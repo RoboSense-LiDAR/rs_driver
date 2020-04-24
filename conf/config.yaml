@@ -13,7 +13,7 @@ lidar:
       include: middle_lidar/lidar.yaml
     ros:
       ros_recv_points_topic: /rslidar_points
-      ros_recv_packets_topic: /rslidar_packets
+      ros_recv_packets_topic: /ruby/rslidar_packets
       ros_send_points_topic: /rslidar_points
       ros_send_packets_topic: /rslidar_packets
     proto:

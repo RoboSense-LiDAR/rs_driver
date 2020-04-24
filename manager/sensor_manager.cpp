@@ -20,7 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#include "rs_sensor/sensor_manager/sensor_manager.h"
+#include "manager/sensor_manager.h"
 
 namespace robosense
 {

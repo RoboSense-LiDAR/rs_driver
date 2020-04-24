@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #ifdef PROTO_FOUND
-#include "rs_sensor/proto/lidar_packets_proto_adapter.h"
+#include "adapter/lidar_packets_proto_adapter.h"
 #define PKT_RECEIVE_BUF_SIZE 2000000
 namespace robosense
 {

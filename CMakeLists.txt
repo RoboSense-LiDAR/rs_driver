@@ -7,7 +7,6 @@ project(lidar_driver)
 #========================
 add_subdirectory(modules/rs_common)
 add_subdirectory(modules/rs_lidar)
-add_subdirectory(modules/rs_manager)
 include(CheckSymbolExists)
 #========================
 # Project details / setup
@@ -27,7 +26,10 @@ add_definitions(-O3)
 add_definitions(-std=c++14)
 add_compile_options(-W)
 
-
+find_package(PCL QUIET)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 #========================
 # Dependencies Setup
 #========================
@@ -63,14 +65,26 @@ endif(Protobuf_FOUND)
 #========================
 # Build Setup
 #========================
+include_directories(${PROJECT_SOURCE_DIR})
+add_library(adapter SHARED
+              adapter/lidar_points_ros_adapter.cpp
+              adapter/lidar_packtes_ros_adapter.cpp      
+              adapter/lidar_points_proto_adapter.cpp
+              adapter/lidar_packets_proto_adapter.cpp
+)
+target_link_libraries(adapter rs_yaml)
 add_executable(demo
             demo/demo.cpp
+            manager/sensor_manager.cpp
             )
-add_dependencies(demo rs_sensormanager)
 
 target_link_libraries(demo
-                    rs_sensormanager
+                    adapter
+                    rs_lidar
                     ${roscpp_LIBRARIES}
-                    ${PROTOBUF_LIBRARY}  
+                    ${PROTOBUF_LIBRARY}
+                    pthread
                        )
-
+if(Protobuf_FOUND)
+target_link_libraries(demo proto_msg)
+endif(Protobuf_FOUND)

@@ -44,24 +44,11 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
 endif (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64") 
 
 
-add_library(encryptor SHARED IMPORTED)
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-  set_target_properties(encryptor PROPERTIES
-    IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/lib/libencryptor_x86_64_v_2.so)
-endif (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64") 
-
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-  set_target_properties(encryptor PROPERTIES
-    IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/lib/libencryptor_aarch64_v_2.so)
-endif (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")  
-set(EXTERNAL_LIBS ${EXTERNAL_LIBS} encryptor)
-
 add_library(rs_yaml SHARED
             src/yaml/yaml_parser.cpp
             src/utility/thread_pool.cpp
             )
 target_link_libraries(rs_yaml
-                      encryptor
                       stdc++fs
                       yaml
                       )  

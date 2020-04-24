@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #ifdef ROS_FOUND
-#include "rs_sensor/ros/lidar_packets_ros_adapter.h"
+#include "adapter/lidar_packets_ros_adapter.h"
 namespace robosense
 {
 namespace sensor

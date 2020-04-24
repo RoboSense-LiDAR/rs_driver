@@ -25,7 +25,6 @@
 #include <memory>
 #include <iostream>
 #include "yaml-cpp/yaml.h"
-#include "rs_common/yaml/encryptor_wrapper.h"
 
 namespace robosense
 {
@@ -38,17 +37,14 @@ class YamlParser
 {
 public:
   YamlParser();
-  YamlParser(const std::string& key);
   ~YamlParser();
   YAML::Node loadAndMerge(const std::string& sys_cfg_path, const std::string& user_cfg_file);
   YAML::Node loadAndMerge(YAML::Node sysNode, const YAML::Node &usrNode);
   YAML::Node loadFile(const std::string& path);
 
 private:
-  const std::string STR_DECRYPT = "#! Encrypt";
   std::string base_dir_;
   std::string base_file_path_;
-  std::unique_ptr<EncryptorWrapper> pDecryptor;
 
   std::string getBaseDirectory(const std::string& path);
   bool catYAML(YAML::Node&);

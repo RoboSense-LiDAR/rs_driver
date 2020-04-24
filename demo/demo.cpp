@@ -1,5 +1,5 @@
 #include <rs_common/common.h>
-#include <rs_sensor/sensor_manager/sensor_manager.h>
+#include <manager/sensor_manager.h>
 #include <signal.h>
 using namespace robosense::sensor;
 bool start_ = true;

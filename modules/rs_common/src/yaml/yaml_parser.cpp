@@ -21,7 +21,6 @@
  *****************************************************************************/
 
 #include "rs_common/yaml/yaml_parser.h"
-#include "rs_common/yaml/encryptor_wrapper.h"
 #include "rs_common/debug/prompt.h"
 #include <unistd.h>
 #include <sstream>
@@ -34,19 +33,6 @@ namespace common
 
 YamlParser::YamlParser()
 {
-  std::string key = "robosense@XiLiSZ";
-  unsigned char lkey[16] = {0};
-  int len = key.length() < 16 ? key.length() : 16;
-  key.copy((char *)lkey, len, 0);
-  pDecryptor = std::unique_ptr<EncryptorWrapper>(new EncryptorWrapper(lkey));
-}
-
-YamlParser::YamlParser(const std::string &key)
-{
-  unsigned char lkey[16] = {0};
-  int len = key.length() < 16 ? key.length() : 16;
-  key.copy((char *)lkey, len, 0);
-  pDecryptor = std::unique_ptr<EncryptorWrapper>(new EncryptorWrapper(lkey));
 }
 
 YamlParser::~YamlParser()
@@ -87,18 +73,7 @@ YAML::Node YamlParser::loadFile(const std::string &path)
 
   std::ifstream fin(path, std::ios::in);
   std::getline(fin, str);
-  if (str == STR_DECRYPT)
-  { // file haved encrypted
-    while (std::getline(fin, str))
-    {
-      ss << pDecryptor->DecryptString(str) << '\n';
-    }
-    result = YAML::Load(ss.str());
-  }
-  else
-  { // file not eccrypted
-    result = YAML::LoadFile(path);
-  }
+  result = YAML::LoadFile(path);
   fin.close();
   catYAML(result);
   return result;
@@ -230,21 +205,13 @@ bool YamlParser::catYAML(YAML::Node &node)
         std::ifstream fin(path, std::ios::in);
 
         std::getline(fin, str);
-        if (str == STR_DECRYPT)
-        {
-          while (std::getline(fin, str))
-          {
-            ss << pDecryptor->DecryptString(str) << std::endl;
-          }
-        }
-        else
+
+        ss << str << std::endl;
+        while (std::getline(fin, str))
         {
           ss << str << std::endl;
-          while (std::getline(fin, str))
-          {
-            ss << str << std::endl;
-          }
         }
+
         fin.close();
 
         YAML::Node included_sub_node = YAML::Load(ss);

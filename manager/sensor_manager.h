@@ -25,10 +25,10 @@
 #include <memory>
 #include <rs_common/common.h>
 #include <rs_lidar/lidar_driver.h>
-#include "rs_sensor/ros/lidar_points_ros_adapter.h"
-#include "rs_sensor/ros/lidar_packets_ros_adapter.h"
-#include "rs_sensor/proto/lidar_points_proto_adapter.h"
-#include "rs_sensor/proto/lidar_packets_proto_adapter.h"
+#include "adapter/lidar_points_ros_adapter.h"
+#include "adapter/lidar_packets_ros_adapter.h"
+#include "adapter/lidar_points_proto_adapter.h"
+#include "adapter/lidar_packets_proto_adapter.h"
 
 
 namespace robosense
