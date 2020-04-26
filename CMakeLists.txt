@@ -6,7 +6,6 @@ project(lidar_driver)
 # Subdirectory
 #========================
 add_subdirectory(modules/rs_common)
-add_subdirectory(modules/rs_lidar)
 include(CheckSymbolExists)
 #========================
 # Project details / setup
@@ -80,10 +79,11 @@ add_executable(demo
 
 target_link_libraries(demo
                     adapter
-                    rs_lidar
                     ${roscpp_LIBRARIES}
                     ${PROTOBUF_LIBRARY}
+                    ${PCL_LIBRARIES}
                     pthread
+                    pcap
                        )
 if(Protobuf_FOUND)
 target_link_libraries(demo proto_msg)

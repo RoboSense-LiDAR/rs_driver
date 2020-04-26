@@ -19,42 +19,44 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#include "rs_lidar/decoder/decoder_base.hpp"
+#include "driver/decoder/decoder_base.hpp"
 namespace robosense
 {
 namespace sensor
 {
-#define RSBP_CHANNELS_PER_BLOCK 32
-#define RSBP_BLOCKS_PER_PKT 12
-#define RSBP_POINTS_CHANNEL_PER_SECOND (20000)
-#define RSBP_BLOCKS_CHANNEL_PER_PKT (12)
-#define RSBP_MSOP_SYNC (0xA050A55A0A05AA55)
-#define RSBP_BLOCK_ID (0xEEFF)
-#define RSBP_DIFOP_SYNC (0x555511115A00FFA5)
-#define RSBP_CHANNEL_TOFFSET (3)
-#define RSBP_FIRING_TDURATION (50)
+#define RS16_CHANNELS_PER_BLOCK (32)
+#define RS16_BLOCKS_PER_PKT (12)
+#define RS16_BLOCK_TDURATION_DUAL (50)
+#define RS16_BLOCK_TDURATION_SINGLE (100)
+#define RS16_POINTS_CHANNEL_PER_SECOND (20000)
+#define RS16_BLOCKS_CHANNEL_PER_PKT (12)
+#define RS16_MSOP_SYNC (0xA050A55A0A05AA55)
+#define RS16_BLOCK_ID (0xEEFF)
+#define RS16_DIFOP_SYNC (0x555511115A00FFA5)
+#define RS16_CHANNEL_TOFFSET (3)
+#define RS16_FIRING_TDURATION (50)
 
 typedef struct
 {
     uint16_t id;
     uint16_t azimuth;
-    ST_Channel channels[RSBP_CHANNELS_PER_BLOCK];
-} __attribute__((packed)) STBP_MsopBlock;
+    ST_Channel channels[RS16_CHANNELS_PER_BLOCK];
+} __attribute__((packed)) ST16_MsopBlock;
 
 typedef struct
 {
     ST_MsopHeader header;
-    STBP_MsopBlock blocks[RSBP_BLOCKS_PER_PKT];
+    ST16_MsopBlock blocks[RS16_BLOCKS_PER_PKT];
     uint32_t index;
     uint16_t tail;
-} __attribute__((packed)) STBP_MsopPkt;
+} __attribute__((packed)) ST16_MsopPkt;
 
 typedef struct
 {
-    uint8_t reserved[240];
+    uint8_t intensity_cali[240];
     uint8_t coef;
     uint8_t ver;
-} __attribute__((packed)) STBP_Intensity;
+} __attribute__((packed)) ST16_Intensity;
 
 typedef struct
 {
@@ -62,10 +64,10 @@ typedef struct
     uint16_t rpm;
     ST_EthNet eth;
     ST_FOV fov;
-    uint16_t reserved0;
+    uint16_t static_base;
     uint16_t lock_phase_angle;
     ST_Version version;
-    STBP_Intensity intensity;
+    ST16_Intensity intensity;
     ST_SN sn;
     uint16_t zero_cali;
     uint8_t return_mode;
@@ -75,29 +77,30 @@ typedef struct
     uint8_t reserved1[11];
     ST_Diagno diagno;
     uint8_t gprmc[86];
-    uint8_t pitch_cali[96];
-    uint8_t yaw_cali[96];
-    uint8_t reserved2[586];
+    uint8_t static_cali[697];
+    uint8_t pitch_cali[48];
+    uint8_t reserved2[33];
     uint16_t tail;
-} __attribute__((packed)) STBP_DifopPkt;
+} __attribute__((packed)) ST16_DifopPkt;
 
 template <typename vpoint>
-class DecoderBP : public DecoderBase<vpoint>
+class Decoder16 : public DecoderBase<vpoint>
 {
 public:
-    DecoderBP(ST_Param &param);
+    Decoder16(RSDecoder_Param &param);
     int32_t decodeDifopPkt(const uint8_t *pkt);
-    int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height);
+    int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec,int &height);
     double getLidarTime(const uint8_t *pkt);
     void loadCalibrationFile(std::string cali_path);
 };
 
 template <typename vpoint>
-DecoderBP<vpoint>::DecoderBP(ST_Param &param) : DecoderBase<vpoint>(param)
+Decoder16<vpoint>::Decoder16(RSDecoder_Param &param) : DecoderBase<vpoint>(param)
 {
-    this->Rx_ = 0.01697;
-    this->Ry_ = -0.0085;
-    this->Rz_ = 0.12644;
+    this->Rx_ = 0.03825;
+    this->Ry_ = -0.01088;
+    this->Rz_ = 0;
+    this->temperature_max_ = 71;
     if (this->max_distance_ > 200.0f || this->max_distance_ < 0.2f)
     {
         this->max_distance_ = 200.0f;
@@ -109,9 +112,9 @@ DecoderBP<vpoint>::DecoderBP(ST_Param &param) : DecoderBase<vpoint>(param)
 }
 
 template <typename vpoint>
-double DecoderBP<vpoint>::getLidarTime(const uint8_t *pkt)
+double Decoder16<vpoint>::getLidarTime(const uint8_t *pkt)
 {
-    STBP_MsopPkt *mpkt_ptr = (STBP_MsopPkt *)pkt;
+    ST16_MsopPkt *mpkt_ptr = (ST16_MsopPkt *)pkt;
     std::tm stm;
     memset(&stm, 0, sizeof(stm));
     stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
@@ -124,89 +127,60 @@ double DecoderBP<vpoint>::getLidarTime(const uint8_t *pkt)
 }
 
 template <typename vpoint>
-int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height)
+int Decoder16<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec,int &height)
 {
-    height = 32;
-    STBP_MsopPkt *mpkt_ptr = (STBP_MsopPkt *)pkt;
-    if (mpkt_ptr->header.sync != RSBP_MSOP_SYNC)
+    height=16;
+    ST16_MsopPkt *mpkt_ptr = (ST16_MsopPkt *)pkt;
+    if (mpkt_ptr->header.sync != RS16_MSOP_SYNC)
     {
         return -2;
     }
-
     int first_azimuth;
     first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
-
     float temperature = this->computeTemperatue(mpkt_ptr->header.temp_raw);
-
-    for (int blk_idx = 0; blk_idx < RSBP_BLOCKS_PER_PKT; blk_idx++)
+    for (int blk_idx = 0; blk_idx < RS16_BLOCKS_PER_PKT; blk_idx++)
     {
-        if (mpkt_ptr->blocks[blk_idx].id != RSBP_BLOCK_ID)
+        if (mpkt_ptr->blocks[blk_idx].id != RS16_BLOCK_ID)
         {
             break;
         }
         int azimuth_blk = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-        int azi_prev;
-        int azi_cur;
-        if (this->echo_mode_ == RS_ECHO_DUAL)
+        int azi_prev = 0;
+        int azi_cur = 0;
+
+        if (blk_idx < (RS16_BLOCKS_PER_PKT - 1)) // 12
         {
-            if (blk_idx < (RSBP_BLOCKS_PER_PKT - 2)) // 12
-            {
-                azi_prev = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 2].azimuth);
-                azi_cur = azimuth_blk;
-            }
-            else
-            {
-                azi_prev = azimuth_blk;
-                azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 2].azimuth);
-            }
+            azi_prev = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth);
+            azi_cur = azimuth_blk;
         }
         else
         {
-            if (blk_idx < (RSBP_BLOCKS_PER_PKT - 1)) // 12
-            {
-                azi_prev = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth);
-                azi_cur = azimuth_blk;
-            }
-            else
-            {
-                azi_prev = azimuth_blk;
-                azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth);
-            }
+            azi_prev = azimuth_blk;
+            azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth);
         }
-
         float azimuth_diff = (float)((36000 + azi_prev - azi_cur) % 36000);
+        // Ingnore the block if the azimuth change abnormal
+        if (azimuth_diff <= 0.0 || azimuth_diff > 75.0)
+        {
+            continue;
+        }        
         float azimuth_channel;
         int ab_flag = 0;
-        if (this->resolution_type_ == RS_RESOLUTION_10mm)
-        {
-            ab_flag = this->ABPktCheck(RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[0].distance));
-        }
-
-        for (int channel_idx = 0; channel_idx < RSBP_CHANNELS_PER_BLOCK; channel_idx++)
+        for (int channel_idx = 0; channel_idx < RS16_CHANNELS_PER_BLOCK; channel_idx++)
         {
             int azimuth_final;
 
-            azimuth_channel = azimuth_blk + (azimuth_diff * RSBP_CHANNEL_TOFFSET * (channel_idx % 16) / RSBP_FIRING_TDURATION);
-            azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
-
+            if (this->echo_mode_ == RS_ECHO_DUAL)
+            {
+                azimuth_channel = azimuth_blk + azimuth_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
+            }
+            else
+            {
+                azimuth_channel = azimuth_blk + azimuth_diff * (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) / RS16_BLOCK_TDURATION_SINGLE;
+            }
+            azimuth_final = ((int)round(azimuth_channel)) % 36000;
             int idx_map = channel_idx;
-            if (this->resolution_type_ == RS_RESOLUTION_10mm && ab_flag == 1)
-            {
-                if (channel_idx < 16)
-                {
-                    idx_map = channel_idx + 16;
-                }
-                else if (channel_idx >= 16)
-                {
-                    idx_map = channel_idx - 16;
-                }
-            }
             int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[idx_map].distance);
-            if (this->resolution_type_ == RS_RESOLUTION_10mm)
-            {
-                int ab_flag_blk = this->ABPktCheck(distance);
-                distance = distance - ab_flag_blk * 32768;
-            }
             float intensity = mpkt_ptr->blocks[blk_idx].channels[idx_map].intensity;
             intensity = this->intensityCalibration(intensity, channel_idx, distance, temperature);
             float distance_cali = this->distanceCalibration(distance, channel_idx, temperature);
@@ -222,8 +196,8 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
             int angle_horiz_ori;
             int angle_horiz = (azimuth_final + 36000) % 36000;
             int angle_vert;
-            angle_horiz_ori = (int)(azimuth_channel + 36000) % 36000;
-            angle_vert = (((int)(this->vert_angle_list_[channel_idx] * 100) % 36000) + 36000) % 36000;
+            angle_horiz_ori = angle_horiz;
+            angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16] * 100) % 36000) + 36000) % 36000;
 
             //store to pointcloud buffer
             vpoint point;
@@ -257,26 +231,25 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
             vec.push_back(point);
         }
     }
-
     return first_azimuth;
 }
 
 template <typename vpoint>
-int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
+int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t *pkt)
 {
-    STBP_DifopPkt *rs32_ptr = (STBP_DifopPkt *)pkt;
-    if (rs32_ptr->sync != RSBP_DIFOP_SYNC)
+    ST16_DifopPkt *rs16_ptr = (ST16_DifopPkt *)pkt;
+    if (rs16_ptr->sync != RS16_DIFOP_SYNC)
     {
         return -2;
     }
 
-    ST_Version *p_ver = &(rs32_ptr->version);
+    ST_Version *p_ver = &(rs16_ptr->version);
     if ((p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] == 0x02 && p_ver->bottom_sn[2] >= 0x09) ||
         (p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] > 0x02))
     {
-        if (rs32_ptr->return_mode == 0x01 || rs32_ptr->return_mode == 0x02)
+        if (rs16_ptr->return_mode == 0x01 || rs16_ptr->return_mode == 0x02)
         {
-            this->echo_mode_ = rs32_ptr->return_mode;
+            this->echo_mode_ = rs16_ptr->return_mode;
         }
         else
         {
@@ -288,11 +261,10 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         this->echo_mode_ = 1;
     }
 
-    int pkt_rate = ceil(RSBP_POINTS_CHANNEL_PER_SECOND / RSBP_BLOCKS_CHANNEL_PER_PKT);
-
-    if (this->echo_mode_ == RS_ECHO_DUAL)
+    int pkt_rate = ceil(RS16_POINTS_CHANNEL_PER_SECOND / RS16_BLOCKS_CHANNEL_PER_PKT);
+    if (this->echo_mode_ == RS_ECHO_LAST || this->echo_mode_ == RS_ECHO_MAX)
     {
-        pkt_rate = pkt_rate * 2;
+        pkt_rate = ceil(pkt_rate / 2);
     }
     this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
 
@@ -304,18 +276,66 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     {
         this->resolution_type_ = 0;
     }
-
-    if (rs32_ptr->intensity.ver == 0x00 || rs32_ptr->intensity.ver == 0xFF || rs32_ptr->intensity.ver == 0xA1)
+    if (rs16_ptr->intensity.ver == 0x00 || rs16_ptr->intensity.ver == 0xFF || rs16_ptr->intensity.ver == 0xA1)
     {
         this->intensity_mode_ = 1;
     }
-    else if (rs32_ptr->intensity.ver == 0xB1)
+    else if (rs16_ptr->intensity.ver == 0xB1)
     {
         this->intensity_mode_ = 2;
     }
-    else if (rs32_ptr->intensity.ver == 0xC1)
+    else if (rs16_ptr->intensity.ver == 0xC1)
     {
         this->intensity_mode_ = 3;
+    }
+    if (!(this->cali_data_flag_ & 0x1))
+    {
+        bool curve_flag = true;
+        ST16_Intensity *p_intensity = &(rs16_ptr->intensity);
+        if ((p_intensity->intensity_cali[0] == 0x00 || p_intensity->intensity_cali[0] == 0xFF) && (p_intensity->intensity_cali[1] == 0x00 || p_intensity->intensity_cali[1] == 0xFF) && (p_intensity->intensity_cali[2] == 0x00 || p_intensity->intensity_cali[2] == 0xFF) && (p_intensity->intensity_cali[3] == 0x00 || p_intensity->intensity_cali[3] == 0xFF))
+        {
+            curve_flag = false;
+        }
+
+        if (curve_flag)
+        {
+            bool check_flag = true;
+            uint8_t checksum;
+            for (int k = 0; k < 16; k++)
+            {
+                checksum = p_intensity->intensity_cali[15 * k] ^ p_intensity->intensity_cali[15 * k + 1];
+                for (int n = 1; n < 7; n++)
+                {
+                    checksum = checksum ^ (p_intensity->intensity_cali[k * 15 + n * 2]) ^ (p_intensity->intensity_cali[k * 15 + n * 2 + 1]);
+                }
+                if (checksum != p_intensity->intensity_cali[k * 15 + 14])
+                {
+                    check_flag = false;
+                    break;
+                }
+            }
+
+            if (check_flag)
+            {
+                uint16_t *inten_p;
+                for (int i = 0; i < 16; i++)
+                {
+                    inten_p = (uint16_t *)(p_intensity->intensity_cali + i * 15);
+                    for (int k = 0; k < 7; k++)
+                    {
+                        this->intensity_cali_[k][i] = RS_SWAP_SHORT(*(inten_p + k)) * 0.001;
+                    }
+                }
+
+                this->cali_data_flag_ = this->cali_data_flag_ | 0x01;
+
+                //std::cout << "[RS_decoder][difop][INFO] curves data is wrote in difop packet!" << std::endl;
+            }
+        }
+        if (rs16_ptr->intensity.coef != 0x00 && rs16_ptr->intensity.coef != 0xFF)
+        {
+            this->intensity_coef_ = rs16_ptr->intensity.coef;
+        }
     }
 
     if (!(this->cali_data_flag_ & 0x2))
@@ -323,9 +343,9 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         bool angle_flag = true;
         const uint8_t *p_pitch_cali;
 
-        p_pitch_cali = ((STBP_DifopPkt *)pkt)->pitch_cali;
+        p_pitch_cali = rs16_ptr->pitch_cali;
 
-        if ((p_pitch_cali[0] == 0x00 || p_pitch_cali[0] == 0xFF) && (p_pitch_cali[1] == 0x00 || p_pitch_cali[1] == 0xFF) && (p_pitch_cali[2] == 0x00 || p_pitch_cali[2] == 0xFF))
+        if ((p_pitch_cali[0] == 0x00 || p_pitch_cali[0] == 0xFF) && (p_pitch_cali[1] == 0x00 || p_pitch_cali[1] == 0xFF) && (p_pitch_cali[2] == 0x00 || p_pitch_cali[2] == 0xFF) && (p_pitch_cali[3] == 0x00 || p_pitch_cali[3] == 0xFF))
         {
             angle_flag = false;
         }
@@ -334,38 +354,25 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         {
             int lsb, mid, msb, neg = 1;
 
-            const uint8_t *p_yaw_cali = ((STBP_DifopPkt *)pkt)->yaw_cali;
-            for (int i = 0; i < 32; i++)
+            for (int i = 0; i < 16; i++)
             {
-                lsb = p_pitch_cali[i * 3];
-                if (lsb == 0)
-                {
-                    neg = 1;
-                }
-                else if (lsb == 1)
+                if (i < 8)
                 {
                     neg = -1;
                 }
+                else
+                {
+                    neg = 1;
+                }
+                lsb = p_pitch_cali[i * 3];
                 mid = p_pitch_cali[i * 3 + 1];
                 msb = p_pitch_cali[i * 3 + 2];
-                this->vert_angle_list_[i] = (mid * 256 + msb) * neg * 0.01f; // / 180 * M_PI;
-                lsb = p_yaw_cali[i * 3];
-                if (lsb == 0)
-                {
-                    neg = 1;
-                }
-                else if (lsb == 1)
-                {
-                    neg = -1;
-                }
-                mid = p_yaw_cali[i * 3 + 1];
-                msb = p_yaw_cali[i * 3 + 2];
-                this->hori_angle_list_[i] = (mid * 256 + msb) * neg * 0.001f * 100;
+
+                this->vert_angle_list_[i] = (lsb * 256 * 256 + mid * 256 + msb) * neg * 0.0001f; // / 180 * M_PI;
+                this->hori_angle_list_[i] = 0;
             }
 
             this->cali_data_flag_ = this->cali_data_flag_ | 0x2;
-
-            //std::cout << "[RS_decoder][difop][INFO] angle data is wrote in difop packet!" << std::endl;
         }
     }
 
@@ -373,10 +380,10 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
 }
 
 template <typename vpoint>
-void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
+void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
 {
     int row_index = 0;
-    int laser_num = 32;
+    int laser_num = 16;
     std::string line_str;
     this->cali_files_dir_ = cali_path;
     std::string file_dir = this->cali_files_dir_ + "/angle.csv";
@@ -393,8 +400,8 @@ void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
             {
                 vect_str.push_back(str);
             }
-            this->vert_angle_list_[row_index] = std::stof(vect_str[0]); //RS_TO_RADS(std::stof(vect_str[0]));
-            this->hori_angle_list_[row_index] = std::stof(vect_str[1]) * 100;
+            this->vert_angle_list_[row_index] = std::stof(vect_str[0]);
+            this->hori_angle_list_[row_index] = 0;
             row_index++;
             if (row_index >= laser_num)
             {

@@ -1,8 +1,8 @@
 frame_id: /middle_lidar      #@type: string @brief: the frame id of the message
-device_type: RS128
-device_ip: 192.168.1.201      #@type: string @brief: the lidar ip address
-msop_port: 6699               #@type: uint16_t @brief: the MSOP packets port
-difop_port: 7788              #@type: uint16_t @brief: the DIFOP packets port
+device_type: RS32
+device_ip: 192.168.1.200      #@type: string @brief: the lidar ip address
+msop_port: 6688               #@type: uint16_t @brief: the MSOP packets port
+difop_port: 7799              #@type: uint16_t @brief: the DIFOP packets port
 echo_mode: 1                  #0: dual 1: MAX 2 Last
 start_angle: 0                #@type: int @brief: the start angle of point cloud area
 end_angle: 360                #@type: int @brief: the end angle of point cloud area
@@ -10,7 +10,7 @@ min_distance: 0.2             #@type: int @brief: the minimum distance of point 
 max_distance: 200             #@type: int @brief: the maximum distance of point cloud area
 cut_angle: 0                #@type: int @area 0~360
                               #@brief: the angle to separate LiDAR scan frame
-pcap: /work_space/bag/lidar.pcap    #@type: string @brief the path of pcap bag
+pcap: /media/xzd/bag/bag/sunnyvael_1014.pcap    #@type: string @brief the path of pcap bag
 read_pcap: false              #@type: bool @brief: if ture, the lidar driver will read message from pcap bag
 use_lidar_clock: false        #@type: bool @brief: if false--use system clock,if true--use lidar clock 
 timeout: 100                  #@type: bool @unit: ms

@@ -328,7 +328,7 @@ R *SensorManager::construct(const std::string &device_type, const std::string &f
   R *ret;
   if (device_type == "RS16" || device_type == "RS32" || device_type == "RSBP" || device_type == "RS128")
   {
-    ret = localConstruct<R, LidarBase>(api_request);
+    ret = localConstruct<R, LidarDriverAdapter>(api_request);
   }
 #ifdef ROS_FOUND
   else if ((int)device_type.find("lidar_points") != -1 && (int)device_type.find("ros") != -1)

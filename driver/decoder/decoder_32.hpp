@@ -19,7 +19,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#include "rs_lidar/decoder/decoder_base.hpp"
+#include "driver/decoder/decoder_base.hpp"
 namespace robosense
 {
 namespace sensor
@@ -85,7 +85,7 @@ template <typename vpoint>
 class Decoder32 : public DecoderBase<vpoint>
 {
 public:
-    Decoder32(ST_Param &param);
+    Decoder32(RSDecoder_Param &param);
     int32_t decodeDifopPkt(const uint8_t *pkt);
     int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height);
     double getLidarTime(const uint8_t *pkt);
@@ -93,7 +93,7 @@ public:
 };
 
 template <typename vpoint>
-Decoder32<vpoint>::Decoder32(ST_Param &param) : DecoderBase<vpoint>(param)
+Decoder32<vpoint>::Decoder32(RSDecoder_Param &param) : DecoderBase<vpoint>(param)
 {
     this->Rx_ = 0.03997;
     this->Ry_ = -0.01087;

@@ -1,8 +1,8 @@
 
-#include "rs_lidar/decoder/decoder_16.hpp"
-#include "rs_lidar/decoder/decoder_32.hpp"
-#include "rs_lidar/decoder/decoder_128.hpp"
-#include "rs_lidar/decoder/decoder_bp.hpp"
+#include "driver/decoder/decoder_16.hpp"
+#include "driver/decoder/decoder_32.hpp"
+#include "driver/decoder/decoder_128.hpp"
+#include "driver/decoder/decoder_bp.hpp"
 namespace robosense
 {
 namespace sensor
@@ -12,7 +12,7 @@ class DecoderFactory
 {
 
 public:
-    inline static std::shared_ptr<DecoderBase<vpoint>> createDecoder(const std::string &lidar_type, ST_Param param)
+    inline static std::shared_ptr<DecoderBase<vpoint>> createDecoder(const std::string &lidar_type, RSDecoder_Param param)
     {
         if (lidar_type == "RS16")
         {

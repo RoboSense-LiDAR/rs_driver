@@ -151,7 +151,7 @@ typedef struct
     uint8_t reserved3[7];
 } __attribute__((packed)) ST_Diagno;
 
-typedef struct eST_Param
+typedef struct eRSDecoder_Param
 {
     RS_RESOLUTION_TYPE resolution = RS_RESOLUTION_10mm;
     RS_INTENSITY_TYPE intensity = RS_INTENSITY_AUTO;
@@ -161,14 +161,14 @@ typedef struct eST_Param
     float min_distance = 0.2f;
     float start_angle = 0.0f;
     float end_angle = 360.0f;
-} ST_Param;
+} RSDecoder_Param;
 
 //----------------- Decoder ---------------------
 template <typename vpoint>
 class DecoderBase
 {
 public:
-    DecoderBase(ST_Param &param);
+    DecoderBase(RSDecoder_Param &param);
     virtual ~DecoderBase();
     virtual E_DECODER_RESULT processMsopPkt(const uint8_t *pkt, std::vector<vpoint> &pointcloud_vec,int &height);
     virtual int32_t processDifopPkt(const uint8_t *pkt);
@@ -216,7 +216,7 @@ protected:
 };
 
 template <typename vpoint>
-DecoderBase<vpoint>::DecoderBase(ST_Param &param) : rpm_(600),
+DecoderBase<vpoint>::DecoderBase(RSDecoder_Param &param) : rpm_(600),
                                                     pkts_per_frame_(84),
                                                     cali_files_dir_("."),
                                                     pkt_counter_(0),

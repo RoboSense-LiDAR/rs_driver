@@ -26,6 +26,7 @@
 #include "rs_common/yaml/yaml_parser.h"
 #include "rs_common/debug/error_code.h"
 #include "rs_common/utility/thread_pool.h"
+#include "rs_common/utility/time.h"
 #include "rs_common/utility/lock_queue.h"
 #include <chrono>
 #include <mutex>
@@ -175,16 +176,6 @@ public:
   }
 
 public:
-  /**
-   * @brief  get the current system time
-   * @retval time
-   */
-  inline double getTime(void)
-  {
-    const auto t = std::chrono::system_clock::now();
-    const auto t_sec = std::chrono::duration_cast<std::chrono::duration<double>>(t.time_since_epoch());
-    return (double)t_sec.count();
-  }
   /**
    * @brief  check a module is initialized or not
    * @retval true: is initialied false: not initialized
