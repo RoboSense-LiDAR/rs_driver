@@ -22,12 +22,12 @@
 #pragma once
 
 #ifdef ROS_FOUND
-#include <rs_common/interface/sensor/lidar_packets_interface.h>
-#include <rs_common/msg/ros_msg_translator.h>
+#include <common/interface/sensor/lidar_packets_interface.h>
+#include <common/msg/ros_msg_translator.h>
 #include <ros/ros.h>
 #include <ros/publisher.h>
 #include <ros/subscriber.h>
-#include <rs_common/msg/ros_msg/lidar_scan_ros.h>
+#include <common/msg/ros_msg/lidar_scan_ros.h>
 
 namespace robosense
 {

@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include "rs_common/debug/prompt.h"
-#include "rs_common/yaml/yaml_parser.h"
-#include "rs_common/debug/error_code.h"
-#include "rs_common/utility/thread_pool.h"
-#include "rs_common/utility/time.h"
-#include "rs_common/utility/lock_queue.h"
+#include "common/debug/prompt.h"
+#include "common/yaml/yaml_parser.h"
+#include "common/debug/error_code.h"
+#include "common/utility/thread_pool.h"
+#include "common/utility/time.h"
+#include "common/utility/lock_queue.h"
 #include <chrono>
 #include <mutex>
 #include <thread>
@@ -204,7 +204,7 @@ protected:
 
 private:
   bool is_initialized_ = false;
-  std::string name_ = "rs_common_default";
+  std::string name_ = "common_default";
 };
 } // namespace common
 } // namespace robosense

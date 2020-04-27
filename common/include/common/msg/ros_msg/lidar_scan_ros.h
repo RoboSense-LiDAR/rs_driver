@@ -15,7 +15,7 @@
 #include <ros/message_operations.h>
 
 #include <std_msgs/Header.h>
-#include "rs_common/msg/ros_msg/lidar_packet_ros.h"
+#include "common/msg/ros_msg/lidar_packet_ros.h"
 
 namespace rslidar_msgs
 {

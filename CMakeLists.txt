@@ -1,11 +1,14 @@
 cmake_minimum_required(VERSION 3.5)
 project(lidar_driver)
-
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 #========================
 # Subdirectory
 #========================
-add_subdirectory(modules/rs_common)
+add_subdirectory(common)
 include(CheckSymbolExists)
 #========================
 # Project details / setup
@@ -29,6 +32,8 @@ find_package(PCL QUIET)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
+
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
 #========================
 # Dependencies Setup
 #========================
@@ -87,4 +92,24 @@ target_link_libraries(demo
                        )
 if(Protobuf_FOUND)
 target_link_libraries(demo proto_msg)
+endif(Protobuf_FOUND)
+
+add_executable(ui
+            UI/main.cpp
+            UI/mainwindow.cpp
+            UI/mainwindow.h
+            UI/mainwindow.ui
+            manager/sensor_manager.cpp
+
+)
+target_link_libraries(ui
+                    adapter
+                    ${roscpp_LIBRARIES}
+                    ${PROTOBUF_LIBRARY}
+                    ${PCL_LIBRARIES}
+                    pthread
+                    pcap
+                    Qt5::Widgets)
+if(Protobuf_FOUND)
+target_link_libraries(ui proto_msg)
 endif(Protobuf_FOUND)

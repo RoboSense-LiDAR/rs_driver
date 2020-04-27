@@ -21,8 +21,8 @@
  *****************************************************************************/
 #pragma once
 
-#include <rs_common/interface/sensor/lidar_packets_interface.h>
-#include <rs_common/interface/sensor/lidar_points_interface.h>
+#include <common/interface/sensor/lidar_packets_interface.h>
+#include <common/interface/sensor/lidar_points_interface.h>
 #include <driver/lidar_driver.hpp>
 namespace robosense
 {

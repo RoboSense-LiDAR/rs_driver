@@ -19,8 +19,8 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#include "rs_common/debug/error_code.h"
-#include "rs_common/debug/prompt.h"
+#include "common/debug/error_code.h"
+#include "common/debug/prompt.h"
 #pragma once
 
 namespace robosense

@@ -27,11 +27,11 @@
 #include <Eigen/Dense>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
-#include "rs_common/msg/rs_msg/lidar_points_msg.h"
-#include "rs_common/msg/rs_msg/lidar_packet_msg.h"
-#include "rs_common/msg/rs_msg/lidar_scan_msg.h"
-#include "rs_common/msg/ros_msg/lidar_scan_ros.h"
-#include "rs_common/common.h"
+#include "common/msg/rs_msg/lidar_points_msg.h"
+#include "common/msg/rs_msg/lidar_packet_msg.h"
+#include "common/msg/rs_msg/lidar_scan_msg.h"
+#include "common/msg/ros_msg/lidar_scan_ros.h"
+#include "common/common.h"
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>

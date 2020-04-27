@@ -86,6 +86,24 @@ ErrCode SensorManager::stop()
 #if (DEBUG_LEVEL > 1)
   INFO << "Sensor Manager stop" << REND;
 #endif
+ if (lidarpoints_run_flag_)
+  {
+    for (auto &iter : lidar_points_receivers_)
+    {
+      if (iter != nullptr)
+        iter->stop();
+    }
+  }
+  if (lidarpkts_run_flag_)
+  {
+    for (auto &iter : lidar_packets_receivers_)
+    {
+      if (iter != nullptr)
+      {
+        iter->stop();
+      }
+    }
+  }
   return ErrCode_Success;
 }
 

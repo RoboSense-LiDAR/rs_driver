@@ -20,8 +20,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#include "rs_common/yaml/yaml_parser.h"
-#include "rs_common/debug/prompt.h"
+#include "common/yaml/yaml_parser.h"
+#include "common/debug/prompt.h"
 #include <unistd.h>
 #include <sstream>
 #include <fstream>

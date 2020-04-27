@@ -3,7 +3,7 @@ include(CheckSymbolExists)
 #========================
 # Project details / setup~
 #========================
-set(PROJECT_NAME rs_common)
+set(PROJECT_NAME common)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 project(${PROJECT_NAME})
@@ -16,7 +16,7 @@ add_compile_options(-W)
 #========================
 find_package(Protobuf QUIET)
 if(Protobuf_FOUND)
-  SET(PROTO_FILE_PATH ${PROJECT_SOURCE_DIR}/include/rs_common/msg/proto_msg)
+  SET(PROTO_FILE_PATH ${PROJECT_SOURCE_DIR}/include/common/msg/proto_msg)
   file(GLOB PROTOBUF_FILELIST ${PROTO_FILE_PATH}/*.proto)
   message("-- Protobuf Found, Protobuf Support is turned On!")
   foreach(proto_file ${PROTOBUF_FILELIST})
@@ -54,7 +54,7 @@ target_link_libraries(rs_yaml
                       )  
 target_include_directories(rs_yaml PUBLIC
                   ${PROJECT_SOURCE_DIR}/include
-                  ${PROJECT_SOURCE_DIR}/include/rs_common/yaml
+                  ${PROJECT_SOURCE_DIR}/include/common/yaml
                           )
 if(Protobuf_FOUND)
 add_library(proto_msg SHARED

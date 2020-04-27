@@ -20,12 +20,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include "rs_common/msg/rs_msg/gnss_msg.h"
-#include "rs_common/msg/rs_msg/imu_msg.h"
-#include "rs_common/msg/rs_msg/odom_msg.h"
-#include "rs_common/msg/rs_msg/lidar_packet_msg.h"
-#include "rs_common/msg/rs_msg/lidar_points_msg.h"
-#include "rs_common/msg/rs_msg/lidar_scan_msg.h"
+#include "common/msg/rs_msg/gnss_msg.h"
+#include "common/msg/rs_msg/imu_msg.h"
+#include "common/msg/rs_msg/odom_msg.h"
+#include "common/msg/rs_msg/lidar_packet_msg.h"
+#include "common/msg/rs_msg/lidar_points_msg.h"
+#include "common/msg/rs_msg/lidar_scan_msg.h"
 namespace robosense
 {
 namespace common

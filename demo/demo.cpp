@@ -1,4 +1,4 @@
-#include <rs_common/common.h>
+#include <common/common.h>
 #include <manager/sensor_manager.h>
 #include <signal.h>
 using namespace robosense::sensor;

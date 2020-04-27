@@ -1,5 +1,5 @@
 frame_id: /middle_lidar      #@type: string @brief: the frame id of the message
-device_type: RS32
+device_type: RS128
 device_ip: 192.168.1.200      #@type: string @brief: the lidar ip address
 msop_port: 6688               #@type: uint16_t @brief: the MSOP packets port
 difop_port: 7799              #@type: uint16_t @brief: the DIFOP packets port

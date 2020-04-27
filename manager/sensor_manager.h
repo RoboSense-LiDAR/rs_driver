@@ -23,7 +23,7 @@
 #pragma once
 
 #include <memory>
-#include <rs_common/common.h>
+#include <common/common.h>
 #include "adapter/lidar_driver_adapter.hpp"
 #include "adapter/lidar_points_ros_adapter.h"
 #include "adapter/lidar_packets_ros_adapter.h"
