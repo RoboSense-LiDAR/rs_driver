@@ -98,6 +98,7 @@ DecoderBP<vpoint>::DecoderBP(RSDecoder_Param &param) : DecoderBase<vpoint>(param
     this->Rx_ = 0.01697;
     this->Ry_ = -0.0085;
     this->Rz_ = 0.12644;
+    this->channel_num_ = 32;
     if (this->max_distance_ > 200.0f || this->max_distance_ < 0.2f)
     {
         this->max_distance_ = 200.0f;
@@ -264,19 +265,19 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
 template <typename vpoint>
 int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
 {
-    STBP_DifopPkt *rs32_ptr = (STBP_DifopPkt *)pkt;
-    if (rs32_ptr->sync != RSBP_DIFOP_SYNC)
+    STBP_DifopPkt *rsBp_ptr = (STBP_DifopPkt *)pkt;
+    if (rsBp_ptr->sync != RSBP_DIFOP_SYNC)
     {
         return -2;
     }
 
-    ST_Version *p_ver = &(rs32_ptr->version);
+    ST_Version *p_ver = &(rsBp_ptr->version);
     if ((p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] == 0x02 && p_ver->bottom_sn[2] >= 0x09) ||
-        (p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] > 0x02))
+        (p_ver->bottom_sn[0] > 0x08) || (p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] > 0x02))
     {
-        if (rs32_ptr->return_mode == 0x01 || rs32_ptr->return_mode == 0x02)
+        if (rsBp_ptr->return_mode == 0x01 || rsBp_ptr->return_mode == 0x02)
         {
-            this->echo_mode_ = rs32_ptr->return_mode;
+            this->echo_mode_ = rsBp_ptr->return_mode;
         }
         else
         {
@@ -305,15 +306,15 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         this->resolution_type_ = 0;
     }
 
-    if (rs32_ptr->intensity.ver == 0x00 || rs32_ptr->intensity.ver == 0xFF || rs32_ptr->intensity.ver == 0xA1)
+    if (rsBp_ptr->intensity.ver == 0x00 || rsBp_ptr->intensity.ver == 0xFF || rsBp_ptr->intensity.ver == 0xA1)
     {
         this->intensity_mode_ = 1;
     }
-    else if (rs32_ptr->intensity.ver == 0xB1)
+    else if (rsBp_ptr->intensity.ver == 0xB1)
     {
         this->intensity_mode_ = 2;
     }
-    else if (rs32_ptr->intensity.ver == 0xC1)
+    else if (rsBp_ptr->intensity.ver == 0xC1)
     {
         this->intensity_mode_ = 3;
     }
@@ -335,7 +336,7 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
             int lsb, mid, msb, neg = 1;
 
             const uint8_t *p_yaw_cali = ((STBP_DifopPkt *)pkt)->yaw_cali;
-            for (int i = 0; i < 32; i++)
+            for (int i = 0; i < this->channel_num_; i++)
             {
                 lsb = p_pitch_cali[i * 3];
                 if (lsb == 0)
@@ -379,12 +380,18 @@ void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
     int laser_num = 32;
     std::string line_str;
     this->cali_files_dir_ = cali_path;
-    std::string file_dir = this->cali_files_dir_ + "/angle.csv";
-    std::ifstream fd(file_dir.c_str(), std::ios::in);
-    if (fd.is_open())
+    std::string angle_file_path = this->cali_files_dir_ + "/angle.csv";
+
+    // read angle.csv
+    std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
+    if (!fd_angle.is_open())
+    {
+        std::cout << angle_file_path << " does not exist"<< std::endl;
+    }
+    else
     {
         row_index = 0;
-        while (std::getline(fd, line_str))
+        while (std::getline(fd_angle, line_str))
         {
             std::stringstream ss(line_str);
             std::string str;
@@ -393,15 +400,113 @@ void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
             {
                 vect_str.push_back(str);
             }
-            this->vert_angle_list_[row_index] = std::stof(vect_str[0]); //RS_TO_RADS(std::stof(vect_str[0]));
-            this->hori_angle_list_[row_index] = std::stof(vect_str[1]) * 100;
+            this->vert_angle_list_[row_index] = std::stof(vect_str[0]); // degree
+            this->hori_angle_list_[row_index] = std::stof(vect_str[1]); // degree
             row_index++;
             if (row_index >= laser_num)
             {
                 break;
             }
         }
-        fd.close();
+        fd_angle.close();
+    }
+
+    // read ChannelNum.csv
+    std::string chan_file_path = this->cali_files_dir_ + "/ChannelNum.csv";
+    std::ifstream fd_ch_num(chan_file_path.c_str(), std::ios::in);
+    if (!fd_ch_num.is_open())
+    {
+        std::cout << chan_file_path << " does not exist"<< std::endl;
+    }
+    else
+    {
+        row_index = 0;
+        while (std::getline(fd_ch_num, line_str))
+        {
+            std::stringstream ss(line_str);
+            std::string str;
+            std::vector<std::string> vect_str;
+            while (std::getline(ss, str, ','))
+            {
+                vect_str.push_back(str);
+            }
+            for (int col_index = 0; col_index < 51; col_index++)
+            {
+                this->channel_cali_[row_index][col_index] = std::stoi(vect_str[col_index]);
+            }
+            row_index++;
+            if (row_index >= laser_num)
+            {
+                break;
+            }
+        }
+        fd_ch_num.close();
+    }
+
+    // read ChannelNumDistance.csv
+    std::string chan_dis_file_path = this->cali_files_dir_ + "/ChannelNumDistance.csv";
+    std::ifstream fd_chan_dis(chan_dis_file_path.c_str(), std::ios::in);
+    if (!fd_chan_dis.is_open())
+    {
+        std::cout << chan_dis_file_path << " does not exist"<< std::endl;
+    }
+    else
+    {
+        row_index = 0;
+        while (std::getline(fd_chan_dis, line_str))
+        {
+            std::stringstream ss(line_str);
+            std::string str;
+            std::vector<std::string> vect_str;
+            while (std::getline(ss, str, ','))
+            {
+                vect_str.push_back(str);
+            }
+            for (int col_index = 0; col_index < laser_num + 1; col_index++)
+            {
+                this->channel_dis_cali_[row_index][col_index] = std::stof(vect_str[col_index]);
+            }
+            row_index++;
+            if (row_index > 3)
+            {
+                break;
+            }
+        }
+        fd_chan_dis.close();
+    }
+
+    // read  ZeroAngleAbsdist
+    std::string zero_angle_path = this->cali_files_dir_ + "/ZeroAngleAbsdist.csv";
+    std::ifstream fd_zero_angle(zero_angle_path.c_str(), std::ios::in);
+    if (!fd_zero_angle.is_open())
+    {
+        std::cout << zero_angle_path << " does not exist"<< std::endl;
+    }
+    else
+    {
+        std::getline(fd_zero_angle, line_str);
+        float zero_angle_cali_ = std::stof(line_str);
+        fd_zero_angle.close();
+        for (int i = 0; i < laser_num; i++)
+        {
+            this->hori_angle_list_[i] -= zero_angle_cali_;
+        }
+    }
+
+    // read limit.csv
+    std::string dis_limit_path = this->cali_files_dir_ + "/limit.csv";
+    std::ifstream fd_limit(dis_limit_path.c_str(), std::ios::in);
+    if (!fd_limit.is_open())
+    {
+        std::cout << dis_limit_path << " does not exist"<< std::endl;
+    }
+    else
+    {
+        std::getline(fd_limit, line_str);
+        this->min_distance_ = std::stof(line_str) / 100.0f;
+        std::getline(fd_limit, line_str);
+        this->max_distance_ = std::stof(line_str) / 100.0f;
+        fd_limit.close();
     }
 }
 } // namespace sensor

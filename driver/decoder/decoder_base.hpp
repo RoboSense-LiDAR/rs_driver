@@ -107,6 +107,12 @@ typedef struct
 
 typedef struct
 {
+    uint8_t sign;
+    uint8_t value[2];
+} __attribute__((packed)) ST_CorAngle;
+
+typedef struct
+{
     uint16_t distance;
     uint8_t intensity;
 } __attribute__((packed)) ST_Channel;
@@ -176,10 +182,11 @@ public:
     virtual void loadCalibrationFile(std::string cali_path) = 0;
 
 protected:
+    uint8_t channel_num_;
     int32_t rpm_;
     int32_t resolution_type_;
     int32_t intensity_mode_;
-    int32_t echo_mode_;
+    uint8_t echo_mode_;
     float Rx_;
     float Ry_;
     float Rz_;
@@ -201,6 +208,7 @@ protected:
     float vert_angle_list_[128];
     float hori_angle_list_[128];
     int32_t channel_cali_[128][51];
+    float channel_dis_cali_[4][129];
     float intensity_cali_[1600][32]; //compatable to old version
     std::vector<double> cos_lookup_table_;
     std::vector<double> sin_lookup_table_;
@@ -374,11 +382,11 @@ int DecoderBase<vpoint>::azimuthCalibration(float azimuth, int channel)
 
     if (azimuth > 0.0 && azimuth < 3000.0)
     {
-        azimuth = azimuth + this->hori_angle_list_[channel] + 36000.0f;
+        azimuth = azimuth + this->hori_angle_list_[channel] * 100 + 36000.0f;
     }
     else
     {
-        azimuth = azimuth + this->hori_angle_list_[channel];
+        azimuth = azimuth + this->hori_angle_list_[channel] * 100;
     }
     azi_ret = (int)azimuth;
     azi_ret %= 36000;
