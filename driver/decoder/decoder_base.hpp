@@ -162,11 +162,13 @@ typedef struct eRSDecoder_Param
     RS_RESOLUTION_TYPE resolution = RS_RESOLUTION_10mm;
     RS_INTENSITY_TYPE intensity = RS_INTENSITY_AUTO;
     RS_ECHO_MODE echo = RS_ECHO_MAX;
-    float cut_angle = 0.0f;
     float max_distance = 200.0f;
     float min_distance = 0.2f;
     float start_angle = 0.0f;
     float end_angle = 360.0f;
+    uint16_t mode_split_frame = 1;
+    uint32_t num_pkts_split = 0;
+    float cut_angle = 0.0f;
 } RSDecoder_Param;
 
 //----------------- Decoder ---------------------
@@ -197,8 +199,10 @@ protected:
     bool angle_flag_;
     int temperature_min_;
     int temperature_max_;
-    int32_t pkts_per_frame_;
-    int32_t pkt_counter_;
+    uint32_t pkts_per_frame_;
+    uint32_t pkt_counter_;
+    uint16_t mode_split_frame_; // 1 - angle,  2 - theoretical packets; 3 - setting packets
+    uint32_t num_pkts_split_; // number of setting packets
     int32_t cut_angle_;
     int32_t last_azimuth_;
     //calibration data
@@ -239,6 +243,8 @@ DecoderBase<vpoint>::DecoderBase(RSDecoder_Param &param) : rpm_(600),
                                                     echo_mode_(param.echo),
                                                     max_distance_(param.max_distance),
                                                     min_distance_(param.min_distance),
+                                                    mode_split_frame_(param.mode_split_frame),
+                                                    num_pkts_split_(param.num_pkts_split),
                                                     cut_angle_(param.cut_angle * 100),
                                                     temperature_min_(31),
                                                     temperature_max_(81)
@@ -300,7 +306,8 @@ E_DECODER_RESULT DecoderBase<vpoint>::processMsopPkt(const uint8_t *pkt, std::ve
     }
 
     this->pkt_counter_++;
-    if (this->cut_angle_ >= 0)
+
+    if (mode_split_frame_ == 1)
     {
         if (azimuth < this->last_azimuth_)
         {
@@ -314,9 +321,17 @@ E_DECODER_RESULT DecoderBase<vpoint>::processMsopPkt(const uint8_t *pkt, std::ve
         }
         this->last_azimuth_ = azimuth;
     }
-    else
+    else if (mode_split_frame_ == 2)
     {
         if (this->pkt_counter_ >= this->pkts_per_frame_)
+        {
+            this->pkt_counter_ = 0;
+            return E_FRAME_SPLIT;
+        }
+    }
+    else if (mode_split_frame_ == 3)
+    {
+        if (this->pkt_counter_ >= this->num_pkts_split_)
         {
             this->pkt_counter_ = 0;
             return E_FRAME_SPLIT;

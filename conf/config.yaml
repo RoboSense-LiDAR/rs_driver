@@ -1,7 +1,7 @@
 #All the Lidars will share a same common config file
 #The size of the config file list is the number of the Lidar
 common:
-    msg_source: 2            #@type: int  @detail: 0--not use Lidar, 1--lidar packet message come from sensor driver
+    msg_source: 1            #@type: int  @detail: 0--not use Lidar, 1--lidar packet message come from sensor driver
                               #                     2--lidar packet message come from ROS,3--lidar points message come from ROS, 4--packets from proto, 5--points from proto
     send_packets_ros: false     #@type: bool @detail: if true, the original lidar packets message will be sent out through ROS
     send_points_ros: true     #@type: bool @detail: if true, the original lidar points message will be sent out through ROS

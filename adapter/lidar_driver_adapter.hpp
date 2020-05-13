@@ -56,6 +56,8 @@ public:
     yamlRead<float>(driver_config, "max_distance", driver_param.decoder_param.max_distance, 200);
     yamlRead<float>(driver_config, "start_angle", driver_param.decoder_param.start_angle, 0);
     yamlRead<float>(driver_config, "end_angle", driver_param.decoder_param.end_angle, 360);
+    yamlRead<uint16_t>(driver_config, "mode_split_frame", driver_param.decoder_param.mode_split_frame, 1);
+    yamlRead<uint32_t>(driver_config, "num_pkts_split", driver_param.decoder_param.num_pkts_split, 0);
     yamlRead<float>(driver_config, "cut_angle", driver_param.decoder_param.cut_angle, 0);
     yamlRead<std::string>(driver_config, "calib_path", driver_param.calib_path, "");
     yamlRead<std::string>(driver_config, "device_ip", driver_param.input_param.device_ip);
@@ -63,6 +65,7 @@ public:
     yamlRead<uint16_t>(driver_config, "difop_port", driver_param.input_param.difop_port);
     yamlRead<bool>(driver_config, "read_pcap", driver_param.input_param.read_pcap);
     yamlRead<std::string>(driver_config, "pcap", driver_param.input_param.pcap_file_dir);
+
     driver_param.decoder_param.echo = RS_ECHO_MODE(echo_mode);
     driver_ptr_->init(driver_param);
     setinitFlag(true);

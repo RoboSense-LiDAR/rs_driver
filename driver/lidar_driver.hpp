@@ -43,6 +43,29 @@ typedef struct RSLiDAR_Driver_Param
   RSDecoder_Param decoder_param;
 } RSLiDAR_Driver_Param;
 
+
+typedef struct RSLiDAR_Point_Type1
+{
+  float x;
+  float y;
+  float z;
+  float intensity;
+} RSLiDAR_Point_Type1;
+
+
+typedef struct RSLiDAR_Point_Type2
+{
+  float x;
+  float y;
+  float z;
+  float intensity;
+  float distance;
+  int ring_id;
+  int seq_id;
+  int echo_id;
+  double timestamp;
+} RSLiDAR_Point_Type2;
+
 class LidarDriver
 {
 public:
