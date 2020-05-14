@@ -66,6 +66,17 @@ typedef struct RSLiDAR_Point_Type2
   double timestamp;
 } RSLiDAR_Point_Type2;
 
+typedef struct RSLiDAR_Point_Type3
+{
+  float x;
+  float y;
+  float z;
+  float intensity;
+  float distance;
+  int ring_id;
+  int echo_id;
+} RSLiDAR_Point_Type3;
+
 class LidarDriver
 {
 public:
@@ -74,7 +85,11 @@ public:
   common::ErrCode init(const RSLiDAR_Driver_Param &param)
   {
     driver_param_ = param;
+#ifdef RS_POINT_TYPE_COMPLEX
+    lidar_decoder_ptr_ = DecoderFactory<RSLiDAR_Point_Type3>::createDecoder(driver_param_.device_type, driver_param_.decoder_param);
+#else
     lidar_decoder_ptr_ = DecoderFactory<pcl::PointXYZI>::createDecoder(driver_param_.device_type, driver_param_.decoder_param);
+#endif
     lidar_decoder_ptr_->loadCalibrationFile(driver_param_.calib_path);
     lidar_input_ptr_ = std::make_shared<Input>(driver_param_.input_param);
     pointcloud_ptr_ = PointCloudPtr(new PointCloud);
@@ -120,14 +135,22 @@ public:
   }
   void processMsopScan(const common::LidarScanMsg &pkt_scan_msg)
   {
+#ifdef RS_POINT_TYPE_COMPLEX
+    std::vector<std::vector<RSLiDAR_Point_Type3>> point_vvec;
+#else
     std::vector<std::vector<pcl::PointXYZI>> point_vvec;
+#endif
     int height = 1;
     PointCloudPtr output_pointcloud_ptr = PointCloudPtr(new PointCloud);
     point_vvec.resize(pkt_scan_msg.packets.size());
 #pragma omp parallel for
     for (uint32_t i = 0; i < pkt_scan_msg.packets.size(); i++)
     {
+#ifdef RS_POINT_TYPE_COMPLEX
+      std::vector<RSLiDAR_Point_Type3> point_vec;
+#else
       std::vector<pcl::PointXYZI> point_vec;
+#endif
       int ret = lidar_decoder_ptr_->processMsopPkt(pkt_scan_msg.packets[i].packet.data(), point_vec, height);
       if (ret == E_DECODE_OK || ret == E_FRAME_SPLIT)
       {
@@ -230,7 +253,11 @@ private:
       LidarPacketMsg pkt = msop_pkt_queue_.m_quque.front();
       scan_ptr_->packets.emplace_back(pkt);
       msop_pkt_queue_.pop();
+#ifdef RS_POINT_TYPE_COMPLEX
+      std::vector<RSLiDAR_Point_Type3> point_vec;
+#else
       std::vector<pcl::PointXYZI> point_vec;
+#endif
       int height = 1;
       int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), point_vec, height);
       if (ret == E_DECODE_OK || ret == E_FRAME_SPLIT)
@@ -300,7 +327,11 @@ private:
     msg.is_transform = false;
     msg.is_motion_correct = false;
     msg.lidar_model = driver_param_.device_type;
+#ifdef RS_POINT_TYPE_COMPLEX
+    msg.points_type = "complex";
+#else
     msg.points_type = "XYZI";
+#endif
   }
 
 private:
@@ -312,7 +343,11 @@ private:
   std::vector<std::function<void(const common::LidarPointsMsg &)>> pointscb_;
   std::function<void(const common::ErrCode &)> excb_;
   std::shared_ptr<std::thread> lidar_thread_ptr_;
+#ifdef RS_POINT_TYPE_COMPLEX
+  std::shared_ptr<DecoderBase<RSLiDAR_Point_Type3>> lidar_decoder_ptr_;
+#else
   std::shared_ptr<DecoderBase<pcl::PointXYZI>> lidar_decoder_ptr_;
+#endif
   std::shared_ptr<Input> lidar_input_ptr_;
   PointCloudPtr pointcloud_ptr_;
   std::shared_ptr<common::LidarScanMsg> scan_ptr_;

@@ -184,11 +184,11 @@ public:
     virtual void loadCalibrationFile(std::string cali_path) = 0;
 
 protected:
-    uint8_t channel_num_;
     int32_t rpm_;
-    int32_t resolution_type_;
-    int32_t intensity_mode_;
+    int8_t resolution_type_;
+    int8_t intensity_mode_;
     uint8_t echo_mode_;
+    uint8_t channel_num_;
     float Rx_;
     float Ry_;
     float Rz_;

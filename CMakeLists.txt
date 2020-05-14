@@ -19,6 +19,15 @@ string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 #========================
 # debug
 #========================
+
+option(RS_POINT_COMPLEX "Select point type of complex" OFF)
+message("RS_POINT_COMPLEX is ${RS_POINT_COMPLEX}")
+
+if(RS_POINT_COMPLEX)
+message("add RS_POINT_COMPLEX macro!!")
+add_definitions(-DRS_POINT_COMPLEX)
+endif(RS_POINT_COMPLEX)
+
 add_definitions(-DDEBUG_LEVEL=0)
 add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
 

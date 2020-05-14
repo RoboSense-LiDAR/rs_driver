@@ -341,6 +341,8 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &v
                   point.intensity = 0;
                 }
             }
+
+            
             vec.push_back(std::move(point));
         }
     }

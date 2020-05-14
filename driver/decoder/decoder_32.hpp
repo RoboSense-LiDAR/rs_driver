@@ -259,6 +259,12 @@ int Decoder32<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
                 point.z = NAN;
                 point.intensity = NAN;
             }
+            
+#ifdef RS_POINT_TYPE_COMPLEX
+            point.distance = distance_cali;
+            point.ring_id = channel_idx;
+            point.echo_id = (this->echo_mode_ == RS_ECHO_DUAL)?(blk_idx%2):0;
+#endif
             vec.push_back(point);
         }
     }
