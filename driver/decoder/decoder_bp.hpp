@@ -107,6 +107,7 @@ DecoderBP<vpoint>::DecoderBP(RSDecoder_Param &param) : DecoderBase<vpoint>(param
     {
         this->min_distance_ = 0.2f;
     }
+    rs_print(RS_INFO, "[RSBP] Constructor.");
 }
 
 template <typename vpoint>
@@ -131,7 +132,8 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
     STBP_MsopPkt *mpkt_ptr = (STBP_MsopPkt *)pkt;
     if (mpkt_ptr->header.sync != RSBP_MSOP_SYNC)
     {
-        return -2;
+      rs_print(RS_ERROR, "[RSBP] MSOP pkt sync no match.");
+      return -2;
     }
 
     int first_azimuth;
@@ -268,6 +270,7 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     STBP_DifopPkt *rsBp_ptr = (STBP_DifopPkt *)pkt;
     if (rsBp_ptr->sync != RSBP_DIFOP_SYNC)
     {
+		rs_print(RS_ERROR, "[RSBP] DIFOP pkt sync no match.");
         return -2;
     }
 
@@ -386,7 +389,8 @@ void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
     if (!fd_angle.is_open())
     {
-        std::cout << angle_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RSBP] Calibration file: %s does not exist!", angle_file_path.c_str());
+        // std::cout << angle_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -416,7 +420,8 @@ void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_ch_num(chan_file_path.c_str(), std::ios::in);
     if (!fd_ch_num.is_open())
     {
-        std::cout << chan_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RSBP] Calibration file: %s does not exist!", chan_file_path.c_str());
+        // std::cout << chan_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -448,7 +453,8 @@ void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_chan_dis(chan_dis_file_path.c_str(), std::ios::in);
     if (!fd_chan_dis.is_open())
     {
-        std::cout << chan_dis_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RSBP] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
+        // std::cout << chan_dis_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -480,7 +486,8 @@ void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_zero_angle(zero_angle_path.c_str(), std::ios::in);
     if (!fd_zero_angle.is_open())
     {
-        std::cout << zero_angle_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RSBP] Calibration file: %s does not exist!", zero_angle_path.c_str());
+        // std::cout << zero_angle_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -498,7 +505,8 @@ void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_limit(dis_limit_path.c_str(), std::ios::in);
     if (!fd_limit.is_open())
     {
-        std::cout << dis_limit_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RSBP] Calibration file: %s does not exist!", dis_limit_path.c_str());
+        // std::cout << dis_limit_path << " does not exist"<< std::endl;
     }
     else
     {

@@ -110,6 +110,7 @@ Decoder16<vpoint>::Decoder16(RSDecoder_Param &param) : DecoderBase<vpoint>(param
     {
         this->min_distance_ = 0.2f;
     }
+    rs_print(RS_INFO, "[RS16] Constructor.");
 }
 
 template <typename vpoint>
@@ -134,7 +135,8 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
     ST16_MsopPkt *mpkt_ptr = (ST16_MsopPkt *)pkt;
     if (mpkt_ptr->header.sync != RS16_MSOP_SYNC)
     {
-        return -2;
+      rs_print(RS_ERROR, "[RS16] MSOP pkt sync no match.");
+      return -2;
     }
     int first_azimuth;
     first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
@@ -246,6 +248,7 @@ int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     ST16_DifopPkt *rs16_ptr = (ST16_DifopPkt *)pkt;
     if (rs16_ptr->sync != RS16_DIFOP_SYNC)
     {
+        rs_print(RS_ERROR, "[RS16] DIFOP pkt sync no match.");
         return -2;
     }
 
@@ -407,7 +410,8 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
     if (!fd_angle.is_open())
     {
-        std::cout << angle_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", angle_file_path.c_str());
+        // std::cout << angle_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -430,7 +434,8 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_ch_num(chan_file_path.c_str(), std::ios::in);
     if (!fd_ch_num.is_open())
     {
-        std::cout << chan_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", chan_file_path.c_str());
+        // std::cout << chan_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -462,7 +467,8 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_chan_dis(chan_dis_file_path.c_str(), std::ios::in);
     if (!fd_chan_dis.is_open())
     {
-        std::cout << chan_dis_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
+        // std::cout << chan_dis_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -494,7 +500,8 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_zero_angle(zero_angle_path.c_str(), std::ios::in);
     if (!fd_zero_angle.is_open())
     {
-        std::cout << zero_angle_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", zero_angle_path.c_str());
+        // std::cout << zero_angle_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -512,7 +519,8 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_limit(dis_limit_path.c_str(), std::ios::in);
     if (!fd_limit.is_open())
     {
-        std::cout << dis_limit_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", dis_limit_path.c_str());
+        // std::cout << dis_limit_path << " does not exist"<< std::endl;
     }
     else
     {

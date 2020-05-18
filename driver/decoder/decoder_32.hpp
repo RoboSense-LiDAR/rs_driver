@@ -107,6 +107,7 @@ Decoder32<vpoint>::Decoder32(RSDecoder_Param &param) : DecoderBase<vpoint>(param
     {
         this->min_distance_ = 0.2f;
     }
+    rs_print(RS_INFO, "[RS32] Constructor.");
 }
 
 template <typename vpoint>
@@ -130,7 +131,8 @@ int Decoder32<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
     ST32_MsopPkt *mpkt_ptr = (ST32_MsopPkt *)pkt;
     if (mpkt_ptr->header.sync != RS32_MSOP_SYNC)
     {
-        return -2;
+      rs_print(RS_ERROR, "[RS32] MSOP pkt sync no match.");
+      return -2;
     }
 
     int first_azimuth;
@@ -279,6 +281,7 @@ int32_t Decoder32<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     ST32_DifopPkt *rs32_ptr = (ST32_DifopPkt *)pkt;
     if (rs32_ptr->sync != RS32_DIFOP_SYNC)
     {
+		rs_print(RS_ERROR, "[RS32] DIFOP pkt sync no match.");
         return -2;
     }
 
@@ -394,7 +397,8 @@ void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
     if (!fd_angle.is_open())
     {
-        std::cout << angle_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", angle_file_path.c_str());
+        // std::cout << angle_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -424,7 +428,8 @@ void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_ch_num(chan_file_path.c_str(), std::ios::in);
     if (!fd_ch_num.is_open())
     {
-        std::cout << chan_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", chan_file_path.c_str());
+        // std::cout << chan_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -456,7 +461,8 @@ void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_chan_dis(chan_dis_file_path.c_str(), std::ios::in);
     if (!fd_chan_dis.is_open())
     {
-        std::cout << chan_dis_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
+        // std::cout << chan_dis_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -488,7 +494,8 @@ void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_zero_angle(zero_angle_path.c_str(), std::ios::in);
     if (!fd_zero_angle.is_open())
     {
-        std::cout << zero_angle_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", zero_angle_path.c_str());
+        // std::cout << zero_angle_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -506,7 +513,8 @@ void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_limit(dis_limit_path.c_str(), std::ios::in);
     if (!fd_limit.is_open())
     {
-        std::cout << dis_limit_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", dis_limit_path.c_str());
+        // std::cout << dis_limit_path << " does not exist"<< std::endl;
     }
     else
     {

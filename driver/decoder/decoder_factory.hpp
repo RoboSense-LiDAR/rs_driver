@@ -32,8 +32,9 @@ public:
         }
         else
         {
-            ERROR<<"Wrong lidar type : "<<lidar_type<<REND;
-            ERROR<<"Please set RS16 or RS32 or RSBP or RS128 ! "<<REND;
+            rs_print(RS_ERROR, "[RSFCT] Wrong lidar type: %s, Please set RS16 or RS32 or RSBP or RS128 !", lidar_type.c_str());
+            // ERROR<<"Wrong lidar type : "<<lidar_type<<REND;
+            // ERROR<<"Please set RS16 or RS32 or RSBP or RS128 ! "<<REND;
             exit(-1);
         }
     }

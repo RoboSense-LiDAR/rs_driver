@@ -165,6 +165,8 @@ Decoder128<vpoint>::Decoder128(RSDecoder_Param &param) : DecoderBase<vpoint>(par
 
     tempPacketNum = 0;
     last_temp = 31.0;
+
+    rs_print(RS_INFO, "[RS128] Constructor.");
 }
 
 template <typename vpoint>
@@ -214,6 +216,7 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &v
     ST128_MsopPkt *mpkt_ptr = (ST128_MsopPkt *)pkt;
     if (mpkt_ptr->header.sync != RS128_MSOP_SYNC)
     {
+      rs_print(RS_ERROR, "[RS128] MSOP pkt sync no match.");
       return -2;
     }
 
@@ -357,6 +360,7 @@ int Decoder128<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     ST128_DifopPkt *rs128_ptr = (ST128_DifopPkt *)pkt;
     if (rs128_ptr->sync != RS128_DIFOP_SYNC)
     {
+		rs_print(RS_ERROR, "[RS128] DIFOP pkt sync no match.");
         return -2;
     }
 
@@ -436,7 +440,8 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
     if (!fd_angle.is_open())
     {
-        std::cout << angle_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", angle_file_path.c_str());
+        // std::cout << angle_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -466,7 +471,8 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_ch_num(chan_file_path.c_str(), std::ios::in);
     if (!fd_ch_num.is_open())
     {
-        std::cout << chan_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", chan_file_path.c_str());
+        // std::cout << chan_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -498,7 +504,8 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_chan_dis(chan_dis_file_path.c_str(), std::ios::in);
     if (!fd_chan_dis.is_open())
     {
-        std::cout << chan_dis_file_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
+        // std::cout << chan_dis_file_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -530,7 +537,8 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_zero_angle(zero_angle_path.c_str(), std::ios::in);
     if (!fd_zero_angle.is_open())
     {
-        std::cout << zero_angle_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", zero_angle_path.c_str());
+        // std::cout << zero_angle_path << " does not exist"<< std::endl;
     }
     else
     {
@@ -548,7 +556,8 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_limit(dis_limit_path.c_str(), std::ios::in);
     if (!fd_limit.is_open())
     {
-        std::cout << dis_limit_path << " does not exist"<< std::endl;
+        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", dis_limit_path.c_str());
+        // std::cout << dis_limit_path << " does not exist"<< std::endl;
     }
     else
     {

@@ -27,7 +27,7 @@
 #include <fstream>
 #include <sstream>
 #include <ctime>
-
+#include "driver/decoder/rs_print.hpp"
 namespace robosense
 {
 namespace sensor
@@ -272,6 +272,8 @@ DecoderBase<vpoint>::DecoderBase(RSDecoder_Param &param) : rpm_(600),
         cos_lookup_table_[i] = std::cos(rad);
         sin_lookup_table_[i] = std::sin(rad);
     }
+
+    rs_print(RS_INFO, "[RSBASE] Constructor.");
 }
 
 template <typename vpoint>
@@ -279,6 +281,8 @@ DecoderBase<vpoint>::~DecoderBase()
 {
     this->cos_lookup_table_.clear();
     this->sin_lookup_table_.clear();
+	
+	rs_print(RS_INFO, "[RSBASE] Destructor.");
 }
 
 template <typename vpoint>
@@ -286,6 +290,7 @@ int32_t DecoderBase<vpoint>::processDifopPkt(const uint8_t *pkt)
 {
     if (pkt == NULL)
     {
+		rs_print(RS_ERROR, "[RSBASE] DIFOP pkt buffer NULL.");
         return -1;
     }
     return decodeDifopPkt(pkt);
@@ -296,12 +301,14 @@ E_DECODER_RESULT DecoderBase<vpoint>::processMsopPkt(const uint8_t *pkt, std::ve
 {
     if (pkt == NULL)
     {
+		rs_print(RS_ERROR, "[RSBASE] MSOP pkt buffer NULL.");
         return E_PARAM_INVALID;
     }
 
     int azimuth = decodeMsopPkt(pkt, pointcloud_vec,height);
     if (azimuth < 0)
     {
+      rs_print(RS_ERROR, "[RSBASE] MSOP pkt decode fail.");
         return E_DECODE_FAIL;
     }
 
