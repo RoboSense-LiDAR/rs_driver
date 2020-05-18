@@ -8,7 +8,6 @@ set(CMAKE_AUTORCC ON)
 #========================
 # Subdirectory
 #========================
-add_subdirectory(common)
 include(CheckSymbolExists)
 #========================
 # Project details / setup
@@ -79,46 +78,18 @@ endif(Protobuf_FOUND)
 # Build Setup
 #========================
 include_directories(${PROJECT_SOURCE_DIR})
-add_library(adapter SHARED
-              adapter/lidar_points_ros_adapter.cpp
-              adapter/lidar_packtes_ros_adapter.cpp      
-              adapter/lidar_points_proto_adapter.cpp
-              adapter/lidar_packets_proto_adapter.cpp
-)
-target_link_libraries(adapter rs_yaml)
+
 add_executable(demo
             demo/demo.cpp
-            manager/sensor_manager.cpp
+            utility/thread_pool.cpp
             )
 
 target_link_libraries(demo
-                    adapter
                     ${roscpp_LIBRARIES}
                     ${PROTOBUF_LIBRARY}
                     ${PCL_LIBRARIES}
                     pthread
                     pcap
                        )
-if(Protobuf_FOUND)
-target_link_libraries(demo proto_msg)
-endif(Protobuf_FOUND)
 
-add_executable(ui
-            UI/main.cpp
-            UI/mainwindow.cpp
-            UI/mainwindow.h
-            UI/mainwindow.ui
-            manager/sensor_manager.cpp
 
-)
-target_link_libraries(ui
-                    adapter
-                    ${roscpp_LIBRARIES}
-                    ${PROTOBUF_LIBRARY}
-                    ${PCL_LIBRARIES}
-                    pthread
-                    pcap
-                    Qt5::Widgets)
-if(Protobuf_FOUND)
-target_link_libraries(ui proto_msg)
-endif(Protobuf_FOUND)

@@ -19,32 +19,50 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-
-#pragma once
-#include <string>
-#include <array>
-#include <vector>
-#include "common/msg/rs_msg/lidar_packet_msg.h"
+#include <mutex>
+#include <unistd.h>
+#include <queue>
+#include <atomic>
 namespace robosense
 {
 namespace common
 {
-/**
-   * @brief Lidar Scan Message for Robosense SDK.
-   * @detail Robosense LidarScanMsg is defined for passing lidar packets scan accross different modules
-   *         If ROS is turned on , we provide translation functions between ROS message and Robosense message
-   *         If Proto is turned on , we provide translation functions between Protobuf message and Robosense message
-   */
-
-struct alignas(16) LidarScanMsg
+template <typename T>
+class Queue
 {
-  double timestamp = 0.0;
-  uint32_t seq = 0;
-  std::string parent_frame_id = "";
-  std::string frame_id = "";
+public:
+    Queue()
+    {
+        is_task_finished = true;
+    }
+    void push(const T &value)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_quque.push(value);
+    }
 
-  std::vector<LidarPacketMsg> packets; ///< a vector which store a scan of packets (the size of the vector is not fix)
+    void pop()
+    {
+        if (!m_quque.empty())
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_quque.pop();
+        }
+    }
+
+    void clear()
+    {
+        std::queue<T> empty;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        swap(empty, m_quque);
+    }
+
+public:
+    std::queue<T> m_quque;
+    std::atomic<bool> is_task_finished;
+
+private:
+    mutable std::mutex m_mutex;
 };
-
 } // namespace common
 } // namespace robosense

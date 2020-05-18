@@ -1,44 +1,30 @@
-#include <common/common.h>
-#include <manager/sensor_manager.h>
-#include <signal.h>
-using namespace robosense::sensor;
-bool start_ = true;
-/**
- * @brief  signal handler
- * @note   will be called if receive ctrl+c signal from keyboard during the progress
- *         (all the threads in progress will be stopped and the progress end)
- * @param  sig: the input signal
- * @retval None
- */
-static void sigHandler(int sig)
+#include "driver/lidar_driver.hpp"
+#include <msg/ros_msg_translator.h>
+#include <ros/ros.h>
+#include <ros/publisher.h>
+ros::Publisher lidar_points_pub_;
+
+void callback(const robosense::common::LidarPointsMsg &msg)
 {
-#ifdef ROS_FOUND
-    ros::shutdown();
-#endif
-    start_ = false;
+    lidar_points_pub_.publish(toRosMsg(msg));
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
-    std::shared_ptr<SensorManager> demo_ptr = std::make_shared<SensorManager>();
-    robosense::common::YamlParser yp;
-    YAML::Node config = yp.loadFile((std::string)PROJECT_PATH + "/conf/config.yaml");
-    std::string config_path = (std::string)PROJECT_PATH + "/conf"; ///< the absolute path of config file
-    signal(SIGINT, sigHandler);                                    ///< bind the ctrl+c signal with the the handler function
-#ifdef ROS_FOUND
-    ros::init(argc, argv, "rs_sdk_demo", ros::init_options::NoSigintHandler); ///< if use_ros is true, ros::init() will be called
-#endif
-    demo_ptr->init(config, config_path);
+    ros::init(argc,argv,"driver");
+    ros::NodeHandle nh_;
+    std::shared_ptr<robosense::sensor::LidarDriver> demo_ptr = std::make_shared<robosense::sensor::LidarDriver>();
+    lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points", 10);
+    robosense::sensor::RSLiDAR_Driver_Param param;
+    param.input_param.read_pcap = true;
+    param.device_type = "RS128";
+    param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
+    param.calib_path = "/home/xzd/work/lidar_driver/conf";
+    demo_ptr->init(param);
+    demo_ptr->regRecvCallback(callback);
     demo_ptr->start();
-    TITLE<<"Robosense-LiDAR-Driver is running....."<<REND;
-#ifdef ROS_FOUND
-    ros::spin();
-#else
-    while (start_)
+    while (true)
     {
         sleep(1);
     }
-#endif
-    demo_ptr.reset();
-    return 0;
 }

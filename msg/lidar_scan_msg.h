@@ -19,37 +19,31 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#pragma once
-#include <experimental/filesystem>
-#include <boost/algorithm/string.hpp>
-#include <memory>
-#include <iostream>
-#include "yaml-cpp/yaml.h"
 
+#pragma once
+#include <string>
+#include <array>
+#include <vector>
+#include "lidar_packet_msg.h"
 namespace robosense
 {
 namespace common
 {
 /**
- * @brief  instantiate a YamlParser to load the yaml file (support encrypted & unencypted file )
- */
-class YamlParser
+   * @brief Lidar Scan Message for Robosense SDK.
+   * @detail Robosense LidarScanMsg is defined for passing lidar packets scan accross different modules
+   *         If ROS is turned on , we provide translation functions between ROS message and Robosense message
+   *         If Proto is turned on , we provide translation functions between Protobuf message and Robosense message
+   */
+
+struct alignas(16) LidarScanMsg
 {
-public:
-  YamlParser();
-  ~YamlParser();
-  YAML::Node loadAndMerge(const std::string& sys_cfg_path, const std::string& user_cfg_file);
-  YAML::Node loadAndMerge(YAML::Node sysNode, const YAML::Node &usrNode);
-  YAML::Node loadFile(const std::string& path);
+  double timestamp = 0.0;
+  uint32_t seq = 0;
+  std::string parent_frame_id = "";
+  std::string frame_id = "";
 
-private:
-  std::string base_dir_;
-  std::string base_file_path_;
-
-  std::string getBaseDirectory(const std::string& path);
-  bool catYAML(YAML::Node&);
-  bool printNodeType(YAML::Node&);
-  bool printNodeType(YAML::Node&&);
+  std::vector<LidarPacketMsg> packets; ///< a vector which store a scan of packets (the size of the vector is not fix)
 };
 
 } // namespace common

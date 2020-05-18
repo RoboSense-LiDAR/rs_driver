@@ -20,7 +20,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include <common/common.h>
 #include <cstdint>
 #include <memory>
 #include <string>

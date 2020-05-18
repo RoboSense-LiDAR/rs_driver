@@ -19,48 +19,43 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#include <mutex>
-#include <unistd.h>
+
+#pragma once
+#ifdef ROS_FOUND
+#include <ros/duration.h>
+#include <ros/rate.h>
+#include <Eigen/Dense>
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
+#include "msg/lidar_points_msg.h"
+
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_types.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
+#include <pcl_ros/transforms.h>
+
 namespace robosense
 {
 namespace common
 {
-template <typename T>
-class Queue
+
+/************************************************************************/
+/**Translation functions between Robosense message and ROS message**/
+/************************************************************************/
+
+inline sensor_msgs::PointCloud2 toRosMsg(const LidarPointsMsg &rs_msg)
 {
-public:
-    Queue()
-    {
-        is_task_finished = true;
-    }
-    void push(const T &value)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_quque.push(value);
-    }
+    sensor_msgs::PointCloud2 ros_msg;
+    pcl::toROSMsg(*rs_msg.cloudPtr, ros_msg);
+    ros_msg.header.stamp = ros_msg.header.stamp.fromSec(rs_msg.timestamp);
+    ros_msg.header.frame_id = rs_msg.parent_frame_id;
+    ros_msg.header.seq = rs_msg.seq;
+    return ros_msg;
+}
 
-    void pop()
-    {
-        if (!m_quque.empty())
-        {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            m_quque.pop();
-        }
-    }
 
-    void clear()
-    {
-        std::queue<T> empty;
-        std::lock_guard<std::mutex> lock(m_mutex);
-        swap(empty, m_quque);
-    }
-
-public:
-    std::queue<T> m_quque;
-    std::atomic<bool> is_task_finished;
-
-private:
-    mutable std::mutex m_mutex;
-};
 } // namespace common
+
 } // namespace robosense
+#endif // ROS_FOUND

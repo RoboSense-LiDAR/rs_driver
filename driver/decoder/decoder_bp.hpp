@@ -384,7 +384,6 @@ void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
     std::string line_str;
     this->cali_files_dir_ = cali_path;
     std::string angle_file_path = this->cali_files_dir_ + "/angle.csv";
-
     // read angle.csv
     std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
     if (!fd_angle.is_open())
