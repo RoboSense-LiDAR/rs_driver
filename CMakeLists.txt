@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(lidar_driver)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
+
 
 #========================
 # Subdirectory
@@ -18,10 +16,8 @@ string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 #========================
 # debug
 #========================
-
-option(RS_POINT_COMPLEX "Select point type of complex" OFF)
+set(RS_POINT_COMPLEX FALSE)
 message("RS_POINT_COMPLEX is ${RS_POINT_COMPLEX}")
-
 if(RS_POINT_COMPLEX)
 message("add RS_POINT_COMPLEX macro!!")
 add_definitions(-DRS_POINT_COMPLEX)
