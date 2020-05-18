@@ -36,6 +36,11 @@ add_definitions(-O3)
 add_definitions(-std=c++14)
 add_compile_options(-W)
 
+find_package(PCL QUIET)
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
 #========================
 # Dependencies Setup
 #========================
@@ -67,6 +72,7 @@ add_executable(demo
 
 target_link_libraries(demo
                     ${roscpp_LIBRARIES}
+                    ${PCL_LIBRARIES}
                     pthread
                     pcap
                        )
