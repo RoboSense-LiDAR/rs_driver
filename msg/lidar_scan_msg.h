@@ -27,8 +27,7 @@
 #include "lidar_packet_msg.h"
 namespace robosense
 {
-namespace common
-{
+
 /**
    * @brief Lidar Scan Message for Robosense SDK.
    * @detail Robosense LidarScanMsg is defined for passing lidar packets scan accross different modules
@@ -46,5 +45,4 @@ struct alignas(16) LidarScanMsg
   std::vector<LidarPacketMsg> packets; ///< a vector which store a scan of packets (the size of the vector is not fix)
 };
 
-} // namespace common
 } // namespace robosense

@@ -1,8 +1,6 @@
 #include "utility/thread_pool.h"
 namespace robosense
 {
-namespace common
-{
 
 ThreadPool::Ptr ThreadPool::instance_ptr = nullptr;
 std::mutex ThreadPool::instance_mutex;
@@ -59,5 +57,4 @@ ThreadPool::~ThreadPool()
 
 int ThreadPool::idlCount() { return idl_thr_num; }
 
-} // namespace common
 } // namespace robosense

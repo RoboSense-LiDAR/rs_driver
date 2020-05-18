@@ -26,8 +26,7 @@
 
 namespace robosense
 {
-namespace common
-{
+
 /**
    * @brief Lidar packet Message for Robosense SDK.
    * @detail Robosense LidarPacketMsg is defined for passing lidar single packet such like difop packet accross different modules
@@ -41,5 +40,4 @@ struct alignas(16) LidarPacketMsg
   std::array<uint8_t, 1248> packet{}; ///< lidar single packet
 };
 
-} // namespace common
 } // namespace robosense

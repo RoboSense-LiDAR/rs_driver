@@ -24,38 +24,30 @@
 #ifdef ROS_FOUND
 #include <ros/duration.h>
 #include <ros/rate.h>
-#include <Eigen/Dense>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include "msg/lidar_points_msg.h"
 
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_types.h>
-#include <pcl/PCLPointCloud2.h>
-#include <pcl/conversions.h>
-#include <pcl_ros/transforms.h>
 
 namespace robosense
 {
-namespace common
-{
+
 
 /************************************************************************/
 /**Translation functions between Robosense message and ROS message**/
 /************************************************************************/
 
-inline sensor_msgs::PointCloud2 toRosMsg(const LidarPointsMsg &rs_msg)
-{
-    sensor_msgs::PointCloud2 ros_msg;
-    pcl::toROSMsg(*rs_msg.cloudPtr, ros_msg);
-    ros_msg.header.stamp = ros_msg.header.stamp.fromSec(rs_msg.timestamp);
-    ros_msg.header.frame_id = rs_msg.parent_frame_id;
-    ros_msg.header.seq = rs_msg.seq;
-    return ros_msg;
-}
+// inline sensor_msgs::PointCloud2 toRosMsg(const LidarPointsMsg &rs_msg)
+// {
+//     sensor_msgs::PointCloud2 ros_msg;
+//     pcl::toROSMsg(*rs_msg.cloudPtr, ros_msg);
+//     ros_msg.header.stamp = ros_msg.header.stamp.fromSec(rs_msg.timestamp);
+//     ros_msg.header.frame_id = rs_msg.parent_frame_id;
+//     ros_msg.header.seq = rs_msg.seq;
+//     return ros_msg;
+// }
 
 
-} // namespace common
 
 } // namespace robosense
 #endif // ROS_FOUND

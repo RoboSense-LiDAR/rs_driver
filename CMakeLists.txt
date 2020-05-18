@@ -36,12 +36,6 @@ add_definitions(-O3)
 add_definitions(-std=c++14)
 add_compile_options(-W)
 
-find_package(PCL QUIET)
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
-
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
 #========================
 # Dependencies Setup
 #========================
@@ -60,19 +54,6 @@ else(roscpp_FOUND)
   message(=============================================================)
 endif(roscpp_FOUND)
 
-find_package(Protobuf QUIET)
-if(Protobuf_FOUND)
-  message(=============================================================)
-  message("-- Protobuf Found, Protobuf Support is turned On!")
-  message(=============================================================)
-  add_definitions(-DPROTO_FOUND)
-  include_directories(${PROTOBUF_INCLUDE_DIRS})
-  set(EXTERNAL_LIBS ${EXTERNAL_LIBS} ${PROTOBUF_LIBRARY})
-else(Protobuf_FOUND)
-  message(=============================================================)
-  message("-- Protobuf Not Found, Protobuf Support is turned Off!")
-  message(=============================================================)
-endif(Protobuf_FOUND)
 
 #========================
 # Build Setup
@@ -86,8 +67,6 @@ add_executable(demo
 
 target_link_libraries(demo
                     ${roscpp_LIBRARIES}
-                    ${PROTOBUF_LIBRARY}
-                    ${PCL_LIBRARIES}
                     pthread
                     pcap
                        )

@@ -4,17 +4,29 @@
 #include <ros/publisher.h>
 ros::Publisher lidar_points_pub_;
 
-void callback(const robosense::common::LidarPointsMsg &msg)
+struct PointXYZI
 {
-    lidar_points_pub_.publish(toRosMsg(msg));
+    double x;
+    double y;
+    double z;
+    double intensity;
+};
+
+void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
+{
+    //lidar_points_pub_.publish(toRosMsg(msg));
+    DEBUG<<"msg: "<<msg.seq<<REND;
 }
 
 int main(int argc, char *argv[])
 {
-    ros::init(argc,argv,"driver");
-    ros::NodeHandle nh_;
-    std::shared_ptr<robosense::sensor::LidarDriver> demo_ptr = std::make_shared<robosense::sensor::LidarDriver>();
-    lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points", 10);
+    // ros::init(argc,argv,"driver");
+    // ros::NodeHandle nh_;
+    // lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points", 10);
+
+
+
+    std::shared_ptr<robosense::sensor::LidarDriver<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<PointXYZI>>();
     robosense::sensor::RSLiDAR_Driver_Param param;
     param.input_param.read_pcap = true;
     param.device_type = "RS128";

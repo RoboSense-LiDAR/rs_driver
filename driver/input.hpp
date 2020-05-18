@@ -38,6 +38,7 @@
 #include <vector>
 #include <iostream>
 #include <chrono>
+#include <sstream>
 namespace robosense
 {
 namespace sensor

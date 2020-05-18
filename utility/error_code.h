@@ -24,8 +24,7 @@
 
 namespace robosense
 {
-namespace common
-{
+
 
 /**
    * @brief Error Code for Robosense SDK.
@@ -182,5 +181,4 @@ enum ErrCode
 
 };
 
-} // namespace common
 } // namespace robosense

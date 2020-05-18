@@ -32,8 +32,7 @@
 #define MAX_THREAD_NUM 128
 namespace robosense
 {
-namespace common
-{
+
 struct Thread
 {
     Thread()
@@ -90,5 +89,4 @@ private:
     static std::mutex instance_mutex;
 };
 
-} // namespace common
 } // namespace robosense

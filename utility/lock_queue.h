@@ -25,8 +25,7 @@
 #include <atomic>
 namespace robosense
 {
-namespace common
-{
+
 template <typename T>
 class Queue
 {
@@ -64,5 +63,4 @@ public:
 private:
     mutable std::mutex m_mutex;
 };
-} // namespace common
 } // namespace robosense

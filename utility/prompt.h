@@ -28,8 +28,7 @@
 
 namespace robosense
 {
-namespace common
-{
+
 #define RESET "\033[0m"
 #define BLACK "\033[30m"              /* Black */
 #define RED "\033[31m"                /* Red */
@@ -61,6 +60,5 @@ namespace common
 #define END (std::endl)
 #define REND "\033[0m" << std::endl
 
-} // namespace common
 } // namespace robosense
 #endif  // PROMPT_H
