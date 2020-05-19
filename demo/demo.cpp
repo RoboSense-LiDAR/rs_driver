@@ -17,19 +17,14 @@ struct PointXYZI
     double intensity;
 };
 
-void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
+void callback(const robosense::LidarPointsMsg<pcl::PointXYZI> &msg)
 {
 
     sensor_msgs::PointCloud2 ros_msg;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZI>);
     for (auto iter : *msg.cloudPtr)
     {
-        pcl::PointXYZI point;
-        point.x = iter.x;
-        point.y = iter.y;
-        point.z = iter.z;
-        point.intensity = iter.intensity;
-        cloud2->push_back(point);
+        cloud2->push_back(iter);
     }
 
     pcl::toROSMsg(*cloud2, ros_msg);
@@ -54,7 +49,7 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "driver", ros::init_options::NoSigintHandler);
     ros::NodeHandle nh_;
     lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points", 10);
-    std::shared_ptr<robosense::sensor::LidarDriver<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<PointXYZI>>();
+    std::shared_ptr<robosense::sensor::LidarDriver<pcl::PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<pcl::PointXYZI>>();
     robosense::sensor::RSLiDAR_Driver_Param param;
     param.input_param.read_pcap = true;
     param.device_type = "RS128";
