@@ -76,7 +76,6 @@ class Input
 {
 public:
   Input(const RSInput_Param &_input_param)
-	  :ep_remote_(io_srv_, )
   {
 #if 1
     input_param_ = _input_param;
@@ -84,9 +83,7 @@ public:
     {
     }
     else
-    {
-		boost::asio::ip::udp::endpoint ep(boost::asio::ip::address_v4::from_string(input_param_.device_ip), input_param_.msop_port);
-
+	{
 //      this->msop_fd_ = setSocket(input_param_.msop_port);
 //      this->difop_fd_ = setSocket(input_param_.difop_port);
 
@@ -240,11 +237,12 @@ private:
 	return 0;
   }
   RSInput_Param input_param_;
+  /*
   boost::asio::io_service io_srv_;
   boost::asio::ip::udp::socket sock_udp_;
   boost::asio::ip::udp::endpoint ep_remote_;
   boost::array<char, 2048> recv_buf_;
-
+  */
   int msop_fd_;
   int difop_fd_;
 #if 0

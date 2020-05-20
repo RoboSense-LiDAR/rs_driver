@@ -29,7 +29,7 @@ add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
 cmake_policy(SET CMP0048 NEW)
 set(CMAKE_BUILD_TYPE Release)
 add_definitions(-O3)
-add_definitions(-std=c++14)
+add_definitions(-std=c++11)
 add_compile_options(-W)
 
 find_package(PCL QUIET)

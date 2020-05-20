@@ -30,7 +30,7 @@
 #include "utility/prompt.h"
 #include "utility/error_code.h"
 
-#include "driver/input.h"
+#include "driver/input.hpp"
 #include "driver/decoder/decoder_factory.hpp"
 
 namespace robosense
@@ -195,7 +195,7 @@ namespace robosense
         while (thread_flag_)
         {
           LidarPacketMsg pkt_msg;
-		  InputState ret = lidar_input_ptr_->getMSOP(pkt_msg.packet.data());
+		  InputState ret = lidar_input_ptr_->getPacket(pkt_msg.packet.data(), driver_param_.timeout);
           if (ret == INPUT_MSOP)
           {
             msop_pkt_queue_.push(pkt_msg);

@@ -2,11 +2,7 @@
 #include <boost\asio.hpp>
 #include "driver/lidar_driver.hpp"
 #include "msg/lidar_points_msg.h"
-//#ifdef _MSC_VER
-
 #include <Windows.h>
-//#endif
-
 #include <iostream>
 
 
@@ -22,8 +18,24 @@ struct PointXYZI
 
 void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
 {
+#if 0
+    sensor_msgs::PointCloud2 ros_msg;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZI>);
+    for (auto iter : *msg.cloudPtr)
+    {
+        cloud2->push_back(iter);
+    }
 
- //   DEBUG << "msg: " << msg.seq << REND;
+    pcl::toROSMsg(*cloud2, ros_msg);
+
+    ros_msg.header.stamp = ros_msg.header.stamp.fromSec(msg.timestamp);
+    ros_msg.header.frame_id = msg.parent_frame_id;
+    ros_msg.header.seq = msg.seq;
+
+    lidar_points_pub_.publish(ros_msg);
+
+    DEBUG << "msg: " << msg.seq << REND;
+#endif
 }
 /*
 static void sigHandler(int sig)
@@ -33,9 +45,6 @@ static void sigHandler(int sig)
 */
 int main(int argc, char *argv[])
 {
-//	boost::asio::io_service io;
-//	std::cout << "hello, boost asio world!" << std::endl;
- //   signal(SIGINT, sigHandler); ///< bind the ctrl+c signal with the the handler function
     std::shared_ptr<robosense::sensor::LidarDriver<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<PointXYZI>>();
     robosense::sensor::RSLiDAR_Driver_Param param;
     param.input_param.read_pcap = true;
