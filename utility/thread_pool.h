@@ -29,7 +29,7 @@
 #include <functional>
 #include <stdexcept>
 
-#define MAX_THREAD_NUM 128
+#define MAX_THREAD_NUM 4
 namespace robosense
 {
 
