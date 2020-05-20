@@ -27,6 +27,7 @@
 #include <fstream>
 #include <sstream>
 #include <ctime>
+#include <math.h>
 #include "driver/decoder/rs_print.hpp"
 namespace robosense
 {
@@ -37,6 +38,8 @@ namespace sensor
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
 #define RS_RESOLUTION_5mm_DISTANCE_COEF (0.005)
 #define RS_RESOLUTION_10mm_DISTANCE_COEF (0.01)
+
+
 
 enum E_DECODER_RESULT
 {
@@ -64,6 +67,9 @@ enum RS_INTENSITY_TYPE
     RS_INTENSITY_IN,
     RS_INTENSITY_AUTO
 };
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
 
 typedef struct
 {
@@ -75,7 +81,11 @@ typedef struct
     uint8_t second;
     uint16_t ms;
     uint16_t us;
-} __attribute__((packed)) ST_Timestamp;
+}
+#ifdef __GNUC__
+__attribute__((packed)) 
+#endif
+ST_Timestamp;
 
 typedef struct
 {
@@ -86,7 +96,11 @@ typedef struct
     uint8_t reserved2[7];
     uint16_t temp_raw;
     uint8_t reserved3[2];
-} __attribute__((packed)) ST_MsopHeader;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST_MsopHeader;
 
 typedef struct
 {
@@ -97,36 +111,60 @@ typedef struct
     uint16_t dest_port;
     uint16_t port3;
     uint16_t port4;
-} __attribute__((packed)) ST_EthNet;
+}
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST_EthNet;
 
 typedef struct
 {
     uint16_t start_angle;
     uint16_t end_angle;
-} __attribute__((packed)) ST_FOV;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST_FOV;
 
 typedef struct
 {
     uint8_t sign;
     uint8_t value[2];
-} __attribute__((packed)) ST_CorAngle;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST_CorAngle;
 
 typedef struct
 {
     uint16_t distance;
     uint8_t intensity;
-} __attribute__((packed)) ST_Channel;
+}
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST_Channel;
 
 typedef struct
 {
     uint8_t main_sn[5];
     uint8_t bottom_sn[5];
-} __attribute__((packed)) ST_Version;
+} 
+#ifdef __GNUC__
+__attribute__((packed)) 
+#endif
+ST_Version;
 
 typedef struct
 {
     uint8_t num[6];
-} __attribute__((packed)) ST_SN;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST_SN;
 
 typedef struct
 {
@@ -138,7 +176,11 @@ typedef struct
     uint16_t vol_3v3;
     uint16_t vol_2v5;
     uint16_t vol_1v2;
-} __attribute__((packed)) ST_Status;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST_Status;
 
 typedef struct
 {
@@ -155,7 +197,16 @@ typedef struct
     uint8_t reserved2[5];
     uint16_t cur_rpm;
     uint8_t reserved3[7];
-} __attribute__((packed)) ST_Diagno;
+}
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST_Diagno;
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
+
 
 typedef struct eRSDecoder_Param
 {
@@ -273,7 +324,7 @@ DecoderBase<vpoint>::DecoderBase(RSDecoder_Param &param) : rpm_(600),
         sin_lookup_table_[i] = std::sin(rad);
     }
 
-    rs_print(RS_INFO, "[RSBASE] Constructor.");
+//    rs_print(RS_INFO, "[RSBASE] Constructor.");
 }
 
 template <typename vpoint>
@@ -282,7 +333,7 @@ DecoderBase<vpoint>::~DecoderBase()
     this->cos_lookup_table_.clear();
     this->sin_lookup_table_.clear();
 	
-	rs_print(RS_INFO, "[RSBASE] Destructor.");
+//	rs_print(RS_INFO, "[RSBASE] Destructor.");
 }
 
 template <typename vpoint>
@@ -290,7 +341,7 @@ int32_t DecoderBase<vpoint>::processDifopPkt(const uint8_t *pkt)
 {
     if (pkt == NULL)
     {
-		rs_print(RS_ERROR, "[RSBASE] DIFOP pkt buffer NULL.");
+//		rs_print(RS_ERROR, "[RSBASE] DIFOP pkt buffer NULL.");
         return -1;
     }
     return decodeDifopPkt(pkt);
@@ -301,14 +352,14 @@ E_DECODER_RESULT DecoderBase<vpoint>::processMsopPkt(const uint8_t *pkt, std::ve
 {
     if (pkt == NULL)
     {
-		rs_print(RS_ERROR, "[RSBASE] MSOP pkt buffer NULL.");
+	//	rs_print(RS_ERROR, "[RSBASE] MSOP pkt buffer NULL.");
         return E_PARAM_INVALID;
     }
 
     int azimuth = decodeMsopPkt(pkt, pointcloud_vec,height);
     if (azimuth < 0)
     {
-      rs_print(RS_ERROR, "[RSBASE] MSOP pkt decode fail.");
+   //   rs_print(RS_ERROR, "[RSBASE] MSOP pkt decode fail.");
         return E_DECODE_FAIL;
     }
 
@@ -543,5 +594,7 @@ float DecoderBase<vpoint>::intensityCalibration(float intensity, int32_t channel
         return intensity_f;
     }
 }
+
+
 } // namespace sensor
 } // namespace robosense

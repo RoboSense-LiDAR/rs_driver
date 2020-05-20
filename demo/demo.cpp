@@ -1,13 +1,16 @@
+#include "stdafx.h"
+#include <boost\asio.hpp>
 #include "driver/lidar_driver.hpp"
-#include <ros/ros.h>
-#include <ros/publisher.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <signal.h>
+#include "msg/lidar_points_msg.h"
+//#ifdef _MSC_VER
 
-ros::Publisher lidar_points_pub_;
+#include <Windows.h>
+//#endif
+
+#include <iostream>
+
+
+
 bool start_=true;
 struct PointXYZI
 {
@@ -20,40 +23,19 @@ struct PointXYZI
 void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
 {
 
-    sensor_msgs::PointCloud2 ros_msg;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZI>);
-    for (auto iter : *msg.cloudPtr)
-    {
-        pcl::PointXYZI point;
-        point.x = iter.x;
-        point.y = iter.y;
-        point.z = iter.z;
-        point.intensity = iter.intensity;
-        cloud2->push_back(point);
-    }
-
-    pcl::toROSMsg(*cloud2, ros_msg);
-
-    ros_msg.header.stamp = ros_msg.header.stamp.fromSec(msg.timestamp);
-    ros_msg.header.frame_id = msg.parent_frame_id;
-    ros_msg.header.seq = msg.seq;
-
-    lidar_points_pub_.publish(ros_msg);
-
-    DEBUG << "msg: " << msg.seq << REND;
+ //   DEBUG << "msg: " << msg.seq << REND;
 }
-
+/*
 static void sigHandler(int sig)
 {
     start_ = false;
 }
-
+*/
 int main(int argc, char *argv[])
 {
-    signal(SIGINT, sigHandler); ///< bind the ctrl+c signal with the the handler function
-    ros::init(argc, argv, "driver", ros::init_options::NoSigintHandler);
-    ros::NodeHandle nh_;
-    lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points", 10);
+//	boost::asio::io_service io;
+//	std::cout << "hello, boost asio world!" << std::endl;
+ //   signal(SIGINT, sigHandler); ///< bind the ctrl+c signal with the the handler function
     std::shared_ptr<robosense::sensor::LidarDriver<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<PointXYZI>>();
     robosense::sensor::RSLiDAR_Driver_Param param;
     param.input_param.read_pcap = true;
@@ -61,10 +43,10 @@ int main(int argc, char *argv[])
     param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
     param.calib_path = "/home/xzd/work/lidar_driver/conf";
     demo_ptr->init(param);
-    demo_ptr->regRecvCallback(callback);
+	demo_ptr->regPointRecvCallback(callback);
     demo_ptr->start();
     while (start_)
     {
-        sleep(1);
+        Sleep(1);
     }
 }

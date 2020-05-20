@@ -34,13 +34,20 @@ namespace sensor
 #define RS128_DSR_TOFFSET (3.0)
 #define RS128_BLOCK_TDURATION (55.0)
 
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
 typedef struct
 {
     uint8_t id;
     uint8_t ret_id;
     uint16_t azimuth;
     ST_Channel channels[RS128_CHANNELS_PER_BLOCK];
-} __attribute__((packed)) ST128_MsopBlock;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST128_MsopBlock;
 
 typedef struct
 {
@@ -51,26 +58,42 @@ typedef struct
     uint8_t temp_high;
     ST_Timestamp timestamp;
     uint8_t reserved2[60];
-} __attribute__((packed)) ST128_MsopHeader;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST128_MsopHeader;
 
 typedef struct
 {
     ST128_MsopHeader header;
     ST128_MsopBlock blocks[RS128_BLOCKS_PER_PKT];
     uint32_t index;
-} __attribute__((packed)) ST128_MsopPkt;
+}
+#ifdef __GNUC__
+__attribute__((packed))
+#endif 
+ST128_MsopPkt;
 
 typedef struct
 {
     uint8_t reserved[229];
-} __attribute__((packed)) ST128_Reserved;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif 
+ST128_Reserved;
 
 typedef struct
 {
     uint8_t sync_mode;
     uint8_t sync_sts;
     ST_Timestamp timestamp;
-} __attribute__((packed)) ST128_TimeInfo;
+}
+#ifdef __GNUC__
+__attribute__((packed))
+#endif 
+ST128_TimeInfo;
 
 typedef struct
 {
@@ -81,7 +104,11 @@ typedef struct
     uint16_t reserve_1;
     uint16_t difop_port;
     uint16_t reserve_2;
-} __attribute__((packed)) ST128_EthNet;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST128_EthNet;
 
 typedef struct
 {
@@ -90,7 +117,11 @@ typedef struct
     uint8_t bot_soft_ver[5];
     uint8_t motor_firmware_ver[5];
     uint8_t hw_ver[3];
-} __attribute__((packed)) ST128_Version;
+}
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST128_Version;
 
 
 typedef struct
@@ -115,8 +146,15 @@ typedef struct
     ST_CorAngle hori_angle_cali[128];
     uint8_t reserved_3[10];
     uint16_t tail;
-} __attribute__((packed)) ST128_DifopPkt;
+}
+#ifdef __GNUC__
+__attribute__((packed))
+#endif 
+ST128_DifopPkt;
 
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 template <typename vpoint>
 class Decoder128 : public DecoderBase<vpoint>
@@ -166,7 +204,7 @@ Decoder128<vpoint>::Decoder128(RSDecoder_Param &param) : DecoderBase<vpoint>(par
     tempPacketNum = 0;
     last_temp = 31.0;
 
-    rs_print(RS_INFO, "[RS128] Constructor.");
+//    rs_print(RS_INFO, "[RS128] Constructor.");
 }
 
 template <typename vpoint>
@@ -216,7 +254,7 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &v
     ST128_MsopPkt *mpkt_ptr = (ST128_MsopPkt *)pkt;
     if (mpkt_ptr->header.sync != RS128_MSOP_SYNC)
     {
-      rs_print(RS_ERROR, "[RS128] MSOP pkt sync no match.");
+//      rs_print(RS_ERROR, "[RS128] MSOP pkt sync no match.");
       return -2;
     }
 
@@ -353,14 +391,13 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &v
     return first_azimuth;
 }
 
-
 template <typename vpoint>
 int Decoder128<vpoint>::decodeDifopPkt(const uint8_t *pkt)
 {
     ST128_DifopPkt *rs128_ptr = (ST128_DifopPkt *)pkt;
     if (rs128_ptr->sync != RS128_DIFOP_SYNC)
     {
-		rs_print(RS_ERROR, "[RS128] DIFOP pkt sync no match.");
+//		rs_print(RS_ERROR, "[RS128] DIFOP pkt sync no match.");
         return -2;
     }
 
@@ -440,7 +477,7 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
     if (!fd_angle.is_open())
     {
-        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", angle_file_path.c_str());
+//        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", angle_file_path.c_str());
         // std::cout << angle_file_path << " does not exist"<< std::endl;
     }
     else
@@ -471,7 +508,7 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_ch_num(chan_file_path.c_str(), std::ios::in);
     if (!fd_ch_num.is_open())
     {
-        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", chan_file_path.c_str());
+//        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", chan_file_path.c_str());
         // std::cout << chan_file_path << " does not exist"<< std::endl;
     }
     else
@@ -504,7 +541,7 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_chan_dis(chan_dis_file_path.c_str(), std::ios::in);
     if (!fd_chan_dis.is_open())
     {
-        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
+//        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
         // std::cout << chan_dis_file_path << " does not exist"<< std::endl;
     }
     else
@@ -537,7 +574,7 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_zero_angle(zero_angle_path.c_str(), std::ios::in);
     if (!fd_zero_angle.is_open())
     {
-        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", zero_angle_path.c_str());
+//        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", zero_angle_path.c_str());
         // std::cout << zero_angle_path << " does not exist"<< std::endl;
     }
     else
@@ -556,7 +593,7 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_limit(dis_limit_path.c_str(), std::ios::in);
     if (!fd_limit.is_open())
     {
-        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", dis_limit_path.c_str());
+//        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", dis_limit_path.c_str());
         // std::cout << dis_limit_path << " does not exist"<< std::endl;
     }
     else
@@ -569,5 +606,7 @@ void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
     }
 
 }
+
+
 } // namespace sensor
 } // namespace robosense

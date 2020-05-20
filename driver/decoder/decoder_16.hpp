@@ -36,12 +36,19 @@ namespace sensor
 #define RS16_CHANNEL_TOFFSET (3)
 #define RS16_FIRING_TDURATION (50)
 
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
 typedef struct
 {
     uint16_t id;
     uint16_t azimuth;
     ST_Channel channels[RS16_CHANNELS_PER_BLOCK];
-} __attribute__((packed)) ST16_MsopBlock;
+}
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST16_MsopBlock;
 
 typedef struct
 {
@@ -49,14 +56,22 @@ typedef struct
     ST16_MsopBlock blocks[RS16_BLOCKS_PER_PKT];
     uint32_t index;
     uint16_t tail;
-} __attribute__((packed)) ST16_MsopPkt;
+}
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST16_MsopPkt;
 
 typedef struct
 {
     uint8_t intensity_cali[240];
     uint8_t coef;
     uint8_t ver;
-} __attribute__((packed)) ST16_Intensity;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif 
+ST16_Intensity;
 
 typedef struct
 {
@@ -81,7 +96,15 @@ typedef struct
     uint8_t pitch_cali[48];
     uint8_t reserved2[33];
     uint16_t tail;
-} __attribute__((packed)) ST16_DifopPkt;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif 
+ST16_DifopPkt;
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 template <typename vpoint>
 class Decoder16 : public DecoderBase<vpoint>
@@ -110,7 +133,7 @@ Decoder16<vpoint>::Decoder16(RSDecoder_Param &param) : DecoderBase<vpoint>(param
     {
         this->min_distance_ = 0.2f;
     }
-    rs_print(RS_INFO, "[RS16] Constructor.");
+//    rs_print(RS_INFO, "[RS16] Constructor.");
 }
 
 template <typename vpoint>
@@ -135,7 +158,7 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
     ST16_MsopPkt *mpkt_ptr = (ST16_MsopPkt *)pkt;
     if (mpkt_ptr->header.sync != RS16_MSOP_SYNC)
     {
-      rs_print(RS_ERROR, "[RS16] MSOP pkt sync no match.");
+//      rs_print(RS_ERROR, "[RS16] MSOP pkt sync no match.");
       return -2;
     }
     int first_azimuth;
@@ -248,7 +271,7 @@ int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     ST16_DifopPkt *rs16_ptr = (ST16_DifopPkt *)pkt;
     if (rs16_ptr->sync != RS16_DIFOP_SYNC)
     {
-        rs_print(RS_ERROR, "[RS16] DIFOP pkt sync no match.");
+//        rs_print(RS_ERROR, "[RS16] DIFOP pkt sync no match.");
         return -2;
     }
 
@@ -410,7 +433,7 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
     if (!fd_angle.is_open())
     {
-        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", angle_file_path.c_str());
+//        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", angle_file_path.c_str());
         // std::cout << angle_file_path << " does not exist"<< std::endl;
     }
     else
@@ -434,7 +457,7 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_ch_num(chan_file_path.c_str(), std::ios::in);
     if (!fd_ch_num.is_open())
     {
-        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", chan_file_path.c_str());
+//        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", chan_file_path.c_str());
         // std::cout << chan_file_path << " does not exist"<< std::endl;
     }
     else
@@ -467,7 +490,7 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_chan_dis(chan_dis_file_path.c_str(), std::ios::in);
     if (!fd_chan_dis.is_open())
     {
-        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
+//        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
         // std::cout << chan_dis_file_path << " does not exist"<< std::endl;
     }
     else
@@ -500,7 +523,7 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_zero_angle(zero_angle_path.c_str(), std::ios::in);
     if (!fd_zero_angle.is_open())
     {
-        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", zero_angle_path.c_str());
+//        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", zero_angle_path.c_str());
         // std::cout << zero_angle_path << " does not exist"<< std::endl;
     }
     else
@@ -519,7 +542,7 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_limit(dis_limit_path.c_str(), std::ios::in);
     if (!fd_limit.is_open())
     {
-        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", dis_limit_path.c_str());
+//        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", dis_limit_path.c_str());
         // std::cout << dis_limit_path << " does not exist"<< std::endl;
     }
     else

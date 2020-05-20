@@ -34,8 +34,13 @@ namespace robosense
    *         If ROS is turned on , we provide translation functions between ROS message and Robosense message
    *         If Proto is turned on , we provide translation functions between Protobuf message and Robosense message
    */
-
+#ifdef _MSC_VER
+#pragma pack(push, 2)
+struct LidarScanMsg
+#elif __GNUC__
 struct alignas(16) LidarScanMsg
+#endif
+
 {
   double timestamp = 0.0;
   uint32_t seq = 0;
@@ -44,5 +49,7 @@ struct alignas(16) LidarScanMsg
 
   std::vector<LidarPacketMsg> packets; ///< a vector which store a scan of packets (the size of the vector is not fix)
 };
-
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 } // namespace robosense

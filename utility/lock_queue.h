@@ -20,7 +20,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #include <mutex>
+#ifdef __GNUC__
 #include <unistd.h>
+#endif
 #include <queue>
 #include <atomic>
 namespace robosense

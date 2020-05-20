@@ -33,11 +33,20 @@ namespace robosense
    *         If ROS is turned on , we provide translation functions between ROS message and Robosense message
    */
 
-struct alignas(16) LidarPacketMsg
+
+#ifdef _MSC_VER
+#pragma pack(push, 2)
+typedef	struct eLidarPacketMsg
+#elif __GNUC__
+typedef	struct alignas(16) eLidarPacketMsg
+#endif
 {
   double timestamp = 0.0;
   std::string frame_id = "";
   std::array<uint8_t, 1248> packet{}; ///< lidar single packet
-};
+} LidarPacketMsg;
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 } // namespace robosense

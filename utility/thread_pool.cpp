@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "utility/thread_pool.h"
 namespace robosense
 {

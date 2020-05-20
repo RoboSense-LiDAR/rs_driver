@@ -27,9 +27,15 @@
 #include <memory>
 namespace robosense
 {
-
+#ifdef _MSC_VER
+#pragma pack(push, 2)
+#endif
   template <typename PointT>
+#ifdef _MSC_VER
+  struct LidarPointsMsg
+#elif __GNUC__
   struct alignas(16) LidarPointsMsg
+#endif
   {
     typedef std::vector<PointT> PointCloud;
     typedef std::shared_ptr<PointCloud> PointCloudPtr;
@@ -54,5 +60,7 @@ namespace robosense
     typedef std::shared_ptr<LidarPointsMsg> Ptr;
     typedef std::shared_ptr<const LidarPointsMsg> ConstPtr;
   };
-
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 } // namespace robosense

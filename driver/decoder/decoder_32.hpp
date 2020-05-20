@@ -34,12 +34,20 @@ namespace sensor
 #define RS32_CHANNEL_TOFFSET (3)
 #define RS32_FIRING_TDURATION (50)
 
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
+
 typedef struct
 {
     uint16_t id;
     uint16_t azimuth;
     ST_Channel channels[RS32_CHANNELS_PER_BLOCK];
-} __attribute__((packed)) ST32_MsopBlock;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST32_MsopBlock;
 
 typedef struct
 {
@@ -47,14 +55,22 @@ typedef struct
     ST32_MsopBlock blocks[RS32_BLOCKS_PER_PKT];
     uint32_t index;
     uint16_t tail;
-} __attribute__((packed)) ST32_MsopPkt;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST32_MsopPkt;
 
 typedef struct
 {
     uint8_t reserved[240];
     uint8_t coef;
     uint8_t ver;
-} __attribute__((packed)) ST32_Intensity;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST32_Intensity;
 
 typedef struct
 {
@@ -79,7 +95,15 @@ typedef struct
     uint8_t yaw_cali[96];
     uint8_t reserved2[586];
     uint16_t tail;
-} __attribute__((packed)) ST32_DifopPkt;
+} 
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+ST32_DifopPkt;
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 template <typename vpoint>
 class Decoder32 : public DecoderBase<vpoint>
@@ -107,7 +131,7 @@ Decoder32<vpoint>::Decoder32(RSDecoder_Param &param) : DecoderBase<vpoint>(param
     {
         this->min_distance_ = 0.2f;
     }
-    rs_print(RS_INFO, "[RS32] Constructor.");
+//    rs_print(RS_INFO, "[RS32] Constructor.");
 }
 
 template <typename vpoint>
@@ -124,6 +148,7 @@ double Decoder32<vpoint>::getLidarTime(const uint8_t *pkt)
     stm.tm_sec = mpkt_ptr->header.timestamp.second;
     return std::mktime(&stm) + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms) / 1000.0 + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
 }
+
 template <typename vpoint>
 int Decoder32<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height)
 {
@@ -131,7 +156,7 @@ int Decoder32<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
     ST32_MsopPkt *mpkt_ptr = (ST32_MsopPkt *)pkt;
     if (mpkt_ptr->header.sync != RS32_MSOP_SYNC)
     {
-      rs_print(RS_ERROR, "[RS32] MSOP pkt sync no match.");
+//      rs_print(RS_ERROR, "[RS32] MSOP pkt sync no match.");
       return -2;
     }
 
@@ -281,7 +306,7 @@ int32_t Decoder32<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     ST32_DifopPkt *rs32_ptr = (ST32_DifopPkt *)pkt;
     if (rs32_ptr->sync != RS32_DIFOP_SYNC)
     {
-		rs_print(RS_ERROR, "[RS32] DIFOP pkt sync no match.");
+//		rs_print(RS_ERROR, "[RS32] DIFOP pkt sync no match.");
         return -2;
     }
 
@@ -397,7 +422,7 @@ void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
     if (!fd_angle.is_open())
     {
-        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", angle_file_path.c_str());
+//        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", angle_file_path.c_str());
         // std::cout << angle_file_path << " does not exist"<< std::endl;
     }
     else
@@ -428,7 +453,7 @@ void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_ch_num(chan_file_path.c_str(), std::ios::in);
     if (!fd_ch_num.is_open())
     {
-        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", chan_file_path.c_str());
+//        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", chan_file_path.c_str());
         // std::cout << chan_file_path << " does not exist"<< std::endl;
     }
     else
@@ -461,7 +486,7 @@ void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_chan_dis(chan_dis_file_path.c_str(), std::ios::in);
     if (!fd_chan_dis.is_open())
     {
-        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
+//        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
         // std::cout << chan_dis_file_path << " does not exist"<< std::endl;
     }
     else
@@ -494,7 +519,7 @@ void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_zero_angle(zero_angle_path.c_str(), std::ios::in);
     if (!fd_zero_angle.is_open())
     {
-        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", zero_angle_path.c_str());
+//        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", zero_angle_path.c_str());
         // std::cout << zero_angle_path << " does not exist"<< std::endl;
     }
     else
@@ -513,7 +538,7 @@ void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
     std::ifstream fd_limit(dis_limit_path.c_str(), std::ios::in);
     if (!fd_limit.is_open())
     {
-        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", dis_limit_path.c_str());
+//        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", dis_limit_path.c_str());
         // std::cout << dis_limit_path << " does not exist"<< std::endl;
     }
     else

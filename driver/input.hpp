@@ -23,12 +23,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <pcap.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <array>
 #include <cmath>
 #include <cstring>
@@ -39,6 +33,20 @@
 #include <iostream>
 #include <chrono>
 #include <sstream>
+#ifdef _MSC_VER
+#include "stdafx.h"
+#include <boost\asio\ip\udp.hpp>
+#include <boost\asio.hpp>
+#include <boost\bind.hpp>
+#include <boost\array.hpp>
+#elif __GNUC__
+#include <pcap.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 namespace robosense
 {
 namespace sensor
@@ -68,46 +76,27 @@ class Input
 {
 public:
   Input(const RSInput_Param &_input_param)
+	  :ep_remote_(io_srv_, )
   {
-    prev_time_ = getTime();
-    new_time_ = getTime();
+#if 1
     input_param_ = _input_param;
     if (input_param_.read_pcap)
     {
-      //std::cout << "Opening PCAP file " << this->pcap_file_dir_ << std::endl;
-      char errbuf[PCAP_ERRBUF_SIZE];
-      if ((this->pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf)) == NULL)
-      {
-        ERROR << "Error opening rslidar pcap file! Abort!" << REND;
-        exit(1);
-      }
-      else
-      {
-        std::stringstream msop_filter;
-        std::stringstream difop_filter;
-
-        msop_filter << "src host " << input_param_.device_ip << " && ";
-        difop_filter << "src host " << input_param_.device_ip << " && ";
-
-        msop_filter << "udp dst port " << input_param_.msop_port;
-        pcap_compile(pcap_, &this->pcap_msop_filter_, msop_filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
-        difop_filter << "udp dst port " << input_param_.difop_port;
-        pcap_compile(pcap_, &this->pcap_difop_filter_, difop_filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
-      }
-
-      this->msop_fd_ = -1;
-      this->difop_fd_ = -1;
     }
     else
     {
-      this->msop_fd_ = setSocket(input_param_.msop_port);
-      this->difop_fd_ = setSocket(input_param_.difop_port);
+		boost::asio::ip::udp::endpoint ep(boost::asio::ip::address_v4::from_string(input_param_.device_ip), input_param_.msop_port);
 
-      this->pcap_ = NULL;
+//      this->msop_fd_ = setSocket(input_param_.msop_port);
+//      this->difop_fd_ = setSocket(input_param_.difop_port);
+
+ //     this->pcap_ = NULL;
     }
+#endif
   }
   ~Input()
   {
+#if 0
     if (!input_param_.read_pcap)
     {
       close(this->msop_fd_);
@@ -120,10 +109,12 @@ public:
       this->input_param_.pcap_file_dir.clear();
       pcap_close(this->pcap_);
     }
+#endif
   }
 
   InputState getPacket(uint8_t *pkt, uint32_t timeout)
   {
+#if 0
     InputState res = InputState(0);
 
     if (pkt == NULL)
@@ -209,11 +200,14 @@ public:
     }
 
     return res;
+#endif
+	return INPUT_OK;
   }
 
 private:
   int setSocket(uint16_t port)
   {
+#if 0
     int sock_fd = socket(PF_INET, SOCK_DGRAM, 0);
     if (sock_fd < 0)
     {
@@ -242,16 +236,26 @@ private:
       return -1;
     }
     return sock_fd;
+#endif
+	return 0;
   }
   RSInput_Param input_param_;
+  boost::asio::io_service io_srv_;
+  boost::asio::ip::udp::socket sock_udp_;
+  boost::asio::ip::udp::endpoint ep_remote_;
+  boost::array<char, 2048> recv_buf_;
 
   int msop_fd_;
   int difop_fd_;
+#if 0
   pcap_t *pcap_;
   bpf_program pcap_msop_filter_;
   bpf_program pcap_difop_filter_;
+#endif
   double prev_time_;
   double new_time_;
 };
+
+
 } // namespace sensor
 } // namespace robosense

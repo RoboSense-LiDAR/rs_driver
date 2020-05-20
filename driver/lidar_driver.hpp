@@ -20,16 +20,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include <msg/lidar_points_msg.h>
-#include <msg/lidar_packet_msg.h>
-#include <msg/lidar_scan_msg.h>
+#include "msg/lidar_points_msg.h"
+#include "msg/lidar_packet_msg.h"
+#include "msg/lidar_scan_msg.h"
 #include "utility/lock_queue.h"
 #include "utility/thread_pool.h"
+
 #include "utility/time.h"
 #include "utility/prompt.h"
 #include "utility/error_code.h"
-#include "driver/input.hpp"
+
+#include "driver/input.h"
 #include "driver/decoder/decoder_factory.hpp"
+
 namespace robosense
 {
   namespace sensor
@@ -52,8 +55,9 @@ namespace robosense
     public:
       LidarDriver() = default;
       ~LidarDriver() { stop(); }
-      ErrCode init(const RSLiDAR_Driver_Param &param)
+	  ErrCode init(const RSLiDAR_Driver_Param &param)
       {
+		  
         driver_param_ = param;
         lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.device_type, driver_param_.decoder_param);
         lidar_decoder_ptr_->loadCalibrationFile(driver_param_.calib_path);
@@ -63,18 +67,22 @@ namespace robosense
         thread_flag_ = false;
         points_seq_ = 0;
         scan_seq_ = 0;
+		
         return ErrCode_Success;
       }
       void start()
       {
+		  
         if (thread_flag_ == false)
         {
           thread_flag_ = true;
           lidar_thread_ptr_ = std::make_shared<std::thread>([this] { getPackets(); });
         }
+		
       }
       void stop()
       {
+		  
         msop_pkt_queue_.clear();
         difop_pkt_queue_.clear();
         if (thread_flag_ == true)
@@ -82,8 +90,9 @@ namespace robosense
           thread_flag_ = false;
           lidar_thread_ptr_->join();
         }
+		
       }
-      inline void regRecvCallback(const std::function<void(const LidarPointsMsg<PointT> &)> callBack)
+      inline void regPointRecvCallback(const std::function<void(const LidarPointsMsg<PointT> &)> callBack)
       {
         pointscb_.emplace_back(callBack);
       }
@@ -145,21 +154,25 @@ namespace robosense
     private:
       inline void runCallBack(const LidarScanMsg &pkts_msg)
       {
+		  
         for (auto &it : pkts_msop_cb_)
         {
           it(pkts_msg);
         }
+		
       }
       inline void runCallBack(const LidarPacketMsg &pkts_msg)
       {
+		  
         for (auto &it : pkts_difop_cb_)
         {
           it(pkts_msg);
         }
+		
       }
       inline void runCallBack(const LidarPointsMsg<PointT> &points_msg)
       {
-
+		  
         for (auto &it : pointscb_)
         {
           it(points_msg);
@@ -167,19 +180,22 @@ namespace robosense
       }
       inline void reportError(const ErrCode &error)
       {
+		  
         if (excb_ != NULL)
         {
           excb_(error);
         }
+		
       }
 
     private:
       void getPackets()
       {
+		  
         while (thread_flag_)
         {
           LidarPacketMsg pkt_msg;
-          InputState ret = lidar_input_ptr_->getPacket(pkt_msg.packet.data(), driver_param_.timeout);
+		  InputState ret = lidar_input_ptr_->getMSOP(pkt_msg.packet.data());
           if (ret == INPUT_MSOP)
           {
             msop_pkt_queue_.push(pkt_msg);
@@ -203,9 +219,11 @@ namespace robosense
             reportError(ErrCode_LidarDriverInterrupt);
           }
         }
+		
       }
       void processOnlineMsop()
       {
+		  
         while (msop_pkt_queue_.m_quque.size() > 0 && thread_flag_)
         {
           LidarPacketMsg pkt = msop_pkt_queue_.m_quque.front();
@@ -234,7 +252,7 @@ namespace robosense
               }
               if (msg.cloudPtr->size() == 0)
               {
-                ERROR << "LiDAR driver output points is zero.  Please make sure your lidar type in lidar yaml is right!" << REND;
+//                ERROR << "LiDAR driver output points is zero.  Please make sure your lidar type in lidar yaml is right!" << REND;
               }
               else
               {
@@ -248,9 +266,11 @@ namespace robosense
           }
         }
         msop_pkt_queue_.is_task_finished.store(true);
-      }
+		
+	  }
       void processOnlineDifop()
       {
+		  
         while (difop_pkt_queue_.m_quque.size() > 0 && thread_flag_)
         {
           LidarPacketMsg pkt = difop_pkt_queue_.m_quque.front();
@@ -259,6 +279,7 @@ namespace robosense
           runCallBack(pkt);
         }
         difop_pkt_queue_.is_task_finished.store(true);
+		
       }
       void prepareLidarScanMsg(LidarScanMsg &msg)
       {
@@ -270,9 +291,11 @@ namespace robosense
         msg.seq = ++scan_seq_;
         msg.parent_frame_id = driver_param_.frame_id;
         msg.frame_id = driver_param_.frame_id;
+		
       }
       void preparePointsMsg(LidarPointsMsg<PointT> &msg)
       {
+		  
         msg.timestamp = getTime();
         msg.seq = ++points_seq_;
         msg.parent_frame_id = driver_param_.frame_id;
@@ -281,9 +304,11 @@ namespace robosense
         msg.is_transform = false;
         msg.is_motion_correct = false;
         msg.lidar_model = driver_param_.device_type;
+		
       }
 
     private:
+		
       Queue<LidarPacketMsg> msop_pkt_queue_;
       Queue<LidarPacketMsg> difop_pkt_queue_;
       bool thread_flag_;
@@ -299,6 +324,9 @@ namespace robosense
       uint32_t scan_seq_;
       uint32_t points_seq_;
       RSLiDAR_Driver_Param driver_param_;
+	  
     };
+
+
   } // namespace sensor
 } // namespace robosense

@@ -27,28 +27,28 @@
 namespace robosense
 {
 
-typedef enum
-{
-    RS_DEBUG,
-    RS_INFO,
-    RS_WARNING,
-    RS_ERROR,
-    RS_FATAL
-}T_log_rank;
-   
+	typedef enum
+	{
+		RS_DEBUG,
+		RS_INFO,
+		RS_WARNING,
+		RS_ERROR,
+		RS_FATAL
+	}T_log_rank;
+
 #define RS_NONE     "\033[m"
 #define RS_GREEN    "\033[0;32;32m"
 #define RS_YELLOW   "\033[0;33m"
 #define RS_PURPLE   "\033[0;35m"
 #define RS_RED      "\033[0;31m"
 
-
-#define rs_print(level, fmt, arg...)     \
+#if 0
+#define rs_print(level, fmt, arg ...)     \
     do {    \
         struct timespec ts; \
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);    \
         switch (level)  \
-        {   \
+		        {   \
         case RS_DEBUG:  \
         printf("[%ld.%ld : %s(%d)] " fmt "\n", ts.tv_sec, ts.tv_nsec, \
                 __FILE__, __LINE__, ##arg);   \
@@ -73,9 +73,8 @@ typedef enum
             printf("[%ld.%ld : %s(%d)] " fmt "\n", ts.tv_sec, ts.tv_nsec, \
                 __FILE__, __LINE__, ##arg);   \
             break;  \
-        }   \
-    } while(0)
-
+		        }   \
+	    } while(0)
+#endif
 }
-
 #endif
