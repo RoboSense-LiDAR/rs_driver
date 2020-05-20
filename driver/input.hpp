@@ -30,8 +30,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#else
-#include "stdafx.h"
 #endif
 #include <array>
 #include <cmath>

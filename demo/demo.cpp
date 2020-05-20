@@ -1,5 +1,4 @@
 #ifndef __GNUC__
-#include "stdafx.h"
 #include <Windows.h>
 #include <boost\asio.hpp>
 #endif
@@ -41,12 +40,7 @@ void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
     // lidar_points_pub_.publish(ros_msg);
     std::cout << "mkkkkkkkkkkkksg: " << msg.seq << std::endl;
 }
-/*
-static void sigHandler(int sig)
-{
-    start_ = false;
-}
-*/
+
 int main(int argc, char *argv[])
 {
     //    ros::init(argc, argv, "driver", ros::init_options::NoSigintHandler);

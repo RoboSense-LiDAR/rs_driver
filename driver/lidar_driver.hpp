@@ -25,11 +25,9 @@
 #include "msg/lidar_scan_msg.h"
 #include "utility/lock_queue.h"
 #include "utility/thread_pool.h"
-
 #include "utility/time.h"
 #include "utility/prompt.h"
 #include "utility/error_code.h"
-
 #include "driver/input.hpp"
 #include "driver/decoder/decoder_factory.hpp"
 
@@ -79,7 +77,6 @@ namespace robosense
       }
       void stop()
       {
-
         msop_pkt_queue_.clear();
         difop_pkt_queue_.clear();
       }
