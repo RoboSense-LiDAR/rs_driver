@@ -23,6 +23,14 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#ifdef __GNUC__
+#include <pcap.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 #include <array>
 #include <cmath>
 #include <cstring>
@@ -33,20 +41,12 @@
 #include <iostream>
 #include <chrono>
 #include <sstream>
-#ifdef _MSC_VER
 #include "stdafx.h"
-#include <boost\asio\ip\udp.hpp>
-#include <boost\asio.hpp>
-#include <boost\bind.hpp>
-#include <boost\array.hpp>
-#elif __GNUC__
-#include <pcap.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#endif
+#include <boost/bind.hpp>
+#include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+using boost::asio::deadline_timer;
+using boost::asio::ip::udp;
 namespace robosense
 {
 namespace sensor
@@ -66,194 +66,147 @@ enum InputState
 typedef struct RSInput_Param
 {
   std::string device_ip = "192.168.1.200";
-  uint16_t msop_port = 6699;
+  uint16_t msop_port = 6688;
   uint16_t difop_port = 7788;
   bool read_pcap = false;
   std::string pcap_file_dir = "";
 } RSInput_Param;
 
-class Input
-{
-public:
-  Input(const RSInput_Param &_input_param)
-  {
-#if 1
-    input_param_ = _input_param;
-    if (input_param_.read_pcap)
+    class Input
     {
-    }
-    else
-	{
-//      this->msop_fd_ = setSocket(input_param_.msop_port);
-//      this->difop_fd_ = setSocket(input_param_.difop_port);
+    public:
+      Input(const RSInput_Param &_input_param)
+      {
+        prev_time_ = getTime();
+        new_time_ = getTime();
+        input_param_ = _input_param;
+        if (input_param_.read_pcap)
+        {
+		#if 0
+          //std::cout << "Opening PCAP file " << this->pcap_file_dir_ << std::endl;
+          char errbuf[PCAP_ERRBUF_SIZE];
+          if ((this->pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf)) == NULL)
+          {
+            ERROR << "Error opening rslidar pcap file! Abort!" << REND;
+            exit(1);
+          }
+          else
+          {
+            std::stringstream msop_filter;
+            std::stringstream difop_filter;
+
+            msop_filter << "src host " << input_param_.device_ip << " && ";
+            difop_filter << "src host " << input_param_.device_ip << " && ";
+
+            msop_filter << "udp dst port " << input_param_.msop_port;
+            pcap_compile(pcap_, &this->pcap_msop_filter_, msop_filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
+            difop_filter << "udp dst port " << input_param_.difop_port;
+            pcap_compile(pcap_, &this->pcap_difop_filter_, difop_filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
+          }
+
+          this->msop_fd_ = -1;
+          this->difop_fd_ = -1;
+		  #endif
+        }
+        else
+        {
+          this->msop_fd_ = setSocket(input_param_.msop_port);
+         // this->difop_fd_ = setSocket(input_param_.difop_port);
 
  //     this->pcap_ = NULL;
     }
-#endif
   }
   ~Input()
   {
-#if 0
+
     if (!input_param_.read_pcap)
     {
-      close(this->msop_fd_);
-      close(this->difop_fd_);
+	
+   //   close(this->msop_fd_);
+   //   close(this->difop_fd_);
       input_param_.msop_port = 0;
       input_param_.difop_port = 0;
+	  
     }
     else
     {
+	#if 0
       this->input_param_.pcap_file_dir.clear();
       pcap_close(this->pcap_);
+	  #endif
     }
-#endif
+
   }
 
-  InputState getPacket(uint8_t *pkt, uint32_t timeout)
-  {
-#if 0
-    InputState res = InputState(0);
-
-    if (pkt == NULL)
-    {
-      return INPUT_ERROR;
-    }
-
-    if (!this->input_param_.read_pcap)
-    {
-      fd_set rfds;
-      struct timeval tmout;
-
-      tmout.tv_sec = timeout / 1000;
-      tmout.tv_usec = (timeout % 1000) * 1000;
-
-      FD_ZERO(&rfds);
-      FD_SET(this->msop_fd_, &rfds);
-      FD_SET(this->difop_fd_, &rfds);
-
-      int max_fd = std::max(this->msop_fd_, this->difop_fd_);
-      int retval = select(max_fd + 1, &rfds, NULL, NULL, &tmout);
-
-      if (retval == -1 && errno == EINTR)
+      InputState getPacket(uint8_t *pkt, uint32_t timeout)
       {
-        res = INPUT_EXIT;
-      }
-      else if (retval == -1)
-      {
-        std::cerr << "select: " << std::strerror(errno) << std::endl;
-        res = InputState(res | INPUT_ERROR);
-      }
-      else if (retval)
-      {
-        ssize_t n;
-        if (FD_ISSET(this->msop_fd_, &rfds))
+        deadline_->expires_from_now(boost::posix_time::seconds(1));
+        boost::system::error_code ec = boost::asio::error::would_block;
+        std::size_t ret = 0;
+        char *pRecvBuffer = (char *)malloc(RSLIDAR_PKT_LEN);
+        recv_sock_ptr_->async_receive(boost::asio::buffer(pRecvBuffer, RSLIDAR_PKT_LEN),
+                                      boost::bind(&Input::handle_receive, _1, _2, &ec, &ret));
+        do
         {
-          res = InputState(res | INPUT_MSOP);
-          n = recvfrom(this->msop_fd_, pkt, RSLIDAR_PKT_LEN, 0, NULL, NULL);
-        }
-        else if (FD_ISSET(this->difop_fd_, &rfds))
+          io_service_.run_one();
+        } while (ec == boost::asio::error::would_block);
+        if (ec)
         {
-          res = InputState(res | INPUT_DIFOP);
-          n = recvfrom(this->difop_fd_, pkt, RSLIDAR_PKT_LEN, 0, NULL, NULL);
-        }
-        else
-        {
+          free(pRecvBuffer);
           return INPUT_ERROR;
         }
-
-        if (n != RSLIDAR_PKT_LEN)
-        {
-          res = InputState(res | INPUT_ERROR);
-        }
+        memcpy(pkt, pRecvBuffer, RSLIDAR_PKT_LEN);
+        free(pRecvBuffer);
+        return INPUT_MSOP;
       }
-    }
-    else
-    {
-      int ret;
-      struct pcap_pkthdr *header;
-      const u_char *pkt_data;
 
-      if ((ret = pcap_next_ex(this->pcap_, &header, &pkt_data)) >= 0)
+    private:
+      inline void check_deadline()
       {
-        if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
+        if (deadline_->expires_at() <= deadline_timer::traits_type::now())
         {
-          memcpy(pkt, pkt_data + 42, RSLIDAR_PKT_LEN);
-          res = INPUT_MSOP;
+          recv_sock_ptr_->cancel();
+          deadline_->expires_at(boost::posix_time::pos_infin);
         }
-        else if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_difop_filter_, header, pkt_data)))
-        {
-          new_time_ = getTime();
-          memcpy(pkt, pkt_data + 42, RSLIDAR_PKT_LEN);
-          res = INPUT_DIFOP;
-          usleep(100000 - (new_time_ - prev_time_) * 1000000);
-          prev_time_ = getTime();
-        }
-        else
-        {
-          res = INPUT_OK;
-          usleep(10);
-        }
+        deadline_->async_wait(boost::bind(&Input::check_deadline, this));
       }
-    }
+      static void handle_receive(
+          const boost::system::error_code &ec, std::size_t length,
+          boost::system::error_code *out_ec, std::size_t *out_length)
+      {
+        *out_ec = ec;
+        *out_length = length;
+      }
+      int setSocket(uint16_t port)
+      {
+        try
+        {
+          recv_sock_ptr_.reset(new udp::socket(io_service_, udp::endpoint(udp::v4(), port)));
+          deadline_.reset(new deadline_timer(io_service_));
+        }
+        catch (...)
+        {
+          ERROR << "Proto Receiver Port is already used! Abort!" << REND;
+          exit(-1);
+        }
+        deadline_->expires_at(boost::posix_time::pos_infin);
+        check_deadline();
+        return 0;
+      }
+      RSInput_Param input_param_;
 
-    return res;
-#endif
-	return INPUT_OK;
-  }
-
-private:
-  int setSocket(uint16_t port)
-  {
-#if 0
-    int sock_fd = socket(PF_INET, SOCK_DGRAM, 0);
-    if (sock_fd < 0)
-    {
-      std::cerr << "socket: " << std::strerror(errno) << std::endl;
-      return -1;
-    }
-
-    struct sockaddr_in my_addr;
-    memset((char *)&my_addr, 0, sizeof(my_addr));
-    my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(port);
-    my_addr.sin_addr.s_addr = INADDR_ANY;
-
-    if (bind(sock_fd, (struct sockaddr *)&my_addr, sizeof(my_addr)) < 0)
-    {
-      std::cerr << "bind: " << std::strerror(errno) << std::endl;
-      return -1;
-    }
-
-    struct timeval timeout;
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 0;
-    if (setsockopt(sock_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
-    {
-      std::cerr << "setsockopt: " << std::strerror(errno) << std::endl;
-      return -1;
-    }
-    return sock_fd;
-#endif
-	return 0;
-  }
-  RSInput_Param input_param_;
-  /*
-  boost::asio::io_service io_srv_;
-  boost::asio::ip::udp::socket sock_udp_;
-  boost::asio::ip::udp::endpoint ep_remote_;
-  boost::array<char, 2048> recv_buf_;
-  */
-  int msop_fd_;
-  int difop_fd_;
-#if 0
-  pcap_t *pcap_;
-  bpf_program pcap_msop_filter_;
-  bpf_program pcap_difop_filter_;
-#endif
-  double prev_time_;
-  double new_time_;
-};
-
-
-} // namespace sensor
+      int msop_fd_;
+      int difop_fd_;
+	  #if 0
+      pcap_t *pcap_;
+      bpf_program pcap_msop_filter_;
+      bpf_program pcap_difop_filter_;
+	  #endif
+      double prev_time_;
+      double new_time_;
+      std::unique_ptr<udp::socket> recv_sock_ptr_;
+      std::unique_ptr<deadline_timer> deadline_;
+      boost::asio::io_service io_service_;
+    };
+  } // namespace sensor
 } // namespace robosense

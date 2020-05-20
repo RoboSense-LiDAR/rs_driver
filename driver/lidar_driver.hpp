@@ -227,8 +227,11 @@ namespace robosense
         while (msop_pkt_queue_.m_quque.size() > 0 && thread_flag_)
         {
           LidarPacketMsg pkt = msop_pkt_queue_.m_quque.front();
+		  std::cout << "size 1    " << msop_pkt_queue_.m_quque.size() << std::endl;
           scan_ptr_->packets.emplace_back(pkt);
           msop_pkt_queue_.pop();
+		  std::cout << "size 2   " << msop_pkt_queue_.m_quque.size() << std::endl;
+
           std::vector<PointT> point_vec;
           int height = 1;
           int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), point_vec, height);

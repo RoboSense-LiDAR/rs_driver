@@ -33,9 +33,8 @@ void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
     ros_msg.header.seq = msg.seq;
 
     lidar_points_pub_.publish(ros_msg);
-
-    DEBUG << "msg: " << msg.seq << REND;
 #endif
+	std::cout << "mkkkkkkkkkkkksg: " << msg.seq << std::endl;
 }
 /*
 static void sigHandler(int sig)
@@ -47,10 +46,10 @@ int main(int argc, char *argv[])
 {
     std::shared_ptr<robosense::sensor::LidarDriver<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<PointXYZI>>();
     robosense::sensor::RSLiDAR_Driver_Param param;
-    param.input_param.read_pcap = true;
-    param.device_type = "RS128";
-    param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
-    param.calib_path = "/home/xzd/work/lidar_driver/conf";
+//    param.input_param.read_pcap = true;
+    param.device_type = "RS16";
+ //   param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
+ //   param.calib_path = "/home/xzd/work/lidar_driver/conf";
     demo_ptr->init(param);
 	demo_ptr->regPointRecvCallback(callback);
     demo_ptr->start();
