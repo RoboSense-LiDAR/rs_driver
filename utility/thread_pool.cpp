@@ -1,5 +1,5 @@
 #ifndef __GNUC__
-#include "stdafx.h"
+//#include "stdafx.h"
 #endif
 #include "utility/thread_pool.h"
 namespace robosense
