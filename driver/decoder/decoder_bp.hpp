@@ -204,12 +204,6 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
 
         float azimuth_diff = (float)((36000 + azi_prev - azi_cur) % 36000);
         float azimuth_channel;
-        int ab_flag = 0;
-        if (this->resolution_type_ == RS_RESOLUTION_10mm)
-        {
-            ab_flag = this->ABPktCheck(RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[0].distance));
-        }
-
         for (int channel_idx = 0; channel_idx < RSBP_CHANNELS_PER_BLOCK; channel_idx++)
         {
             int azimuth_final;
@@ -218,35 +212,12 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
             azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
 
             int idx_map = channel_idx;
-            if (this->resolution_type_ == RS_RESOLUTION_10mm && ab_flag == 1)
-            {
-                if (channel_idx < 16)
-                {
-                    idx_map = channel_idx + 16;
-                }
-                else if (channel_idx >= 16)
-                {
-                    idx_map = channel_idx - 16;
-                }
-            }
             int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[idx_map].distance);
-            if (this->resolution_type_ == RS_RESOLUTION_10mm)
-            {
-                int ab_flag_blk = this->ABPktCheck(distance);
-                distance = distance - ab_flag_blk * 32768;
-            }
+
             float intensity = mpkt_ptr->blocks[blk_idx].channels[idx_map].intensity;
-            intensity = this->intensityCalibration(intensity, channel_idx, distance, temperature);
             float distance_cali = this->distanceCalibration(distance, channel_idx, temperature);
-            if (this->resolution_type_ == RS_RESOLUTION_5mm)
-            {
-                distance_cali = distance_cali * RS_RESOLUTION_5mm_DISTANCE_COEF;
-            }
-            else
-            {
-                distance_cali = distance_cali * RS_RESOLUTION_10mm_DISTANCE_COEF;
-            }
-            //
+            distance_cali = distance_cali * RS_RESOLUTION_5mm_DISTANCE_COEF;
+
             int angle_horiz_ori;
             int angle_horiz = (azimuth_final + 36000) % 36000;
             int angle_vert;
@@ -255,7 +226,10 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
 
             //store to pointcloud buffer
             vpoint point;
-            if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) && ((this->angle_flag_ && angle_horiz >= this->start_angle_ && angle_horiz <= this->end_angle_) || (!this->angle_flag_ && ((angle_horiz >= this->start_angle_ && angle_horiz <= 36000) || (angle_horiz >= 0 && angle_horiz <= this->end_angle_)))))
+            if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) 
+                && ((this->angle_flag_ && angle_horiz >= this->start_angle_ && angle_horiz <= this->end_angle_) 
+                || (!this->angle_flag_ && ((angle_horiz >= this->start_angle_ && angle_horiz <= 36000) 
+                || (angle_horiz >= 0 && angle_horiz <= this->end_angle_)))))
             {
                 const double vert_cos_value = this->cos_lookup_table_[angle_vert];
                 const double horiz_cos_value = this->cos_lookup_table_[angle_horiz];
@@ -325,28 +299,6 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     }
     this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
 
-    if ((p_ver->main_sn[1] == 0x00 && p_ver->main_sn[2] == 0x00 && p_ver->main_sn[3] == 0x00) || (p_ver->main_sn[1] == 0xFF && p_ver->main_sn[2] == 0xFF && p_ver->main_sn[3] == 0xFF) || (p_ver->main_sn[1] == 0x55 && p_ver->main_sn[2] == 0xAA && p_ver->main_sn[3] == 0x5A) || (p_ver->main_sn[1] == 0xE9 && p_ver->main_sn[2] == 0x01 && p_ver->main_sn[3] == 0x00))
-    {
-        this->resolution_type_ = 1;
-    }
-    else
-    {
-        this->resolution_type_ = 0;
-    }
-
-    if (rsBp_ptr->intensity.ver == 0x00 || rsBp_ptr->intensity.ver == 0xFF || rsBp_ptr->intensity.ver == 0xA1)
-    {
-        this->intensity_mode_ = 1;
-    }
-    else if (rsBp_ptr->intensity.ver == 0xB1)
-    {
-        this->intensity_mode_ = 2;
-    }
-    else if (rsBp_ptr->intensity.ver == 0xC1)
-    {
-        this->intensity_mode_ = 3;
-    }
-
     if (!(this->cali_data_flag_ & 0x2))
     {
         bool angle_flag = true;
@@ -354,7 +306,9 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
 
         p_pitch_cali = ((STBP_DifopPkt *)pkt)->pitch_cali;
 
-        if ((p_pitch_cali[0] == 0x00 || p_pitch_cali[0] == 0xFF) && (p_pitch_cali[1] == 0x00 || p_pitch_cali[1] == 0xFF) && (p_pitch_cali[2] == 0x00 || p_pitch_cali[2] == 0xFF))
+        if ((p_pitch_cali[0] == 0x00 || p_pitch_cali[0] == 0xFF) 
+            && (p_pitch_cali[1] == 0x00 || p_pitch_cali[1] == 0xFF) 
+            && (p_pitch_cali[2] == 0x00 || p_pitch_cali[2] == 0xFF))
         {
             angle_flag = false;
         }
@@ -437,108 +391,6 @@ void DecoderBP<vpoint>::loadCalibrationFile(std::string cali_path)
             }
         }
         fd_angle.close();
-    }
-
-    // read ChannelNum.csv
-    std::string chan_file_path = this->cali_files_dir_ + "/ChannelNum.csv";
-    std::ifstream fd_ch_num(chan_file_path.c_str(), std::ios::in);
-    if (!fd_ch_num.is_open())
-    {
-//        rs_print(RS_WARNING, "[RSBP] Calibration file: %s does not exist!", chan_file_path.c_str());
-        // std::cout << chan_file_path << " does not exist"<< std::endl;
-    }
-    else
-    {
-        row_index = 0;
-        while (std::getline(fd_ch_num, line_str))
-        {
-            std::stringstream ss(line_str);
-            std::string str;
-            std::vector<std::string> vect_str;
-            while (std::getline(ss, str, ','))
-            {
-                vect_str.push_back(str);
-            }
-            for (int col_index = 0; col_index < 51; col_index++)
-            {
-                this->channel_cali_[row_index][col_index] = std::stoi(vect_str[col_index]);
-            }
-            row_index++;
-            if (row_index >= laser_num)
-            {
-                break;
-            }
-        }
-        fd_ch_num.close();
-    }
-
-    // read ChannelNumDistance.csv
-    std::string chan_dis_file_path = this->cali_files_dir_ + "/ChannelNumDistance.csv";
-    std::ifstream fd_chan_dis(chan_dis_file_path.c_str(), std::ios::in);
-    if (!fd_chan_dis.is_open())
-    {
-//        rs_print(RS_WARNING, "[RSBP] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
-        // std::cout << chan_dis_file_path << " does not exist"<< std::endl;
-    }
-    else
-    {
-        row_index = 0;
-        while (std::getline(fd_chan_dis, line_str))
-        {
-            std::stringstream ss(line_str);
-            std::string str;
-            std::vector<std::string> vect_str;
-            while (std::getline(ss, str, ','))
-            {
-                vect_str.push_back(str);
-            }
-            for (int col_index = 0; col_index < laser_num + 1; col_index++)
-            {
-                this->channel_dis_cali_[row_index][col_index] = std::stof(vect_str[col_index]);
-            }
-            row_index++;
-            if (row_index > 3)
-            {
-                break;
-            }
-        }
-        fd_chan_dis.close();
-    }
-
-    // read  ZeroAngleAbsdist
-    std::string zero_angle_path = this->cali_files_dir_ + "/ZeroAngleAbsdist.csv";
-    std::ifstream fd_zero_angle(zero_angle_path.c_str(), std::ios::in);
-    if (!fd_zero_angle.is_open())
-    {
-//        rs_print(RS_WARNING, "[RSBP] Calibration file: %s does not exist!", zero_angle_path.c_str());
-        // std::cout << zero_angle_path << " does not exist"<< std::endl;
-    }
-    else
-    {
-        std::getline(fd_zero_angle, line_str);
-        float zero_angle_cali_ = std::stof(line_str);
-        fd_zero_angle.close();
-        for (int i = 0; i < laser_num; i++)
-        {
-            this->hori_angle_list_[i] -= zero_angle_cali_;
-        }
-    }
-
-    // read limit.csv
-    std::string dis_limit_path = this->cali_files_dir_ + "/limit.csv";
-    std::ifstream fd_limit(dis_limit_path.c_str(), std::ios::in);
-    if (!fd_limit.is_open())
-    {
-//        rs_print(RS_WARNING, "[RSBP] Calibration file: %s does not exist!", dis_limit_path.c_str());
-        // std::cout << dis_limit_path << " does not exist"<< std::endl;
-    }
-    else
-    {
-        std::getline(fd_limit, line_str);
-        this->min_distance_ = std::stof(line_str) / 100.0f;
-        std::getline(fd_limit, line_str);
-        this->max_distance_ = std::stof(line_str) / 100.0f;
-        fd_limit.close();
     }
 }
 

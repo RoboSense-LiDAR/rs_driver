@@ -12,7 +12,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-os::Publisher lidar_points_pub_;
+ros::Publisher lidar_points_pub_;
 #endif
 bool start_ = true;
 struct PointXYZI
@@ -25,7 +25,7 @@ struct PointXYZI
 
 void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
 {
-#ifdef __GNUC__
+#if 0//def __GNUC__
     sensor_msgs::PointCloud2 ros_msg;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZI>);
     for (auto iter : *msg.cloudPtr)
@@ -40,7 +40,7 @@ void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
 	
 	lidar_points_pub_.publish(ros_msg);
 #endif
-    std::cout << "mkkkkkkkkkkkksg: " << msg.seq << std::endl;
+    std::cout << "msg: " << msg.seq << std::endl;
 }
 
 int main(int argc, char *argv[])
@@ -52,7 +52,11 @@ int main(int argc, char *argv[])
 #endif
     std::shared_ptr<robosense::sensor::LidarDriver<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<PointXYZI>>();
     robosense::sensor::RSLiDAR_Driver_Param param;
-	param.input_param.read_pcap = TRUE;
+#ifdef __GNUC__
+	param.input_param.read_pcap = true;
+#elif _MSC_VER
+    param.input_param.read_pcap = TRUE;
+#endif
 	param.input_param.pcap_file_dir = "D:/workspace/rs_decoder/Debug/Ruby-Data.pcap";
     param.calib_path="/home/xzd/work/lidar_driver/conf";
     param.device_type = "RS128";

@@ -191,7 +191,6 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
             continue;
         }        
         float azimuth_channel;
-        int ab_flag = 0;
         for (int channel_idx = 0; channel_idx < RS16_CHANNELS_PER_BLOCK; channel_idx++)
         {
             int azimuth_final;
@@ -208,17 +207,10 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
             int idx_map = channel_idx;
             int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[idx_map].distance);
             float intensity = mpkt_ptr->blocks[blk_idx].channels[idx_map].intensity;
-            intensity = this->intensityCalibration(intensity, channel_idx, distance, temperature);
+
             float distance_cali = this->distanceCalibration(distance, channel_idx, temperature);
-            if (this->resolution_type_ == RS_RESOLUTION_5mm)
-            {
-                distance_cali = distance_cali * RS_RESOLUTION_5mm_DISTANCE_COEF;
-            }
-            else
-            {
-                distance_cali = distance_cali * RS_RESOLUTION_10mm_DISTANCE_COEF;
-            }
-            //
+            distance_cali = distance_cali * RS_RESOLUTION_5mm_DISTANCE_COEF;
+
             int angle_horiz_ori;
             int angle_horiz = (azimuth_final + 36000) % 36000;
             int angle_vert;
@@ -227,7 +219,10 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
 
             //store to pointcloud buffer
             vpoint point;
-            if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) && ((this->angle_flag_ && angle_horiz >= this->start_angle_ && angle_horiz <= this->end_angle_) || (!this->angle_flag_ && ((angle_horiz >= this->start_angle_ && angle_horiz <= 36000) || (angle_horiz >= 0 && angle_horiz <= this->end_angle_)))))
+            if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) 
+                && ((this->angle_flag_ && angle_horiz >= this->start_angle_ && angle_horiz <= this->end_angle_) 
+                || (!this->angle_flag_ && ((angle_horiz >= this->start_angle_ && angle_horiz <= 36000) 
+                || (angle_horiz >= 0 && angle_horiz <= this->end_angle_)))))
             {
                 const double vert_cos_value = this->cos_lookup_table_[angle_vert];
                 const double horiz_cos_value = this->cos_lookup_table_[angle_horiz];
@@ -299,82 +294,6 @@ int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         pkt_rate = ceil(pkt_rate / 2);
     }
     this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
-
-    if ((p_ver->main_sn[1] == 0x00 && p_ver->main_sn[2] == 0x00 && p_ver->main_sn[3] == 0x00) || 
-        (p_ver->main_sn[1] == 0xFF && p_ver->main_sn[2] == 0xFF && p_ver->main_sn[3] == 0xFF) || 
-        (p_ver->main_sn[1] == 0x55 && p_ver->main_sn[2] == 0xAA && p_ver->main_sn[3] == 0x5A) || 
-        (p_ver->main_sn[1] == 0xE9 && p_ver->main_sn[2] == 0x01 && p_ver->main_sn[3] == 0x00))
-    {
-        this->resolution_type_ = 1;
-    }
-    else
-    {
-        this->resolution_type_ = 0;
-    }
-    if (rs16_ptr->intensity.ver == 0x00 || rs16_ptr->intensity.ver == 0xFF || rs16_ptr->intensity.ver == 0xA1)
-    {
-        this->intensity_mode_ = 1;
-    }
-    else if (rs16_ptr->intensity.ver == 0xB1)
-    {
-        this->intensity_mode_ = 2;
-    }
-    else if (rs16_ptr->intensity.ver == 0xC1)
-    {
-        this->intensity_mode_ = 3;
-    }
-    if (!(this->cali_data_flag_ & 0x1))
-    {
-        bool curve_flag = true;
-        ST16_Intensity *p_intensity = &(rs16_ptr->intensity);
-        if ((p_intensity->intensity_cali[0] == 0x00 || p_intensity->intensity_cali[0] == 0xFF) && 
-            (p_intensity->intensity_cali[1] == 0x00 || p_intensity->intensity_cali[1] == 0xFF) && 
-            (p_intensity->intensity_cali[2] == 0x00 || p_intensity->intensity_cali[2] == 0xFF) && 
-            (p_intensity->intensity_cali[3] == 0x00 || p_intensity->intensity_cali[3] == 0xFF))
-        {
-            curve_flag = false;
-        }
-
-        if (curve_flag)
-        {
-            bool check_flag = true;
-            uint8_t checksum;
-            for (int k = 0; k < this->channel_num_; k++)
-            {
-                checksum = p_intensity->intensity_cali[15 * k] ^ p_intensity->intensity_cali[15 * k + 1];
-                for (int n = 1; n < 7; n++)
-                {
-                    checksum = checksum ^ (p_intensity->intensity_cali[k * 15 + n * 2]) ^ (p_intensity->intensity_cali[k * 15 + n * 2 + 1]);
-                }
-                if (checksum != p_intensity->intensity_cali[k * 15 + 14])
-                {
-                    check_flag = false;
-                    break;
-                }
-            }
-
-            if (check_flag)
-            {
-                uint16_t *inten_p;
-                for (int i = 0; i < this->channel_num_; i++)
-                {
-                    inten_p = (uint16_t *)(p_intensity->intensity_cali + i * 15);
-                    for (int k = 0; k < 7; k++)
-                    {
-                        this->intensity_cali_[k][i] = RS_SWAP_SHORT(*(inten_p + k)) * 0.001;
-                    }
-                }
-
-                this->cali_data_flag_ = this->cali_data_flag_ | 0x01;
-
-                //std::cout << "[RS_decoder][difop][INFO] curves data is wrote in difop packet!" << std::endl;
-            }
-        }
-        if (rs16_ptr->intensity.coef != 0x00 && rs16_ptr->intensity.coef != 0xFF)
-        {
-            this->intensity_coef_ = rs16_ptr->intensity.coef;
-        }
-    }
 
     if (!(this->cali_data_flag_ & 0x2))
     {
@@ -450,108 +369,6 @@ void Decoder16<vpoint>::loadCalibrationFile(std::string cali_path)
             }
         }
         fd_angle.close();
-    }
-
-    // read ChannelNum.csv
-    std::string chan_file_path = this->cali_files_dir_ + "/ChannelNum.csv";
-    std::ifstream fd_ch_num(chan_file_path.c_str(), std::ios::in);
-    if (!fd_ch_num.is_open())
-    {
-//        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", chan_file_path.c_str());
-        // std::cout << chan_file_path << " does not exist"<< std::endl;
-    }
-    else
-    {
-        row_index = 0;
-        while (std::getline(fd_ch_num, line_str))
-        {
-            std::stringstream ss(line_str);
-            std::string str;
-            std::vector<std::string> vect_str;
-            while (std::getline(ss, str, ','))
-            {
-                vect_str.push_back(str);
-            }
-            for (int col_index = 0; col_index < 41; col_index++)
-            {
-                this->channel_cali_[row_index][col_index] = std::stoi(vect_str[col_index]);
-            }
-            row_index++;
-            if (row_index >= laser_num)
-            {
-                break;
-            }
-        }
-        fd_ch_num.close();
-    }
-
-    // read ChannelNumDistance.csv
-    std::string chan_dis_file_path = this->cali_files_dir_ + "/ChannelNumDistance.csv";
-    std::ifstream fd_chan_dis(chan_dis_file_path.c_str(), std::ios::in);
-    if (!fd_chan_dis.is_open())
-    {
-//        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", chan_dis_file_path.c_str());
-        // std::cout << chan_dis_file_path << " does not exist"<< std::endl;
-    }
-    else
-    {
-        row_index = 0;
-        while (std::getline(fd_chan_dis, line_str))
-        {
-            std::stringstream ss(line_str);
-            std::string str;
-            std::vector<std::string> vect_str;
-            while (std::getline(ss, str, ','))
-            {
-                vect_str.push_back(str);
-            }
-            for (int col_index = 0; col_index < laser_num + 1; col_index++)
-            {
-                this->channel_dis_cali_[row_index][col_index] = std::stof(vect_str[col_index]);
-            }
-            row_index++;
-            if (row_index > 3)
-            {
-                break;
-            }
-        }
-        fd_chan_dis.close();
-    }
-
-    // read  ZeroAngleAbsdist
-    std::string zero_angle_path = this->cali_files_dir_ + "/ZeroAngleAbsdist.csv";
-    std::ifstream fd_zero_angle(zero_angle_path.c_str(), std::ios::in);
-    if (!fd_zero_angle.is_open())
-    {
-//        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", zero_angle_path.c_str());
-        // std::cout << zero_angle_path << " does not exist"<< std::endl;
-    }
-    else
-    {
-        std::getline(fd_zero_angle, line_str);
-        float zero_angle_cali_ = std::stof(line_str);
-        fd_zero_angle.close();
-        for (int i = 0; i < laser_num; i++)
-        {
-            this->hori_angle_list_[i] -= zero_angle_cali_;
-        }
-    }
-
-    // read limit.csv
-    std::string dis_limit_path = this->cali_files_dir_ + "/limit.csv";
-    std::ifstream fd_limit(dis_limit_path.c_str(), std::ios::in);
-    if (!fd_limit.is_open())
-    {
-//        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", dis_limit_path.c_str());
-        // std::cout << dis_limit_path << " does not exist"<< std::endl;
-    }
-    else
-    {
-        std::getline(fd_limit, line_str);
-        this->min_distance_ = std::stof(line_str) / 100.0f;
-        std::getline(fd_limit, line_str);
-        this->max_distance_ = std::stof(line_str) / 100.0f;
-        fd_limit.close();
     }
 }
 } // namespace sensor

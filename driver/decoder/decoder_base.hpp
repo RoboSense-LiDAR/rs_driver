@@ -39,8 +39,6 @@ namespace sensor
 #define RS_RESOLUTION_5mm_DISTANCE_COEF (0.005)
 #define RS_RESOLUTION_10mm_DISTANCE_COEF (0.01)
 
-
-
 enum E_DECODER_RESULT
 {
     E_DECODE_FAIL = -2,
@@ -49,24 +47,13 @@ enum E_DECODER_RESULT
     E_FRAME_SPLIT = 1
 };
 
-enum RS_RESOLUTION_TYPE
-{
-    RS_RESOLUTION_5mm = 0,
-    RS_RESOLUTION_10mm
-};
-
 enum RS_ECHO_MODE
 {
     RS_ECHO_DUAL = 0,
     RS_ECHO_MAX,
     RS_ECHO_LAST
 };
-enum RS_INTENSITY_TYPE
-{
-    RS_INTENSITY_EXTERN = 1,
-    RS_INTENSITY_IN,
-    RS_INTENSITY_AUTO
-};
+
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #endif
@@ -210,8 +197,6 @@ ST_Diagno;
 
 typedef struct eRSDecoder_Param
 {
-    RS_RESOLUTION_TYPE resolution = RS_RESOLUTION_10mm;
-    RS_INTENSITY_TYPE intensity = RS_INTENSITY_AUTO;
     RS_ECHO_MODE echo = RS_ECHO_MAX;
     float max_distance = 200.0f;
     float min_distance = 0.2f;
@@ -236,8 +221,6 @@ public:
 
 protected:
     int32_t rpm_;
-    int8_t resolution_type_;
-    int8_t intensity_mode_;
     uint8_t echo_mode_;
     uint8_t channel_num_;
     float Rx_;
@@ -259,12 +242,10 @@ protected:
     //calibration data
     std::string cali_files_dir_;
     uint32_t cali_data_flag_;
-    int32_t intensity_coef_;
     float vert_angle_list_[128];
     float hori_angle_list_[128];
     int32_t channel_cali_[128][51];
     float channel_dis_cali_[4][129];
-    float intensity_cali_[1600][32]; //compatable to old version
     std::vector<double> cos_lookup_table_;
     std::vector<double> sin_lookup_table_;
 
@@ -272,8 +253,6 @@ protected:
     virtual float computeTemperatue(const uint16_t temp_raw);
     virtual float distanceCalibration(int32_t distance, int32_t channel, float temp);
     virtual int32_t azimuthCalibration(float azimuth, int32_t channel);
-    virtual int32_t ABPktCheck(int32_t distance);
-    virtual float intensityCalibration(float intensity, int32_t channel, int32_t distance, float temp);
     virtual int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec,int &height) = 0;
     virtual int32_t decodeDifopPkt(const uint8_t *pkt) = 0;
 };
@@ -285,10 +264,7 @@ DecoderBase<vpoint>::DecoderBase(RSDecoder_Param &param) : rpm_(600),
                                                     pkt_counter_(0),
                                                     last_azimuth_(-36001),
                                                     cali_data_flag_(0x00),
-                                                    intensity_coef_(1),
                                                     angle_flag_(true),
-                                                    intensity_mode_(param.intensity),
-                                                    resolution_type_(param.resolution),
                                                     start_angle_(param.start_angle * 100),
                                                     end_angle_(param.end_angle * 100),
                                                     echo_mode_(param.echo),
@@ -466,135 +442,5 @@ int DecoderBase<vpoint>::azimuthCalibration(float azimuth, int channel)
 
     return azi_ret;
 }
-
-template <typename vpoint>
-int DecoderBase<vpoint>::ABPktCheck(int distance)
-{
-    int flag = 0;
-    if ((distance & 32768) != 0)
-    {
-        flag = 1;
-    }
-
-    return flag;
-}
-
-template <typename vpoint>
-float DecoderBase<vpoint>::intensityCalibration(float intensity, int32_t channel, int32_t distance, float temp)
-{
-    if (this->intensity_mode_ == 3)
-    {
-        return intensity;
-    }
-    else
-    {
-        float real_pwr = std::max((float)(intensity / (1 + (temp - temperature_min_) / 24.0f)), 1.0f);
-        if (this->intensity_mode_ == 1)
-        {
-            if ((int)real_pwr < 126)
-            {
-                real_pwr = real_pwr * 4.0f;
-            }
-            else if ((int)real_pwr >= 126 && (int)real_pwr < 226)
-            {
-                real_pwr = (real_pwr - 125.0f) * 16.0f + 500.0f;
-            }
-            else
-            {
-                real_pwr = (real_pwr - 225.0f) * 256.0f + 2100.0f;
-            }
-        }
-        else if (this->intensity_mode_ == 2)
-        {
-            if ((int)real_pwr < 64)
-            {
-                real_pwr = real_pwr;
-            }
-            else if ((int)real_pwr >= 64 && (int)real_pwr < 176)
-            {
-                real_pwr = (real_pwr - 64.0f) * 4.0f + 64.0f;
-            }
-            else
-            {
-                real_pwr = (real_pwr - 176.0f) * 16.0f + 512.0f;
-            }
-        }
-
-        int temp_idx = (int)floor(temp + 0.5);
-        if (temp_idx < temperature_min_)
-        {
-            temp_idx = 0;
-        }
-        else if (temp_idx > temperature_max_)
-        {
-            temp_idx = temperature_max_ - temperature_min_;
-        }
-        else
-        {
-            temp_idx = temp_idx - temperature_min_;
-        }
-        int distance_cali = (distance > this->channel_cali_[channel][temp_idx]) ? distance : this->channel_cali_[channel][temp_idx];
-        distance_cali = distance_cali - this->channel_cali_[channel][temp_idx];
-        float distance_final = (float)distance_cali * RS_RESOLUTION_5mm_DISTANCE_COEF;
-        if (this->resolution_type_ == RS_RESOLUTION_10mm)
-        {
-            distance_final = (float)distance_cali * RS_RESOLUTION_10mm_DISTANCE_COEF;
-        }
-
-        float ref_pwr_temp = 0.0f;
-        int order = 3;
-        float sect1 = 5.0f;
-        float sect2 = 40.0f;
-        if (this->intensity_mode_ == 1)
-        {
-            if (distance_final <= sect1)
-            {
-                ref_pwr_temp = this->intensity_cali_[0][channel] * exp(this->intensity_cali_[1][channel] -
-                                                                       this->intensity_cali_[2][channel] * distance_final) +
-                               this->intensity_cali_[3][channel];
-            }
-            else
-            {
-                for (int i = 0; i < order; i++)
-                {
-                    ref_pwr_temp += this->intensity_cali_[i + 4][channel] * (pow(distance_final, order - 1 - i));
-                }
-            }
-        }
-        else if (this->intensity_mode_ == 2)
-        {
-            if (distance_final <= sect1)
-            {
-                ref_pwr_temp = this->intensity_cali_[0][channel] * exp(this->intensity_cali_[1][channel] -
-                                                                       this->intensity_cali_[2][channel] * distance_final) +
-                               this->intensity_cali_[3][channel];
-            }
-            else if (distance_final > sect1 && distance_final <= sect2)
-            {
-                for (int i = 0; i < order; i++)
-                {
-                    ref_pwr_temp += this->intensity_cali_[i + 4][channel] * (pow(distance_final, order - 1 - i));
-                }
-            }
-            else
-            {
-                float ref_pwr_t0 = 0.0f;
-                float ref_pwr_t1 = 0.0f;
-                for (int i = 0; i < order; i++)
-                {
-                    ref_pwr_t0 += this->intensity_cali_[i + 4][channel] * pow(40.0f, order - 1 - i);
-                    ref_pwr_t1 += this->intensity_cali_[i + 4][channel] * pow(39.0f, order - 1 - i);
-                }
-                ref_pwr_temp = 0.3f * (ref_pwr_t0 - ref_pwr_t1) * distance_final + ref_pwr_t0;
-            }
-        }
-        float ref_pwr = std::max(std::min(ref_pwr_temp, 500.0f), 4.0f);
-        float intensity_f = ((this->intensity_coef_ * ref_pwr) / real_pwr);
-        intensity_f = (int)intensity_f > 255 ? 255.0f : intensity_f;
-        return intensity_f;
-    }
-}
-
-
 } // namespace sensor
 } // namespace robosense
