@@ -5,7 +5,7 @@
 #include "driver/lidar_driver.hpp"
 #include "msg/lidar_points_msg.h"
 #include <iostream>
-#ifdef __GNUC__
+
 #include <ros/ros.h>
 #include <ros/publisher.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -23,7 +23,7 @@ struct PointXYZI
     double intensity;
 };
 
-void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
+void callback(const robosense::LidarPointsMsg<pcl::PointXYZI> &msg)
 {
 #if 0//def __GNUC__
     sensor_msgs::PointCloud2 ros_msg;
@@ -32,13 +32,13 @@ void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
     {
         cloud2->push_back(iter);
     }
-	pcl::toROSMsg(*cloud2, ros_msg);
+    pcl::toROSMsg(*cloud2, ros_msg);
 
     ros_msg.header.stamp = ros_msg.header.stamp.fromSec(msg.timestamp);
     ros_msg.header.frame_id = msg.parent_frame_id;
     ros_msg.header.seq = msg.seq;
-	
-	lidar_points_pub_.publish(ros_msg);
+
+    lidar_points_pub_.publish(ros_msg);
 #endif
     std::cout << "msg: " << msg.seq << std::endl;
 }
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     ros::NodeHandle nh_;
     lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points", 10);
 #endif
-    std::shared_ptr<robosense::sensor::LidarDriver<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<PointXYZI>>();
+    std::shared_ptr<robosense::sensor::LidarDriver<pcl::PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<pcl::PointXYZI>>();
     robosense::sensor::RSLiDAR_Driver_Param param;
 #ifdef __GNUC__
 	param.input_param.read_pcap = true;
@@ -59,6 +59,9 @@ int main(int argc, char *argv[])
 #endif
 	param.input_param.pcap_file_dir = "D:/workspace/rs_decoder/Debug/Ruby-Data.pcap";
     param.calib_path="/home/xzd/work/lidar_driver/conf";
+    param.input_param.read_pcap = true;
+    param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
+    param.calib_path = "/home/xzd/work/lidar_driver/conf";
     param.device_type = "RS128";
     demo_ptr->init(param);
     demo_ptr->regPointRecvCallback(callback);

@@ -80,15 +80,15 @@ namespace robosense
       {
         prev_time_ = getTime();
         new_time_ = getTime();
-        
-		input_param_ = _input_param;
+
+        input_param_ = _input_param;
         if (input_param_.read_pcap)
         {
           std::cout << "Opening PCAP file " << this->input_param_.pcap_file_dir << std::endl;
           char errbuf[PCAP_ERRBUF_SIZE];
           if ((this->pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf)) == NULL)
           {
-			ERROR << "Error opening rslidar pcap file! Abort!" << REND;
+            ERROR << "Error opening rslidar pcap file! Abort!" << REND;
             exit(1);
           }
           else
@@ -101,14 +101,11 @@ namespace robosense
 
             msop_filter << "udp dst port " << input_param_.msop_port;
             pcap_compile(pcap_, &this->pcap_msop_filter_, msop_filter.str().c_str(), 1, 0xFFFFFFFF);
-	//		pcap_compile(pcap_, &this->pcap_msop_filter_, msop_filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
+            //		pcap_compile(pcap_, &this->pcap_msop_filter_, msop_filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
             difop_filter << "udp dst port " << input_param_.difop_port;
             pcap_compile(pcap_, &this->pcap_difop_filter_, difop_filter.str().c_str(), 1, 0xFFFFFFFF);
-//			pcap_compile(pcap_, &this->pcap_difop_filter_, difop_filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
+            //			pcap_compile(pcap_, &this->pcap_difop_filter_, difop_filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
           }
-
-          // this->msop_fd_ = -1;
-          // this->difop_fd_ = -1;
         }
         else
         {
@@ -120,13 +117,15 @@ namespace robosense
       {
         if (!input_param_.read_pcap)
         {
-			msop_thread_.start.store(false);
-			difop_thread_.start.store(false);
-			msop_thread_.m_thread->detach();
-			difop_thread_.m_thread->detach();
+          msop_thread_.start.store(false);
+          difop_thread_.start.store(false);
+          msop_thread_.m_thread->detach();
+          difop_thread_.m_thread->detach();
         }
         else
         {
+          pcap_thread_.start.store(false);
+          pcap_thread_.m_thread->detach();
           this->input_param_.pcap_file_dir.clear();
           pcap_close(this->pcap_);
         }
@@ -143,10 +142,18 @@ namespace robosense
 
       void start()
       {
-		msop_thread_.start.store(true);
-		difop_thread_.start.store(true);
-		msop_thread_.m_thread.reset(new std::thread([this]() { getMsopPacket(); }));
-		difop_thread_.m_thread.reset(new std::thread([this]() { getDifopPacket(); }));  
+        if (!input_param_.read_pcap)
+        {
+          msop_thread_.start.store(true);
+          difop_thread_.start.store(true);
+          msop_thread_.m_thread.reset(new std::thread([this]() { getMsopPacket(); }));
+          difop_thread_.m_thread.reset(new std::thread([this]() { getDifopPacket(); }));
+        }
+        else
+        {
+          pcap_thread_.start.store(true);
+          pcap_thread_.m_thread.reset(new std::thread([this]() { getPcapPacket(); }));
+        }
       }
 
     private:
@@ -210,50 +217,65 @@ namespace robosense
         }
         return 0;
       }
+      void getPcapPacket()
+      {
+        while (pcap_thread_.start.load())
+        {
+          int ret;
+          struct pcap_pkthdr *header;
+          const u_char *pkt_data;
+          if ((ret = pcap_next_ex(this->pcap_, &header, &pkt_data)) >= 0)
+          {
+            if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
+            {
+              LidarPacketMsg msg;
+              memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
+              for (auto &iter : msop_cb_)
+              {
+                iter(msg);
+              }
+            }
+            else if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_difop_filter_, header, pkt_data)))
+            {
+              new_time_ = getTime();
+              LidarPacketMsg msg;
+              memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
+              for (auto &iter : difop_cb_)
+              {
+                iter(msg);
+              }
+              usleep(100000 - (new_time_ - prev_time_) * 1000000);
+              prev_time_ = getTime();
+            }
+            else
+            {
+              continue;
+            }
+          }
+        }
+      }
       void getMsopPacket()
       {
         while (msop_thread_.start.load())
         {
-			char *pRecvBuffer = (char *)malloc(RSLIDAR_PKT_LEN);
-			if (!input_param_.read_pcap)
-			{
-				msop_deadline_->expires_from_now(boost::posix_time::seconds(1));
-				boost::system::error_code ec = boost::asio::error::would_block;
-				std::size_t ret = 0;
+          char *pRecvBuffer = (char *)malloc(RSLIDAR_PKT_LEN);
 
-				msop_sock_ptr_->async_receive(boost::asio::buffer(pRecvBuffer, RSLIDAR_PKT_LEN),
-					boost::bind(&Input::handle_receive, _1, _2, &ec, &ret));
-				do
-				{
-					msop_io_service_.run_one();
-				} while (ec == boost::asio::error::would_block);
-				if (ec)
-				{
-					free(pRecvBuffer);
-					continue;
-				}
+          msop_deadline_->expires_from_now(boost::posix_time::seconds(1));
+          boost::system::error_code ec = boost::asio::error::would_block;
+          std::size_t ret = 0;
 
-			}
-			else
-			{
-				int ret;
-				struct pcap_pkthdr *header;
-				const u_char *pkt_data;
-				if ((ret = pcap_next_ex(this->pcap_, &header, &pkt_data)) >= 0)
-				{
-					if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
-					{
-						memcpy(pRecvBuffer, pkt_data + 42, RSLIDAR_PKT_LEN);
-					}
-					else
-					{
-						free(pRecvBuffer);
-						continue;
-					}
-				}
+          msop_sock_ptr_->async_receive(boost::asio::buffer(pRecvBuffer, RSLIDAR_PKT_LEN),
+                                        boost::bind(&Input::handle_receive, _1, _2, &ec, &ret));
+          do
+          {
+            msop_io_service_.run_one();
+          } while (ec == boost::asio::error::would_block);
+          if (ec)
+          {
+            free(pRecvBuffer);
+            continue;
+          }
 
-			}
-          
           LidarPacketMsg msg;
           memcpy(msg.packet.data(), pRecvBuffer, RSLIDAR_PKT_LEN);
           for (auto &iter : msop_cb_)
@@ -267,43 +289,23 @@ namespace robosense
       {
         while (difop_thread_.start.load())
         {
-    	  char *pRecvBuffer = (char *)malloc(RSLIDAR_PKT_LEN);
-		  if (!input_param_.read_pcap)
-		  {
-			  difop_deadline_->expires_from_now(boost::posix_time::seconds(1));
-			  boost::system::error_code ec = boost::asio::error::would_block;
-			  std::size_t ret = 0;
+          char *pRecvBuffer = (char *)malloc(RSLIDAR_PKT_LEN);
 
-			  difop_sock_ptr_->async_receive(boost::asio::buffer(pRecvBuffer, RSLIDAR_PKT_LEN),
-				  boost::bind(&Input::handle_receive, _1, _2, &ec, &ret));
-			  do
-			  {
-				  difop_io_service_.run_one();
-			  } while (ec == boost::asio::error::would_block);
-			  if (ec)
-			  {
-				  free(pRecvBuffer);
-				  continue;
-			  }
-		  }
-		  else
-		  {
-			  int ret;
-			  struct pcap_pkthdr *header;
-			  const u_char *pkt_data;
-			  if ((ret = pcap_next_ex(this->pcap_, &header, &pkt_data)) >= 0)
-			  {
-				  if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_difop_filter_, header, pkt_data)))
-				  {
-					  memcpy(pRecvBuffer, pkt_data + 42, RSLIDAR_PKT_LEN);
-				  }
-				  else
-				  {
-					  free(pRecvBuffer);
-					  continue;
-				  }
-			  }
-		  }
+          difop_deadline_->expires_from_now(boost::posix_time::seconds(1));
+          boost::system::error_code ec = boost::asio::error::would_block;
+          std::size_t ret = 0;
+
+          difop_sock_ptr_->async_receive(boost::asio::buffer(pRecvBuffer, RSLIDAR_PKT_LEN),
+                                         boost::bind(&Input::handle_receive, _1, _2, &ec, &ret));
+          do
+          {
+            difop_io_service_.run_one();
+          } while (ec == boost::asio::error::would_block);
+          if (ec)
+          {
+            free(pRecvBuffer);
+            continue;
+          }
 
           LidarPacketMsg msg;
           memcpy(msg.packet.data(), pRecvBuffer, RSLIDAR_PKT_LEN);
@@ -317,19 +319,20 @@ namespace robosense
 
     private:
       RSInput_Param input_param_;
-	  /* pcap file parse */
+      /* pcap file parse */
       pcap_t *pcap_;
       bpf_program pcap_msop_filter_;
       bpf_program pcap_difop_filter_;
       double prev_time_;
       double new_time_;
-	  /* live socket */
+      /* live socket */
       std::unique_ptr<udp::socket> msop_sock_ptr_;
       std::unique_ptr<udp::socket> difop_sock_ptr_;
       std::unique_ptr<deadline_timer> msop_deadline_;
       std::unique_ptr<deadline_timer> difop_deadline_;
       Thread msop_thread_;
       Thread difop_thread_;
+      Thread pcap_thread_;
       boost::asio::io_service msop_io_service_;
       boost::asio::io_service difop_io_service_;
 
