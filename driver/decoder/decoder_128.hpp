@@ -31,8 +31,8 @@ namespace sensor
 #define RS128_BLOCKS_PER_PKT (3)
 #define RS128_TEMPERATURE_MIN (31)
 #define RS128_TEMPERATURE_RANGE (50)
-#define RS128_DSR_TOFFSET (3.0)
-#define RS128_BLOCK_TDURATION (55.0)
+#define RS128_DSR_TOFFSET (3.23)
+#define RS128_BLOCK_TDURATION (55.55)
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
@@ -314,15 +314,8 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &v
 
         for (int channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
         {
-            int dsr_temp;
-            if (channel_idx >= 16)
-            {
-              dsr_temp = channel_idx % 16;
-            }
-            else
-            {
-              dsr_temp = channel_idx;
-            }
+            int dsr_temp = channel_idx/4;
+            dsr_temp = dsr_temp % 16;
 
             azimuth_corrected_float = azimuth_blk + (azimuth_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
             azimuth_corrected = this->azimuthCalibration(azimuth_corrected_float, channel_idx);
@@ -389,8 +382,6 @@ int Decoder128<vpoint>::decodeDifopPkt(const uint8_t *pkt)
 
     int pkt_rate = 6760;
     this->rpm_ = rs128_ptr->rpm;
-    // this->intensity_mode_ = 3;
-    // this->resolution_type_ = RS_RESOLUTION_5mm;
     this->echo_mode_ = rs128_ptr->return_mode;
     
     if (this->echo_mode_ == RS_ECHO_DUAL)
