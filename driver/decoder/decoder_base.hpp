@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright 2017 RoboSense All rights reserved.
+ * Copyright 2020 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
  * This software is provided to you directly by RoboSense and might
@@ -136,8 +136,8 @@ ST_Channel;
 
 typedef struct
 {
-    uint8_t main_sn[5];
-    uint8_t bottom_sn[5];
+    uint8_t top_ver[5];
+    uint8_t bottom_ver[5];
 } 
 #ifdef __GNUC__
 __attribute__((packed)) 

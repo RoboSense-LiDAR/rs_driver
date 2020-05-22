@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright 2017 RoboSense All rights reserved.
+ * Copyright 2020 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
  * This software is provided to you directly by RoboSense and might
@@ -28,7 +28,7 @@ namespace sensor
 #define RS16_BLOCKS_PER_PKT (12)
 #define RS16_BLOCK_TDURATION_DUAL (50)
 #define RS16_BLOCK_TDURATION_SINGLE (100)
-#define RS16_POINTS_CHANNEL_PER_SECOND (20000)
+#define RS16_POINTS_CHANNEL_PER_SECOND (18000)
 #define RS16_BLOCKS_CHANNEL_PER_PKT (12)
 #define RS16_MSOP_SYNC (0xA050A55A0A05AA55)
 #define RS16_BLOCK_ID (0xEEFF)
@@ -271,8 +271,8 @@ int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     }
 
     ST_Version *p_ver = &(rs16_ptr->version);
-    if ((p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] == 0x02 && p_ver->bottom_sn[2] >= 0x09) ||
-        (p_ver->bottom_sn[0] > 0x08) || (p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] > 0x02))
+    if ((p_ver->bottom_ver[0] == 0x08 && p_ver->bottom_ver[1] == 0x02 && p_ver->bottom_ver[2] >= 0x09) ||
+        (p_ver->bottom_ver[0] > 0x08) || (p_ver->bottom_ver[0] == 0x08 && p_ver->bottom_ver[1] > 0x02))
     {
         if (rs16_ptr->return_mode == 0x01 || rs16_ptr->return_mode == 0x02)
         {

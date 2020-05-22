@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright 2017 RoboSense All rights reserved.
+ * Copyright 2020 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
  * This software is provided to you directly by RoboSense and might
@@ -165,11 +165,7 @@ public:
     int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec,int &height);
     double getLidarTime(const uint8_t *pkt);
     void   loadCalibrationFile(std::string cali_path);
-    float intensityCalibration(float intensity, int32_t channel, int32_t distance, float temp);
     float computeTemperatue(const uint8_t temp_low, const uint8_t temp_high);
-private:
-    int   tempPacketNum;
-    float last_temp;
 };
 
 template <typename vpoint>
@@ -180,7 +176,7 @@ Decoder128<vpoint>::Decoder128(RSDecoder_Param &param) : DecoderBase<vpoint>(par
     this->Rz_ = 0;
     this->channel_num_ = 128;
 
-    if (param.max_distance > 230.0f || param.max_distance < 3.5f)
+    if (param.max_distance > 230.0f || param.max_distance < 2.0f)
     {
         this->max_distance_ = 230.0f;
     }
@@ -191,18 +187,15 @@ Decoder128<vpoint>::Decoder128(RSDecoder_Param &param) : DecoderBase<vpoint>(par
 
     if (param.min_distance > 230.0f || param.min_distance > param.max_distance)
     {
-        this->min_distance_ = 3.5f;
+        this->min_distance_ = 2.0f;
     }
     else
     {
         this->min_distance_ = param.min_distance;
     }
 
-    int pkt_rate = 6760;
+    int pkt_rate = 6000;
     this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
-
-    tempPacketNum = 0;
-    last_temp = 31.0;
 
 //    rs_print(RS_INFO, "[RS128] Constructor.");
 }
@@ -254,19 +247,8 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &v
 
     float azimuth_corrected_float;
     int azimuth_corrected;
-    float temperature = last_temp;
+    float temperature = computeTemperatue(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
     int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
-
-    if(tempPacketNum < 20000 && tempPacketNum > 0)
-    {
-        tempPacketNum++;
-    }
-    else
-    {
-        temperature = computeTemperatue(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
-        last_temp = temperature;
-        tempPacketNum = 0;
-    }
 
     for (int blk_idx = 0; blk_idx < RS128_BLOCKS_PER_PKT; blk_idx++)
     {
@@ -306,11 +288,6 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &v
         }
 
         float azimuth_diff = (float)((36000 + azi_prev - azi_cur) % 36000);
-        // Ingnore the block if the azimuth change abnormal
-        if(azimuth_diff <= 0.0 || azimuth_diff > 40.0)
-        {
-          continue;
-        }
 
         for (int channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
         {
@@ -380,7 +357,7 @@ int Decoder128<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         return -2;
     }
 
-    int pkt_rate = 6760;
+    int pkt_rate = 6000;
     this->rpm_ = rs128_ptr->rpm;
     this->echo_mode_ = rs128_ptr->return_mode;
     

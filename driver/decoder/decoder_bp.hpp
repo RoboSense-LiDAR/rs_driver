@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright 2017 RoboSense All rights reserved.
+ * Copyright 2020 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
  * This software is provided to you directly by RoboSense and might
@@ -26,7 +26,7 @@ namespace sensor
 {
 #define RSBP_CHANNELS_PER_BLOCK 32
 #define RSBP_BLOCKS_PER_PKT 12
-#define RSBP_POINTS_CHANNEL_PER_SECOND (20000)
+#define RSBP_POINTS_CHANNEL_PER_SECOND (18000)
 #define RSBP_BLOCKS_CHANNEL_PER_PKT (12)
 #define RSBP_MSOP_SYNC (0xA050A55A0A05AA55)
 #define RSBP_BLOCK_ID (0xEEFF)
@@ -274,8 +274,8 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     }
 
     ST_Version *p_ver = &(rsBp_ptr->version);
-    if ((p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] == 0x02 && p_ver->bottom_sn[2] >= 0x09) ||
-        (p_ver->bottom_sn[0] > 0x08) || (p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] > 0x02))
+    if ((p_ver->bottom_ver[0] == 0x08 && p_ver->bottom_ver[1] == 0x02 && p_ver->bottom_ver[2] >= 0x09) ||
+        (p_ver->bottom_ver[0] > 0x08) || (p_ver->bottom_ver[0] == 0x08 && p_ver->bottom_ver[1] > 0x02))
     {
         if (rsBp_ptr->return_mode == 0x01 || rsBp_ptr->return_mode == 0x02)
         {

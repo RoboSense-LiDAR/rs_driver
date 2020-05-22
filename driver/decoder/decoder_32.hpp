@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright 2017 RoboSense All rights reserved.
+ * Copyright 2020 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
  * This software is provided to you directly by RoboSense and might
@@ -26,7 +26,7 @@ namespace sensor
 {
 #define RS32_CHANNELS_PER_BLOCK (32)
 #define RS32_BLOCKS_PER_PKT (12)
-#define RS32_POINTS_CHANNEL_PER_SECOND (20000)
+#define RS32_POINTS_CHANNEL_PER_SECOND (18000)
 #define RS32_BLOCKS_CHANNEL_PER_PKT (12)
 #define RS32_MSOP_SYNC (0xA050A55A0A05AA55)
 #define RS32_BLOCK_ID (0xEEFF)
@@ -123,13 +123,13 @@ Decoder32<vpoint>::Decoder32(RSDecoder_Param &param) : DecoderBase<vpoint>(param
     this->Ry_ = -0.01087;
     this->Rz_ = 0;
     this->channel_num_ = 32;
-    if (this->max_distance_ > 200.0f || this->max_distance_ < 0.2f)
+    if (this->max_distance_ > 200.0f || this->max_distance_ < 0.4f)
     {
         this->max_distance_ = 200.0f;
     }
     if (this->min_distance_ > 200.0f || this->min_distance_ > this->max_distance_)
     {
-        this->min_distance_ = 0.2f;
+        this->min_distance_ = 0.4f;
     }
 //    rs_print(RS_INFO, "[RS32] Constructor.");
 }
@@ -202,11 +202,6 @@ int Decoder32<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
         }
 
         float azimuth_diff = (float)((36000 + azi_prev - azi_cur) % 36000);
-        // Ingnore the block if the azimuth change abnormal
-        if (azimuth_diff <= 0.0 || azimuth_diff > 25.0)
-        {
-            continue;
-        }
         float azimuth_channel;
         for (int channel_idx = 0; channel_idx < RS32_CHANNELS_PER_BLOCK; channel_idx++)
         {
@@ -287,8 +282,8 @@ int32_t Decoder32<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     }
 
     ST_Version *p_ver = &(rs32_ptr->version);
-    if ((p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] == 0x02 && p_ver->bottom_sn[2] >= 0x09) ||
-        (p_ver->bottom_sn[0] > 0x08) || (p_ver->bottom_sn[0] == 0x08 && p_ver->bottom_sn[1] > 0x02))
+    if ((p_ver->bottom_ver[0] == 0x08 && p_ver->bottom_ver[1] == 0x02 && p_ver->bottom_ver[2] >= 0x09) ||
+        (p_ver->bottom_ver[0] > 0x08) || (p_ver->bottom_ver[0] == 0x08 && p_ver->bottom_ver[1] > 0x02))
     {
         if (rs32_ptr->return_mode == 0x01 || rs32_ptr->return_mode == 0x02)
         {
