@@ -185,11 +185,7 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
             azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth);
         }
         float azimuth_diff = (float)((36000 + azi_prev - azi_cur) % 36000);
-        // Ingnore the block if the azimuth change abnormal
-        if (azimuth_diff <= 0.0 || azimuth_diff > 75.0)
-        {
-            continue;
-        }        
+       
         float azimuth_channel;
         for (int channel_idx = 0; channel_idx < RS16_CHANNELS_PER_BLOCK; channel_idx++)
         {
