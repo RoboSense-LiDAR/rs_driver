@@ -212,11 +212,10 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
             azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
 
             int idx_map = channel_idx;
-            int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[idx_map].distance);
 
             float intensity = mpkt_ptr->blocks[blk_idx].channels[idx_map].intensity;
-            float distance_cali = this->distanceCalibration(distance, channel_idx, temperature);
-            distance_cali = distance_cali * RS_RESOLUTION_5mm_DISTANCE_COEF;
+            int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[idx_map].distance);
+            float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
 
             int angle_horiz_ori;
             int angle_horiz = (azimuth_final + 36000) % 36000;
@@ -273,22 +272,13 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         return -2;
     }
 
-    ST_Version *p_ver = &(rsBp_ptr->version);
-    if ((p_ver->bottom_ver[0] == 0x08 && p_ver->bottom_ver[1] == 0x02 && p_ver->bottom_ver[2] >= 0x09) ||
-        (p_ver->bottom_ver[0] > 0x08) || (p_ver->bottom_ver[0] == 0x08 && p_ver->bottom_ver[1] > 0x02))
+    if (rsBp_ptr->return_mode == 0x01 || rsBp_ptr->return_mode == 0x02)
     {
-        if (rsBp_ptr->return_mode == 0x01 || rsBp_ptr->return_mode == 0x02)
-        {
-            this->echo_mode_ = rsBp_ptr->return_mode;
-        }
-        else
-        {
-            this->echo_mode_ = 0;
-        }
+        this->echo_mode_ = rsBp_ptr->return_mode;
     }
     else
     {
-        this->echo_mode_ = 1;
+        this->echo_mode_ = 0;
     }
 
     int pkt_rate = ceil(RSBP_POINTS_CHANNEL_PER_SECOND / RSBP_BLOCKS_CHANNEL_PER_PKT);

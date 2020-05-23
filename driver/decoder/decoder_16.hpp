@@ -124,7 +124,6 @@ Decoder16<vpoint>::Decoder16(RSDecoder_Param &param) : DecoderBase<vpoint>(param
     this->Ry_ = -0.01088;
     this->Rz_ = 0;
     this->channel_num_ = 16;
-    this->temperature_max_ = 71;
     if (this->max_distance_ > 200.0f || this->max_distance_ < 0.2f)
     {
         this->max_distance_ = 200.0f;
@@ -197,15 +196,15 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
             }
             else
             {
-                azimuth_channel = azimuth_blk + azimuth_diff * (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) / RS16_BLOCK_TDURATION_SINGLE;
+                azimuth_channel = azimuth_blk + azimuth_diff * (RS16_FIRING_TDURATION * (channel_idx / 16) 
+                    + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) / RS16_BLOCK_TDURATION_SINGLE;
             }
             azimuth_final = ((int)round(azimuth_channel)) % 36000;
             int idx_map = channel_idx;
-            int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[idx_map].distance);
             float intensity = mpkt_ptr->blocks[blk_idx].channels[idx_map].intensity;
 
-            float distance_cali = this->distanceCalibration(distance, channel_idx, temperature);
-            distance_cali = distance_cali * RS_RESOLUTION_5mm_DISTANCE_COEF;
+            int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[idx_map].distance);
+            float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
 
             int angle_horiz_ori;
             int angle_horiz = (azimuth_final + 36000) % 36000;
@@ -266,23 +265,15 @@ int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         return -2;
     }
 
-    ST_Version *p_ver = &(rs16_ptr->version);
-    if ((p_ver->bottom_ver[0] == 0x08 && p_ver->bottom_ver[1] == 0x02 && p_ver->bottom_ver[2] >= 0x09) ||
-        (p_ver->bottom_ver[0] > 0x08) || (p_ver->bottom_ver[0] == 0x08 && p_ver->bottom_ver[1] > 0x02))
+    if (rs16_ptr->return_mode == 0x01 || rs16_ptr->return_mode == 0x02)
     {
-        if (rs16_ptr->return_mode == 0x01 || rs16_ptr->return_mode == 0x02)
-        {
-            this->echo_mode_ = rs16_ptr->return_mode;
-        }
-        else
-        {
-            this->echo_mode_ = 0;
-        }
+        this->echo_mode_ = rs16_ptr->return_mode;
     }
     else
     {
-        this->echo_mode_ = 1;
+        this->echo_mode_ = 0;
     }
+
 
     int pkt_rate = ceil(RS16_POINTS_CHANNEL_PER_SECOND / RS16_BLOCKS_CHANNEL_PER_PKT);
     if (this->echo_mode_ == RS_ECHO_LAST || this->echo_mode_ == RS_ECHO_MAX)

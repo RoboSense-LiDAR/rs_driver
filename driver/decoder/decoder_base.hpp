@@ -231,8 +231,6 @@ protected:
     int start_angle_;
     int end_angle_;
     bool angle_flag_;
-    int temperature_min_;
-    int temperature_max_;
     uint32_t pkts_per_frame_;
     uint32_t pkt_counter_;
     uint16_t mode_split_frame_; // 1 - angle,  2 - theoretical packets; 3 - setting packets
@@ -244,14 +242,11 @@ protected:
     uint32_t cali_data_flag_;
     float vert_angle_list_[128];
     float hori_angle_list_[128];
-    int32_t channel_cali_[128][51];
-    float channel_dis_cali_[4][129];
     std::vector<double> cos_lookup_table_;
     std::vector<double> sin_lookup_table_;
 
 protected:
     virtual float computeTemperatue(const uint16_t temp_raw);
-    virtual float distanceCalibration(int32_t distance, int32_t channel, float temp);
     virtual int32_t azimuthCalibration(float azimuth, int32_t channel);
     virtual int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec,int &height) = 0;
     virtual int32_t decodeDifopPkt(const uint8_t *pkt) = 0;
@@ -272,11 +267,8 @@ DecoderBase<vpoint>::DecoderBase(RSDecoder_Param &param) : rpm_(600),
                                                     min_distance_(param.min_distance),
                                                     mode_split_frame_(param.mode_split_frame),
                                                     num_pkts_split_(param.num_pkts_split),
-                                                    cut_angle_(param.cut_angle * 100),
-                                                    temperature_min_(31),
-                                                    temperature_max_(81)
+                                                    cut_angle_(param.cut_angle * 100)
 {
-    memset(this->channel_cali_, 0, sizeof(int) * 128 * 51);
     if (cut_angle_ > 36000)
     {
         cut_angle_ = 0;
@@ -392,36 +384,6 @@ float DecoderBase<vpoint>::computeTemperatue(const uint16_t temp_raw)
     }
 
     return temp;
-}
-
-template <typename vpoint>
-float DecoderBase<vpoint>::distanceCalibration(int distance, int channel, float temp)
-{
-    int temp_idx = (int)floor(temp + 0.5);
-    if (temp_idx < temperature_min_)
-    {
-        temp_idx = 0;
-    }
-    else if (temp_idx > temperature_max_)
-    {
-        temp_idx = temperature_max_ - temperature_min_;
-    }
-    else
-    {
-        temp_idx = temp_idx - temperature_min_;
-    }
-    float estimate_distance = 0.0;
-    float dis_ret = this->channel_cali_[channel][temp_idx];
-    if (distance < dis_ret)
-    {
-        estimate_distance = 0.0;
-    }
-    else
-    {
-        estimate_distance = (float)(distance - dis_ret);
-    }
-
-    return estimate_distance;
 }
 
 template <typename vpoint>

@@ -296,13 +296,10 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &v
 
             azimuth_corrected_float = azimuth_blk + (azimuth_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
             azimuth_corrected = this->azimuthCalibration(azimuth_corrected_float, channel_idx);
-
-            int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
-
+            
             float intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
-
-            float distance_cali = this->distanceCalibration(distance, channel_idx, temperature);
-            distance_cali = distance_cali * RS_RESOLUTION_5mm_DISTANCE_COEF;
+            int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
+            float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
 
             int angle_horiz_ori = (int)(azimuth_corrected_float + 36000) % 36000;
             int angle_horiz = (azimuth_corrected + 36000) % 36000;
