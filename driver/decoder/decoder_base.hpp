@@ -76,7 +76,17 @@ ST_Timestamp;
 
 typedef struct
 {
-    uint64_t sync;
+    uint8_t sec[6];
+    uint32_t ns;
+}
+#ifdef __GNUC__
+__attribute__((packed)) 
+#endif
+ST_TimestampUTC;
+
+typedef struct
+{
+    uint64_t id;
     uint8_t reserved1[12];
     ST_Timestamp timestamp;
     uint8_t lidar_type;
@@ -393,11 +403,11 @@ int DecoderBase<vpoint>::azimuthCalibration(float azimuth, int channel)
 
     if (azimuth > 0.0 && azimuth < 3000.0)
     {
-        azimuth = azimuth + this->hori_angle_list_[channel] * 100 + 36000.0f;
+        azimuth = azimuth + this->hori_angle_list_[channel] + 36000.0f;
     }
     else
     {
-        azimuth = azimuth + this->hori_angle_list_[channel] * 100;
+        azimuth = azimuth + this->hori_angle_list_[channel];
     }
     azi_ret = (int)azimuth;
     azi_ret %= 36000;

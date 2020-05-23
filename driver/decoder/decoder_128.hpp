@@ -24,9 +24,9 @@ namespace robosense
 {
 namespace sensor
 {
-#define RS128_MSOP_SYNC (0x5A05AA55) // big endian
+#define RS128_MSOP_ID (0x5A05AA55) // big endian
 #define RS128_BLOCK_ID (0xFE)
-#define RS128_DIFOP_SYNC (0x555511115A00FFA5) // big endian
+#define RS128_DIFOP_ID (0x555511115A00FFA5) // big endian
 #define RS128_CHANNELS_PER_BLOCK (128)
 #define RS128_BLOCKS_PER_PKT (3)
 #define RS128_TEMPERATURE_MIN (31)
@@ -51,12 +51,12 @@ ST128_MsopBlock;
 
 typedef struct
 {
-    uint32_t sync;
+    uint32_t id;
     uint8_t reserved1[3];
     uint8_t wave_mode;
     uint8_t temp_low;
     uint8_t temp_high;
-    ST_Timestamp timestamp;
+    ST_TimestampUTC timestamp_utc;
     uint8_t reserved2[60];
 } 
 #ifdef __GNUC__
@@ -126,12 +126,12 @@ ST128_Version;
 
 typedef struct
 {
-    uint64_t sync;
+    uint64_t id;
     uint16_t rpm;
     ST128_EthNet eth;
     ST_FOV fov;
     uint16_t reserved_0;
-    uint16_t lock_phase_angle;
+    uint16_t phase_lock_angle;
     ST128_Version version;
     uint8_t reserved_1[229];
     ST_SN sn;
@@ -204,15 +204,22 @@ template <typename vpoint>
 double Decoder128<vpoint>::getLidarTime(const uint8_t *pkt)
 {
     ST128_MsopPkt *mpkt_ptr = (ST128_MsopPkt *)pkt;
-    std::tm stm;
-    memset(&stm, 0, sizeof(stm));
-    stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
-    stm.tm_mon = mpkt_ptr->header.timestamp.month - 1;
-    stm.tm_mday = mpkt_ptr->header.timestamp.day;
-    stm.tm_hour = mpkt_ptr->header.timestamp.hour;
-    stm.tm_min = mpkt_ptr->header.timestamp.minute;
-    stm.tm_sec = mpkt_ptr->header.timestamp.second;
-    return std::mktime(&stm) + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms) / 1000.0 + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
+    union u_ts
+    {
+        uint8_t data[8];
+        double ts;
+    } t;
+    
+    t.data[7] = 0;
+    t.data[6] = 0;
+    t.data[5] = mpkt_ptr->header.timestamp_utc.sec[0];
+    t.data[4] = mpkt_ptr->header.timestamp_utc.sec[1];
+    t.data[3] = mpkt_ptr->header.timestamp_utc.sec[2];
+    t.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
+    t.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
+    t.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
+    
+    return t.ts;
 }
 
 template <typename vpoint>
@@ -239,9 +246,9 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &v
 { 
     height=128;
     ST128_MsopPkt *mpkt_ptr = (ST128_MsopPkt *)pkt;
-    if (mpkt_ptr->header.sync != RS128_MSOP_SYNC)
+    if (mpkt_ptr->header.id != RS128_MSOP_ID)
     {
-//      rs_print(RS_ERROR, "[RS128] MSOP pkt sync no match.");
+//      rs_print(RS_ERROR, "[RS128] MSOP pkt ID no match.");
       return -2;
     }
 
@@ -303,7 +310,7 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &v
 
             int angle_horiz_ori = (int)(azimuth_corrected_float + 36000) % 36000;
             int angle_horiz = (azimuth_corrected + 36000) % 36000;
-            int angle_vert = (((int)(this->vert_angle_list_[channel_idx] * 100) % 36000) + 36000) % 36000;
+            int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
             vpoint point;
             if ((distance_cali > this->max_distance_ || distance_cali < this->min_distance_)
@@ -348,9 +355,9 @@ template <typename vpoint>
 int Decoder128<vpoint>::decodeDifopPkt(const uint8_t *pkt)
 {
     ST128_DifopPkt *rs128_ptr = (ST128_DifopPkt *)pkt;
-    if (rs128_ptr->sync != RS128_DIFOP_SYNC)
+    if (rs128_ptr->id != RS128_DIFOP_ID)
     {
-//		rs_print(RS_ERROR, "[RS128] DIFOP pkt sync no match.");
+//		rs_print(RS_ERROR, "[RS128] DIFOP pkt ID no match.");
         return -2;
     }
 
@@ -358,11 +365,11 @@ int Decoder128<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     this->rpm_ = rs128_ptr->rpm;
 
     if (rs128_ptr->return_mode == 0x01 || rs128_ptr->return_mode == 0x02)
-    {
+    {//1,2: single echo
         this->echo_mode_ = rs128_ptr->return_mode;
     }
     else
-    {
+    {// 3: dual echo
         this->echo_mode_ = RS_ECHO_DUAL;
     }
     
@@ -400,7 +407,7 @@ int Decoder128<vpoint>::decodeDifopPkt(const uint8_t *pkt)
                 {
                     neg = -1;
                 }
-                this->vert_angle_list_[i] = (mid * 256 + msb) * neg * 0.01f;
+                this->vert_angle_list_[i] = (mid * 256 + msb) * neg;// * 0.01f;
 
                 // horizontal offset angle
                 lsb = rs128_ptr->hori_angle_cali[i].sign;
@@ -414,7 +421,7 @@ int Decoder128<vpoint>::decodeDifopPkt(const uint8_t *pkt)
                 {
                     neg = -1;
                 }
-                this->hori_angle_list_[i] = (mid * 256 + msb) * neg * 0.01f;
+                this->hori_angle_list_[i] = (mid * 256 + msb) * neg;// * 0.01f;
             }
             this->cali_data_flag_ = this->cali_data_flag_ | 0x2;
         }

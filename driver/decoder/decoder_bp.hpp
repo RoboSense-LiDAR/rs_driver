@@ -28,9 +28,9 @@ namespace sensor
 #define RSBP_BLOCKS_PER_PKT 12
 #define RSBP_POINTS_CHANNEL_PER_SECOND (18000)
 #define RSBP_BLOCKS_CHANNEL_PER_PKT (12)
-#define RSBP_MSOP_SYNC (0xA050A55A0A05AA55)
+#define RSBP_MSOP_ID (0xA050A55A0A05AA55)
 #define RSBP_BLOCK_ID (0xEEFF)
-#define RSBP_DIFOP_SYNC (0x555511115A00FFA5)
+#define RSBP_DIFOP_ID (0x555511115A00FFA5)
 #define RSBP_CHANNEL_TOFFSET (3)
 #define RSBP_FIRING_TDURATION (50)
 
@@ -75,12 +75,12 @@ STBP_Intensity;
 
 typedef struct
 {
-    uint64_t sync;
+    uint64_t id;
     uint16_t rpm;
     ST_EthNet eth;
     ST_FOV fov;
     uint16_t reserved0;
-    uint16_t lock_phase_angle;
+    uint16_t phase_lock_angle;
     ST_Version version;
     STBP_Intensity intensity;
     ST_SN sn;
@@ -155,9 +155,9 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
 {
     height = 32;
     STBP_MsopPkt *mpkt_ptr = (STBP_MsopPkt *)pkt;
-    if (mpkt_ptr->header.sync != RSBP_MSOP_SYNC)
+    if (mpkt_ptr->header.id != RSBP_MSOP_ID)
     {
-//      rs_print(RS_ERROR, "[RSBP] MSOP pkt sync no match.");
+//      rs_print(RS_ERROR, "[RSBP] MSOP pkt ID no match.");
       return -2;
     }
 
@@ -221,7 +221,7 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &ve
             int angle_horiz = (azimuth_final + 36000) % 36000;
             int angle_vert;
             angle_horiz_ori = (int)(azimuth_channel + 36000) % 36000;
-            angle_vert = (((int)(this->vert_angle_list_[channel_idx] * 100) % 36000) + 36000) % 36000;
+            angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
             //store to pointcloud buffer
             vpoint point;
@@ -266,9 +266,9 @@ template <typename vpoint>
 int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
 {
     STBP_DifopPkt *rsBp_ptr = (STBP_DifopPkt *)pkt;
-    if (rsBp_ptr->sync != RSBP_DIFOP_SYNC)
+    if (rsBp_ptr->id != RSBP_DIFOP_ID)
     {
-//		rs_print(RS_ERROR, "[RSBP] DIFOP pkt sync no match.");
+//		rs_print(RS_ERROR, "[RSBP] DIFOP pkt ID no match.");
         return -2;
     }
 
@@ -292,13 +292,13 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     if (!(this->cali_data_flag_ & 0x2))
     {
         bool angle_flag = true;
-        const uint8_t *p_pitch_cali;
+        const uint8_t *p_ver_cali;
 
-        p_pitch_cali = ((STBP_DifopPkt *)pkt)->pitch_cali;
+        p_ver_cali = ((STBP_DifopPkt *)pkt)->pitch_cali;
 
-        if ((p_pitch_cali[0] == 0x00 || p_pitch_cali[0] == 0xFF) 
-            && (p_pitch_cali[1] == 0x00 || p_pitch_cali[1] == 0xFF) 
-            && (p_pitch_cali[2] == 0x00 || p_pitch_cali[2] == 0xFF))
+        if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) 
+            && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) 
+            && (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF))
         {
             angle_flag = false;
         }
@@ -307,10 +307,13 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         {
             int lsb, mid, msb, neg = 1;
 
-            const uint8_t *p_yaw_cali = ((STBP_DifopPkt *)pkt)->yaw_cali;
+            const uint8_t *p_hori_cali = ((STBP_DifopPkt *)pkt)->yaw_cali;
             for (int i = 0; i < this->channel_num_; i++)
             {
-                lsb = p_pitch_cali[i * 3];
+                /* vert angle calibration data */
+                lsb = p_ver_cali[i * 3];
+                mid = p_ver_cali[i * 3 + 1];
+                msb = p_ver_cali[i * 3 + 2];
                 if (lsb == 0)
                 {
                     neg = 1;
@@ -319,10 +322,13 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
                 {
                     neg = -1;
                 }
-                mid = p_pitch_cali[i * 3 + 1];
-                msb = p_pitch_cali[i * 3 + 2];
-                this->vert_angle_list_[i] = (mid * 256 + msb) * neg * 0.01f; // / 180 * M_PI;
-                lsb = p_yaw_cali[i * 3];
+                
+                this->vert_angle_list_[i] = (mid * 256 + msb) * neg ; // / 180 * M_PI;
+
+                /* horizon angle calibration data */
+                lsb = p_hori_cali[i * 3];
+                mid = p_hori_cali[i * 3 + 1];
+                msb = p_hori_cali[i * 3 + 2];
                 if (lsb == 0)
                 {
                     neg = 1;
@@ -331,9 +337,8 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
                 {
                     neg = -1;
                 }
-                mid = p_yaw_cali[i * 3 + 1];
-                msb = p_yaw_cali[i * 3 + 2];
-                this->hori_angle_list_[i] = (mid * 256 + msb) * neg * 0.001f * 100;
+                
+                this->hori_angle_list_[i] = (mid * 256 + msb) * neg;
             }
 
             this->cali_data_flag_ = this->cali_data_flag_ | 0x2;
