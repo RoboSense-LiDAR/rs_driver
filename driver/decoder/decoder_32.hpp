@@ -284,7 +284,7 @@ int32_t Decoder32<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     }
     else
     {
-        this->echo_mode_ = 0;
+        this->echo_mode_ = RS_ECHO_DUAL;
     }
 
     int pkt_rate = ceil(RS32_POINTS_CHANNEL_PER_SECOND / RS32_BLOCKS_CHANNEL_PER_PKT);

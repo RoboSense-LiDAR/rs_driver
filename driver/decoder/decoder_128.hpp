@@ -356,7 +356,15 @@ int Decoder128<vpoint>::decodeDifopPkt(const uint8_t *pkt)
 
     int pkt_rate = 6000;
     this->rpm_ = rs128_ptr->rpm;
-    this->echo_mode_ = rs128_ptr->return_mode;
+
+    if (rs128_ptr->return_mode == 0x01 || rs128_ptr->return_mode == 0x02)
+    {
+        this->echo_mode_ = rs128_ptr->return_mode;
+    }
+    else
+    {
+        this->echo_mode_ = RS_ECHO_DUAL;
+    }
     
     if (this->echo_mode_ == RS_ECHO_DUAL)
     {

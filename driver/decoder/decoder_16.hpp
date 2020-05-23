@@ -271,7 +271,7 @@ int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t *pkt)
     }
     else
     {
-        this->echo_mode_ = 0;
+        this->echo_mode_ = RS_ECHO_DUAL;
     }
 
 
