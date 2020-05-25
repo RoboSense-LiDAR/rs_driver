@@ -85,7 +85,6 @@ include_directories(${PROJECT_SOURCE_DIR})
 
 add_executable(demo
             demo/demo.cpp
-            utility/thread_pool.cpp
             )
 
 target_link_libraries(demo

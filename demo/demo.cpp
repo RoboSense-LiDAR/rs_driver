@@ -60,12 +60,12 @@ void callback(const robosense::LidarPointsMsg<pcl::PointXYZI> &msg)
     ros_msg.header.seq = msg.seq;
 
     lidar_points_pub_.publish(ros_msg);
-    std::cout << "msg: " << msg.seq << std::endl;
+    std::cout << "msg: " << msg.seq <<"pointcloud size: " << msg.cloudPtr->size()<< std::endl;
 }
 #else
 void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
 {
-    std::cout << "msg: " << msg.seq < < < < "pointcloud size: " << msg.cloudPtr->size() << std::endl;
+    std::cout << "msg: " << msg.seq << "pointcloud size: " << msg.cloudPtr->size() << std::endl;
 }
 #endif
 
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 #ifdef __GNUC__
     ros::init(argc, argv, "driver", ros::init_options::NoSigintHandler);
     ros::NodeHandle nh_;
-    lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("points", 10);
+    lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("rslidar_points", 10);
     std::shared_ptr<robosense::sensor::LidarDriver<pcl::PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<pcl::PointXYZI>>();
 #else
     std::shared_ptr<robosense::sensor::LidarDriver<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<PointXYZI>>();

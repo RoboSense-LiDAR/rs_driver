@@ -20,16 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include "msg/lidar_points_msg.h"
-#include "msg/lidar_packet_msg.h"
-#include "msg/lidar_scan_msg.h"
-#include "utility/lock_queue.h"
-#include "utility/thread_pool.hpp"
-#include "utility/time.h"
-#include "utility/prompt.h"
-#include "utility/error_code.h"
-#include "driver/input.hpp"
-#include "driver/decoder/decoder_factory.hpp"
+#include "driver/lidar_driver.hpp"
 
 namespace robosense
 {

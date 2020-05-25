@@ -28,7 +28,6 @@
 #include <sstream>
 #include <ctime>
 #include <math.h>
-#include "driver/decoder/rs_print.hpp"
 namespace robosense
 {
 namespace sensor
