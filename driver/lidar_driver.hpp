@@ -204,7 +204,7 @@ namespace robosense
         {
           LidarPacketMsg pkt = difop_pkt_queue_.m_quque.front();
           difop_pkt_queue_.pop();
-          lidar_decoder_ptr_->processDifopPkt(pkt.packet.data());
+          processDifopPackets(pkt);
           runCallBack(pkt);
         }
         difop_pkt_queue_.is_task_finished.store(true);

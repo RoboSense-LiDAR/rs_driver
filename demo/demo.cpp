@@ -19,13 +19,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#ifndef __GNUC__
-#include <boost\asio.hpp>
-#include <Windows.h>
-#endif
-#include "driver/lidar_driver.hpp"
-#include "msg/lidar_points_msg.h"
-#include <iostream>
 #ifdef __GNUC__
 #include <ros/ros.h>
 #include <ros/publisher.h>
@@ -34,7 +27,11 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 ros::Publisher lidar_points_pub_;
+#else
+#include <boost\asio.hpp>
+#include <Windows.h>
 #endif
+#include "interface/lidar_interface.h"
 bool start_ = true;
 struct PointXYZI
 {
@@ -75,9 +72,9 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "driver", ros::init_options::NoSigintHandler);
     ros::NodeHandle nh_;
     lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("rslidar_points", 10);
-    std::shared_ptr<robosense::sensor::LidarDriver<pcl::PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<pcl::PointXYZI>>();
+    std::shared_ptr<robosense::sensor::LidarDriverInterface<pcl::PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriverInterface<pcl::PointXYZI>>();
 #else
-    std::shared_ptr<robosense::sensor::LidarDriver<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriver<PointXYZI>>();
+    std::shared_ptr<robosense::sensor::LidarDriverInterface<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriverInterface<PointXYZI>>();
 #endif
 
 
@@ -88,7 +85,7 @@ int main(int argc, char *argv[])
     param.input_param.read_pcap = TRUE;
 #endif
     param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
-    param.calib_path = "/home/xzd/work/lidar_driver/conf";
+    param.calib_path = "/home/xzd/work/lidar_driver/parameter";
     param.device_type = "RS128";
     demo_ptr->init(param);
     demo_ptr->regPointRecvCallback(callback);
