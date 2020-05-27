@@ -21,32 +21,32 @@
  *****************************************************************************/
 
 #pragma once
-#include <string>
-#include <array>
+#include "common/common_header.h"
 
 namespace robosense
 {
 
-/**
+  namespace lidar
+  {
+    /**
    * @brief Lidar packet Message for Robosense SDK.
    * @detail Robosense LidarPacketMsg is defined for passing lidar single packet such like difop packet accross different modules
    *         If ROS is turned on , we provide translation functions between ROS message and Robosense message
    */
 
-
 #ifdef _MSC_VER
 #pragma pack(push, 2)
-typedef	struct eLidarPacketMsg
+    typedef struct LidarPacketMsg
 #elif __GNUC__
-typedef	struct alignas(16) eLidarPacketMsg
+    struct alignas(16) LidarPacketMsg
 #endif
-{
-  double timestamp = 0.0;
-  std::string frame_id = "";
-  std::array<uint8_t, 1248> packet{}; ///< lidar single packet
-} LidarPacketMsg;
+    {
+      double timestamp = 0.0;
+      std::string frame_id = "";
+      std::array<uint8_t, 1248> packet{}; ///< lidar single packet
+    };
 #ifdef _MSC_VER
 #pragma pack(pop)
 #endif
-
+  } // namespace lidar
 } // namespace robosense

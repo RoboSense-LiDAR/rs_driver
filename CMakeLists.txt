@@ -38,21 +38,15 @@ string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 #========================
 # debug
 #========================
-set(RS_POINT_COMPLEX FALSE)
-message("RS_POINT_COMPLEX is ${RS_POINT_COMPLEX}")
-if(RS_POINT_COMPLEX)
-message("add RS_POINT_COMPLEX macro!!")
-add_definitions(-DRS_POINT_COMPLEX)
-endif(RS_POINT_COMPLEX)
 
-add_definitions(-DDEBUG_LEVEL=0)
 add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
-
 cmake_policy(SET CMP0048 NEW)
 set(CMAKE_BUILD_TYPE Release)
 add_definitions(-O3)
 add_definitions(-std=c++11)
 add_compile_options(-W)
+
+find_package(Boost REQUIRED)
 
 find_package(PCL QUIET)
 include_directories(${PCL_INCLUDE_DIRS})
@@ -82,16 +76,38 @@ endif(roscpp_FOUND)
 # Build Setup
 #========================
 include_directories(${PROJECT_SOURCE_DIR})
+add_executable(demo_linux_pcap
+              demo/demo_linux_pcap.cpp
+               )
+target_link_libraries(demo_linux_pcap
+                      ${Boost_LIBRARIES}                      
+                      pcap
+                      )
 
-add_executable(demo
-            demo/demo.cpp
-            )
+add_executable(demo_linux_online
+              demo/demo_linux_online.cpp
+              )
+target_link_libraries(demo_linux_online
+                    ${Boost_LIBRARIES}                       
+                          pcap
+)
 
-target_link_libraries(demo
+add_executable(demo_ros_recv_ros_send
+              demo/ros/demo_ros_recv_ros_send.cpp
+              )
+target_link_libraries(demo_ros_recv_ros_send
+                    ${Boost_LIBRARIES}    
                     ${roscpp_LIBRARIES}
-                    ${PCL_LIBRARIES}
-                    pthread
-                    pcap
-                       )
+                    ${PCL_LIBRARIES}         
+                          pcap
+)
 
-
+add_executable(demo_pcap_recv_ros_send
+              demo/ros/demo_pcap_recv_ros_send.cpp
+              )
+target_link_libraries(demo_pcap_recv_ros_send
+                    ${Boost_LIBRARIES}    
+                    ${roscpp_LIBRARIES}
+                    ${PCL_LIBRARIES}         
+                          pcap
+)

@@ -24,7 +24,8 @@
 
 namespace robosense
 {
-
+    namespace lidar
+    {
 
 /**
    * @brief Error Code for Robosense SDK.
@@ -40,6 +41,7 @@ namespace robosense
 
 enum ErrCode
 {
+   
    /* Success */
    ErrCode_Success = 0x0,
 
@@ -56,4 +58,5 @@ enum ErrCode
 
 };
 
+    }
 } // namespace robosense

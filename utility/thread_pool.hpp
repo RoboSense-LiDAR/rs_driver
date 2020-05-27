@@ -31,85 +31,88 @@
 #define MAX_THREAD_NUM 4
 namespace robosense
 {
-    struct Thread
-    {
-        Thread()
-        {
-            start = false;
-        }
-        std::shared_ptr<std::thread> m_thread;
-        std::atomic<bool> start;
-    };
-    class ThreadPool
+    namespace lidar
     {
 
-    public:
-        ThreadPool() : stoped{false}
+        struct Thread
         {
-            idl_thr_num = MAX_THREAD_NUM;
-            for (int i = 0; i < idl_thr_num; ++i)
+            Thread()
             {
-                pool.emplace_back(
-                    [this] {
-                        while (!this->stoped)
-                        {
-                            std::function<void()> task;
+                start = false;
+            }
+            std::shared_ptr<std::thread> m_thread;
+            std::atomic<bool> start;
+        };
+        class ThreadPool
+        {
+
+        public:
+            ThreadPool() : stoped{false}
+            {
+                idl_thr_num = MAX_THREAD_NUM;
+                for (int i = 0; i < idl_thr_num; ++i)
+                {
+                    pool.emplace_back(
+                        [this] {
+                            while (!this->stoped)
                             {
-                                std::unique_lock<std::mutex> lock{this->m_lock};
-                                this->cv_task.wait(lock, [this] {
-                                    return this->stoped.load() || !this->tasks.empty();
-                                });
-                                if (this->stoped && this->tasks.empty())
-                                    return;
-                                task = std::move(this->tasks.front());
-                                this->tasks.pop();
+                                std::function<void()> task;
+                                {
+                                    std::unique_lock<std::mutex> lock{this->m_lock};
+                                    this->cv_task.wait(lock, [this] {
+                                        return this->stoped.load() || !this->tasks.empty();
+                                    });
+                                    if (this->stoped && this->tasks.empty())
+                                        return;
+                                    task = std::move(this->tasks.front());
+                                    this->tasks.pop();
+                                }
+                                idl_thr_num--;
+                                task();
+                                idl_thr_num++;
                             }
-                            idl_thr_num--;
-                            task();
-                            idl_thr_num++;
-                        }
-                    });
+                        });
+                }
             }
-        }
-        ~ThreadPool()
-        {
-            stoped.store(true);
-            cv_task.notify_all();
-            for (std::thread &thread : pool)
+            ~ThreadPool()
             {
-                thread.detach();
+                stoped.store(true);
+                cv_task.notify_all();
+                for (std::thread &thread : pool)
+                {
+                    thread.detach();
+                }
             }
-        }
 
-    public:
-        template <class F, class... Args>
-        inline auto commit(F &&f, Args &&... args) -> std::future<decltype(f(args...))>
-        {
-            if (stoped.load())
-                throw std::runtime_error("Commit on ThreadPool is stopped.");
-            using RetType = decltype(f(args...));
-            auto task = std::make_shared<std::packaged_task<RetType()>>(
-                std::bind(std::forward<F>(f), std::forward<Args>(args)...)); // wtf !
-            std::future<RetType> future = task->get_future();
+        public:
+            template <class F, class... Args>
+            inline auto commit(F &&f, Args &&... args) -> std::future<decltype(f(args...))>
             {
-                std::lock_guard<std::mutex> lock{m_lock};
-                tasks.emplace(
-                    [task]() {
-                        (*task)();
-                    });
+                if (stoped.load())
+                    throw std::runtime_error("Commit on ThreadPool is stopped.");
+                using RetType = decltype(f(args...));
+                auto task = std::make_shared<std::packaged_task<RetType()>>(
+                    std::bind(std::forward<F>(f), std::forward<Args>(args)...)); // wtf !
+                std::future<RetType> future = task->get_future();
+                {
+                    std::lock_guard<std::mutex> lock{m_lock};
+                    tasks.emplace(
+                        [task]() {
+                            (*task)();
+                        });
+                }
+                cv_task.notify_one();
+                return future;
             }
-            cv_task.notify_one();
-            return future;
-        }
 
-    private:
-        using Task = std::function<void()>;
-        std::vector<std::thread> pool;
-        std::queue<Task> tasks;
-        std::mutex m_lock;
-        std::condition_variable cv_task;
-        std::atomic<bool> stoped;
-        std::atomic<int> idl_thr_num;
-    };
-
+        private:
+            using Task = std::function<void()>;
+            std::vector<std::thread> pool;
+            std::queue<Task> tasks;
+            std::mutex m_lock;
+            std::condition_variable cv_task;
+            std::atomic<bool> stoped;
+            std::atomic<int> idl_thr_num;
+        };
+    } // namespace lidar
 } // namespace robosense

@@ -24,7 +24,7 @@
 
 namespace robosense
 {
-  namespace sensor
+  namespace lidar
   {
 
     template <typename PointT>
@@ -61,6 +61,10 @@ namespace robosense
       {
         driver_ptr_->regExceptionCallback(excallBack);
       }
+      void processMsopScan(const LidarScanMsg &pkt_scan_msg,  LidarPointsMsg<PointT> &point_msg)
+      {
+        driver_ptr_->processMsopScan(pkt_scan_msg, point_msg);
+      }
       void processDifopPackets(const LidarPacketMsg &pkt_msg)
       {
         driver_ptr_->processDifopPackets(pkt_msg);
@@ -70,5 +74,5 @@ namespace robosense
       std::shared_ptr<LidarDriver<PointT>> driver_ptr_;
     };
 
-  } // namespace sensor
+  } // namespace lidar
 } // namespace robosense

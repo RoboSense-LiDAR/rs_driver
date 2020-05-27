@@ -19,48 +19,42 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-
 #pragma once
-#include "common/common_header.h"
-namespace robosense
-{
-  namespace lidar
-  {
-#ifdef _MSC_VER
-#pragma pack(push, 2)
-#endif
-    template <typename PointT>
-#ifdef _MSC_VER
-    struct LidarPointsMsg
-#elif __GNUC__
-    struct alignas(16) LidarPointsMsg
-#endif
-    {
-      typedef std::vector<PointT> PointCloud;
-      typedef std::shared_ptr<PointCloud> PointCloudPtr;
-      typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
+#define PCAP_ENABLE
 
-      double timestamp = 0.0;
-      uint32_t seq = 0;
-      std::string parent_frame_id = "";
-      std::string frame_id = "";
-      std::string lidar_model = "";
-      uint32_t height = 0;
-      uint32_t width = 0;
-      bool is_dense = false;
-      bool is_transform = false;
-      bool is_motion_correct = false;
-      PointCloudPtr cloudPtr;
+/*Common*/
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <ctime>
+#include <math.h>
+#include <memory>
+#include <array>
+#include <cmath>
+#include <cstring>
+#include <algorithm>
+#include <functional>
+#include <iterator>
+#include <chrono>
+#include <boost/bind.hpp>
+#include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 
-      LidarPointsMsg() = default;
-      LidarPointsMsg(const PointCloudPtr &pointptr) : cloudPtr(pointptr)
-      {
-      }
-      typedef std::shared_ptr<LidarPointsMsg> Ptr;
-      typedef std::shared_ptr<const LidarPointsMsg> ConstPtr;
-    };
-#ifdef _MSC_VER
-#pragma pack(pop)
+/*Linux*/
+#ifdef __GNUC__
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 #endif
-  } // namespace lidar
-} // namespace robosense
+
+/*Pcap*/
+#ifdef PCAP_ENABLE
+#include <pcap.h>
+#endif
+
+

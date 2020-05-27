@@ -33,13 +33,12 @@
 
 namespace robosense
 {
-  namespace sensor
+  namespace lidar
   {
-
     typedef struct RSLiDAR_Driver_Param
     {
       std::string calib_path = "";
-      std::string frame_id = "rslidar_points";
+      std::string frame_id = "rslidar";
       std::string device_type = "RS16";
       bool use_lidar_clock = false;
       uint32_t timeout = 100;
@@ -55,20 +54,18 @@ namespace robosense
       ~LidarDriver() { stop(); }
       ErrCode init(const RSLiDAR_Driver_Param &param)
       {
-
         driver_param_ = param;
         lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.device_type, driver_param_.decoder_param);
         lidar_decoder_ptr_->loadCalibrationFile(driver_param_.calib_path);
         lidar_input_ptr_ = std::make_shared<Input>(driver_param_.input_param);
         lidar_input_ptr_->regRecvMsopCallback(std::bind(&LidarDriver::msopCallback, this, std::placeholders::_1));
         lidar_input_ptr_->regRecvDifopCallback(std::bind(&LidarDriver::difopCallback, this, std::placeholders::_1));
-        thread_pool_ptr_=std::make_shared<ThreadPool>();
+        thread_pool_ptr_ = std::make_shared<ThreadPool>();
         pointcloud_ptr_ = typename LidarPointsMsg<PointT>::PointCloudPtr(new typename LidarPointsMsg<PointT>::PointCloud);
         scan_ptr_ = std::make_shared<LidarScanMsg>();
         thread_flag_ = false;
         points_seq_ = 0;
         scan_seq_ = 0;
-
         return ErrCode_Success;
       }
       void start()
@@ -95,6 +92,41 @@ namespace robosense
       inline void regExceptionCallback(const std::function<void(const ErrCode &)> excallBack)
       {
         excb_ = excallBack;
+      }
+      void processMsopScan(const LidarScanMsg &pkt_scan_msg,  LidarPointsMsg<PointT> &point_msg)
+      {
+        std::vector<std::vector<PointT>> point_vvec;
+        int height = 1;
+        typename LidarPointsMsg<PointT>::PointCloudPtr output_pointcloud_ptr = typename LidarPointsMsg<PointT>::PointCloudPtr(new typename LidarPointsMsg<PointT>::PointCloud);
+        point_vvec.resize(pkt_scan_msg.packets.size());
+#pragma omp parallel for
+        for (uint32_t i = 0; i < pkt_scan_msg.packets.size(); i++)
+        {
+          std::vector<PointT> point_vec;
+          int ret = lidar_decoder_ptr_->processMsopPkt(pkt_scan_msg.packets[i].packet.data(), point_vec, height);
+          if (ret == E_DECODE_OK || ret == E_FRAME_SPLIT)
+          {
+            point_vvec[i] = std::move(point_vec);
+          }
+        }
+
+        for (auto iiter : point_vvec)
+        {
+          for (auto iter = iiter.cbegin(); iter != iiter.cend(); iter++)
+          {
+            output_pointcloud_ptr->push_back(*iter);
+          }
+        }
+        point_msg.cloudPtr=output_pointcloud_ptr;
+        point_msg.height = height;
+        point_msg.width = point_msg.cloudPtr->size() / point_msg.height;
+        preparePointsMsg(point_msg);
+        point_msg.timestamp = pkt_scan_msg.timestamp;
+        if (point_msg.cloudPtr->size() == 0)
+        {
+          // ERROR << "LiDAR driver output points is zero.  Please make sure your lidar type in lidar yaml is right!" << REND;
+        }
+
       }
       void processDifopPackets(const LidarPacketMsg &pkt_msg)
       {
@@ -156,7 +188,7 @@ namespace robosense
 
       void processMsop()
       {
-        while (msop_pkt_queue_.m_quque.size() > 0 )
+        while (msop_pkt_queue_.m_quque.size() > 0)
         {
           LidarPacketMsg pkt = msop_pkt_queue_.m_quque.front();
           scan_ptr_->packets.emplace_back(pkt);
@@ -252,5 +284,5 @@ namespace robosense
       RSLiDAR_Driver_Param driver_param_;
     };
 
-  } // namespace sensor
+  } // namespace lidar
 } // namespace robosense

@@ -19,19 +19,12 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#ifdef __GNUC__
-#include <ros/ros.h>
-#include <ros/publisher.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-ros::Publisher lidar_points_pub_;
-#else
+
 #include <boost\asio.hpp>
 #include <Windows.h>
-#endif
 #include "interface/lidar_interface.h"
+
+using namespace robosense::lidar;
 bool start_ = true;
 struct PointXYZI
 {
@@ -40,62 +33,29 @@ struct PointXYZI
     double z;
     double intensity;
 };
+std::shared_ptr<LidarDriverInterface<PointXYZI>> demo_ptr;
 
-#ifdef __GNUC__
-void callback(const robosense::LidarPointsMsg<pcl::PointXYZI> &msg)
-{
-    sensor_msgs::PointCloud2 ros_msg;
-    pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZI>);
-    for (auto iter : *msg.cloudPtr)
-    {
-        cloud2->push_back(iter);
-    }
-    pcl::toROSMsg(*cloud2, ros_msg);
-
-    ros_msg.header.stamp = ros_msg.header.stamp.fromSec(msg.timestamp);
-    ros_msg.header.frame_id = msg.parent_frame_id;
-    ros_msg.header.seq = msg.seq;
-
-    lidar_points_pub_.publish(ros_msg);
-    std::cout << "msg: " << msg.seq <<"pointcloud size: " << msg.cloudPtr->size()<< std::endl;
-}
-#else
-void callback(const robosense::LidarPointsMsg<PointXYZI> &msg)
+void callback(const LidarPointsMsg<PointXYZI> &msg)
 {
     std::cout << "msg: " << msg.seq << "pointcloud size: " << msg.cloudPtr->size() << std::endl;
 }
-#endif
 
 int main(int argc, char *argv[])
 {
-#ifdef __GNUC__
-    ros::init(argc, argv, "driver", ros::init_options::NoSigintHandler);
-    ros::NodeHandle nh_;
-    lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("rslidar_points", 10);
-    std::shared_ptr<robosense::sensor::LidarDriverInterface<pcl::PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriverInterface<pcl::PointXYZI>>();
-#else
-    std::shared_ptr<robosense::sensor::LidarDriverInterface<PointXYZI>> demo_ptr = std::make_shared<robosense::sensor::LidarDriverInterface<PointXYZI>>();
-#endif
-
-
-    robosense::sensor::RSLiDAR_Driver_Param param;
-#ifdef __GNUC__
-    param.input_param.read_pcap = true;
-#elif _MSC_VER
+    demo_ptr = std::make_shared<LidarDriverInterface<PointXYZI>>();
+    RSLiDAR_Driver_Param param;
     param.input_param.read_pcap = TRUE;
-#endif
+    param.input_param.msop_port = 6699;
+    param.input_param.difop_port = 7788;
     param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
     param.calib_path = "/home/xzd/work/lidar_driver/parameter";
-    param.device_type = "RS128";
+    param.device_type = "RS32";
     demo_ptr->init(param);
     demo_ptr->regPointRecvCallback(callback);
     demo_ptr->start();
+    std::cout << "Robosense Lidar-Driver Windows pcap demo start......" << std::endl;
     while (start_)
     {
-#ifdef __GNUC__
-        sleep(1);
-#else
         Sleep(1);
-#endif
     }
 }

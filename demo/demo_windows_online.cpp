@@ -20,47 +20,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#pragma once
-#include "common/common_header.h"
-namespace robosense
+#include <boost\asio.hpp>
+#include <Windows.h>
+#include "interface/lidar_interface.h"
+
+using namespace robosense::lidar;
+bool start_ = true;
+struct PointXYZI
 {
-  namespace lidar
-  {
-#ifdef _MSC_VER
-#pragma pack(push, 2)
-#endif
-    template <typename PointT>
-#ifdef _MSC_VER
-    struct LidarPointsMsg
-#elif __GNUC__
-    struct alignas(16) LidarPointsMsg
-#endif
+    double x;
+    double y;
+    double z;
+    double intensity;
+};
+std::shared_ptr<LidarDriverInterface<PointXYZI>> demo_ptr;
+
+void callback(const LidarPointsMsg<PointXYZI> &msg)
+{
+    std::cout << "msg: " << msg.seq << "pointcloud size: " << msg.cloudPtr->size() << std::endl;
+}
+
+int main(int argc, char *argv[])
+{
+    demo_ptr = std::make_shared<LidarDriverInterface<PointXYZI>>();
+    RSLiDAR_Driver_Param param;
+    param.input_param.msop_port = 6699;
+    param.input_param.difop_port = 7788;
+    param.calib_path = "/home/xzd/work/lidar_driver/parameter";
+    param.device_type = "RS32";
+    demo_ptr->init(param);
+    demo_ptr->regPointRecvCallback(callback);
+    demo_ptr->start();
+    std::cout << "Robosense Lidar-Driver Windows online demo start......" << std::endl;
+    while (start_)
     {
-      typedef std::vector<PointT> PointCloud;
-      typedef std::shared_ptr<PointCloud> PointCloudPtr;
-      typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
-
-      double timestamp = 0.0;
-      uint32_t seq = 0;
-      std::string parent_frame_id = "";
-      std::string frame_id = "";
-      std::string lidar_model = "";
-      uint32_t height = 0;
-      uint32_t width = 0;
-      bool is_dense = false;
-      bool is_transform = false;
-      bool is_motion_correct = false;
-      PointCloudPtr cloudPtr;
-
-      LidarPointsMsg() = default;
-      LidarPointsMsg(const PointCloudPtr &pointptr) : cloudPtr(pointptr)
-      {
-      }
-      typedef std::shared_ptr<LidarPointsMsg> Ptr;
-      typedef std::shared_ptr<const LidarPointsMsg> ConstPtr;
-    };
-#ifdef _MSC_VER
-#pragma pack(pop)
-#endif
-  } // namespace lidar
-} // namespace robosense
+        Sleep(1);
+    }
+}

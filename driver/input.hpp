@@ -20,36 +20,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include <cstdint>
-#include <memory>
-#include <string>
-#ifdef __GNUC__
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#endif
-#include <array>
-#include <cmath>
-#include <cstring>
-#include <algorithm>
-#include <functional>
-#include <iterator>
-#include <vector>
-#include <iostream>
-#include <chrono>
-#include <sstream>
-#include <boost/bind.hpp>
-#include <boost/asio.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include "common/common_header.h"
 #include "msg/lidar_packet_msg.h"
-#include "pcap.h"
+
 using boost::asio::deadline_timer;
 using boost::asio::ip::udp;
 namespace robosense
 {
-  namespace sensor
+  namespace lidar
   {
     const int RSLIDAR_PKT_LEN = 1248;
 
@@ -83,7 +61,7 @@ namespace robosense
         input_param_ = _input_param;
         if (input_param_.read_pcap)
         {
-          std::cout << "Opening PCAP file " << this->input_param_.pcap_file_dir << std::endl;
+          //std::cout << "Opening PCAP file " << this->input_param_.pcap_file_dir << std::endl;
           char errbuf[PCAP_ERRBUF_SIZE];
           if ((this->pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf)) == NULL)
           {
@@ -338,5 +316,5 @@ namespace robosense
       std::vector<std::function<void(const LidarPacketMsg &)>> difop_cb_;
       std::vector<std::function<void(const LidarPacketMsg &)>> msop_cb_;
     };
-  } // namespace sensor
+  } // namespace lidar
 } // namespace robosense

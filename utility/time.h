@@ -1,4 +1,4 @@
-  /******************************************************************************
+/******************************************************************************
  * Copyright 2020 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
@@ -19,11 +19,16 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-  #include <chrono>
-  
-  inline double getTime(void)
+#include <chrono>
+namespace robosense
+{
+  namespace lidar
   {
-    const auto t = std::chrono::system_clock::now();
-    const auto t_sec = std::chrono::duration_cast<std::chrono::duration<double>>(t.time_since_epoch());
-    return (double)t_sec.count();
-  }
+    inline double getTime(void)
+    {
+      const auto t = std::chrono::system_clock::now();
+      const auto t_sec = std::chrono::duration_cast<std::chrono::duration<double>>(t.time_since_epoch());
+      return (double)t_sec.count();
+    }
+  } // namespace lidar
+} // namespace robosense

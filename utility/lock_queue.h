@@ -27,42 +27,44 @@
 #include <atomic>
 namespace robosense
 {
-
-template <typename T>
-class Queue
-{
-public:
-    Queue()
+    namespace lidar
     {
-        is_task_finished = true;
-    }
-    void push(const T &value)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_quque.push(value);
-    }
-
-    void pop()
-    {
-        if (!m_quque.empty())
+        template <typename T>
+        class Queue
         {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            m_quque.pop();
-        }
-    }
+        public:
+            Queue()
+            {
+                is_task_finished = true;
+            }
+            void push(const T &value)
+            {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                m_quque.push(value);
+            }
 
-    void clear()
-    {
-        std::queue<T> empty;
-        std::lock_guard<std::mutex> lock(m_mutex);
-        swap(empty, m_quque);
-    }
+            void pop()
+            {
+                if (!m_quque.empty())
+                {
+                    std::lock_guard<std::mutex> lock(m_mutex);
+                    m_quque.pop();
+                }
+            }
 
-public:
-    std::queue<T> m_quque;
-    std::atomic<bool> is_task_finished;
+            void clear()
+            {
+                std::queue<T> empty;
+                std::lock_guard<std::mutex> lock(m_mutex);
+                swap(empty, m_quque);
+            }
 
-private:
-    mutable std::mutex m_mutex;
-};
+        public:
+            std::queue<T> m_quque;
+            std::atomic<bool> is_task_finished;
+
+        private:
+            mutable std::mutex m_mutex;
+        };
+    } // namespace lidar
 } // namespace robosense

@@ -21,13 +21,12 @@
  *****************************************************************************/
 
 #pragma once
-#include <string>
-#include <array>
-#include <vector>
+#include "common/common_header.h"
 #include "lidar_packet_msg.h"
 namespace robosense
 {
-
+  namespace lidar
+  {
 /**
    * @brief Lidar Scan Message for Robosense SDK.
    * @detail Robosense LidarScanMsg is defined for passing lidar packets scan accross different modules
@@ -36,20 +35,20 @@ namespace robosense
    */
 #ifdef _MSC_VER
 #pragma pack(push, 2)
-struct LidarScanMsg
+    struct LidarScanMsg
 #elif __GNUC__
-struct alignas(16) LidarScanMsg
+    struct alignas(16) LidarScanMsg
 #endif
+    {
+      double timestamp = 0.0;
+      uint32_t seq = 0;
+      std::string parent_frame_id = "";
+      std::string frame_id = "";
 
-{
-  double timestamp = 0.0;
-  uint32_t seq = 0;
-  std::string parent_frame_id = "";
-  std::string frame_id = "";
-
-  std::vector<LidarPacketMsg> packets; ///< a vector which store a scan of packets (the size of the vector is not fix)
-};
+      std::vector<LidarPacketMsg> packets; ///< a vector which store a scan of packets (the size of the vector is not fix)
+    };
 #ifdef _MSC_VER
 #pragma pack(pop)
 #endif
+  } // namespace lidar
 } // namespace robosense
