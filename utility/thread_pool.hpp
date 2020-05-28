@@ -33,7 +33,6 @@ namespace robosense
 {
     namespace lidar
     {
-
         struct Thread
         {
             Thread()

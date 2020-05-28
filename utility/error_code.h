@@ -26,24 +26,16 @@ namespace robosense
 {
     namespace lidar
     {
-
         /**
-   * @brief Error Code for Robosense LiDAR Driver.
-   * @detail
-   *
-   * 0x0 for Success
-   * for each module range
-   * 0x001 ~ 0x400 for normal
-   * 0x401 ~ 0x800 for Warning
-   * 0x801 ~ 0xC00 for Critical Error
-   *
-   */
-
+         * @description:Error Code for Robosense LiDAR Driver.
+             * 0x01 ~ 0x40 for normal
+             * 0x41 ~ 0x80 for Warning
+             * 0x81 ~ 0xC0 for Critical Error
+         */
         enum ErrCode
         {
-
-            ErrCode_PcapWrongDirectory = 0x801,
-
+            ErrCode_PcapWrongDirectory = 0x81, ///< The input directory of pcap file is wrong
+            ErrCode_PcapContradiction = 0x82,  ///< The pcap function is disable but try to decode pcap file
         };
 
         struct Error
@@ -56,6 +48,8 @@ namespace robosense
                 {
                 case ErrCode_PcapWrongDirectory:
                     return "ErrCode_PcapWrongDirectory";
+                case ErrCode_PcapContradiction:
+                    return "ErrCode_PcapContradiction";
                 }
             }
         };

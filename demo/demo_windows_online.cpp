@@ -35,7 +35,7 @@ struct PointXYZI
 };
 std::shared_ptr<LidarDriverInterface<PointXYZI>> demo_ptr;
 
-void callback(const LidarPointsMsg<PointXYZI> &msg)
+void callback(const LidarPointcloudMsg<PointXYZI> &msg)
 {
     std::cout << "msg: " << msg.seq << "pointcloud size: " << msg.cloudPtr->size() << std::endl;
 }

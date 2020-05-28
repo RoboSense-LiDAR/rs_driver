@@ -47,16 +47,6 @@ namespace robosense
       INPUT_EXIT = 16
     };
 
-    typedef struct RSInput_Param
-    {
-      std::string device_ip = "192.168.1.200";
-      uint16_t msop_port = 6699;
-      uint16_t difop_port = 7788;
-      bool read_pcap = false;
-      bool pcap_repeat = false;
-      std::string pcap_file_dir = "";
-    } RSInput_Param;
-
     class Input
     {
     public:
@@ -86,7 +76,8 @@ namespace robosense
             pcap_compile(pcap_, &this->pcap_difop_filter_, difop_filter.str().c_str(), 1, 0xFFFFFFFF);
           }
 #else
-
+          excb_(Error(ErrCode_PcapContradiction));
+          exit(-1);
 #endif
         }
         else
@@ -112,7 +103,6 @@ namespace robosense
           pcap_close(this->pcap_);
         }
       }
-
       inline void regRecvMsopCallback(const std::function<void(const LidarPacketMsg &)> callBack)
       {
         msop_cb_.push_back(callBack);
@@ -157,7 +147,7 @@ namespace robosense
         }
         msop_deadline_->async_wait(boost::bind(&Input::checkMsopDeadline, this));
       }
-      static void handle_receive(
+      static void handleReceive(
           const boost::system::error_code &ec, std::size_t length,
           boost::system::error_code *out_ec, std::size_t *out_length)
       {
@@ -175,7 +165,6 @@ namespace robosense
           }
           catch (...)
           {
-            ERROR << "MSOP Port is already used! Abort!" << REND;
             exit(-1);
           }
           msop_deadline_->expires_at(boost::posix_time::pos_infin);
@@ -271,62 +260,62 @@ namespace robosense
       {
         while (msop_thread_.start.load())
         {
-          char *pRecvBuffer = (char *)malloc(RSLIDAR_PKT_LEN);
+          char *precv_buffer = (char *)malloc(RSLIDAR_PKT_LEN);
 
           msop_deadline_->expires_from_now(boost::posix_time::seconds(1));
           boost::system::error_code ec = boost::asio::error::would_block;
           std::size_t ret = 0;
 
-          msop_sock_ptr_->async_receive(boost::asio::buffer(pRecvBuffer, RSLIDAR_PKT_LEN),
-                                        boost::bind(&Input::handle_receive, _1, _2, &ec, &ret));
+          msop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, RSLIDAR_PKT_LEN),
+                                        boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
           do
           {
             msop_io_service_.run_one();
           } while (ec == boost::asio::error::would_block);
           if (ec)
           {
-            free(pRecvBuffer);
+            free(precv_buffer);
             continue;
           }
 
           LidarPacketMsg msg;
-          memcpy(msg.packet.data(), pRecvBuffer, RSLIDAR_PKT_LEN);
+          memcpy(msg.packet.data(), precv_buffer, RSLIDAR_PKT_LEN);
           for (auto &iter : msop_cb_)
           {
             iter(msg);
           }
-          free(pRecvBuffer);
+          free(precv_buffer);
         }
       }
       void getDifopPacket()
       {
         while (difop_thread_.start.load())
         {
-          char *pRecvBuffer = (char *)malloc(RSLIDAR_PKT_LEN);
+          char *precv_buffer = (char *)malloc(RSLIDAR_PKT_LEN);
 
           difop_deadline_->expires_from_now(boost::posix_time::seconds(1));
           boost::system::error_code ec = boost::asio::error::would_block;
           std::size_t ret = 0;
 
-          difop_sock_ptr_->async_receive(boost::asio::buffer(pRecvBuffer, RSLIDAR_PKT_LEN),
-                                         boost::bind(&Input::handle_receive, _1, _2, &ec, &ret));
+          difop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, RSLIDAR_PKT_LEN),
+                                         boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
           do
           {
             difop_io_service_.run_one();
           } while (ec == boost::asio::error::would_block);
           if (ec)
           {
-            free(pRecvBuffer);
+            free(precv_buffer);
             continue;
           }
 
           LidarPacketMsg msg;
-          memcpy(msg.packet.data(), pRecvBuffer, RSLIDAR_PKT_LEN);
+          memcpy(msg.packet.data(), precv_buffer, RSLIDAR_PKT_LEN);
           for (auto &iter : difop_cb_)
           {
             iter(msg);
           }
-          free(pRecvBuffer);
+          free(precv_buffer);
         }
       }
 

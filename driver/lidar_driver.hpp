@@ -20,7 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include "msg/lidar_points_msg.h"
+#include "msg/lidar_pointcloud_msg.h"
 #include "msg/lidar_packet_msg.h"
 #include "msg/lidar_scan_msg.h"
 #include "utility/lock_queue.h"
@@ -34,17 +34,6 @@ namespace robosense
 {
   namespace lidar
   {
-    typedef struct RSLiDAR_Driver_Param
-    {
-      std::string calib_path = "";
-      std::string frame_id = "rslidar";
-      LiDAR_TYPE lidar_type = LiDAR_TYPE::RS16;
-      bool use_lidar_clock = false;
-      uint32_t timeout = 100;
-      RSInput_Param input_param;
-      RSDecoder_Param decoder_param;
-    } RSLiDAR_Driver_Param;
-
     template <typename PointT>
     class LidarDriver
     {
@@ -60,7 +49,7 @@ namespace robosense
         lidar_input_ptr_->regRecvMsopCallback(std::bind(&LidarDriver::msopCallback, this, std::placeholders::_1));
         lidar_input_ptr_->regRecvDifopCallback(std::bind(&LidarDriver::difopCallback, this, std::placeholders::_1));
         thread_pool_ptr_ = std::make_shared<ThreadPool>();
-        pointcloud_ptr_ = typename LidarPointsMsg<PointT>::PointCloudPtr(new typename LidarPointsMsg<PointT>::PointCloud);
+        pointcloud_ptr_ = typename LidarPointcloudMsg<PointT>::PointCloudPtr(new typename LidarPointcloudMsg<PointT>::PointCloud);
         scan_ptr_ = std::make_shared<LidarScanMsg>();
         thread_flag_ = false;
         difop_flag_ = false;
@@ -76,7 +65,7 @@ namespace robosense
         msop_pkt_queue_.clear();
         difop_pkt_queue_.clear();
       }
-      inline void regPointRecvCallback(const std::function<void(const LidarPointsMsg<PointT> &)> _cb)
+      inline void regPointRecvCallback(const std::function<void(const LidarPointcloudMsg<PointT> &)> _cb)
       {
         pointscb_.emplace_back(_cb);
       }
@@ -92,7 +81,7 @@ namespace robosense
       {
         excb_.emplace_back(_excb);
       }
-      inline void decodeMsopScan(const LidarScanMsg &pkt_scan_msg, LidarPointsMsg<PointT> &point_msg)
+      inline void decodeMsopScan(const LidarScanMsg &pkt_scan_msg, LidarPointcloudMsg<PointT> &point_msg)
       {
         if (!difop_flag_)
         {
@@ -100,7 +89,7 @@ namespace robosense
         }
         std::vector<std::vector<PointT>> point_vvec;
         int height = 1;
-        typename LidarPointsMsg<PointT>::PointCloudPtr output_pointcloud_ptr = typename LidarPointsMsg<PointT>::PointCloudPtr(new typename LidarPointsMsg<PointT>::PointCloud);
+        typename LidarPointcloudMsg<PointT>::PointCloudPtr output_pointcloud_ptr = typename LidarPointcloudMsg<PointT>::PointCloudPtr(new typename LidarPointcloudMsg<PointT>::PointCloud);
         point_vvec.resize(pkt_scan_msg.packets.size());
 #pragma omp parallel for
         for (uint32_t i = 0; i < pkt_scan_msg.packets.size(); i++)
@@ -151,7 +140,7 @@ namespace robosense
           it(pkts_msg);
         }
       }
-      inline void runCallBack(const LidarPointsMsg<PointT> &points_msg)
+      inline void runCallBack(const LidarPointcloudMsg<PointT> &points_msg)
       {
         for (auto &it : pointscb_)
         {
@@ -210,7 +199,7 @@ namespace robosense
             }
             if (ret == E_FRAME_SPLIT)
             {
-              LidarPointsMsg<PointT> msg(pointcloud_ptr_);
+              LidarPointcloudMsg<PointT> msg(pointcloud_ptr_);
               msg.height = height;
               msg.width = pointcloud_ptr_->size() / msg.height;
               preparePointsMsg(msg);
@@ -226,7 +215,7 @@ namespace robosense
               {
                 runCallBack(msg);
               }
-              pointcloud_ptr_.reset(new typename LidarPointsMsg<PointT>::PointCloud);
+              pointcloud_ptr_.reset(new typename LidarPointcloudMsg<PointT>::PointCloud);
               prepareLidarScanMsg(*scan_ptr_);
               runCallBack(*scan_ptr_);
               scan_ptr_.reset(new LidarScanMsg);
@@ -257,7 +246,7 @@ namespace robosense
         msg.parent_frame_id = driver_param_.frame_id;
         msg.frame_id = driver_param_.frame_id;
       }
-      void preparePointsMsg(LidarPointsMsg<PointT> &msg)
+      void preparePointsMsg(LidarPointcloudMsg<PointT> &msg)
       {
         msg.timestamp = getTime();
         msg.seq = ++points_seq_;
@@ -275,13 +264,13 @@ namespace robosense
       bool difop_flag_;
       std::vector<std::function<void(const LidarScanMsg &)>> pkts_msop_cb_;
       std::vector<std::function<void(const LidarPacketMsg &)>> pkts_difop_cb_;
-      std::vector<std::function<void(const LidarPointsMsg<PointT> &)>> pointscb_;
+      std::vector<std::function<void(const LidarPointcloudMsg<PointT> &)>> pointscb_;
       std::vector<std::function<void(const Error &)>> excb_;
       std::shared_ptr<std::thread> lidar_thread_ptr_;
       std::shared_ptr<DecoderBase<PointT>> lidar_decoder_ptr_;
       std::shared_ptr<Input> lidar_input_ptr_;
       std::shared_ptr<ThreadPool> thread_pool_ptr_;
-      typename LidarPointsMsg<PointT>::PointCloudPtr pointcloud_ptr_;
+      typename LidarPointcloudMsg<PointT>::PointCloudPtr pointcloud_ptr_;
       std::shared_ptr<LidarScanMsg> scan_ptr_;
       uint32_t scan_seq_;
       uint32_t points_seq_;

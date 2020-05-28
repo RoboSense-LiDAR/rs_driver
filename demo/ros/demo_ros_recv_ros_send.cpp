@@ -33,7 +33,7 @@ using namespace robosense::lidar;
 ros::Publisher lidar_points_pub_;
 bool start_ = true;
 std::shared_ptr<LidarDriverInterface<pcl::PointXYZI>> demo_ptr;
-void callback(const LidarPointsMsg<pcl::PointXYZI> &msg)
+void callback(const LidarPointcloudMsg<pcl::PointXYZI> &msg)
 {
     sensor_msgs::PointCloud2 ros_msg;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZI>);
@@ -70,7 +70,7 @@ void subMsopCallback(const rslidar_msgs::rslidarScan &scan_msg)
         LidarPacketMsg tmp = toRsMsg(scan_msg.packets[i]);
         rs_msg.packets.emplace_back(tmp);
     }
-    LidarPointsMsg<pcl::PointXYZI> point_msg;
+    LidarPointcloudMsg<pcl::PointXYZI> point_msg;
     demo_ptr->decodeMsopScan(rs_msg, point_msg);
     sensor_msgs::PointCloud2 ros_msg;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZI>);

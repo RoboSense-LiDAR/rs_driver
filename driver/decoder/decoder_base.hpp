@@ -30,26 +30,13 @@ namespace robosense
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
 #define RS_RESOLUTION_5mm_DISTANCE_COEF (0.005)
 #define RS_RESOLUTION_10mm_DISTANCE_COEF (0.01)
-        enum class LiDAR_TYPE
-        {
-            RS16,
-            RS32,
-            RSBP,
-            RS128
-        };
+
         enum E_DECODER_RESULT
         {
             E_DECODE_FAIL = -2,
             E_PARAM_INVALID = -1,
             E_DECODE_OK = 0,
             E_FRAME_SPLIT = 1
-        };
-
-        enum RS_ECHO_MODE
-        {
-            RS_ECHO_DUAL = 0,
-            RS_ECHO_MAX,
-            RS_ECHO_LAST
         };
 
 #ifdef _MSC_VER
@@ -201,18 +188,6 @@ namespace robosense
 #ifdef _MSC_VER
 #pragma pack(pop)
 #endif
-
-        typedef struct eRSDecoder_Param
-        {
-            RS_ECHO_MODE echo = RS_ECHO_MAX;
-            float max_distance = 200.0f;
-            float min_distance = 0.2f;
-            float start_angle = 0.0f;
-            float end_angle = 360.0f;
-            uint16_t mode_split_frame = 1;
-            uint32_t num_pkts_split = 0;
-            float cut_angle = 0.0f;
-        } RSDecoder_Param;
 
         //----------------- Decoder ---------------------
         template <typename vpoint>
