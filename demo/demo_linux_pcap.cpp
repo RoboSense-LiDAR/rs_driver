@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     param.input_param.difop_port = 7788;
     param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
     param.calib_path = "/home/xzd/work/lidar_driver/parameter";
-    param.device_type = "RS128";
+    param.lidar_type =  LiDAR_TYPE::RS128;
     demo_ptr->init(param);
     demo_ptr->regPointRecvCallback(callback);
     demo_ptr->start();

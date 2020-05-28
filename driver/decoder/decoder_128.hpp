@@ -159,7 +159,7 @@ namespace robosense
         class Decoder128 : public DecoderBase<vpoint>
         {
         public:
-            Decoder128(RSDecoder_Param &param);
+            Decoder128(const RSDecoder_Param &param);
             int32_t decodeDifopPkt(const uint8_t *pkt);
             int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height);
             double getLidarTime(const uint8_t *pkt);
@@ -168,7 +168,7 @@ namespace robosense
         };
 
         template <typename vpoint>
-        Decoder128<vpoint>::Decoder128(RSDecoder_Param &param) : DecoderBase<vpoint>(param)
+        Decoder128<vpoint>::Decoder128(const RSDecoder_Param &param) : DecoderBase<vpoint>(param)
         {
             this->Rx_ = 0.03615;
             this->Ry_ = -0.017;

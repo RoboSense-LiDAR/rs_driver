@@ -78,8 +78,8 @@ void subMsopCallback(const rslidar_msgs::rslidarScan &scan_msg)
     {
         cloud2->push_back(std::move(iter));
     }
-    cloud2->height = msg.height;
-    cloud2->width = msg.width;
+    cloud2->height = point_msg.height;
+    cloud2->width = point_msg.width;
     pcl::toROSMsg(*cloud2, ros_msg);
     ros_msg.header.stamp = ros_msg.header.stamp.fromSec(point_msg.timestamp);
     ros_msg.header.frame_id = point_msg.parent_frame_id;
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     ros::Subscriber difop_sub = nh_.subscribe("rslidar_packets_difop", 1, subDifopCallback);
     RSLiDAR_Driver_Param param;
     param.calib_path = "/home/xzd/work/lidar_driver/parameter";
-    param.device_type = "RS32";
+    param.lidar_type =  LiDAR_TYPE::RS128;
     demo_ptr->init(param);
     ros::spin();
 }

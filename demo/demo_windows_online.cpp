@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     param.input_param.msop_port = 6699;
     param.input_param.difop_port = 7788;
     param.calib_path = "/home/xzd/work/lidar_driver/parameter";
-    param.device_type = "RS32";
+    param.lidar_type =  LiDAR_TYPE::RS128;
     demo_ptr->init(param);
     demo_ptr->regPointRecvCallback(callback);
     demo_ptr->start();

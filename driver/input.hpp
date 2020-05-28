@@ -20,7 +20,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
+#define RS16_PCAP_SLEEP_DURATION 1000
+#define RS32_PCAP_SLEEP_DURATION 500
+#define RSBP_PCAP_SLEEP_DURATION 500
+#define RS128_PCAP_SLEEP_DURATION 90
+
 #include "common/common_header.h"
+#include "driver/decoder/decoder_base.hpp"
 #include "msg/lidar_packet_msg.h"
 
 using boost::asio::deadline_timer;
@@ -53,12 +59,9 @@ namespace robosense
     class Input
     {
     public:
-      Input(const RSInput_Param &_input_param)
+      Input(const LiDAR_TYPE &_lidar_type, const RSInput_Param &_input_param) : lidar_type_(_lidar_type),
+                                                                                input_param_(_input_param)
       {
-        prev_time_ = getTime();
-        new_time_ = getTime();
-
-        input_param_ = _input_param;
         if (input_param_.read_pcap)
         {
           //std::cout << "Opening PCAP file " << this->input_param_.pcap_file_dir << std::endl;
@@ -201,6 +204,24 @@ namespace robosense
           int ret;
           struct pcap_pkthdr *header;
           const u_char *pkt_data;
+
+          switch (lidar_type_)
+          {
+          case LiDAR_TYPE::RS16:
+            usleep(RS16_PCAP_SLEEP_DURATION);
+            break;
+          case LiDAR_TYPE::RS32:
+            usleep(RS32_PCAP_SLEEP_DURATION);
+            break;
+          case LiDAR_TYPE::RSBP:
+            usleep(RSBP_PCAP_SLEEP_DURATION);
+            break;
+          case LiDAR_TYPE::RS128:
+            usleep(RS128_PCAP_SLEEP_DURATION);
+            break;
+          default:
+            break;
+          }
           if ((ret = pcap_next_ex(this->pcap_, &header, &pkt_data)) >= 0)
           {
             if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
@@ -214,15 +235,12 @@ namespace robosense
             }
             else if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_difop_filter_, header, pkt_data)))
             {
-              new_time_ = getTime();
               LidarPacketMsg msg;
               memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
               for (auto &iter : difop_cb_)
               {
                 iter(msg);
               }
-              usleep(100000 - (new_time_ - prev_time_) * 1000000);
-              prev_time_ = getTime();
             }
             else
             {
@@ -296,12 +314,11 @@ namespace robosense
 
     private:
       RSInput_Param input_param_;
+      LiDAR_TYPE lidar_type_;
       /* pcap file parse */
       pcap_t *pcap_;
       bpf_program pcap_msop_filter_;
       bpf_program pcap_difop_filter_;
-      double prev_time_;
-      double new_time_;
       /* live socket */
       std::unique_ptr<udp::socket> msop_sock_ptr_;
       std::unique_ptr<udp::socket> difop_sock_ptr_;

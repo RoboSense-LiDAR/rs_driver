@@ -39,7 +39,7 @@ namespace robosense
     {
       std::string calib_path = "";
       std::string frame_id = "rslidar";
-      std::string device_type = "RS16";
+      LiDAR_TYPE lidar_type = LiDAR_TYPE::RS16;
       bool use_lidar_clock = false;
       uint32_t timeout = 100;
       RSInput_Param input_param;
@@ -55,9 +55,9 @@ namespace robosense
       ErrCode init(const RSLiDAR_Driver_Param &param)
       {
         driver_param_ = param;
-        lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.device_type, driver_param_.decoder_param);
+        lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param);
         lidar_decoder_ptr_->loadCalibrationFile(driver_param_.calib_path);
-        lidar_input_ptr_ = std::make_shared<Input>(driver_param_.input_param);
+        lidar_input_ptr_ = std::make_shared<Input>(driver_param_.lidar_type, driver_param_.input_param);
         lidar_input_ptr_->regRecvMsopCallback(std::bind(&LidarDriver::msopCallback, this, std::placeholders::_1));
         lidar_input_ptr_->regRecvDifopCallback(std::bind(&LidarDriver::difopCallback, this, std::placeholders::_1));
         thread_pool_ptr_ = std::make_shared<ThreadPool>();
@@ -93,7 +93,7 @@ namespace robosense
       {
         excb_ = excallBack;
       }
-      void processMsopScan(const LidarScanMsg &pkt_scan_msg,  LidarPointsMsg<PointT> &point_msg)
+      void processMsopScan(const LidarScanMsg &pkt_scan_msg, LidarPointsMsg<PointT> &point_msg)
       {
         std::vector<std::vector<PointT>> point_vvec;
         int height = 1;
@@ -117,7 +117,7 @@ namespace robosense
             output_pointcloud_ptr->push_back(*iter);
           }
         }
-        point_msg.cloudPtr=output_pointcloud_ptr;
+        point_msg.cloudPtr = output_pointcloud_ptr;
         point_msg.height = height;
         point_msg.width = point_msg.cloudPtr->size() / point_msg.height;
         preparePointsMsg(point_msg);
@@ -126,7 +126,6 @@ namespace robosense
         {
           // ERROR << "LiDAR driver output points is zero.  Please make sure your lidar type in lidar yaml is right!" << REND;
         }
-
       }
       void processDifopPackets(const LidarPacketMsg &pkt_msg)
       {
@@ -254,7 +253,6 @@ namespace robosense
       }
       void preparePointsMsg(LidarPointsMsg<PointT> &msg)
       {
-
         msg.timestamp = getTime();
         msg.seq = ++points_seq_;
         msg.parent_frame_id = driver_param_.frame_id;
@@ -262,7 +260,6 @@ namespace robosense
         msg.is_dense = false;
         msg.is_transform = false;
         msg.is_motion_correct = false;
-        msg.lidar_model = driver_param_.device_type;
       }
 
     private:

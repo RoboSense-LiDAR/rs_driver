@@ -44,7 +44,6 @@ namespace robosense
       uint32_t seq = 0;
       std::string parent_frame_id = "";
       std::string frame_id = "";
-      std::string lidar_model = "";
       uint32_t height = 0;
       uint32_t width = 0;
       bool is_dense = false;

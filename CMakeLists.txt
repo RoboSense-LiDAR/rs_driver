@@ -82,6 +82,7 @@ add_executable(demo_linux_pcap
 target_link_libraries(demo_linux_pcap
                       ${Boost_LIBRARIES}                      
                       pcap
+                      pthread
                       )
 
 add_executable(demo_linux_online
@@ -90,6 +91,7 @@ add_executable(demo_linux_online
 target_link_libraries(demo_linux_online
                     ${Boost_LIBRARIES}                       
                           pcap
+                          pthread
 )
 
 add_executable(demo_ros_recv_ros_send
@@ -100,6 +102,7 @@ target_link_libraries(demo_ros_recv_ros_send
                     ${roscpp_LIBRARIES}
                     ${PCL_LIBRARIES}         
                           pcap
+                          pthread
 )
 
 add_executable(demo_pcap_recv_ros_send
@@ -110,4 +113,5 @@ target_link_libraries(demo_pcap_recv_ros_send
                     ${roscpp_LIBRARIES}
                     ${PCL_LIBRARIES}         
                           pcap
+                          pthread
 )

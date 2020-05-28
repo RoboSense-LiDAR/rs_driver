@@ -30,7 +30,13 @@ namespace robosense
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
 #define RS_RESOLUTION_5mm_DISTANCE_COEF (0.005)
 #define RS_RESOLUTION_10mm_DISTANCE_COEF (0.01)
-
+        enum class LiDAR_TYPE
+        {
+            RS16,
+            RS32,
+            RSBP,
+            RS128
+        };
         enum E_DECODER_RESULT
         {
             E_DECODE_FAIL = -2,
@@ -213,7 +219,7 @@ namespace robosense
         class DecoderBase
         {
         public:
-            DecoderBase(RSDecoder_Param &param);
+            DecoderBase(const RSDecoder_Param &param);
             virtual ~DecoderBase();
             virtual E_DECODER_RESULT processMsopPkt(const uint8_t *pkt, std::vector<vpoint> &pointcloud_vec, int &height);
             virtual int32_t processDifopPkt(const uint8_t *pkt);
@@ -254,21 +260,21 @@ namespace robosense
         };
 
         template <typename vpoint>
-        DecoderBase<vpoint>::DecoderBase(RSDecoder_Param &param) : rpm_(600),
-                                                                   pkts_per_frame_(84),
-                                                                   cali_files_dir_("."),
-                                                                   pkt_counter_(0),
-                                                                   last_azimuth_(-36001),
-                                                                   cali_data_flag_(0x00),
-                                                                   angle_flag_(true),
-                                                                   start_angle_(param.start_angle * 100),
-                                                                   end_angle_(param.end_angle * 100),
-                                                                   echo_mode_(param.echo),
-                                                                   max_distance_(param.max_distance),
-                                                                   min_distance_(param.min_distance),
-                                                                   mode_split_frame_(param.mode_split_frame),
-                                                                   num_pkts_split_(param.num_pkts_split),
-                                                                   cut_angle_(param.cut_angle * 100)
+        DecoderBase<vpoint>::DecoderBase(const RSDecoder_Param &param) : rpm_(600),
+                                                                         pkts_per_frame_(84),
+                                                                         cali_files_dir_("."),
+                                                                         pkt_counter_(0),
+                                                                         last_azimuth_(-36001),
+                                                                         cali_data_flag_(0x00),
+                                                                         angle_flag_(true),
+                                                                         start_angle_(param.start_angle * 100),
+                                                                         end_angle_(param.end_angle * 100),
+                                                                         echo_mode_(param.echo),
+                                                                         max_distance_(param.max_distance),
+                                                                         min_distance_(param.min_distance),
+                                                                         mode_split_frame_(param.mode_split_frame),
+                                                                         num_pkts_split_(param.num_pkts_split),
+                                                                         cut_angle_(param.cut_angle * 100)
         {
             if (cut_angle_ > 36000)
             {
