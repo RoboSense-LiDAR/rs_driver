@@ -20,8 +20,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
+namespace robosense
+{
+    namespace lidar
+    {
 #define PCAP_ENABLE
-
+#define INFO (std::cout << "\033[1m\033[32m")
+#define WARNING (std::cout << "\033[1m\033[33m")
+#define ERROR (std::cout << "\033[1m\033[31m")
+#define DEBUG (std::cout << "\033[1m\033[36m")
+#define TITLE (std::cout << "\033[1m\033[35m")
+#define REND "\033[0m" << std::endl
+    } // namespace lidar
+} // namespace robosense
 /*Common*/
 #include <cstdint>
 #include <string>
@@ -56,5 +67,3 @@
 #ifdef PCAP_ENABLE
 #include <pcap.h>
 #endif
-
-

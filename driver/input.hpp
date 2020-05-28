@@ -20,10 +20,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#define RS16_PCAP_SLEEP_DURATION 1000
+#define RS16_PCAP_SLEEP_DURATION 1150
 #define RS32_PCAP_SLEEP_DURATION 500
 #define RSBP_PCAP_SLEEP_DURATION 500
-#define RS128_PCAP_SLEEP_DURATION 90
+#define RS128_PCAP_SLEEP_DURATION 95
 
 #include "common/common_header.h"
 #include "driver/decoder/decoder_base.hpp"
@@ -53,6 +53,7 @@ namespace robosense
       uint16_t msop_port = 6699;
       uint16_t difop_port = 7788;
       bool read_pcap = false;
+      bool pcap_repeat = false;
       std::string pcap_file_dir = "";
     } RSInput_Param;
 
@@ -64,9 +65,9 @@ namespace robosense
       {
         if (input_param_.read_pcap)
         {
-          //std::cout << "Opening PCAP file " << this->input_param_.pcap_file_dir << std::endl;
+          INFO << "Opening PCAP file " << this->input_param_.pcap_file_dir << REND;
           char errbuf[PCAP_ERRBUF_SIZE];
-          if ((this->pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf)) == NULL)
+          if ((pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf)) == NULL)
           {
             ERROR << "Error opening rslidar pcap file! Abort!" << REND;
             exit(1);
@@ -75,16 +76,12 @@ namespace robosense
           {
             std::stringstream msop_filter;
             std::stringstream difop_filter;
-
             msop_filter << "src host " << input_param_.device_ip << " && ";
             difop_filter << "src host " << input_param_.device_ip << " && ";
-
             msop_filter << "udp dst port " << input_param_.msop_port;
             pcap_compile(pcap_, &this->pcap_msop_filter_, msop_filter.str().c_str(), 1, 0xFFFFFFFF);
-            //		pcap_compile(pcap_, &this->pcap_msop_filter_, msop_filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
             difop_filter << "udp dst port " << input_param_.difop_port;
             pcap_compile(pcap_, &this->pcap_difop_filter_, difop_filter.str().c_str(), 1, 0xFFFFFFFF);
-            //			pcap_compile(pcap_, &this->pcap_difop_filter_, difop_filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
           }
         }
         else
@@ -222,7 +219,7 @@ namespace robosense
           default:
             break;
           }
-          if ((ret = pcap_next_ex(this->pcap_, &header, &pkt_data)) >= 0)
+          if ((ret = pcap_next_ex(pcap_, &header, &pkt_data)) >= 0)
           {
             if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
             {
@@ -245,6 +242,23 @@ namespace robosense
             else
             {
               continue;
+            }
+          }
+          else
+          {
+            sleep(1);
+            INFO << "Pcap finished..." << REND;
+            if (input_param_.pcap_repeat)
+            {
+              INFO << "Pcap will repeat in 1 sec..." << REND;
+              sleep(1);
+              char errbuf[PCAP_ERRBUF_SIZE];
+              pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf);
+            }
+            else
+            {
+              INFO << "Pcap thread exit..." << REND;
+              break;
             }
           }
         }

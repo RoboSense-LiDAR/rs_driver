@@ -61,13 +61,13 @@ namespace robosense
       {
         driver_ptr_->regExceptionCallback(excallBack);
       }
-      void processMsopScan(const LidarScanMsg &pkt_scan_msg,  LidarPointsMsg<PointT> &point_msg)
+      void decodeMsopScan(const LidarScanMsg &pkt_scan_msg,  LidarPointsMsg<PointT> &point_msg)
       {
-        driver_ptr_->processMsopScan(pkt_scan_msg, point_msg);
+        driver_ptr_->decodeMsopScan(pkt_scan_msg, point_msg);
       }
-      void processDifopPackets(const LidarPacketMsg &pkt_msg)
+      void decodeDifopPkt(const LidarPacketMsg &pkt_msg)
       {
-        driver_ptr_->processDifopPackets(pkt_msg);
+        driver_ptr_->decodeDifopPkt(pkt_msg);
       }
 
     private:

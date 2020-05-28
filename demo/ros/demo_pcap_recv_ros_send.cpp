@@ -59,7 +59,6 @@ int main(int argc, char *argv[])
     param.input_param.read_pcap = true;
     param.input_param.msop_port = 6699;
     param.input_param.difop_port = 7788;
-    //param.input_param.pcap_file_dir = "/home/xzd/项目/驱动/测试数据/BP.pcap";
     param.input_param.pcap_file_dir = "/home/xzd/项目/驱动/测试数据/128.pcap";
 
     //param.calib_path = "/home/xzd/work/lidar_driver/parameter";

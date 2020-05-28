@@ -71,7 +71,7 @@ void subMsopCallback(const rslidar_msgs::rslidarScan &scan_msg)
         rs_msg.packets.emplace_back(tmp);
     }
     LidarPointsMsg<pcl::PointXYZI> point_msg;
-    demo_ptr->processMsopScan(rs_msg, point_msg);
+    demo_ptr->decodeMsopScan(rs_msg, point_msg);
     sensor_msgs::PointCloud2 ros_msg;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZI>);
     for (auto iter : *point_msg.cloudPtr)
@@ -89,7 +89,7 @@ void subMsopCallback(const rslidar_msgs::rslidarScan &scan_msg)
 }
 void subDifopCallback(const rslidar_msgs::rslidarPacket &msg)
 {
-    demo_ptr->processDifopPackets(toRsMsg(msg));
+    demo_ptr->decodeDifopPkt(toRsMsg(msg));
 }
 
 int main(int argc, char *argv[])

@@ -26,7 +26,6 @@
 #include "utility/lock_queue.h"
 #include "utility/thread_pool.hpp"
 #include "utility/time.h"
-#include "utility/prompt.h"
 #include "utility/error_code.h"
 #include "driver/input.hpp"
 #include "driver/decoder/decoder_factory.hpp"
@@ -64,6 +63,7 @@ namespace robosense
         pointcloud_ptr_ = typename LidarPointsMsg<PointT>::PointCloudPtr(new typename LidarPointsMsg<PointT>::PointCloud);
         scan_ptr_ = std::make_shared<LidarScanMsg>();
         thread_flag_ = false;
+        difop_flag_ = false;
         points_seq_ = 0;
         scan_seq_ = 0;
         return ErrCode_Success;
@@ -93,8 +93,12 @@ namespace robosense
       {
         excb_ = excallBack;
       }
-      void processMsopScan(const LidarScanMsg &pkt_scan_msg, LidarPointsMsg<PointT> &point_msg)
+      void decodeMsopScan(const LidarScanMsg &pkt_scan_msg, LidarPointsMsg<PointT> &point_msg)
       {
+        if (!difop_flag_)
+        {
+          return;
+        }
         std::vector<std::vector<PointT>> point_vvec;
         int height = 1;
         typename LidarPointsMsg<PointT>::PointCloudPtr output_pointcloud_ptr = typename LidarPointsMsg<PointT>::PointCloudPtr(new typename LidarPointsMsg<PointT>::PointCloud);
@@ -127,9 +131,10 @@ namespace robosense
           // ERROR << "LiDAR driver output points is zero.  Please make sure your lidar type in lidar yaml is right!" << REND;
         }
       }
-      void processDifopPackets(const LidarPacketMsg &pkt_msg)
+      void decodeDifopPkt(const LidarPacketMsg &pkt_msg)
       {
         lidar_decoder_ptr_->processDifopPkt(pkt_msg.packet.data());
+        difop_flag_ = true;
       }
 
     private:
@@ -149,7 +154,6 @@ namespace robosense
       }
       inline void runCallBack(const LidarPointsMsg<PointT> &points_msg)
       {
-
         for (auto &it : pointscb_)
         {
           it(points_msg);
@@ -165,6 +169,10 @@ namespace robosense
 
       void msopCallback(const LidarPacketMsg &msg)
       {
+        if (!difop_flag_)
+        {
+          return;
+        }
         LidarPacketMsg pkt_msg = msg;
         msop_pkt_queue_.push(pkt_msg);
         if (msop_pkt_queue_.is_task_finished.load())
@@ -230,12 +238,11 @@ namespace robosense
       }
       void processDifop()
       {
-
         while (difop_pkt_queue_.m_quque.size() > 0)
         {
           LidarPacketMsg pkt = difop_pkt_queue_.m_quque.front();
           difop_pkt_queue_.pop();
-          processDifopPackets(pkt);
+          decodeDifopPkt(pkt);
           runCallBack(pkt);
         }
         difop_pkt_queue_.is_task_finished.store(true);
@@ -266,6 +273,7 @@ namespace robosense
       Queue<LidarPacketMsg> msop_pkt_queue_;
       Queue<LidarPacketMsg> difop_pkt_queue_;
       bool thread_flag_;
+      bool difop_flag_;
       std::vector<std::function<void(const LidarScanMsg &)>> pkts_msop_cb_;
       std::vector<std::function<void(const LidarPacketMsg &)>> pkts_difop_cb_;
       std::vector<std::function<void(const LidarPointsMsg<PointT> &)>> pointscb_;
