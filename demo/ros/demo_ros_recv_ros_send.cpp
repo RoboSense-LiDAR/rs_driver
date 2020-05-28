@@ -37,14 +37,10 @@ void callback(const LidarPointsMsg<pcl::PointXYZI> &msg)
 {
     sensor_msgs::PointCloud2 ros_msg;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZI>);
-    double time1 = getTime();
     for (auto iter : *msg.cloudPtr)
     {
         cloud2->push_back(std::move(iter));
     }
-    double time2 = getTime();
-    ;
-    DEBUG << std::fixed << time2 - time1 << REND;
     pcl::toROSMsg(*cloud2, ros_msg);
     ros_msg.header.stamp = ros_msg.header.stamp.fromSec(msg.timestamp);
     ros_msg.header.frame_id = msg.parent_frame_id;
@@ -82,6 +78,8 @@ void subMsopCallback(const rslidar_msgs::rslidarScan &scan_msg)
     {
         cloud2->push_back(std::move(iter));
     }
+    cloud2->height = msg.height;
+    cloud2->width = msg.width;
     pcl::toROSMsg(*cloud2, ros_msg);
     ros_msg.header.stamp = ros_msg.header.stamp.fromSec(point_msg.timestamp);
     ros_msg.header.frame_id = point_msg.parent_frame_id;

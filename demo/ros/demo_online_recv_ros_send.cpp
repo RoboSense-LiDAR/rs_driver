@@ -39,6 +39,8 @@ void callback(const LidarPointsMsg<pcl::PointXYZI> &msg)
     {
         cloud2->push_back(std::move(iter));
     }
+    cloud2->height = msg.height;
+    cloud2->width = msg.width;
     pcl::toROSMsg(*cloud2, ros_msg);
     ros_msg.header.stamp = ros_msg.header.stamp.fromSec(msg.timestamp);
     ros_msg.header.frame_id = msg.parent_frame_id;

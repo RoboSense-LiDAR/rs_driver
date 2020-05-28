@@ -39,6 +39,8 @@ void callback(const LidarPointsMsg<pcl::PointXYZI> &msg)
     {
         cloud2->push_back(std::move(iter));
     }
+    cloud2->height =msg.height;
+    cloud2->width =msg.width;
     pcl::toROSMsg(*cloud2, ros_msg);
     ros_msg.header.stamp = ros_msg.header.stamp.fromSec(msg.timestamp);
     ros_msg.header.frame_id = msg.parent_frame_id;
@@ -57,8 +59,8 @@ int main(int argc, char *argv[])
     param.input_param.read_pcap = true;
     param.input_param.msop_port = 6699;
     param.input_param.difop_port = 7788;
-    param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
-    param.calib_path = "/home/xzd/work/lidar_driver/parameter";
+    param.input_param.pcap_file_dir = "/home/xzd/Downloads/30m.pcap";
+    //param.calib_path = "/home/xzd/work/lidar_driver/parameter";
     param.device_type = "RS128";
     demo_ptr->init(param);
     demo_ptr->regPointRecvCallback(callback);
