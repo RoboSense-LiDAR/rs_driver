@@ -51,12 +51,12 @@ namespace robosense
     public:
       LidarDriver() = default;
       ~LidarDriver() { stop(); }
-      ErrCode init(const RSLiDAR_Driver_Param &param)
+      inline void init(const RSLiDAR_Driver_Param &param)
       {
         driver_param_ = param;
         lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param);
         lidar_decoder_ptr_->loadCalibrationFile(driver_param_.calib_path);
-        lidar_input_ptr_ = std::make_shared<Input>(driver_param_.lidar_type, driver_param_.input_param);
+        lidar_input_ptr_ = std::make_shared<Input>(driver_param_.lidar_type, driver_param_.input_param, std::bind(&LidarDriver::reportError, this, std::placeholders::_1));
         lidar_input_ptr_->regRecvMsopCallback(std::bind(&LidarDriver::msopCallback, this, std::placeholders::_1));
         lidar_input_ptr_->regRecvDifopCallback(std::bind(&LidarDriver::difopCallback, this, std::placeholders::_1));
         thread_pool_ptr_ = std::make_shared<ThreadPool>();
@@ -66,34 +66,33 @@ namespace robosense
         difop_flag_ = false;
         points_seq_ = 0;
         scan_seq_ = 0;
-        return ErrCode_Success;
       }
-      void start()
+      inline void start()
       {
         lidar_input_ptr_->start();
       }
-      void stop()
+      inline void stop()
       {
         msop_pkt_queue_.clear();
         difop_pkt_queue_.clear();
       }
-      inline void regPointRecvCallback(const std::function<void(const LidarPointsMsg<PointT> &)> callBack)
+      inline void regPointRecvCallback(const std::function<void(const LidarPointsMsg<PointT> &)> _cb)
       {
-        pointscb_.emplace_back(callBack);
+        pointscb_.emplace_back(_cb);
       }
-      inline void regRecvCallback(const std::function<void(const LidarScanMsg &)> callBack)
+      inline void regRecvCallback(const std::function<void(const LidarScanMsg &)> _cb)
       {
-        pkts_msop_cb_.emplace_back(callBack);
+        pkts_msop_cb_.emplace_back(_cb);
       }
-      inline void regRecvCallback(const std::function<void(const LidarPacketMsg &)> callBack)
+      inline void regRecvCallback(const std::function<void(const LidarPacketMsg &)> _cb)
       {
-        pkts_difop_cb_.emplace_back(callBack);
+        pkts_difop_cb_.emplace_back(_cb);
       }
-      inline void regExceptionCallback(const std::function<void(const ErrCode &)> excallBack)
+      inline void regExceptionCallback(const std::function<void(const Error &)> _excb)
       {
-        excb_ = excallBack;
+        excb_.emplace_back(_excb);
       }
-      void decodeMsopScan(const LidarScanMsg &pkt_scan_msg, LidarPointsMsg<PointT> &point_msg)
+      inline void decodeMsopScan(const LidarScanMsg &pkt_scan_msg, LidarPointsMsg<PointT> &point_msg)
       {
         if (!difop_flag_)
         {
@@ -159,11 +158,11 @@ namespace robosense
           it(points_msg);
         }
       }
-      inline void reportError(const ErrCode &error)
+      inline void reportError(const Error &error)
       {
-        if (excb_ != NULL)
+        for (auto &it : excb_)
         {
-          excb_(error);
+          it(error);
         }
       }
 
@@ -277,7 +276,7 @@ namespace robosense
       std::vector<std::function<void(const LidarScanMsg &)>> pkts_msop_cb_;
       std::vector<std::function<void(const LidarPacketMsg &)>> pkts_difop_cb_;
       std::vector<std::function<void(const LidarPointsMsg<PointT> &)>> pointscb_;
-      std::function<void(const ErrCode &)> excb_;
+      std::vector<std::function<void(const Error &)>> excb_;
       std::shared_ptr<std::thread> lidar_thread_ptr_;
       std::shared_ptr<DecoderBase<PointT>> lidar_decoder_ptr_;
       std::shared_ptr<Input> lidar_input_ptr_;

@@ -26,22 +26,21 @@ namespace robosense
 {
   namespace lidar
   {
-
     template <typename PointT>
     class LidarDriverInterface
     {
     public:
       LidarDriverInterface() { driver_ptr_ = std::make_shared<LidarDriver<PointT>>(); };
       ~LidarDriverInterface() { driver_ptr_->stop(); }
-      ErrCode init(const RSLiDAR_Driver_Param &param)
+      inline void init(const RSLiDAR_Driver_Param &param)
       {
         driver_ptr_->init(param);
       }
-      void start()
+      inline void start()
       {
         driver_ptr_->start();
       }
-      void stop()
+      inline void stop()
       {
         driver_ptr_->stop();
       }
@@ -57,15 +56,15 @@ namespace robosense
       {
         driver_ptr_->regRecvCallback(callBack);
       }
-      inline void regExceptionCallback(const std::function<void(const ErrCode &)> excallBack)
+      inline void regExceptionCallback(const std::function<void(const Error &)> excallBack)
       {
         driver_ptr_->regExceptionCallback(excallBack);
       }
-      void decodeMsopScan(const LidarScanMsg &pkt_scan_msg,  LidarPointsMsg<PointT> &point_msg)
+      inline void decodeMsopScan(const LidarScanMsg &pkt_scan_msg, LidarPointsMsg<PointT> &point_msg)
       {
         driver_ptr_->decodeMsopScan(pkt_scan_msg, point_msg);
       }
-      void decodeDifopPkt(const LidarPacketMsg &pkt_msg)
+      inline void decodeDifopPkt(const LidarPacketMsg &pkt_msg)
       {
         driver_ptr_->decodeDifopPkt(pkt_msg);
       }

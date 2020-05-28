@@ -60,17 +60,19 @@ namespace robosense
     class Input
     {
     public:
-      Input(const LiDAR_TYPE &_lidar_type, const RSInput_Param &_input_param) : lidar_type_(_lidar_type),
-                                                                                input_param_(_input_param)
+      Input(const LiDAR_TYPE &_lidar_type, const RSInput_Param &_input_param,
+            const std::function<void(const Error &)> _excb) : lidar_type_(_lidar_type),
+                                                              input_param_(_input_param),
+                                                              excb_(_excb)
       {
         if (input_param_.read_pcap)
         {
-          INFO << "Opening PCAP file " << this->input_param_.pcap_file_dir << REND;
+#if (PCAP_ENABLE == TRUE || PCAP_ENABLE == true)
           char errbuf[PCAP_ERRBUF_SIZE];
           if ((pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf)) == NULL)
           {
-            ERROR << "Error opening rslidar pcap file! Abort!" << REND;
-            exit(1);
+            excb_(Error(ErrCode_PcapWrongDirectory));
+            exit(-1);
           }
           else
           {
@@ -83,6 +85,9 @@ namespace robosense
             difop_filter << "udp dst port " << input_param_.difop_port;
             pcap_compile(pcap_, &this->pcap_difop_filter_, difop_filter.str().c_str(), 1, 0xFFFFFFFF);
           }
+#else
+
+#endif
         }
         else
         {
@@ -108,16 +113,15 @@ namespace robosense
         }
       }
 
-      void regRecvMsopCallback(const std::function<void(const LidarPacketMsg &)> callBack)
+      inline void regRecvMsopCallback(const std::function<void(const LidarPacketMsg &)> callBack)
       {
         msop_cb_.push_back(callBack);
       }
-      void regRecvDifopCallback(const std::function<void(const LidarPacketMsg &)> callBack)
+      inline void regRecvDifopCallback(const std::function<void(const LidarPacketMsg &)> callBack)
       {
         difop_cb_.push_back(callBack);
       }
-
-      void start()
+      inline void start()
       {
         if (!input_param_.read_pcap)
         {
@@ -329,10 +333,13 @@ namespace robosense
     private:
       RSInput_Param input_param_;
       LiDAR_TYPE lidar_type_;
+      std::function<void(const Error &)> excb_;
       /* pcap file parse */
+#if (PCAP_ENABLE == TRUE || PCAP_ENABLE == true)
       pcap_t *pcap_;
       bpf_program pcap_msop_filter_;
       bpf_program pcap_difop_filter_;
+#endif
       /* live socket */
       std::unique_ptr<udp::socket> msop_sock_ptr_;
       std::unique_ptr<udp::socket> difop_sock_ptr_;

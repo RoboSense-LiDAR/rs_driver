@@ -27,8 +27,8 @@ namespace robosense
     namespace lidar
     {
 
-/**
-   * @brief Error Code for Robosense SDK.
+        /**
+   * @brief Error Code for Robosense LiDAR Driver.
    * @detail
    *
    * 0x0 for Success
@@ -39,24 +39,26 @@ namespace robosense
    *
    */
 
-enum ErrCode
-{
-   
-   /* Success */
-   ErrCode_Success = 0x0,
+        enum ErrCode
+        {
 
-   /* Lidar : 0x1000~0x1FFF*/
-   ErrCode_LidarDriverInterrupt = 0x1401,
-   ErrCode_LidarPointsProtoSendError = 0x1402,
-   ErrCode_LidarPointsProtoReceiveError = 0x1403,
-   ErrCode_LidarPacketsProtoSendError = 0x1404,
-   ErrCode_LidarPacketsProtoReceiveError = 0x1405,
+            ErrCode_PcapWrongDirectory = 0x801,
 
+        };
 
+        struct Error
+        {
+            ErrCode error_code;
+            Error(const ErrCode &_code) : error_code(_code) {}
+            std::string toString() const
+            {
+                switch (error_code)
+                {
+                case ErrCode_PcapWrongDirectory:
+                    return "ErrCode_PcapWrongDirectory";
+                }
+            }
+        };
 
-
-
-};
-
-    }
+    } // namespace lidar
 } // namespace robosense

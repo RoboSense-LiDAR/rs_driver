@@ -49,6 +49,10 @@ void callback(const LidarPointsMsg<pcl::PointXYZI> &msg)
     std::cout << "msg: " << msg.seq << "pointcloud size: " << msg.cloudPtr->size() << std::endl;
 }
 
+void exceptionCallback(const Error &code)
+{
+    std::cout << "Error code : " << code.toString() << std::endl;
+}
 int main(int argc, char *argv[])
 {
     ros::init(argc, argv, "driver", ros::init_options::NoSigintHandler);
@@ -63,8 +67,10 @@ int main(int argc, char *argv[])
 
     //param.calib_path = "/home/xzd/work/lidar_driver/parameter";
     param.lidar_type = LiDAR_TYPE::RS128;
-    demo_ptr->init(param);
     demo_ptr->regPointRecvCallback(callback);
+    demo_ptr->regExceptionCallback(exceptionCallback);
+    demo_ptr->init(param);
+
     demo_ptr->start();
     while (start_)
     {

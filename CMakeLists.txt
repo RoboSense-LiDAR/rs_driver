@@ -53,6 +53,15 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
+set (PCAP_ENABLE true)
+set (DEBUG_LEVEL 0)
+
+
+configure_file (
+  "${PROJECT_SOURCE_DIR}/macro/macro.h.in"
+  "${PROJECT_SOURCE_DIR}/macro/macro.h"
+)
+
 #========================
 # Dependencies Setup
 #========================
