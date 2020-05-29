@@ -163,7 +163,7 @@ namespace robosense
             int32_t decodeDifopPkt(const uint8_t *pkt);
             int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height);
             double getLidarTime(const uint8_t *pkt);
-            void loadCalibrationFile(std::string cali_path);
+            void loadCalibrationFile(const std::string &angle_path);
             float computeTemperatue(const uint8_t temp_low, const uint8_t temp_high);
         };
 
@@ -425,16 +425,14 @@ namespace robosense
         }
 
         template <typename vpoint>
-        void Decoder128<vpoint>::loadCalibrationFile(std::string cali_path)
+        void Decoder128<vpoint>::loadCalibrationFile(const std::string &angle_path)
         {
             int row_index = 0;
             int laser_num = 128;
             std::string line_str;
-            this->cali_files_dir_ = cali_path;
-            std::string angle_file_path = this->cali_files_dir_ + "/angle.csv";
 
             // read angle.csv
-            std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
+            std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
             if (!fd_angle.is_open())
             {
                 //        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", angle_file_path.c_str());
