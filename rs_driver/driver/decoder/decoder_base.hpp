@@ -199,7 +199,7 @@ namespace robosense
             virtual E_DECODER_RESULT processMsopPkt(const uint8_t *pkt, std::vector<vpoint> &pointcloud_vec, int &height);
             virtual int32_t processDifopPkt(const uint8_t *pkt);
             virtual double getLidarTime(const uint8_t *pkt) = 0;
-            virtual void loadCalibrationFile(std::string cali_path) = 0;
+            virtual void loadCalibrationFile(const std::string &angle_path) = 0;
 
         protected:
             int32_t rpm_;
@@ -220,7 +220,6 @@ namespace robosense
             int32_t cut_angle_;
             int32_t last_azimuth_;
             //calibration data
-            std::string cali_files_dir_;
             uint32_t cali_data_flag_;
             float vert_angle_list_[128];
             float hori_angle_list_[128];
@@ -237,7 +236,6 @@ namespace robosense
         template <typename vpoint>
         DecoderBase<vpoint>::DecoderBase(const RSDecoder_Param &param) : rpm_(600),
                                                                          pkts_per_frame_(84),
-                                                                         cali_files_dir_("."),
                                                                          pkt_counter_(0),
                                                                          last_azimuth_(-36001),
                                                                          cali_data_flag_(0x00),

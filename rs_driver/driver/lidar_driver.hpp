@@ -52,7 +52,7 @@ namespace robosense
       {
         driver_param_ = param;
         lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param);
-        lidar_decoder_ptr_->loadCalibrationFile(driver_param_.calib_path);
+        lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
         lidar_input_ptr_ = std::make_shared<Input>(driver_param_.lidar_type, driver_param_.input_param, std::bind(&LidarDriver::reportError, this, std::placeholders::_1));
         lidar_input_ptr_->regRecvMsopCallback(std::bind(&LidarDriver::msopCallback, this, std::placeholders::_1));
         lidar_input_ptr_->regRecvDifopCallback(std::bind(&LidarDriver::difopCallback, this, std::placeholders::_1));

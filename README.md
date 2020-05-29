@@ -88,7 +88,7 @@ RSInput_Param为雷达解析输入参数:
 ```
 typedef struct RSLiDAR_Driver_Param ///< The lidar driver parameter
 {
-    std::string calib_path = "";              ///< The path of the folder which store lidar calibration files
+    std::string angle_path = "";              ///< The path of the folder which store lidar calibration files
     std::string frame_id = "rslidar";         ///< The frame id of lidar message
     LiDAR_TYPE lidar_type = LiDAR_TYPE::RS16; ///< Lidar type
     bool use_lidar_clock = false;             ///< True: lidar message timestamp is the lidar clock. False: timestamp is the computer system clock
@@ -100,7 +100,7 @@ typedef struct RSLiDAR_Driver_Param ///< The lidar driver parameter
 
 
 RSLiDAR_Driver_Param为雷达驱动配置参数：
-+ calib_path用于设置雷达的标定参数路径；
++ angle_path用于设置雷达的标定参数路径；
 + frame_id用于设置雷达的frame_id；
 + lidar_type用于设置雷达的类型，包括RS16，RS32,RSBP,RS128；
 + use_lidar_clock用于设置雷达消息时间戳类型，true:使用lidar时间戳,false:使用系统时间戳；
@@ -285,7 +285,7 @@ LidarPointcloudMsg单帧雷达点云消息:
       + inline void regPointRecvCallback(const std::function<void(const LidarPointcloudMsg<PointT> &)> callBack)
       > **功能:**用于注册单帧雷达点云回调函数，当雷达收到一帧LidarPointsMsg时，调用回调函数<br/>
       > **参数:**LidarPointsMsg回调函数*<br/>
-      > **返回值:void<br/>
+      > **返回值:**void<br/>
 
       + inline void regRecvCallback(const std::function<void(const LidarScanMsg &)> callBack)<br/>
       > **功能:**用于注册msop消息回调函数，当雷达驱动收到一帧雷达LidarScanMsg消息时，调用回调函数

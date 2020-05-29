@@ -113,7 +113,7 @@ namespace robosense
             int32_t decodeDifopPkt(const uint8_t *pkt);
             int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height);
             double getLidarTime(const uint8_t *pkt);
-            void loadCalibrationFile(std::string cali_path);
+            void loadCalibrationFile(const std::string &angle_path);
         };
 
         template <typename vpoint>
@@ -346,16 +346,13 @@ namespace robosense
         }
 
         template <typename vpoint>
-        void Decoder32<vpoint>::loadCalibrationFile(std::string cali_path)
+        void Decoder32<vpoint>::loadCalibrationFile(const std::string &angle_path)
         {
             int row_index = 0;
             int laser_num = 32;
             std::string line_str;
-            this->cali_files_dir_ = cali_path;
-            std::string angle_file_path = this->cali_files_dir_ + "/angle.csv";
-
             // read angle.csv
-            std::ifstream fd_angle(angle_file_path.c_str(), std::ios::in);
+            std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
             if (!fd_angle.is_open())
             {
                 //        rs_print(RS_WARNING, "[RS32] Calibration file: %s does not exist!", angle_file_path.c_str());
