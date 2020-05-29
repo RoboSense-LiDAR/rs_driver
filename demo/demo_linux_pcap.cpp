@@ -30,26 +30,26 @@ struct PointXYZI
     double z;
     double intensity;
 };
-std::shared_ptr<LidarDriverInterface<PointXYZI>> demo_ptr;
+std::shared_ptr<LidarDriverInterface<PointXYZI>> demo_ptr_;
 
 void callback(const LidarPointcloudMsg<PointXYZI> &msg)
 {
-    std::cout << "msg: " << msg.seq << "pointcloud size: " << msg.cloudPtr->size() << std::endl;
+    std::cout << "msg: " << msg.seq << "pointcloud size: " << msg.pointcloud_ptr->size() << std::endl;
 }
 
 int main(int argc, char *argv[])
 {
-    demo_ptr = std::make_shared<LidarDriverInterface<PointXYZI>>();
+    demo_ptr_ = std::make_shared<LidarDriverInterface<PointXYZI>>();
     RSLiDAR_Driver_Param param;
     param.input_param.read_pcap = true;
     param.input_param.msop_port = 6699;
     param.input_param.difop_port = 7788;
     param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
     param.calib_path = "/home/xzd/work/lidar_driver/parameter";
-    param.lidar_type =  LiDAR_TYPE::RS128;
-    demo_ptr->init(param);
-    demo_ptr->regPointRecvCallback(callback);
-    demo_ptr->start();
+    param.lidar_type = LiDAR_TYPE::RS128;
+    demo_ptr_->init(param);
+    demo_ptr_->regPointRecvCallback(callback);
+    demo_ptr_->start();
     std::cout << "Robosense Lidar-Driver Linux pcap demo start......" << std::endl;
     while (start_)
     {

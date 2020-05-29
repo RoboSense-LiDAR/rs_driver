@@ -62,7 +62,6 @@ typedef struct RSLiDAR_Driver_Param
     std::string frame_id = "rslidar";
     LiDAR_TYPE lidar_type = LiDAR_TYPE::RS16;
     bool use_lidar_clock = false;
-    uint32_t timeout = 100;
     RSInput_Param input_param;
     RSDecoder_Param decoder_param;
 } RSLiDAR_Driver_Param;

@@ -1,3 +1,3 @@
-#define PCAP_ENABLE true
-#define DEBUG_LEVEL 0
+#define PCAP_ENABLE 
+#define DEBUG_LEVEL 
 

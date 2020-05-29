@@ -30,12 +30,12 @@
 using namespace robosense::lidar;
 ros::Publisher lidar_points_pub_;
 bool start_ = true;
-std::shared_ptr<LidarDriverInterface<pcl::PointXYZI>> demo_ptr;
+std::shared_ptr<LidarDriverInterface<pcl::PointXYZI>> demo_ptr_;
 void callback(const LidarPointcloudMsg<pcl::PointXYZI> &msg)
 {
     sensor_msgs::PointCloud2 ros_msg;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZI>);
-    for (auto iter : *msg.cloudPtr)
+    for (auto iter : *msg.pointcloud_ptr)
     {
         cloud2->push_back(std::move(iter));
     }
@@ -46,7 +46,7 @@ void callback(const LidarPointcloudMsg<pcl::PointXYZI> &msg)
     ros_msg.header.frame_id = msg.parent_frame_id;
     ros_msg.header.seq = msg.seq;
     lidar_points_pub_.publish(ros_msg);
-    std::cout << "msg: " << msg.seq << "pointcloud size: " << msg.cloudPtr->size() << std::endl;
+    std::cout << "msg: " << msg.seq << "pointcloud size: " << msg.pointcloud_ptr->size() << std::endl;
 }
 
 int main(int argc, char *argv[])
@@ -54,15 +54,14 @@ int main(int argc, char *argv[])
     ros::init(argc, argv, "driver", ros::init_options::NoSigintHandler);
     ros::NodeHandle nh_;
     lidar_points_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("rslidar_points", 10);
-    demo_ptr = std::make_shared<LidarDriverInterface<pcl::PointXYZI>>();
+    demo_ptr_ = std::make_shared<LidarDriverInterface<pcl::PointXYZI>>();
     RSLiDAR_Driver_Param param;
-    param.input_param.read_pcap = true;
-    param.input_param.pcap_file_dir = "/media/xzd/bag/bag/sunnyvael_1014.pcap";
-    param.calib_path = "/home/xzd/work/lidar_driver/parameter";
-    param.lidar_type =  LiDAR_TYPE::RS128;
-    demo_ptr->init(param);
-    demo_ptr->regPointRecvCallback(callback);
-    demo_ptr->start();
+    param.input_param.msop_port = 6699;
+    param.input_param.difop_port = 7788;
+    param.lidar_type = LiDAR_TYPE::RS128;
+    demo_ptr_->init(param);
+    demo_ptr_->regPointRecvCallback(callback);
+    demo_ptr_->start();
     while (start_)
     {
         sleep(1);

@@ -345,8 +345,8 @@ namespace robosense
                 row_index = 0;
                 while (std::getline(fd_angle, line_str))
                 {
-                    this->vert_angle_list_[row_index] = std::stof(line_str)*100; // degree
-                    this->hori_angle_list_[row_index] = 0;                   // degree
+                    this->vert_angle_list_[row_index] = std::stof(line_str) * 100; // degree
+                    this->hori_angle_list_[row_index] = 0;                         // degree
                     row_index++;
                     if (row_index >= laser_num)
                     {

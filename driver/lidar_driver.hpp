@@ -32,14 +32,22 @@
 
 namespace robosense
 {
+
   namespace lidar
   {
+
     template <typename PointT>
     class LidarDriver
     {
+
     public:
       LidarDriver() = default;
-      ~LidarDriver() { stop(); }
+
+      ~LidarDriver()
+      {
+        stop();
+      }
+
       inline void init(const RSLiDAR_Driver_Param &param)
       {
         driver_param_ = param;
@@ -56,35 +64,43 @@ namespace robosense
         points_seq_ = 0;
         scan_seq_ = 0;
       }
+
       inline void start()
       {
         lidar_input_ptr_->start();
       }
+
       inline void stop()
       {
         msop_pkt_queue_.clear();
         difop_pkt_queue_.clear();
       }
+
       inline void regPointRecvCallback(const std::function<void(const LidarPointcloudMsg<PointT> &)> _cb)
       {
         pointscb_.emplace_back(_cb);
       }
+
       inline void regRecvCallback(const std::function<void(const LidarScanMsg &)> _cb)
       {
         pkts_msop_cb_.emplace_back(_cb);
       }
+
       inline void regRecvCallback(const std::function<void(const LidarPacketMsg &)> _cb)
       {
         pkts_difop_cb_.emplace_back(_cb);
       }
+
       inline void regExceptionCallback(const std::function<void(const Error &)> _excb)
       {
         excb_.emplace_back(_excb);
       }
+
       inline void decodeMsopScan(const LidarScanMsg &pkt_scan_msg, LidarPointcloudMsg<PointT> &point_msg)
       {
         if (!difop_flag_)
         {
+          reportError(ErrCode_NoDifopRecv);
           return;
         }
         std::vector<std::vector<PointT>> point_vvec;
@@ -101,7 +117,6 @@ namespace robosense
             point_vvec[i] = std::move(point_vec);
           }
         }
-
         for (auto iiter : point_vvec)
         {
           for (auto iter = iiter.cbegin(); iter != iiter.cend(); iter++)
@@ -109,16 +124,17 @@ namespace robosense
             output_pointcloud_ptr->push_back(*iter);
           }
         }
-        point_msg.cloudPtr = output_pointcloud_ptr;
+        point_msg.pointcloud_ptr = output_pointcloud_ptr;
         point_msg.height = height;
-        point_msg.width = point_msg.cloudPtr->size() / point_msg.height;
+        point_msg.width = point_msg.pointcloud_ptr->size() / point_msg.height;
         preparePointsMsg(point_msg);
         point_msg.timestamp = pkt_scan_msg.timestamp;
-        if (point_msg.cloudPtr->size() == 0)
+        if (point_msg.pointcloud_ptr->size() == 0)
         {
-          // ERROR << "LiDAR driver output points is zero.  Please make sure your lidar type in lidar yaml is right!" << REND;
+          reportError(ErrCode_ZeroPoints);
         }
       }
+
       void decodeDifopPkt(const LidarPacketMsg &pkt_msg)
       {
         lidar_decoder_ptr_->processDifopPkt(pkt_msg.packet.data());
@@ -133,6 +149,7 @@ namespace robosense
           it(pkts_msg);
         }
       }
+
       inline void runCallBack(const LidarPacketMsg &pkts_msg)
       {
         for (auto &it : pkts_difop_cb_)
@@ -140,6 +157,7 @@ namespace robosense
           it(pkts_msg);
         }
       }
+
       inline void runCallBack(const LidarPointcloudMsg<PointT> &points_msg)
       {
         for (auto &it : pointscb_)
@@ -147,6 +165,7 @@ namespace robosense
           it(points_msg);
         }
       }
+
       inline void reportError(const Error &error)
       {
         for (auto &it : excb_)
@@ -159,6 +178,7 @@ namespace robosense
       {
         if (!difop_flag_)
         {
+          reportError(ErrCode_NoDifopRecv);
           return;
         }
         LidarPacketMsg pkt_msg = msg;
@@ -207,9 +227,9 @@ namespace robosense
               {
                 msg.timestamp = lidar_decoder_ptr_->getLidarTime(pkt.packet.data());
               }
-              if (msg.cloudPtr->size() == 0)
+              if (msg.pointcloud_ptr->size() == 0)
               {
-                ERROR << "LiDAR driver output points is zero.  Please make sure your lidar type in lidar yaml is right!" << REND;
+                reportError(ErrCode_ZeroPoints);
               }
               else
               {
@@ -224,6 +244,7 @@ namespace robosense
         }
         msop_pkt_queue_.is_task_finished.store(true);
       }
+
       void processDifop()
       {
         while (difop_pkt_queue_.m_quque.size() > 0)
@@ -235,6 +256,7 @@ namespace robosense
         }
         difop_pkt_queue_.is_task_finished.store(true);
       }
+
       void prepareLidarScanMsg(LidarScanMsg &msg)
       {
         msg.timestamp = getTime();
@@ -242,14 +264,15 @@ namespace robosense
         {
           msg.timestamp = lidar_decoder_ptr_->getLidarTime(msg.packets.back().packet.data());
         }
-        msg.seq = ++scan_seq_;
+        msg.seq = scan_seq_++;
         msg.parent_frame_id = driver_param_.frame_id;
         msg.frame_id = driver_param_.frame_id;
       }
+
       void preparePointsMsg(LidarPointcloudMsg<PointT> &msg)
       {
         msg.timestamp = getTime();
-        msg.seq = ++points_seq_;
+        msg.seq = points_seq_++;
         msg.parent_frame_id = driver_param_.frame_id;
         msg.frame_id = driver_param_.frame_id;
         msg.is_dense = false;
@@ -260,8 +283,6 @@ namespace robosense
     private:
       Queue<LidarPacketMsg> msop_pkt_queue_;
       Queue<LidarPacketMsg> difop_pkt_queue_;
-      bool thread_flag_;
-      bool difop_flag_;
       std::vector<std::function<void(const LidarScanMsg &)>> pkts_msop_cb_;
       std::vector<std::function<void(const LidarPacketMsg &)>> pkts_difop_cb_;
       std::vector<std::function<void(const LidarPointcloudMsg<PointT> &)>> pointscb_;
@@ -270,11 +291,13 @@ namespace robosense
       std::shared_ptr<DecoderBase<PointT>> lidar_decoder_ptr_;
       std::shared_ptr<Input> lidar_input_ptr_;
       std::shared_ptr<ThreadPool> thread_pool_ptr_;
-      typename LidarPointcloudMsg<PointT>::PointCloudPtr pointcloud_ptr_;
       std::shared_ptr<LidarScanMsg> scan_ptr_;
       uint32_t scan_seq_;
       uint32_t points_seq_;
+      bool thread_flag_;
+      bool difop_flag_;
       RSLiDAR_Driver_Param driver_param_;
+      typename LidarPointcloudMsg<PointT>::PointCloudPtr pointcloud_ptr_;
     };
 
   } // namespace lidar

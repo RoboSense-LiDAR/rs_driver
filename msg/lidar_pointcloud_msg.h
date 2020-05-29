@@ -39,7 +39,6 @@ namespace robosense
       typedef std::vector<PointT> PointCloud;
       typedef std::shared_ptr<PointCloud> PointCloudPtr;
       typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
-
       double timestamp = 0.0;
       uint32_t seq = 0;
       std::string parent_frame_id = "";
@@ -49,10 +48,9 @@ namespace robosense
       bool is_dense = false;
       bool is_transform = false;
       bool is_motion_correct = false;
-      PointCloudPtr cloudPtr;
-
+      PointCloudPtr pointcloud_ptr;
       LidarPointcloudMsg() = default;
-      LidarPointcloudMsg(const PointCloudPtr &pointptr) : cloudPtr(pointptr)
+      LidarPointcloudMsg(const PointCloudPtr &_point_ptr) : pointcloud_ptr(_point_ptr)
       {
       }
       typedef std::shared_ptr<LidarPointcloudMsg> Ptr;

@@ -20,13 +20,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#define INFO (std::cout << "\033[1m\033[32m")
-#define WARNING (std::cout << "\033[1m\033[33m")
-#define ERROR (std::cout << "\033[1m\033[31m")
-#define DEBUG (std::cout << "\033[1m\033[36m")
-#define TITLE (std::cout << "\033[1m\033[35m")
-#define REND "\033[0m" << std::endl
-
 /*Common*/
 #include <cstdint>
 #include <string>
@@ -59,6 +52,4 @@
 #endif
 
 /*Pcap*/
-#if(PCAP_ENABLE==TRUE||PCAP_ENABLE==true) 
 #include <pcap.h>
-#endif
