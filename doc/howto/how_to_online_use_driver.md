@@ -82,8 +82,8 @@ Define the parameter and config it. The msop port and difop port number of lidar
 
 ```c++
  RSLiDAR_Driver_Param param;                      ///< Creat a parameter object
- param.input_param.msop_port = 6688;              ///< Set the lidar msop port number the default 6699
- param.input_param.difop_port = 7799;             ///< Set the lidar difop port number the default 7788
+ param.input_param.msop_port = 6699;              ///< Set the lidar msop port number the default 6699
+ param.input_param.difop_port = 7788;             ///< Set the lidar difop port number the default 7788
  param.lidar_type = LiDAR_TYPE::RS16;             ///< Set the lidar type. Make sure this type is correct!
 ```
 
