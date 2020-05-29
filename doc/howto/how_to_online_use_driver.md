@@ -62,8 +62,6 @@ Define the exception callback function. When driver want to send out infos or er
 ```c++
 void exceptionCallback(const Error &code)
 {
-    /* Note: Please do not put time-consuming operations in the callback function! */
-    /* Make a copy of the error message and process it in another thread is recommended*/
     std::cout << "Error code : " << code.toString() << std::endl;
 }
 ```
