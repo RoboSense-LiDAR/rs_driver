@@ -21,13 +21,13 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 ###############################################################################
 cmake_minimum_required(VERSION 3.5)
-project(lidar_driver)
+project(rs_driver)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 #========================
 # Project details / setup
 #========================
-set(PROJECT_NAME lidar_driver)
+set(PROJECT_NAME rs_driver)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
@@ -40,13 +40,9 @@ add_compile_options(-W)
 #========================
 # Installation Setup
 #========================
-SET(CMAKE_INSTALL_PREFIX /usr/include/rs_lidar_driver)
-set(INSTALL_COMMON_DIR ${CMAKE_INSTALL_PREFIX}/common)
-set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/driver)
-set(INSTALL_INTERFACE_DIR ${CMAKE_INSTALL_PREFIX}/interface)
-set(INSTALL_MACRO_DIR ${CMAKE_INSTALL_PREFIX}/macro)
-set(INSTALL_MSG_DIR ${CMAKE_INSTALL_PREFIX}/msg)
-set(INSTALL_UTILITY_DIR ${CMAKE_INSTALL_PREFIX}/utility)
+SET(CMAKE_INSTALL_PREFIX /usr/include)
+set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/rs_driver)
+
 
 
 
@@ -60,8 +56,8 @@ add_definitions(${PCL_DEFINITIONS})
 
 
 configure_file (
-  "${PROJECT_SOURCE_DIR}/macro/macro.h.in"
-  "${PROJECT_SOURCE_DIR}/macro/macro.h"
+  "${PROJECT_SOURCE_DIR}/rs_driver/macro/macro.h.in"
+  "${PROJECT_SOURCE_DIR}/rs_driver/macro/macro.h"
 )
 
 #========================
@@ -87,34 +83,6 @@ endif(roscpp_FOUND)
 # Build Setup
 #========================
 include_directories(${PROJECT_SOURCE_DIR})
-add_executable(demo_linux_pcap
-              demo/demo_linux_pcap.cpp
-               )
-target_link_libraries(demo_linux_pcap
-                      ${Boost_LIBRARIES}                      
-                      pcap
-                      pthread
-                      )
-
-add_executable(demo_linux_online
-              demo/demo_linux_online.cpp
-              )
-target_link_libraries(demo_linux_online
-                    ${Boost_LIBRARIES}                       
-                          pcap
-                          pthread
-)
-
-add_executable(demo_ros_recv_ros_send
-              demo/ros/demo_ros_recv_ros_send.cpp
-              )
-target_link_libraries(demo_ros_recv_ros_send
-                    ${Boost_LIBRARIES}    
-                    ${roscpp_LIBRARIES}
-                    ${PCL_LIBRARIES}         
-                          pcap
-                          pthread
-)
 
 add_executable(demo_pcap_recv_ros_send
               demo/ros/demo_pcap_recv_ros_send.cpp
@@ -132,36 +100,12 @@ target_link_libraries(demo_pcap_recv_ros_send
 # Installation
 #========================        
 
-install(DIRECTORY common/
-       DESTINATION ${INSTALL_COMMON_DIR}
-       FILES_MATCHING PATTERN "*.h")
-
-install(DIRECTORY driver/
+install(DIRECTORY rs_driver/
         DESTINATION ${INSTALL_DRIVER_DIR}
-        FILES_MATCHING PATTERN "*.h" )
+        FILES_MATCHING PATTERN "*.h")
 
-install(DIRECTORY driver/
+install(DIRECTORY rs_driver/
         DESTINATION ${INSTALL_DRIVER_DIR}
-        FILES_MATCHING PATTERN "*.hpp" )
-
-install(DIRECTORY interface/
-        DESTINATION ${INSTALL_INTERFACE_DIR}
-        FILES_MATCHING PATTERN "*.h")
-
-install(DIRECTORY macro/
-        DESTINATION ${INSTALL_MACRO_DIR}
-        FILES_MATCHING PATTERN "*.h")
-
-install(DIRECTORY msg/
-        DESTINATION ${INSTALL_MSG_DIR}
-        FILES_MATCHING PATTERN "*.h")
-
-install(DIRECTORY utility/
-        DESTINATION ${INSTALL_UTILITY_DIR}
-        FILES_MATCHING PATTERN "*.h")
-
-install(DIRECTORY utility/
-        DESTINATION ${INSTALL_UTILITY_DIR}
         FILES_MATCHING PATTERN "*.hpp")
 
 #========================

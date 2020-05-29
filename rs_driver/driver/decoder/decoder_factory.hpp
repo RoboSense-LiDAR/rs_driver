@@ -19,10 +19,10 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#include "driver/decoder/decoder_16.hpp"
-#include "driver/decoder/decoder_32.hpp"
-#include "driver/decoder/decoder_128.hpp"
-#include "driver/decoder/decoder_bp.hpp"
+#include <rs_driver/driver/decoder/decoder_16.hpp>
+#include <rs_driver/driver/decoder/decoder_32.hpp>
+#include <rs_driver/driver/decoder/decoder_128.hpp>
+#include <rs_driver/driver/decoder/decoder_bp.hpp>
 namespace robosense
 {
     namespace lidar

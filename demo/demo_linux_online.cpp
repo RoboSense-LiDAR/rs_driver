@@ -20,7 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#include "interface/lidar_interface.h"
+#include "rs_driver/interface/lidar_interface.h"
 using namespace robosense::lidar;
 bool start_ = true;
 struct PointXYZI

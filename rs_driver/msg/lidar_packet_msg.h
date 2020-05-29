@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright 2020 RoboSense All rights reserved.
+ * Copyright 2017 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
  * This software is provided to you directly by RoboSense and might
@@ -21,31 +21,29 @@
  *****************************************************************************/
 
 #pragma once
-#include "common/common_header.h"
-#include "lidar_packet_msg.h"
+#include <rs_driver/common/common_header.h>
+
 namespace robosense
 {
+
   namespace lidar
   {
-/**
-   * @brief Lidar Scan Message for Robosense SDK.
-   * @detail Robosense LidarScanMsg is defined for passing lidar packets scan accross different modules
+    /**
+   * @brief Lidar packet Message for Robosense SDK.
+   * @detail Robosense LidarPacketMsg is defined for passing lidar single packet such like difop packet accross different modules
    *         If ROS is turned on , we provide translation functions between ROS message and Robosense message
-   *         If Proto is turned on , we provide translation functions between Protobuf message and Robosense message
    */
+
 #ifdef _MSC_VER
 #pragma pack(push, 2)
-    struct LidarScanMsg
+    typedef struct LidarPacketMsg
 #elif __GNUC__
-    struct alignas(16) LidarScanMsg
+    struct alignas(16) LidarPacketMsg
 #endif
     {
       double timestamp = 0.0;
-      uint32_t seq = 0;
-      std::string parent_frame_id = "";
       std::string frame_id = "";
-
-      std::vector<LidarPacketMsg> packets; ///< a vector which store a scan of packets (the size of the vector is not fix)
+      std::array<uint8_t, 1248> packet{}; ///< lidar single packet
     };
 #ifdef _MSC_VER
 #pragma pack(pop)

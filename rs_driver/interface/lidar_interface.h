@@ -20,7 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include "driver/lidar_driver.hpp"
+#include <rs_driver/driver/lidar_driver.hpp>
 
 namespace robosense
 {

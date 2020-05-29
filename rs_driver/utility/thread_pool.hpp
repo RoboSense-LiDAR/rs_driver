@@ -20,14 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include <vector>
-#include <queue>
-#include <thread>
-#include <atomic>
-#include <condition_variable>
-#include <future>
-#include <functional>
-#include <stdexcept>
+#include <rs_driver/common/common_header.h>
 #define MAX_THREAD_NUM 4
 namespace robosense
 {

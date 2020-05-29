@@ -25,9 +25,8 @@
 #define RSBP_PCAP_SLEEP_DURATION 500
 #define RS128_PCAP_SLEEP_DURATION 95
 
-#include "common/common_header.h"
-#include "driver/decoder/decoder_base.hpp"
-#include "msg/lidar_packet_msg.h"
+#include <rs_driver/common/common_header.h>
+#include <rs_driver/msg/lidar_packet_msg.h>
 
 using boost::asio::deadline_timer;
 using boost::asio::ip::udp;

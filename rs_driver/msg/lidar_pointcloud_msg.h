@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright 2017 RoboSense All rights reserved.
+ * Copyright 2020 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
  * This software is provided to you directly by RoboSense and might
@@ -21,29 +21,40 @@
  *****************************************************************************/
 
 #pragma once
-#include "common/common_header.h"
-
+#include <rs_driver/common/common_header.h>
 namespace robosense
 {
-
   namespace lidar
   {
-    /**
-   * @brief Lidar packet Message for Robosense SDK.
-   * @detail Robosense LidarPacketMsg is defined for passing lidar single packet such like difop packet accross different modules
-   *         If ROS is turned on , we provide translation functions between ROS message and Robosense message
-   */
-
 #ifdef _MSC_VER
 #pragma pack(push, 2)
-    typedef struct LidarPacketMsg
+#endif
+    template <typename PointT>
+#ifdef _MSC_VER
+    struct LidarPointcloudMsg
 #elif __GNUC__
-    struct alignas(16) LidarPacketMsg
+    struct alignas(16) LidarPointcloudMsg
 #endif
     {
+      typedef std::vector<PointT> PointCloud;
+      typedef std::shared_ptr<PointCloud> PointCloudPtr;
+      typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
       double timestamp = 0.0;
+      uint32_t seq = 0;
+      std::string parent_frame_id = "";
       std::string frame_id = "";
-      std::array<uint8_t, 1248> packet{}; ///< lidar single packet
+      uint32_t height = 0;
+      uint32_t width = 0;
+      bool is_dense = false;
+      bool is_transform = false;
+      bool is_motion_correct = false;
+      PointCloudPtr pointcloud_ptr;
+      LidarPointcloudMsg() = default;
+      LidarPointcloudMsg(const PointCloudPtr &_point_ptr) : pointcloud_ptr(_point_ptr)
+      {
+      }
+      typedef std::shared_ptr<LidarPointcloudMsg> Ptr;
+      typedef std::shared_ptr<const LidarPointcloudMsg> ConstPtr;
     };
 #ifdef _MSC_VER
 #pragma pack(pop)

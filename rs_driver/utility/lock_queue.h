@@ -19,45 +19,48 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-
 #pragma once
-#include "common/common_header.h"
+#include <rs_driver/common/common_header.h>
 namespace robosense
 {
-  namespace lidar
-  {
-#ifdef _MSC_VER
-#pragma pack(push, 2)
-#endif
-    template <typename PointT>
-#ifdef _MSC_VER
-    struct LidarPointcloudMsg
-#elif __GNUC__
-    struct alignas(16) LidarPointcloudMsg
-#endif
+    namespace lidar
     {
-      typedef std::vector<PointT> PointCloud;
-      typedef std::shared_ptr<PointCloud> PointCloudPtr;
-      typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
-      double timestamp = 0.0;
-      uint32_t seq = 0;
-      std::string parent_frame_id = "";
-      std::string frame_id = "";
-      uint32_t height = 0;
-      uint32_t width = 0;
-      bool is_dense = false;
-      bool is_transform = false;
-      bool is_motion_correct = false;
-      PointCloudPtr pointcloud_ptr;
-      LidarPointcloudMsg() = default;
-      LidarPointcloudMsg(const PointCloudPtr &_point_ptr) : pointcloud_ptr(_point_ptr)
-      {
-      }
-      typedef std::shared_ptr<LidarPointcloudMsg> Ptr;
-      typedef std::shared_ptr<const LidarPointcloudMsg> ConstPtr;
-    };
-#ifdef _MSC_VER
-#pragma pack(pop)
-#endif
-  } // namespace lidar
+        template <typename T>
+        class Queue
+        {
+        public:
+            Queue()
+            {
+                is_task_finished = true;
+            }
+            void push(const T &value)
+            {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                m_quque.push(value);
+            }
+
+            void pop()
+            {
+                if (!m_quque.empty())
+                {
+                    std::lock_guard<std::mutex> lock(m_mutex);
+                    m_quque.pop();
+                }
+            }
+
+            void clear()
+            {
+                std::queue<T> empty;
+                std::lock_guard<std::mutex> lock(m_mutex);
+                swap(empty, m_quque);
+            }
+
+        public:
+            std::queue<T> m_quque;
+            std::atomic<bool> is_task_finished;
+
+        private:
+            mutable std::mutex m_mutex;
+        };
+    } // namespace lidar
 } // namespace robosense

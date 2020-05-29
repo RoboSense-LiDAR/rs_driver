@@ -20,7 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include "common/common_header.h"
+#include <rs_driver/common/common_header.h>
 namespace robosense
 {
     namespace lidar

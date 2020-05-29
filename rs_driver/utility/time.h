@@ -19,37 +19,16 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#pragma once
-/*Common*/
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <ctime>
-#include <math.h>
-#include <memory>
-#include <array>
-#include <cmath>
-#include <cstring>
-#include <algorithm>
-#include <functional>
-#include <iterator>
-#include <chrono>
-#include <boost/bind.hpp>
-#include <boost/asio.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "macro/macro.h"
-#include "common/driver_param.h"
-/*Linux*/
-#ifdef __GNUC__
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#endif
-
-/*Pcap*/
-#include <pcap.h>
+#include <rs_driver/common/common_header.h>
+namespace robosense
+{
+  namespace lidar
+  {
+    inline double getTime(void)
+    {
+      const auto t = std::chrono::system_clock::now();
+      const auto t_sec = std::chrono::duration_cast<std::chrono::duration<double>>(t.time_since_epoch());
+      return (double)t_sec.count();
+    }
+  } // namespace lidar
+} // namespace robosense

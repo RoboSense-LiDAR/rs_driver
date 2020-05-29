@@ -19,7 +19,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#include "driver/decoder/decoder_base.hpp"
+#include <rs_driver/driver/decoder/decoder_base.hpp>
 namespace robosense
 {
     namespace lidar
@@ -371,8 +371,8 @@ namespace robosense
                     {
                         vect_str.push_back(str);
                     }
-                    this->vert_angle_list_[row_index] = std::stof(vect_str[0])*100; // degree
-                    this->hori_angle_list_[row_index] = std::stof(vect_str[1])*100; // degree
+                    this->vert_angle_list_[row_index] = std::stof(vect_str[0]) * 100; // degree
+                    this->hori_angle_list_[row_index] = std::stof(vect_str[1]) * 100; // degree
                     row_index++;
                     if (row_index >= laser_num)
                     {

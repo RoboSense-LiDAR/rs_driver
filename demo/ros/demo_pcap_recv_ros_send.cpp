@@ -26,7 +26,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include "interface/lidar_interface.h"
+#include "rs_driver/interface/lidar_interface.h"
 using namespace robosense::lidar;
 ros::Publisher lidar_points_pub_;
 bool start_ = true;
