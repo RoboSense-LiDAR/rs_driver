@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright 2020 RoboSense All rights reserved.
+ * Copyright 2017 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
  * This software is provided to you directly by RoboSense and might
@@ -22,39 +22,23 @@
 
 #pragma once
 #include <rs_driver/common/common_header.h>
+
 namespace robosense
 {
+
   namespace lidar
   {
+
 #ifdef _MSC_VER
 #pragma pack(push, 2)
-#endif
-    template <typename PointT>
-#ifdef _MSC_VER
-    struct LidarPointcloudMsg
+    typedef struct PacketMsg
 #elif __GNUC__
-    struct alignas(16) LidarPointcloudMsg
+    struct alignas(16) PacketMsg ///< LiDAR single packet message
 #endif
     {
-      typedef std::vector<PointT> PointCloud;
-      typedef std::shared_ptr<PointCloud> PointCloudPtr;
-      typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
       double timestamp = 0.0;
-      uint32_t seq = 0;
-      std::string parent_frame_id = "";
       std::string frame_id = "";
-      uint32_t height = 0;
-      uint32_t width = 0;
-      bool is_dense = false;
-      bool is_transform = false;
-      bool is_motion_correct = false;
-      PointCloudPtr pointcloud_ptr;
-      LidarPointcloudMsg() = default;
-      LidarPointcloudMsg(const PointCloudPtr &_point_ptr) : pointcloud_ptr(_point_ptr)
-      {
-      }
-      typedef std::shared_ptr<LidarPointcloudMsg> Ptr;
-      typedef std::shared_ptr<const LidarPointcloudMsg> ConstPtr;
+      std::array<uint8_t, 1248> packet{};
     };
 #ifdef _MSC_VER
 #pragma pack(pop)

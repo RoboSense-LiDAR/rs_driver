@@ -36,7 +36,7 @@ struct PointXYZI ///< user defined point type
  *              When the point cloud message is ready, driver can send out message through this function.
  * @param msg  The lidar point cloud message. 
  */
-void pointCloudCallback(const LidarPointcloudMsg<PointXYZI> &msg)
+void pointCloudCallback(const PointcloudMsg<PointXYZI> &msg)
 {
     /* Note: Please do not put time-consuming operations in the callback function!
      Make a copy of the message and process it in another thread is recommended*/

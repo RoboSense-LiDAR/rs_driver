@@ -66,6 +66,7 @@ namespace robosense
                         });
                 }
             }
+
             ~ThreadPool()
             {
                 stoped.store(true);

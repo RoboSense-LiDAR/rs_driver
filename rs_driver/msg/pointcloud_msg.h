@@ -22,30 +22,39 @@
 
 #pragma once
 #include <rs_driver/common/common_header.h>
-#include <rs_driver/msg/lidar_packet_msg.h>
 namespace robosense
 {
   namespace lidar
   {
-/**
-   * @brief Lidar Scan Message for Robosense SDK.
-   * @detail Robosense LidarScanMsg is defined for passing lidar packets scan accross different modules
-   *         If ROS is turned on , we provide translation functions between ROS message and Robosense message
-   *         If Proto is turned on , we provide translation functions between Protobuf message and Robosense message
-   */
 #ifdef _MSC_VER
 #pragma pack(push, 2)
-    struct LidarScanMsg
+#endif
+    template <typename PointT>
+#ifdef _MSC_VER
+    struct PointcloudMsg
 #elif __GNUC__
-    struct alignas(16) LidarScanMsg
+    struct alignas(16) PointcloudMsg
 #endif
     {
+      typedef std::vector<PointT> PointCloud;
+      typedef std::shared_ptr<PointCloud> PointCloudPtr;
+      typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
       double timestamp = 0.0;
       uint32_t seq = 0;
       std::string parent_frame_id = "";
       std::string frame_id = "";
-
-      std::vector<LidarPacketMsg> packets; ///< a vector which store a scan of packets (the size of the vector is not fix)
+      uint32_t height = 0;
+      uint32_t width = 0;
+      bool is_dense = false;
+      bool is_transform = false;
+      bool is_motion_correct = false;
+      PointCloudPtr pointcloud_ptr;
+      PointcloudMsg() = default;
+      PointcloudMsg(const PointCloudPtr &_point_ptr) : pointcloud_ptr(_point_ptr)
+      {
+      }
+      typedef std::shared_ptr<PointcloudMsg> Ptr;
+      typedef std::shared_ptr<const PointcloudMsg> ConstPtr;
     };
 #ifdef _MSC_VER
 #pragma pack(pop)

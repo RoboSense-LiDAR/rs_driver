@@ -26,8 +26,8 @@
 #define RS128_PCAP_SLEEP_DURATION 95
 
 #include <rs_driver/common/common_header.h>
-#include <rs_driver/msg/lidar_packet_msg.h>
-
+#include <rs_driver/common/error_code.h>
+#include <rs_driver/msg/packet_msg.h>
 using boost::asio::deadline_timer;
 using boost::asio::ip::udp;
 namespace robosense
@@ -97,11 +97,11 @@ namespace robosense
           pcap_close(this->pcap_);
         }
       }
-      inline void regRecvMsopCallback(const std::function<void(const LidarPacketMsg &)> callBack)
+      inline void regRecvMsopCallback(const std::function<void(const PacketMsg &)> callBack)
       {
         msop_cb_.push_back(callBack);
       }
-      inline void regRecvDifopCallback(const std::function<void(const LidarPacketMsg &)> callBack)
+      inline void regRecvDifopCallback(const std::function<void(const PacketMsg &)> callBack)
       {
         difop_cb_.push_back(callBack);
       }
@@ -209,7 +209,7 @@ namespace robosense
           {
             if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
             {
-              LidarPacketMsg msg;
+              PacketMsg msg;
               memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
               for (auto &iter : msop_cb_)
               {
@@ -218,7 +218,7 @@ namespace robosense
             }
             else if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_difop_filter_, header, pkt_data)))
             {
-              LidarPacketMsg msg;
+              PacketMsg msg;
               memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
               for (auto &iter : difop_cb_)
               {
@@ -275,7 +275,7 @@ namespace robosense
             excb_(ErrCode_MsopPktIncomplete);
             continue;
           }
-          LidarPacketMsg msg;
+          PacketMsg msg;
           memcpy(msg.packet.data(), precv_buffer, RSLIDAR_PKT_LEN);
           for (auto &iter : msop_cb_)
           {
@@ -312,7 +312,7 @@ namespace robosense
             excb_(ErrCode_DifopPktIncomplete);
             continue;
           }
-          LidarPacketMsg msg;
+          PacketMsg msg;
           memcpy(msg.packet.data(), precv_buffer, RSLIDAR_PKT_LEN);
           for (auto &iter : difop_cb_)
           {
@@ -340,8 +340,8 @@ namespace robosense
       Thread pcap_thread_;
       boost::asio::io_service msop_io_service_;
       boost::asio::io_service difop_io_service_;
-      std::vector<std::function<void(const LidarPacketMsg &)>> difop_cb_;
-      std::vector<std::function<void(const LidarPacketMsg &)>> msop_cb_;
+      std::vector<std::function<void(const PacketMsg &)>> difop_cb_;
+      std::vector<std::function<void(const PacketMsg &)>> msop_cb_;
     };
   } // namespace lidar
 } // namespace robosense

@@ -79,7 +79,7 @@ namespace robosense
        * @param callBack the callback funtion  
        * @return: Null
        */
-      inline void regPointRecvCallback(const std::function<void(const LidarPointcloudMsg<PointT> &)> callBack)
+      inline void regPointRecvCallback(const std::function<void(const PointcloudMsg<PointT> &)> callBack)
       {
         driver_ptr_->regPointRecvCallback(callBack);
       }
@@ -89,7 +89,7 @@ namespace robosense
        * @param callBack the callback funtion  
        * @return: Null
        */
-      inline void regRecvCallback(const std::function<void(const LidarScanMsg &)> callBack)
+      inline void regRecvCallback(const std::function<void(const ScanMsg &)> callBack)
       {
         driver_ptr_->regRecvCallback(callBack);
       }
@@ -99,7 +99,7 @@ namespace robosense
        * @param callBack the callback funtion  
        * @return: Null
        */
-      inline void regRecvCallback(const std::function<void(const LidarPacketMsg &)> callBack)
+      inline void regRecvCallback(const std::function<void(const PacketMsg &)> callBack)
       {
         driver_ptr_->regRecvCallback(callBack);
       }
@@ -121,7 +121,7 @@ namespace robosense
        * @param point_msg The output point cloud message
        * @return: Null
        */
-      inline void decodeMsopScan(const LidarScanMsg &pkt_scan_msg, LidarPointcloudMsg<PointT> &point_msg)
+      inline void decodeMsopScan(const ScanMsg &pkt_scan_msg, PointcloudMsg<PointT> &point_msg)
       {
         driver_ptr_->decodeMsopScan(pkt_scan_msg, point_msg);
       }
@@ -130,7 +130,7 @@ namespace robosense
        * @param pkt_msg The lidar difop packet 
        * @return: Null
        */
-      inline void decodeDifopPkt(const LidarPacketMsg &pkt_msg)
+      inline void decodeDifopPkt(const PacketMsg &pkt_msg)
       {
         driver_ptr_->decodeDifopPkt(pkt_msg);
       }
