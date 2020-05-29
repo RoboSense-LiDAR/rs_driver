@@ -22,7 +22,7 @@
 
 #pragma once
 #include <rs_driver/common/common_header.h>
-#include <rs_driver/msg/lidar_packet_msg.h>
+#include <rs_driver/msg/packet_msg.h>
 namespace robosense
 {
   namespace lidar
