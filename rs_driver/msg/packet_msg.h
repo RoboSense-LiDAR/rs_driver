@@ -25,7 +25,6 @@
 
 namespace robosense
 {
-
   namespace lidar
   {
 
