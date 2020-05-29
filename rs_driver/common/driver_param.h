@@ -36,7 +36,7 @@ enum RS_ECHO_MODE
 };
 typedef struct RSDecoder_Param
 {
-    RS_ECHO_MODE echo = RS_ECHO_MAX;
+    RS_ECHO_MODE echo_mode = RS_ECHO_MAX;
     float max_distance = 200.0f;
     float min_distance = 0.2f;
     float start_angle = 0.0f;

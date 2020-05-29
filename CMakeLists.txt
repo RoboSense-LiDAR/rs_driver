@@ -83,19 +83,16 @@ endif(roscpp_FOUND)
 # Build Setup
 #========================
 include_directories(${PROJECT_SOURCE_DIR})
-
-add_executable(demo_pcap_recv_ros_send
-              demo/ros/demo_pcap_recv_ros_send.cpp
+add_executable(demo
+              demo/demo.cpp
               )
-target_link_libraries(demo_pcap_recv_ros_send
+target_link_libraries(demo
                     ${Boost_LIBRARIES}    
                     ${roscpp_LIBRARIES}
                     ${PCL_LIBRARIES}         
                           pcap
                           pthread
 )
-
-
 #========================
 # Installation
 #========================        

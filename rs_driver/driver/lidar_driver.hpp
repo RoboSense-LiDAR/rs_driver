@@ -101,6 +101,7 @@ namespace robosense
         if (!difop_flag_)
         {
           reportError(ErrCode_NoDifopRecv);
+          usleep(100000);
           return;
         }
         std::vector<std::vector<PointT>> point_vvec;
@@ -142,11 +143,14 @@ namespace robosense
       }
 
     private:
-      inline void runCallBack(const LidarScanMsg &pkts_msg)
+      inline void runCallBack(const LidarScanMsg &scan_msg)
       {
-        for (auto &it : pkts_msop_cb_)
+        if (scan_msg.seq != 0)
         {
-          it(pkts_msg);
+          for (auto &it : pkts_msop_cb_)
+          {
+            it(scan_msg);
+          }
         }
       }
 
@@ -160,9 +164,12 @@ namespace robosense
 
       inline void runCallBack(const LidarPointcloudMsg<PointT> &points_msg)
       {
-        for (auto &it : pointscb_)
+        if (points_msg.seq != 0)
         {
-          it(points_msg);
+          for (auto &it : pointscb_)
+          {
+            it(points_msg);
+          }
         }
       }
 
@@ -176,11 +183,6 @@ namespace robosense
 
       void msopCallback(const LidarPacketMsg &msg)
       {
-        if (!difop_flag_)
-        {
-          reportError(ErrCode_NoDifopRecv);
-          return;
-        }
         LidarPacketMsg pkt_msg = msg;
         msop_pkt_queue_.push(pkt_msg);
         if (msop_pkt_queue_.is_task_finished.load())
@@ -203,6 +205,14 @@ namespace robosense
 
       void processMsop()
       {
+        if (!difop_flag_)
+        {
+          reportError(ErrCode_NoDifopRecv);
+          msop_pkt_queue_.clear();
+          msop_pkt_queue_.is_task_finished.store(true);
+          usleep(100000);
+          return;
+        }
         while (msop_pkt_queue_.m_quque.size() > 0)
         {
           LidarPacketMsg pkt = msop_pkt_queue_.m_quque.front();

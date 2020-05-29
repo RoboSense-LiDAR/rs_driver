@@ -244,7 +244,7 @@ namespace robosense
                                                                          angle_flag_(true),
                                                                          start_angle_(param.start_angle * 100),
                                                                          end_angle_(param.end_angle * 100),
-                                                                         echo_mode_(param.echo),
+                                                                         echo_mode_(param.echo_mode),
                                                                          max_distance_(param.max_distance),
                                                                          min_distance_(param.min_distance),
                                                                          mode_split_frame_(param.mode_split_frame),
