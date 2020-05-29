@@ -1,4 +1,4 @@
-### Error code简介
+# Error Code Introduction
 
 ```c++
         /**
@@ -27,36 +27,3 @@
         };
 ```
 
-​	0x00~0x40为提示信息，程序正常运行
-
-​	0x40~0x80为警告信息，程序可能无法正常工作
-
-​	0x80~0xC0为严重错误，程序将立即退出
-
-+ ErrCode_Success: 正常
-
-+ ErrCode_PcapFinished: pcap 文件解析完成；
-
-+ ErrCode_PcapRepeat: pcap将会重复播放；
-
-+ ErrCode_PcapExit: 将会退出pcap线程；
-
-+ ErrCode_MsopPktTimeout: msop消息接收超时(1秒)；
-
-+ ErrCode_DifopPktTimeout: difop消息接收超时(2秒)；
-
-+ ErrCode_MsopPktIncomplete: msop消息接收未完成；
-
-+ ErrCode_DifopPktIncomplete: difop消息接收未完成；
-
-+ ErrCode_NoDifopRecv: 点云解析未开始直到收到difop消息；
-
-+ ErrCode_ZeroPoints: 点云的大小为0，请检查雷达参数是否配置正确；
-
-+ ErrCode_PcapWrongDirectory: pcap文件路径错误；
-
-+ ErrCode_PcapContradiction: pcap功能被禁止，但是仍然尝试解析pcap文件；
-
-+ ErrCode_MsopPortBuzy: msop端口被占用；
-
-+ ErrCode_DifopPortBuzy: difop端口被占用；

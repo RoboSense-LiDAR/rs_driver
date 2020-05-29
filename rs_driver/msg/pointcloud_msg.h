@@ -41,14 +41,14 @@ namespace robosense
       typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
       double timestamp = 0.0;
       uint32_t seq = 0;
-      std::string parent_frame_id = "";
-      std::string frame_id = "";
-      uint32_t height = 0;
-      uint32_t width = 0;
-      bool is_dense = false;
-      bool is_transform = false;
-      bool is_motion_correct = false;
-      PointCloudPtr pointcloud_ptr;
+      std::string parent_frame_id = ""; ///< which coordinate the point cloud is in
+      std::string frame_id = "";        ///< the point cloud frame id
+      uint32_t height = 0;              ///< the height of point cloud
+      uint32_t width = 0;               ///< the width of point cloud
+      bool is_dense = false;            ///< if is_dense=true, the point cloud does not contain NAN points
+      bool is_transform = false;        ///< if is_transform=true, the point cloud has been transformed
+      bool is_motion_correct = false;   ///< if is_motion_correct=true, the point cloud has been compensated
+      PointCloudPtr pointcloud_ptr;     ///< the point cloud pointer
       PointcloudMsg() = default;
       PointcloudMsg(const PointCloudPtr &_point_ptr) : pointcloud_ptr(_point_ptr)
       {

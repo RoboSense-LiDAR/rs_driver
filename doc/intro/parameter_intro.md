@@ -1,4 +1,4 @@
-### 参数简介
+# Parameters Introduction
 
 #### 1. RSDecoder_Param
 ```c++
@@ -15,15 +15,7 @@ typedef struct RSDecoder_Param ///< The lidar decoder parameter
 } RSDecoder_Param;
 ```
 
-RSDecoder_Param为雷达解析配置参数:
-+ echo_mode用于设置雷达的回波模式；
-+ max_distance用于设置雷达的最远有效距离；
-+ min_distance用于设置雷达的最短有效距离；
-+ start_angle用于设置雷达一帧数据的起始角度；
-+ end_angle用于设置雷达一帧数据的结束角度；
-+ mode_split_frame 1: 角度分帧模式 2：固定包数分帧 3： 自定义包数分帧
-+ num_pkts_split 自定义的分帧包数
-+ cut_angle表示雷达的分割角度；
+
 
 #### 2. RSInput_Param
 
@@ -39,13 +31,7 @@ typedef struct RSInput_Param ///< The lidar input parameter
 } RSInput_Param;
 ```
 
-RSInput_Param为雷达解析输入参数:
-+ device_ip用于设置雷达的IP；
-+ msop_port用于设置雷达的msop端口；
-+ difop_port用于设置雷达的difop端口；
-+ read_pcap用于设置是否读取pcap；
-+ pcap_repeat用于设置是否重复读取pcap；
-+ pcap_file_dir用于设置pcap数据的路径；
+
 
 
 #### 3. RSLiDAR_Driver_Param
@@ -61,11 +47,5 @@ typedef struct RSLiDAR_Driver_Param ///< The lidar driver parameter
 } RSLiDAR_Driver_Param;
 ```
 
-RSLiDAR_Driver_Param为雷达驱动配置参数：
-+ calib_path用于设置雷达的标定参数路径；
-+ frame_id用于设置雷达的frame_id；
-+ lidar_type用于设置雷达的类型，包括RS16，RS32,RSBP,RS128；
-+ use_lidar_clock用于设置雷达消息时间戳类型，true:使用lidar时间戳,false:使用系统时间戳；
-+ input_param用于设置雷达解析输入参数；
-+ decoder_param用于设置雷达解析配置参数；
+
 

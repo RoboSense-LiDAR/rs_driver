@@ -38,8 +38,8 @@ struct PointXYZI ///< user defined point type
  */
 void pointCloudCallback(const PointcloudMsg<PointXYZI> &msg)
 {
-    /* Note: Please do not put time-consuming operations in the callback function!
-     Make a copy of the message and process it in another thread is recommended*/
+    /* Note: Please do not put time-consuming operations in the callback function! */
+    /* Make a copy of the message and process it in another thread is recommended*/
     std::cout << "msg: " << msg.seq << " pointcloud size: " << msg.pointcloud_ptr->size() << std::endl;
 }
 
@@ -49,8 +49,8 @@ void pointCloudCallback(const PointcloudMsg<PointXYZI> &msg)
  */
 void exceptionCallback(const Error &code)
 {
-    /* Note: Please do not put time-consuming operations in the callback function!
-     Make a copy of the error message and process it in another thread is recommended*/
+    /* Note: Please do not put time-consuming operations in the callback function! */
+    /* Make a copy of the error message and process it in another thread is recommended*/
     std::cout << "Error code : " << code.toString() << std::endl;
 }
 

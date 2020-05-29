@@ -36,7 +36,7 @@ namespace robosense
     {
       double timestamp = 0.0;
       uint32_t seq = 0;
-      std::string parent_frame_id = "";
+      std::string parent_frame_id = ""; ///< which coordinate the message is in
       std::string frame_id = "";
       std::vector<PacketMsg> packets; ///< A vector which store a scan of packets (the size of the vector is not fix)
     };
