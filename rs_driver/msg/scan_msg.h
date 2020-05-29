@@ -38,7 +38,6 @@ namespace robosense
       uint32_t seq = 0;
       std::string parent_frame_id = "";
       std::string frame_id = "";
-
       std::vector<PacketMsg> packets; ///< A vector which store a scan of packets (the size of the vector is not fix)
     };
 #ifdef _MSC_VER

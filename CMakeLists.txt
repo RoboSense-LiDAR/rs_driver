@@ -36,6 +36,10 @@ set(CMAKE_BUILD_TYPE Release)
 add_definitions(-O3)
 add_definitions(-std=c++11)
 add_compile_options(-W)
+configure_file (
+  "${PROJECT_SOURCE_DIR}/rs_driver/macro/macro.h.in"
+  "${PROJECT_SOURCE_DIR}/rs_driver/macro/macro.h"
+)
 
 #========================
 # Installation Setup
@@ -43,41 +47,10 @@ add_compile_options(-W)
 SET(CMAKE_INSTALL_PREFIX /usr/include)
 set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/rs_driver)
 
-
-
-
-find_package(Boost REQUIRED)
-
-find_package(PCL QUIET)
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
-
-
-
-configure_file (
-  "${PROJECT_SOURCE_DIR}/rs_driver/macro/macro.h.in"
-  "${PROJECT_SOURCE_DIR}/rs_driver/macro/macro.h"
-)
-
 #========================
 # Dependencies Setup
 #========================
-set(EXTERNAL_LIBS "")
-find_package(roscpp 1.12 QUIET)
-if(roscpp_FOUND)
-  message(=============================================================)
-  message("-- ROS Found, Ros Support is turned On!")
-  message(=============================================================)
-  add_definitions(-DROS_FOUND)
-  include_directories(${roscpp_INCLUDE_DIRS})
-  set(EXTERNAL_LIBS ${EXTERNAL_LIBS} ${roscpp_LIBRARIES})
-else(roscpp_FOUND)
-  message(=============================================================)
-  message("-- ROS Not Found, Ros Support is turned Off!")
-  message(=============================================================)
-endif(roscpp_FOUND)
-
+find_package(Boost COMPONENTS system REQUIRED)
 
 #========================
 # Build Setup
@@ -87,16 +60,14 @@ add_executable(demo
               demo/demo.cpp
               )
 target_link_libraries(demo
-                    ${Boost_LIBRARIES}    
-                    ${roscpp_LIBRARIES}
-                    ${PCL_LIBRARIES}         
-                          pcap
-                          pthread
+                    ${Boost_LIBRARIES}       
+                      pcap
+                      pthread
 )
+
 #========================
 # Installation
 #========================        
-
 install(DIRECTORY rs_driver/
         DESTINATION ${INSTALL_DRIVER_DIR}
         FILES_MATCHING PATTERN "*.h")
@@ -104,59 +75,4 @@ install(DIRECTORY rs_driver/
 install(DIRECTORY rs_driver/
         DESTINATION ${INSTALL_DRIVER_DIR}
         FILES_MATCHING PATTERN "*.hpp")
-
-#========================
-# Allow find_package()
-#======================== 
-
-# # Change the include location for the case of an install location
-# set(CONF_INCLUDE_DIRS ${INSTALL_INCLUDE_DIR} ${CONF_INCLUDE_DIRS} )
-
-
-# #FIXME: this will only be applied to installed files. Confirm that we want that.
-# # gather all the includes but remove ones in the source tree
-# # because we added an include for the local yaml-cpp-pm we should also remove it
-# list(REMOVE_ITEM CONF_INCLUDE_DIRS ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include)
-
-# # We put the generated file for installation in a different repository (i.e., ./CMakeFiles/)
-# configure_file(
-#   "cmake/${PROJECT_NAME}Config.cmake.in"
-#   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake" @ONLY
-# )
-
-# # The same versioning file can be used for both cases
-# configure_file(
-#   "cmake/${PROJECT_NAME}ConfigVersion.cmake.in"
-#   "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY
-# )
-
-# # Install Config.cmake
-# install(
-#   FILES
-#     "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
-#     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-#   DESTINATION 
-#     "${INSTALL_CMAKE_DIR}/${PROJECT_NAME}"
-# )
-
-# #Handle pkg-config file
-# set(LIBRARY_CC_ARGS "")
-# foreach(_LIB IN LISTS PACKAGE_LIBS EXTERNAL_LIBS) 
-#   get_filename_component(_FILE_NAME ${_LIB} NAME)
-#   if(${_FILE_NAME} STREQUAL ${_LIB}) # not an absolute path
-#     set(LIBRARY_CC_ARGS "${LIBRARY_CC_ARGS} -l${_LIB}")
-#   else()
-#     set(LIBRARY_CC_ARGS "${LIBRARY_CC_ARGS} ${_LIB}")
-#   endif()
-# endforeach()
-# unset(_LIB)
-# unset(_FILE_NAME)
-
-# configure_file(cmake/${PROJECT_NAME}.pc.in ${PROJECT_NAME}.pc @ONLY)
-# install(FILES
-#   ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pc
-#   DESTINATION ${INSTALL_PKGCONFIG_DIR}
-# )
-# unset(LIBRARY_CC_ARGS)
-
 
