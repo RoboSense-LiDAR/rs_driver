@@ -56,6 +56,15 @@ namespace robosense
         driver_ptr_->init(param);
       }
       /**
+       * @description: The initialize function, only initilize decoder(not include input module), used in offline data decoding.
+       * @param The struct->RSLiDAR_Driver_Param 
+       * @return: Null
+       */
+      inline void initDecoderOnly(const RSLiDAR_Driver_Param &param)
+      {
+        driver_ptr_->initDecoderOnly(param);
+      }
+      /**
        * @description: Used to start the thread to receive packets, and decode packets
        * @param Null
        * @return: Null

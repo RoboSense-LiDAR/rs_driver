@@ -65,6 +65,20 @@ namespace robosense
         scan_seq_ = 0;
       }
 
+      inline void initDecoderOnly(const RSLiDAR_Driver_Param &param)
+      {
+        driver_param_ = param;
+        lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param);
+        lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
+        thread_pool_ptr_ = std::make_shared<ThreadPool>();
+        pointcloud_ptr_ = typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
+        scan_ptr_ = std::make_shared<ScanMsg>();
+        thread_flag_ = false;
+        difop_flag_ = false;
+        points_seq_ = 0;
+        scan_seq_ = 0;
+      }
+
       inline void start()
       {
         lidar_input_ptr_->start();
