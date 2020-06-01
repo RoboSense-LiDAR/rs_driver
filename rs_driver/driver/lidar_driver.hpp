@@ -86,6 +86,10 @@ namespace robosense
 
       inline void stop()
       {
+        if (lidar_input_ptr_ != nullptr)
+        {
+          lidar_input_ptr_->stop();
+        }
         msop_pkt_queue_.clear();
         difop_pkt_queue_.clear();
       }

@@ -82,7 +82,7 @@ namespace robosense
             inline auto commit(F &&f, Args &&... args) -> std::future<decltype(f(args...))>
             {
                 if (stoped.load())
-                    throw std::runtime_error("Commit on ThreadPool is stopped.");
+                    throw std::runtime_error("Commit on LiDAR threadpool is stopped.");
                 using RetType = decltype(f(args...));
                 auto task = std::make_shared<std::packaged_task<RetType()>>(
                     std::bind(std::forward<F>(f), std::forward<Args>(args)...)); // wtf !

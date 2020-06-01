@@ -82,20 +82,7 @@ namespace robosense
       }
       ~Input()
       {
-        if (!input_param_.read_pcap)
-        {
-          msop_thread_.start.store(false);
-          difop_thread_.start.store(false);
-          msop_thread_.m_thread->detach();
-          difop_thread_.m_thread->detach();
-        }
-        else
-        {
-          pcap_thread_.start.store(false);
-          pcap_thread_.m_thread->detach();
-          this->input_param_.pcap_file_dir.clear();
-          pcap_close(this->pcap_);
-        }
+        stop();
       }
       inline void regRecvMsopCallback(const std::function<void(const PacketMsg &)> callBack)
       {
@@ -118,6 +105,31 @@ namespace robosense
         {
           pcap_thread_.start.store(true);
           pcap_thread_.m_thread.reset(new std::thread([this]() { getPcapPacket(); }));
+        }
+      }
+      inline void stop()
+      {
+        if (!input_param_.read_pcap)
+        {
+          if (msop_thread_.start.load())
+          {
+            msop_thread_.start.store(false);
+            msop_thread_.m_thread->join();
+          }
+          if (difop_thread_.start.load())
+          {
+            difop_thread_.start.store(false);
+            difop_thread_.m_thread->join();
+          }
+        }
+        else
+        {
+          if (pcap_thread_.start.load())
+          {
+            pcap_thread_.start.store(false);
+            pcap_thread_.m_thread->join();
+            pcap_close(this->pcap_);
+          }
         }
       }
 
