@@ -21,11 +21,11 @@
  *****************************************************************************/
 #pragma once
 #include <rs_driver/common/common_header.h>
-#define MAX_THREAD_NUM 4
 namespace robosense
 {
     namespace lidar
     {
+        const int MAX_THREAD_NUM = 4;
         struct Thread
         {
             Thread()

@@ -98,15 +98,16 @@ namespace robosense
 
       inline void decodeMsopScan(const ScanMsg &pkt_scan_msg, PointcloudMsg<PointT> &point_msg)
       {
+        typename PointcloudMsg<PointT>::PointCloudPtr output_pointcloud_ptr = typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
         if (!difop_flag_)
         {
           reportError(ErrCode_NoDifopRecv);
+          point_msg.pointcloud_ptr = output_pointcloud_ptr;
           usleep(100000);
           return;
         }
         std::vector<std::vector<PointT>> point_vvec;
         int height = 1;
-        typename PointcloudMsg<PointT>::PointCloudPtr output_pointcloud_ptr = typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
         point_vvec.resize(pkt_scan_msg.packets.size());
 #pragma omp parallel for
         for (uint32_t i = 0; i < pkt_scan_msg.packets.size(); i++)

@@ -1,3 +1,2 @@
-#define PCAP_ENABLE 
-#define DEBUG_LEVEL 
-
+#define PCAP_ENABLE @PCAP_ENABLE @
+#define DRIVER_DEBUG_LEVEL @DEBUG_LEVEL @
