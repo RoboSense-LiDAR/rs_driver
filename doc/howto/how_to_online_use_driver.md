@@ -91,7 +91,7 @@ Define the parameter and config it. The msop port and difop port number of lidar
 
 #### Step6
 
-Call the initialize function and pass the parameter into the driver.
+Call the initialize function and pass the parameter into the driver. Since we need to get packets from online lidar, we call init() function.
 
 ```c++
  driver.init(param);                              ///< Call the init funtion and pass the parameter

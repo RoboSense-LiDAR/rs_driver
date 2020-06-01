@@ -47,7 +47,8 @@ namespace robosense
        */
       ~LidarDriverInterface() { stop(); }
       /**
-       * @description: The initialize function, used to set the realated parameters and instance objects
+       * @description: The initialize function, used to set the realated parameters and instance objects, 
+       *               used when get packets from online lidar or pcap.
        * @param The struct->RSLiDAR_Driver_Param 
        * @return: Null
        */
@@ -56,7 +57,8 @@ namespace robosense
         driver_ptr_->init(param);
       }
       /**
-       * @description: The initialize function, only initilize decoder(not include input module), used in offline data decoding.
+       * @description: The initialize function, only initilize decoder(not include input module), 
+       *               only be used when not get packets from ROS or other ways excluding online lidar and pcap.
        * @param The struct->RSLiDAR_Driver_Param 
        * @return: Null
        */

@@ -16,7 +16,7 @@
 
 ```c++
       /**
-       * @description: The initialize function, used to set the realated parameters and instance objects
+       * @description: The initialize function, used to set the realated parameters and instance objects, used when get packets from online lidar or pcap.
        * @param The struct->RSLiDAR_Driver_Param 
        * @return: Null
        */
@@ -25,6 +25,20 @@
         driver_ptr_->init(param);
       }
 ```
+
+```c++
+      /**
+       * @description: The initialize function, only initilize decoder(not include input module), only be used when not get packets from ROS or other ways excluding online lidar and pcap.
+       * @param The struct->RSLiDAR_Driver_Param 
+       * @return: Null
+       */
+      inline void initDecoderOnly(const RSLiDAR_Driver_Param &param)
+      {
+        driver_ptr_->initDecoderOnly(param);
+      }
+```
+
+
 
 ```c++
       /**
