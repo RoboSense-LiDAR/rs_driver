@@ -49,7 +49,7 @@ namespace robosense
                     return std::make_shared<Decoder128<vpoint>>(_param);
                     break;
                 default:
-                    assert(false);
+                    exit(-1);
                 }
             }
         };

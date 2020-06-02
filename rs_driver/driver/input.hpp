@@ -60,7 +60,7 @@ namespace robosense
           if ((pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf)) == NULL)
           {
             excb_(Error(ErrCode_PcapWrongDirectory));
-            assert(false);
+            exit(-1);
           }
           else
           {
@@ -172,7 +172,7 @@ namespace robosense
           catch (...)
           {
             excb_(ErrCode_MsopPortBuzy);
-            assert(false);
+            exit(-1);
           }
           msop_deadline_->expires_at(boost::posix_time::pos_infin);
           checkMsopDeadline();
@@ -187,7 +187,7 @@ namespace robosense
           catch (...)
           {
             excb_(ErrCode_DifopPortBuzy);
-            assert(false);
+            exit(-1);
           }
           difop_deadline_->expires_at(boost::posix_time::pos_infin);
           checkDifopDeadline();

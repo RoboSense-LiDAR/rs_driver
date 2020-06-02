@@ -35,7 +35,6 @@
 #include <functional>
 #include <iterator>
 #include <chrono>
-#include <assert.h>
 #include <queue>
 #include <thread>
 #include <atomic>

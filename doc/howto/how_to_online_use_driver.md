@@ -93,21 +93,21 @@ Define the parameter and config it. The msop port and difop port number of lidar
 
 #### Step6
 
-Call the initialize function and pass the parameter into the driver. Since we need to get packets from online lidar, we call init() function.
+Register the callback functions we defined in step2 and step3. Note: The exception callback function must be registered before the init() function is called because there may be an error during the initialization.
 
 ```c++
- driver.init(param);                              ///< Call the init funtion and pass the parameter
+ driver.regPointRecvCallback(pointCloudCallback); ///< Register the point cloud callback funtion into the driver
+ driver.regExceptionCallback(exceptionCallback);  ///<Register the exception callback funtion into the driver
 ```
 
 
 
 #### Step7
 
-Register the callback functions we defined in step2 and step3.
+Call the initialize function and pass the parameter into the driver. Since we need to get packets from online lidar, we call init() function.
 
 ```c++
- driver.regPointRecvCallback(pointCloudCallback); ///< Register the point cloud callback funtion into the driver
- driver.regExceptionCallback(exceptionCallback);  ///<Register the exception callback funtion into the driver
+ driver.init(param);                              ///< Call the init funtion and pass the parameter
 ```
 
 
