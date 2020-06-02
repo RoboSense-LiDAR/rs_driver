@@ -48,19 +48,19 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST16_MsopBlock;
+        RS16_MsopBlock;
 
         typedef struct
         {
             RS_MsopHeader header;
-            ST16_MsopBlock blocks[RS16_BLOCKS_PER_PKT];
+            RS16_MsopBlock blocks[RS16_BLOCKS_PER_PKT];
             uint32_t index;
             uint16_t tail;
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST16_MsopPkt;
+        RS16_MsopPkt;
 
         typedef struct
         {
@@ -71,7 +71,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST16_Intensity;
+        RS16_Intensity;
 
         typedef struct
         {
@@ -82,7 +82,7 @@ namespace robosense
             uint16_t static_base;
             uint16_t phase_lock_angle;
             RS_Version version;
-            ST16_Intensity intensity;
+            RS16_Intensity intensity;
             RS_SN sn;
             uint16_t zero_cali;
             uint8_t return_mode;
@@ -100,7 +100,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST16_DifopPkt;
+        RS16_DifopPkt;
 
 #ifdef _MSC_VER
 #pragma pack(pop)
@@ -138,7 +138,7 @@ namespace robosense
         template <typename vpoint>
         double Decoder16<vpoint>::getLidarTime(const uint8_t *pkt)
         {
-            ST16_MsopPkt *mpkt_ptr = (ST16_MsopPkt *)pkt;
+            RS16_MsopPkt *mpkt_ptr = (RS16_MsopPkt *)pkt;
             std::tm stm;
             memset(&stm, 0, sizeof(stm));
             stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
@@ -154,7 +154,7 @@ namespace robosense
         int Decoder16<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height)
         {
             height = 16;
-            ST16_MsopPkt *mpkt_ptr = (ST16_MsopPkt *)pkt;
+            RS16_MsopPkt *mpkt_ptr = (RS16_MsopPkt *)pkt;
             if (mpkt_ptr->header.id != RS16_MSOP_ID)
             {
                 //      rs_print(RS_ERROR, "[RS16] MSOP pkt ID no match.");
@@ -254,7 +254,7 @@ namespace robosense
         template <typename vpoint>
         int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         {
-            ST16_DifopPkt *rs16_ptr = (ST16_DifopPkt *)pkt;
+            RS16_DifopPkt *rs16_ptr = (RS16_DifopPkt *)pkt;
             if (rs16_ptr->id != RS16_DIFOP_ID)
             {
                 //        rs_print(RS_ERROR, "[RS16] DIFOP pkt ID no match.");
