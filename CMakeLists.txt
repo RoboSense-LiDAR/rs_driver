@@ -22,14 +22,13 @@
 ###############################################################################
 cmake_minimum_required(VERSION 3.5)
 project(rs_driver)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
+set (PROJECT_VERSION_MAJOR 1)
+set (PROJECT_VERSION_MINOR 0)
+set (PROJECT_VERSION_PATCH 0)
 #========================
 # Project details / setup
 #========================
 set(PROJECT_NAME rs_driver)
-string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
-string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
 cmake_policy(SET CMP0048 NEW)
 set(CMAKE_BUILD_TYPE Release)
@@ -37,8 +36,8 @@ add_definitions(-O3)
 add_definitions(-std=c++11)
 add_compile_options(-W)
 configure_file (
-  "${PROJECT_SOURCE_DIR}/rs_driver/macro/macro.h.in"
-  "${PROJECT_SOURCE_DIR}/rs_driver/macro/macro.h"
+  "${PROJECT_SOURCE_DIR}/rs_driver/macro/version.h.in"
+  "${PROJECT_SOURCE_DIR}/rs_driver/macro/version.h"
 )
 
 #========================

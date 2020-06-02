@@ -31,6 +31,15 @@ namespace robosense
 #define RS_RESOLUTION_5mm_DISTANCE_COEF (0.005)
 #define RS_RESOLUTION_10mm_DISTANCE_COEF (0.01)
 
+        enum RS_ECHO_MODE
+        {
+            RS_ECHO_DUAL = 0,
+            RS_ECHO_STRONGEST,
+            RS_ECHO_LAST
+        };
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
         enum E_DECODER_RESULT
         {
             E_DECODE_FAIL = -2,
@@ -57,7 +66,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_Timestamp;
+        RS_Timestamp;
 
         typedef struct
         {
@@ -67,13 +76,13 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_TimestampUTC;
+        RS_TimestampUTC;
 
         typedef struct
         {
             uint64_t id;
             uint8_t reserved1[12];
-            ST_Timestamp timestamp;
+            RS_Timestamp timestamp;
             uint8_t lidar_type;
             uint8_t reserved2[7];
             uint16_t temp_raw;
@@ -82,7 +91,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_MsopHeader;
+        RS_MsopHeader;
 
         typedef struct
         {
@@ -97,7 +106,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_EthNet;
+        RS_EthNet;
 
         typedef struct
         {
@@ -107,7 +116,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_FOV;
+        RS_ROV;
 
         typedef struct
         {
@@ -117,7 +126,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_CorAngle;
+        RS_CorAngle;
 
         typedef struct
         {
@@ -127,7 +136,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_Channel;
+        RS_Channel;
 
         typedef struct
         {
@@ -137,7 +146,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_Version;
+        RS_Version;
 
         typedef struct
         {
@@ -146,7 +155,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_SN;
+        RS_SN;
 
         typedef struct
         {
@@ -162,7 +171,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_Status;
+        RS_Status;
 
         typedef struct
         {
@@ -183,7 +192,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        ST_Diagno;
+        RS_Diagno;
 
 #ifdef _MSC_VER
 #pragma pack(pop)
@@ -242,7 +251,7 @@ namespace robosense
                                                                          angle_flag_(true),
                                                                          start_angle_(param.start_angle * 100),
                                                                          end_angle_(param.end_angle * 100),
-                                                                         echo_mode_(param.echo_mode),
+                                                                         echo_mode_(RS_ECHO_STRONGEST),
                                                                          max_distance_(param.max_distance),
                                                                          min_distance_(param.min_distance),
                                                                          mode_split_frame_(param.mode_split_frame),

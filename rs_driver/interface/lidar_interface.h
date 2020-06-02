@@ -39,7 +39,17 @@ namespace robosense
        * @param Null 
        * @return: Null
        */
-      LidarDriverInterface() { driver_ptr_ = std::make_shared<LidarDriver<PointT>>(); };
+      LidarDriverInterface()
+      {
+        std::cout << "\033[1m\033[35m"
+                  << "------------------------------------------------------" << std::endl;
+        std::cout << "            RS_Driver Core Version: V" << VERSION_MAJOR << "." 
+        << VERSION_MINOR << "." << VERSION_PATCH << std::endl;
+        std::cout << "\033[1m\033[35m"
+                  << "------------------------------------------------------" <<"\033[0m"<< std::endl;
+
+        driver_ptr_ = std::make_shared<LidarDriver<PointT>>();
+      };
       /**
        * @description: Deconstructor, stop all threads
        * @param Null
@@ -54,6 +64,7 @@ namespace robosense
        */
       inline void init(const RSLiDAR_Driver_Param &param)
       {
+        param.print();
         driver_ptr_->init(param);
       }
       /**

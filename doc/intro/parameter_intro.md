@@ -4,7 +4,7 @@
 ```c++
 typedef struct RSDecoder_Param ///< The lidar decoder parameter
 {
-    RS_ECHO_MODE echo_mode = RS_ECHO_MAX; ///< Echo mode
+    RS_ECHO_MODE echo_mode = RS_ECHO_STRONGEST; ///< Echo mode
     float max_distance = 200.0f;          ///< The max distance of lidar detect range
     float min_distance = 0.2f;            ///< The minimum distance of lidar detect range
     float start_angle = 0.0f;             ///< The start angle of point cloud

@@ -42,7 +42,7 @@ namespace robosense
             uint8_t id;
             uint8_t ret_id;
             uint16_t azimuth;
-            ST_Channel channels[RS128_CHANNELS_PER_BLOCK];
+            RS_Channel channels[RS128_CHANNELS_PER_BLOCK];
         }
 #ifdef __GNUC__
         __attribute__((packed))
@@ -56,7 +56,7 @@ namespace robosense
             uint8_t wave_mode;
             uint8_t temp_low;
             uint8_t temp_high;
-            ST_TimestampUTC timestamp_utc;
+            RS_TimestampUTC timestamp_utc;
             uint8_t reserved2[60];
         }
 #ifdef __GNUC__
@@ -88,7 +88,7 @@ namespace robosense
         {
             uint8_t sync_mode;
             uint8_t sync_sts;
-            ST_Timestamp timestamp;
+            RS_Timestamp timestamp;
         }
 #ifdef __GNUC__
         __attribute__((packed))
@@ -128,21 +128,21 @@ namespace robosense
             uint64_t id;
             uint16_t rpm;
             ST128_EthNet eth;
-            ST_FOV fov;
+            RS_ROV fov;
             uint16_t reserved_0;
             uint16_t phase_lock_angle;
             ST128_Version version;
             uint8_t reserved_1[229];
-            ST_SN sn;
+            RS_SN sn;
             uint16_t zero_cali;
             uint8_t return_mode;
             ST128_TimeInfo time_info;
-            ST_Status status;
+            RS_Status status;
             uint8_t reserved_2[11];
-            ST_Diagno diagno;
+            RS_Diagno diagno;
             uint8_t gprmc[86];
-            ST_CorAngle ver_angle_cali[128];
-            ST_CorAngle hori_angle_cali[128];
+            RS_CorAngle ver_angle_cali[128];
+            RS_CorAngle hori_angle_cali[128];
             uint8_t reserved_3[10];
             uint16_t tail;
         }

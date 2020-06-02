@@ -48,7 +48,7 @@
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include <rs_driver/macro/macro.h>
+#include <rs_driver/macro/version.h>
 #include <rs_driver/common/driver_param.h>
 /*Linux*/
 #ifdef __GNUC__

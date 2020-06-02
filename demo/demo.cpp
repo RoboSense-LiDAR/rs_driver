@@ -56,10 +56,13 @@ void exceptionCallback(const Error &code)
 
 int main(int argc, char *argv[])
 {
-    LidarDriverInterface<PointXYZI> driver;          ///< Declare the driver object
-    RSLiDAR_Driver_Param param;                      ///< Creat a parameter object
-    param.input_param.msop_port = 6699;              ///< Set the lidar msop port number the default 6699
-    param.input_param.difop_port = 7788;             ///< Set the lidar difop port number the default 7788
+    LidarDriverInterface<PointXYZI> driver; ///< Declare the driver object
+    RSLiDAR_Driver_Param param;             ///< Creat a parameter object
+    param.input_param.msop_port = 6699;     ///< Set the lidar msop port number the default 6699
+    param.input_param.difop_port = 7788;    ///< Set the lidar difop port number the default 7788
+    param.input_param.read_pcap = true;
+    param.input_param.pcap_repeat = true;
+    param.input_param.pcap_file_dir = "/home/xzd/项目/驱动/测试数据/16.pcap";
     param.lidar_type = LiDAR_TYPE::RS16;             ///< Set the lidar type. Make sure this type is correct!
     driver.init(param);                              ///< Call the init funtion and pass the parameter
     driver.regPointRecvCallback(pointCloudCallback); ///< Register the point cloud callback funtion into the driver

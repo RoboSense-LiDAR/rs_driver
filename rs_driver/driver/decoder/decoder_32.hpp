@@ -42,7 +42,7 @@ namespace robosense
         {
             uint16_t id;
             uint16_t azimuth;
-            ST_Channel channels[RS32_CHANNELS_PER_BLOCK];
+            RS_Channel channels[RS32_CHANNELS_PER_BLOCK];
         }
 #ifdef __GNUC__
         __attribute__((packed))
@@ -51,7 +51,7 @@ namespace robosense
 
         typedef struct
         {
-            ST_MsopHeader header;
+            RS_MsopHeader header;
             ST32_MsopBlock blocks[RS32_BLOCKS_PER_PKT];
             uint32_t index;
             uint16_t tail;
@@ -76,20 +76,20 @@ namespace robosense
         {
             uint64_t id;
             uint16_t rpm;
-            ST_EthNet eth;
-            ST_FOV fov;
+            RS_EthNet eth;
+            RS_ROV fov;
             uint16_t reserved0;
             uint16_t phase_lock_angle;
-            ST_Version version;
+            RS_Version version;
             ST32_Intensity intensity;
-            ST_SN sn;
+            RS_SN sn;
             uint16_t zero_cali;
             uint8_t return_mode;
             uint16_t sw_ver;
-            ST_Timestamp timestamp;
-            ST_Status status;
+            RS_Timestamp timestamp;
+            RS_Status status;
             uint8_t reserved1[11];
-            ST_Diagno diagno;
+            RS_Diagno diagno;
             uint8_t gprmc[86];
             uint8_t pitch_cali[96];
             uint8_t yaw_cali[96];
