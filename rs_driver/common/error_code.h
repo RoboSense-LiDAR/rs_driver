@@ -33,9 +33,9 @@ namespace robosense
          */
         enum class ErrCode_Type
         {
-            INFO_CODE,
-            WARNING_CODE,
-            ERROR_CODE
+            INFO_CODE,    ///< Common information
+            WARNING_CODE, ///< The program may not work normally
+            ERROR_CODE    ///< The program will exit immediately
         };
         enum ErrCode
         {
