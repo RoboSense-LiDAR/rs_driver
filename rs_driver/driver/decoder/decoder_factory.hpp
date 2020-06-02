@@ -32,24 +32,24 @@ namespace robosense
         {
 
         public:
-            inline static std::shared_ptr<DecoderBase<vpoint>> createDecoder(const LiDAR_TYPE &_lidar_type, const RSDecoder_Param &_param)
+            inline static std::shared_ptr<DecoderBase<vpoint>> createDecoder(const LidarType &_lidar_type, const RSDecoderParam &_param)
             {
                 switch (_lidar_type)
                 {
-                case LiDAR_TYPE::RS16:
+                case LidarType::RS16:
                     return std::make_shared<Decoder16<vpoint>>(_param);
                     break;
-                case LiDAR_TYPE::RS32:
+                case LidarType::RS32:
                     return std::make_shared<Decoder32<vpoint>>(_param);
                     break;
-                case LiDAR_TYPE::RSBP:
+                case LidarType::RSBP:
                     return std::make_shared<DecoderBP<vpoint>>(_param);
                     break;
-                case LiDAR_TYPE::RS128:
+                case LidarType::RS128:
                     return std::make_shared<Decoder128<vpoint>>(_param);
                     break;
                 default:
-                    exit(-1);
+                    assert(false);
                 }
             }
         };

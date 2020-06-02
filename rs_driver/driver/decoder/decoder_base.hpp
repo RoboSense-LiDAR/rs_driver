@@ -31,21 +31,21 @@ namespace robosense
 #define RS_RESOLUTION_5mm_DISTANCE_COEF (0.005)
 #define RS_RESOLUTION_10mm_DISTANCE_COEF (0.01)
 
-        enum RS_ECHO_MODE
+        enum RSEchoMode
         {
-            RS_ECHO_DUAL = 0,
-            RS_ECHO_STRONGEST,
-            RS_ECHO_LAST
+            ECHO_DUAL = 0,
+            ECHO_STRONGEST,
+            ECHO_LAST
         };
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #endif
-        enum E_DECODER_RESULT
+        enum RSDecoderResult
         {
-            E_DECODE_FAIL = -2,
-            E_PARAM_INVALID = -1,
-            E_DECODE_OK = 0,
-            E_FRAME_SPLIT = 1
+            DECODE_FAIL = -2,
+            PARAM_INVALID = -1,
+            DECODE_OK = 0,
+            FRAME_SPLIT = 1
         };
 
 #ifdef _MSC_VER
@@ -66,7 +66,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_Timestamp;
+        RSTimestamp;
 
         typedef struct
         {
@@ -76,13 +76,13 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_TimestampUTC;
+        RSTimestampUTC;
 
         typedef struct
         {
             uint64_t id;
             uint8_t reserved1[12];
-            RS_Timestamp timestamp;
+            RSTimestamp timestamp;
             uint8_t lidar_type;
             uint8_t reserved2[7];
             uint16_t temp_raw;
@@ -91,7 +91,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_MsopHeader;
+        RSMsopHeader;
 
         typedef struct
         {
@@ -106,7 +106,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_EthNet;
+        RSEthNet;
 
         typedef struct
         {
@@ -116,7 +116,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_ROV;
+        RSROV;
 
         typedef struct
         {
@@ -126,7 +126,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_CorAngle;
+        RSCorAngle;
 
         typedef struct
         {
@@ -136,7 +136,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_Channel;
+        RSChannel;
 
         typedef struct
         {
@@ -146,7 +146,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_Version;
+        RSVersion;
 
         typedef struct
         {
@@ -155,7 +155,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_SN;
+        RSSn;
 
         typedef struct
         {
@@ -171,7 +171,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_Status;
+        RSStatus;
 
         typedef struct
         {
@@ -192,7 +192,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS_Diagno;
+        RSDiagno;
 
 #ifdef _MSC_VER
 #pragma pack(pop)
@@ -203,9 +203,9 @@ namespace robosense
         class DecoderBase
         {
         public:
-            DecoderBase(const RSDecoder_Param &param);
+            DecoderBase(const RSDecoderParam &param);
             virtual ~DecoderBase();
-            virtual E_DECODER_RESULT processMsopPkt(const uint8_t *pkt, std::vector<vpoint> &pointcloud_vec, int &height);
+            virtual RSDecoderResult processMsopPkt(const uint8_t *pkt, std::vector<vpoint> &pointcloud_vec, int &height);
             virtual int32_t processDifopPkt(const uint8_t *pkt);
             virtual double getLidarTime(const uint8_t *pkt) = 0;
             virtual void loadCalibrationFile(const std::string &angle_path) = 0;
@@ -243,20 +243,20 @@ namespace robosense
         };
 
         template <typename vpoint>
-        DecoderBase<vpoint>::DecoderBase(const RSDecoder_Param &param) : rpm_(600),
-                                                                         pkts_per_frame_(84),
-                                                                         pkt_counter_(0),
-                                                                         last_azimuth_(-36001),
-                                                                         cali_data_flag_(0x00),
-                                                                         angle_flag_(true),
-                                                                         start_angle_(param.start_angle * 100),
-                                                                         end_angle_(param.end_angle * 100),
-                                                                         echo_mode_(RS_ECHO_STRONGEST),
-                                                                         max_distance_(param.max_distance),
-                                                                         min_distance_(param.min_distance),
-                                                                         mode_split_frame_(param.mode_split_frame),
-                                                                         num_pkts_split_(param.num_pkts_split),
-                                                                         cut_angle_(param.cut_angle * 100)
+        DecoderBase<vpoint>::DecoderBase(const RSDecoderParam &param) : rpm_(600),
+                                                                        pkts_per_frame_(84),
+                                                                        pkt_counter_(0),
+                                                                        last_azimuth_(-36001),
+                                                                        cali_data_flag_(0x00),
+                                                                        angle_flag_(true),
+                                                                        start_angle_(param.start_angle * 100),
+                                                                        end_angle_(param.end_angle * 100),
+                                                                        echo_mode_(ECHO_STRONGEST),
+                                                                        max_distance_(param.max_distance),
+                                                                        min_distance_(param.min_distance),
+                                                                        mode_split_frame_(param.mode_split_frame),
+                                                                        num_pkts_split_(param.num_pkts_split),
+                                                                        cut_angle_(param.cut_angle * 100)
         {
             if (cut_angle_ > 36000)
             {
@@ -305,19 +305,19 @@ namespace robosense
         }
 
         template <typename vpoint>
-        E_DECODER_RESULT DecoderBase<vpoint>::processMsopPkt(const uint8_t *pkt, std::vector<vpoint> &pointcloud_vec, int &height)
+        RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t *pkt, std::vector<vpoint> &pointcloud_vec, int &height)
         {
             if (pkt == NULL)
             {
                 //	rs_print(RS_ERROR, "[RSBASE] MSOP pkt buffer NULL.");
-                return E_PARAM_INVALID;
+                return PARAM_INVALID;
             }
 
             int azimuth = decodeMsopPkt(pkt, pointcloud_vec, height);
             if (azimuth < 0)
             {
                 //   rs_print(RS_ERROR, "[RSBASE] MSOP pkt decode fail.");
-                return E_DECODE_FAIL;
+                return DECODE_FAIL;
             }
 
             this->pkt_counter_++;
@@ -332,7 +332,7 @@ namespace robosense
                 {
                     this->last_azimuth_ = azimuth;
                     this->pkt_counter_ = 0;
-                    return E_FRAME_SPLIT;
+                    return FRAME_SPLIT;
                 }
                 this->last_azimuth_ = azimuth;
             }
@@ -341,7 +341,7 @@ namespace robosense
                 if (this->pkt_counter_ >= this->pkts_per_frame_)
                 {
                     this->pkt_counter_ = 0;
-                    return E_FRAME_SPLIT;
+                    return FRAME_SPLIT;
                 }
             }
             else if (mode_split_frame_ == 3)
@@ -349,11 +349,11 @@ namespace robosense
                 if (this->pkt_counter_ >= this->num_pkts_split_)
                 {
                     this->pkt_counter_ = 0;
-                    return E_FRAME_SPLIT;
+                    return FRAME_SPLIT;
                 }
             }
 
-            return E_DECODE_OK;
+            return DECODE_OK;
         }
 
         template <typename vpoint>

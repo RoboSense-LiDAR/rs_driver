@@ -49,7 +49,7 @@ namespace robosense
     class Input
     {
     public:
-      Input(const LiDAR_TYPE &_lidar_type, const RSInput_Param &_input_param,
+      Input(const LidarType &_lidar_type, const RSInputParam &_input_param,
             const std::function<void(const Error &)> _excb) : lidar_type_(_lidar_type),
                                                               input_param_(_input_param),
                                                               excb_(_excb)
@@ -60,7 +60,7 @@ namespace robosense
           if ((pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf)) == NULL)
           {
             excb_(Error(ErrCode_PcapWrongDirectory));
-            exit(-1);
+            assert(false);
           }
           else
           {
@@ -172,7 +172,7 @@ namespace robosense
           catch (...)
           {
             excb_(ErrCode_MsopPortBuzy);
-            exit(-1);
+            assert(false);
           }
           msop_deadline_->expires_at(boost::posix_time::pos_infin);
           checkMsopDeadline();
@@ -187,7 +187,7 @@ namespace robosense
           catch (...)
           {
             excb_(ErrCode_DifopPortBuzy);
-            exit(-1);
+            assert(false);
           }
           difop_deadline_->expires_at(boost::posix_time::pos_infin);
           checkDifopDeadline();
@@ -202,16 +202,16 @@ namespace robosense
           const u_char *pkt_data;
           switch (lidar_type_)
           {
-          case LiDAR_TYPE::RS16:
+          case LidarType::RS16:
             usleep(RS16_PCAP_SLEEP_DURATION);
             break;
-          case LiDAR_TYPE::RS32:
+          case LidarType::RS32:
             usleep(RS32_PCAP_SLEEP_DURATION);
             break;
-          case LiDAR_TYPE::RSBP:
+          case LidarType::RSBP:
             usleep(RSBP_PCAP_SLEEP_DURATION);
             break;
-          case LiDAR_TYPE::RS128:
+          case LidarType::RS128:
             usleep(RS128_PCAP_SLEEP_DURATION);
             break;
           default:
@@ -335,8 +335,8 @@ namespace robosense
       }
 
     private:
-      RSInput_Param input_param_;
-      LiDAR_TYPE lidar_type_;
+      RSInputParam input_param_;
+      LidarType lidar_type_;
       std::function<void(const Error &)> excb_;
       /* pcap file parse */
       pcap_t *pcap_;

@@ -48,7 +48,7 @@ namespace robosense
         stop();
       }
 
-      inline void init(const RSLiDAR_Driver_Param &param)
+      inline void init(const RSDriverParam &param)
       {
         driver_param_ = param;
         lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param);
@@ -65,7 +65,7 @@ namespace robosense
         scan_seq_ = 0;
       }
 
-      inline void initDecoderOnly(const RSLiDAR_Driver_Param &param)
+      inline void initDecoderOnly(const RSDriverParam &param)
       {
         driver_param_ = param;
         lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param);
@@ -132,7 +132,7 @@ namespace robosense
         {
           std::vector<PointT> point_vec;
           int ret = lidar_decoder_ptr_->processMsopPkt(pkt_scan_msg.packets[i].packet.data(), point_vec, height);
-          if (ret == E_DECODE_OK || ret == E_FRAME_SPLIT)
+          if (ret == DECODE_OK || ret == FRAME_SPLIT)
           {
             point_vvec[i] = std::move(point_vec);
           }
@@ -204,9 +204,9 @@ namespace robosense
       {
         PacketMsg pkt_msg = msg;
         msop_pkt_queue_.push(pkt_msg);
-        if (msop_pkt_queue_.is_task_finished.load())
+        if (msop_pkt_queue_.is_task_finished_.load())
         {
-          msop_pkt_queue_.is_task_finished.store(false);
+          msop_pkt_queue_.is_task_finished_.store(false);
           thread_pool_ptr_->commit([this]() { processMsop(); });
         }
       }
@@ -215,9 +215,9 @@ namespace robosense
       {
         PacketMsg pkt_msg = msg;
         difop_pkt_queue_.push(pkt_msg);
-        if (difop_pkt_queue_.is_task_finished.load())
+        if (difop_pkt_queue_.is_task_finished_.load())
         {
-          difop_pkt_queue_.is_task_finished.store(false);
+          difop_pkt_queue_.is_task_finished_.store(false);
           thread_pool_ptr_->commit([this]() { processDifop(); });
         }
       }
@@ -228,25 +228,25 @@ namespace robosense
         {
           reportError(ErrCode_NoDifopRecv);
           msop_pkt_queue_.clear();
-          msop_pkt_queue_.is_task_finished.store(true);
+          msop_pkt_queue_.is_task_finished_.store(true);
           usleep(100000);
           return;
         }
-        while (msop_pkt_queue_.m_quque.size() > 0)
+        while (msop_pkt_queue_.m_quque_.size() > 0)
         {
-          PacketMsg pkt = msop_pkt_queue_.m_quque.front();
+          PacketMsg pkt = msop_pkt_queue_.m_quque_.front();
           scan_ptr_->packets.emplace_back(pkt);
           msop_pkt_queue_.pop();
           std::vector<PointT> point_vec;
           int height = 1;
           int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), point_vec, height);
-          if (ret == E_DECODE_OK || ret == E_FRAME_SPLIT)
+          if (ret == DECODE_OK || ret == FRAME_SPLIT)
           {
             for (auto iter = point_vec.cbegin(); iter != point_vec.cend(); iter++)
             {
               pointcloud_ptr_->push_back(*iter);
             }
-            if (ret == E_FRAME_SPLIT)
+            if (ret == FRAME_SPLIT)
             {
               PointcloudMsg<PointT> msg(pointcloud_ptr_);
               msg.height = height;
@@ -271,19 +271,19 @@ namespace robosense
             }
           }
         }
-        msop_pkt_queue_.is_task_finished.store(true);
+        msop_pkt_queue_.is_task_finished_.store(true);
       }
 
       void processDifop()
       {
-        while (difop_pkt_queue_.m_quque.size() > 0)
+        while (difop_pkt_queue_.m_quque_.size() > 0)
         {
-          PacketMsg pkt = difop_pkt_queue_.m_quque.front();
+          PacketMsg pkt = difop_pkt_queue_.m_quque_.front();
           difop_pkt_queue_.pop();
           decodeDifopPkt(pkt);
           runCallBack(pkt);
         }
-        difop_pkt_queue_.is_task_finished.store(true);
+        difop_pkt_queue_.is_task_finished_.store(true);
       }
 
       void prepareScanMsg(ScanMsg &msg)
@@ -325,7 +325,7 @@ namespace robosense
       uint32_t points_seq_;
       bool thread_flag_;
       bool difop_flag_;
-      RSLiDAR_Driver_Param driver_param_;
+      RSDriverParam driver_param_;
       typename PointcloudMsg<PointT>::PointCloudPtr pointcloud_ptr_;
     };
 

@@ -31,7 +31,7 @@ namespace robosense
              * 0x41 ~ 0x80 for Warning, the program may not work normally
              * 0x81 ~ 0xC0 for Critical Error, the program will exit
          */
-        enum class ErrCode_Type
+        enum class ErrCodeType
         {
             INFO_CODE,    ///< Common information
             WARNING_CODE, ///< The program may not work normally
@@ -59,20 +59,20 @@ namespace robosense
         struct Error
         {
             ErrCode error_code;
-            ErrCode_Type error_code_type;
+            ErrCodeType error_code_type;
             Error(const ErrCode &_code) : error_code(_code)
             {
                 if (error_code <= 0x40)
                 {
-                    error_code_type = ErrCode_Type::INFO_CODE;
+                    error_code_type = ErrCodeType::INFO_CODE;
                 }
                 else if (error_code <= 0x80)
                 {
-                    error_code_type = ErrCode_Type::WARNING_CODE;
+                    error_code_type = ErrCodeType::WARNING_CODE;
                 }
                 else
                 {
-                    error_code_type = ErrCode_Type::ERROR_CODE;
+                    error_code_type = ErrCodeType::ERROR_CODE;
                 }
             }
             std::string toString() const

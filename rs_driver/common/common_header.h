@@ -31,13 +31,11 @@
 #include <math.h>
 #include <memory>
 #include <array>
-#include <cmath>
-#include <cstring>
 #include <algorithm>
 #include <functional>
 #include <iterator>
 #include <chrono>
-#include <vector>
+#include <assert.h>
 #include <queue>
 #include <thread>
 #include <atomic>

@@ -42,24 +42,24 @@ namespace robosense
         {
             uint16_t id;
             uint16_t azimuth;
-            RS_Channel channels[RSBP_CHANNELS_PER_BLOCK];
+            RSChannel channels[RSBP_CHANNELS_PER_BLOCK];
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RSBP_MsopBlock;
+        RSBPMsopBlock;
 
         typedef struct
         {
-            RS_MsopHeader header;
-            RSBP_MsopBlock blocks[RSBP_BLOCKS_PER_PKT];
+            RSMsopHeader header;
+            RSBPMsopBlock blocks[RSBP_BLOCKS_PER_PKT];
             uint32_t index;
             uint16_t tail;
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RSBP_MsopPkt;
+        RSBPMsopPkt;
 
         typedef struct
         {
@@ -70,26 +70,26 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RSBP_Intensity;
+        RSBPIntensity;
 
         typedef struct
         {
             uint64_t id;
             uint16_t rpm;
-            RS_EthNet eth;
-            RS_ROV fov;
+            RSEthNet eth;
+            RSROV fov;
             uint16_t reserved0;
             uint16_t phase_lock_angle;
-            RS_Version version;
-            RSBP_Intensity intensity;
-            RS_SN sn;
+            RSVersion version;
+            RSBPIntensity intensity;
+            RSSn sn;
             uint16_t zero_cali;
             uint8_t return_mode;
             uint16_t sw_ver;
-            RS_Timestamp timestamp;
-            RS_Status status;
+            RSTimestamp timestamp;
+            RSStatus status;
             uint8_t reserved1[11];
-            RS_Diagno diagno;
+            RSDiagno diagno;
             uint8_t gprmc[86];
             uint8_t pitch_cali[96];
             uint8_t yaw_cali[96];
@@ -99,7 +99,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RSBP_DifopPkt;
+        RSBPDifopPkt;
 
 #ifdef _MSC_VER
 #pragma pack(pop)
@@ -109,7 +109,7 @@ namespace robosense
         class DecoderBP : public DecoderBase<vpoint>
         {
         public:
-            DecoderBP(const RSDecoder_Param &param);
+            DecoderBP(const RSDecoderParam &param);
             int32_t decodeDifopPkt(const uint8_t *pkt);
             int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height);
             double getLidarTime(const uint8_t *pkt);
@@ -117,7 +117,7 @@ namespace robosense
         };
 
         template <typename vpoint>
-        DecoderBP<vpoint>::DecoderBP(const RSDecoder_Param &param) : DecoderBase<vpoint>(param)
+        DecoderBP<vpoint>::DecoderBP(const RSDecoderParam &param) : DecoderBase<vpoint>(param)
         {
             this->Rx_ = 0.01697;
             this->Ry_ = -0.0085;
@@ -137,7 +137,7 @@ namespace robosense
         template <typename vpoint>
         double DecoderBP<vpoint>::getLidarTime(const uint8_t *pkt)
         {
-            RSBP_MsopPkt *mpkt_ptr = (RSBP_MsopPkt *)pkt;
+            RSBPMsopPkt *mpkt_ptr = (RSBPMsopPkt *)pkt;
             std::tm stm;
             memset(&stm, 0, sizeof(stm));
             stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
@@ -153,7 +153,7 @@ namespace robosense
         int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height)
         {
             height = 32;
-            RSBP_MsopPkt *mpkt_ptr = (RSBP_MsopPkt *)pkt;
+            RSBPMsopPkt *mpkt_ptr = (RSBPMsopPkt *)pkt;
             if (mpkt_ptr->header.id != RSBP_MSOP_ID)
             {
                 //      rs_print(RS_ERROR, "[RSBP] MSOP pkt ID no match.");
@@ -174,7 +174,7 @@ namespace robosense
                 int azimuth_blk = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
                 int azi_prev;
                 int azi_cur;
-                if (this->echo_mode_ == RS_ECHO_DUAL)
+                if (this->echo_mode_ == ECHO_DUAL)
                 {
                     if (blk_idx < (RSBP_BLOCKS_PER_PKT - 2)) // 12
                     {
@@ -261,7 +261,7 @@ namespace robosense
         template <typename vpoint>
         int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         {
-            RSBP_DifopPkt *rsBp_ptr = (RSBP_DifopPkt *)pkt;
+            RSBPDifopPkt *rsBp_ptr = (RSBPDifopPkt *)pkt;
             if (rsBp_ptr->id != RSBP_DIFOP_ID)
             {
                 //		rs_print(RS_ERROR, "[RSBP] DIFOP pkt ID no match.");
@@ -274,12 +274,12 @@ namespace robosense
             }
             else
             {
-                this->echo_mode_ = RS_ECHO_DUAL;
+                this->echo_mode_ = ECHO_DUAL;
             }
 
             int pkt_rate = ceil(RSBP_POINTS_CHANNEL_PER_SECOND / RSBP_BLOCKS_CHANNEL_PER_PKT);
 
-            if (this->echo_mode_ == RS_ECHO_DUAL)
+            if (this->echo_mode_ == ECHO_DUAL)
             {
                 pkt_rate = pkt_rate * 2;
             }
@@ -290,7 +290,7 @@ namespace robosense
                 bool angle_flag = true;
                 const uint8_t *p_ver_cali;
 
-                p_ver_cali = ((RSBP_DifopPkt *)pkt)->pitch_cali;
+                p_ver_cali = ((RSBPDifopPkt *)pkt)->pitch_cali;
 
                 if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) && (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF))
                 {
@@ -301,7 +301,7 @@ namespace robosense
                 {
                     int lsb, mid, msb, neg = 1;
 
-                    const uint8_t *p_hori_cali = ((RSBP_DifopPkt *)pkt)->yaw_cali;
+                    const uint8_t *p_hori_cali = ((RSBPDifopPkt *)pkt)->yaw_cali;
                     for (int i = 0; i < this->channel_num_; i++)
                     {
                         /* vert angle calibration data */

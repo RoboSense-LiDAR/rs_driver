@@ -28,14 +28,15 @@ namespace robosense
     namespace lidar
     {
 
-        enum class LiDAR_TYPE ///< The lidar type
+        enum class LidarType ///< The lidar type
         {
             RS16,
             RS32,
             RSBP,
             RS128
         };
-        typedef struct RSDecoder_Param ///< The lidar decoder parameter
+
+        typedef struct RSDecoderParam ///< The lidar decoder parameter
         {
             float max_distance = 200.0f;   ///< The max distance of lidar detect range
             float min_distance = 0.2f;     ///< The minimum distance of lidar detect range
@@ -64,9 +65,9 @@ namespace robosense
                           << "------------------------------------------------------"
                           << "\033[0m" << std::endl;
             }
-        } RSDecoder_Param;
+        } RSDecoderParam;
 
-        typedef struct RSInput_Param ///< The lidar input parameter
+        typedef struct RSInputParam ///< The lidar input parameter
         {
             std::string device_ip = "192.168.1.200"; ///< The ip of lidar
             uint16_t msop_port = 6699;               ///< The msop packet port number
@@ -93,17 +94,17 @@ namespace robosense
                           << "------------------------------------------------------"
                           << "\033[0m" << std::endl;
             }
-        } RSInput_Param;
+        } RSInputParam;
 
-        typedef struct RSLiDAR_Driver_Param ///< The lidar driver parameter
+        typedef struct RSDriverParam ///< The lidar driver parameter
         {
-            RSInput_Param input_param;                ///< The input parameter
-            RSDecoder_Param decoder_param;            ///< The decoder parameter
-            std::string angle_path = "null";          ///< The path of angle calibration files(angle.csv)(for latest version lidar, this file is not needed)
-            std::string frame_id = "rslidar";         ///< The frame id of lidar message
-            LiDAR_TYPE lidar_type = LiDAR_TYPE::RS16; ///< Lidar type
-            bool use_lidar_clock = false;             ///< True: lidar message timestamp is the lidar clock. False: timestamp is the computer system clock
-            void print() const                        ///< This function is used to print all the parameters for debug
+            RSInputParam input_param;               ///< The input parameter
+            RSDecoderParam decoder_param;           ///< The decoder parameter
+            std::string angle_path = "null";        ///< The path of angle calibration files(angle.csv)(for latest version lidar, this file is not needed)
+            std::string frame_id = "rslidar";       ///< The frame id of lidar message
+            LidarType lidar_type = LidarType::RS16; ///< Lidar type
+            bool use_lidar_clock = false;           ///< True: lidar message timestamp is the lidar clock. False: timestamp is the computer system clock
+            void print() const                      ///< This function is used to print all the parameters for debug
             {
                 input_param.print();
                 decoder_param.print();
@@ -120,28 +121,28 @@ namespace robosense
 
                 switch (lidar_type)
                 {
-                case LiDAR_TYPE::RS16:
+                case LidarType::RS16:
                     std::cout << "lidar_type : "
                               << "\033[0m";
                     std::cout << "\033[1m\033[32m"
                               << "RS16"
                               << "\033[0m" << std::endl;
                     break;
-                case LiDAR_TYPE::RS32:
+                case LidarType::RS32:
                     std::cout << "lidar_type : "
                               << "\033[0m";
                     std::cout << "\033[1m\033[32m"
                               << "RS32"
                               << "\033[0m" << std::endl;
                     break;
-                case LiDAR_TYPE::RSBP:
+                case LidarType::RSBP:
                     std::cout << "lidar_type : "
                               << "\033[0m";
                     std::cout << "\033[1m\033[32m"
                               << "RSBP"
                               << "\033[0m" << std::endl;
                     break;
-                case LiDAR_TYPE::RS128:
+                case LidarType::RS128:
                     std::cout << "lidar_type : "
                               << "\033[0m";
                     std::cout << "\033[1m\033[32m"
@@ -154,13 +155,12 @@ namespace robosense
                     std::cout << "\033[1m\033[31m"
                               << "ERROR"
                               << "\033[0m" << std::endl;
-                    break;
                 }
 
                 std::cout << "\033[1m\033[32m"
                           << "------------------------------------------------------"
                           << "\033[0m" << std::endl;
             }
-        } RSLiDAR_Driver_Param;
+        } RSDriverParam;
     } // namespace lidar
 } // namespace robosense

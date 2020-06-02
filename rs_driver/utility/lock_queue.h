@@ -31,20 +31,20 @@ namespace robosense
         public:
             Queue()
             {
-                is_task_finished = true;
+                is_task_finished_ = true;
             }
             void push(const T &value)
             {
                 std::lock_guard<std::mutex> lock(m_mutex);
-                m_quque.push(value);
+                m_quque_.push(value);
             }
 
             void pop()
             {
-                if (!m_quque.empty())
+                if (!m_quque_.empty())
                 {
                     std::lock_guard<std::mutex> lock(m_mutex);
-                    m_quque.pop();
+                    m_quque_.pop();
                 }
             }
 
@@ -52,12 +52,12 @@ namespace robosense
             {
                 std::queue<T> empty;
                 std::lock_guard<std::mutex> lock(m_mutex);
-                swap(empty, m_quque);
+                swap(empty, m_quque_);
             }
 
         public:
-            std::queue<T> m_quque;
-            std::atomic<bool> is_task_finished;
+            std::queue<T> m_quque_;
+            std::atomic<bool> is_task_finished_;
 
         private:
             mutable std::mutex m_mutex;

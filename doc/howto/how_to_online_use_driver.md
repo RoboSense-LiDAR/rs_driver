@@ -83,10 +83,10 @@ Instanciate the driver object
 Define the parameter and config it. The msop port and difop port number of lidar can be got from **wireshark(a network socket capture software)**. The default value is 6699 and 7788. User also need to make sure the **lidar type** is set correctly.
 
 ```c++
- RSLiDAR_Driver_Param param;                      ///< Creat a parameter object
+ RSDriverParam param;                      ///< Creat a parameter object
  param.input_param.msop_port = 6699;              ///< Set the lidar msop port number the default 6699
  param.input_param.difop_port = 7788;             ///< Set the lidar difop port number the default 7788
- param.lidar_type = LiDAR_TYPE::RS16;             ///< Set the lidar type. Make sure this type is correct!
+ param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct!
 ```
 
 

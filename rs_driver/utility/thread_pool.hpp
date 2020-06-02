@@ -39,29 +39,29 @@ namespace robosense
         {
 
         public:
-            ThreadPool() : stoped{false}
+            ThreadPool() : stop_flag_{false}
             {
-                idl_thr_num = MAX_THREAD_NUM;
-                for (int i = 0; i < idl_thr_num; ++i)
+                idl_thr_num_ = MAX_THREAD_NUM;
+                for (int i = 0; i < idl_thr_num_; ++i)
                 {
-                    pool.emplace_back(
+                    pool_.emplace_back(
                         [this] {
-                            while (!this->stoped)
+                            while (!this->stop_flag_)
                             {
                                 std::function<void()> task;
                                 {
-                                    std::unique_lock<std::mutex> lock{this->m_lock};
-                                    this->cv_task.wait(lock, [this] {
-                                        return this->stoped.load() || !this->tasks.empty();
+                                    std::unique_lock<std::mutex> lock{this->m_lock_};
+                                    this->cv_task_.wait(lock, [this] {
+                                        return this->stop_flag_.load() || !this->tasks_.empty();
                                     });
-                                    if (this->stoped && this->tasks.empty())
+                                    if (this->stop_flag_ && this->tasks_.empty())
                                         return;
-                                    task = std::move(this->tasks.front());
-                                    this->tasks.pop();
+                                    task = std::move(this->tasks_.front());
+                                    this->tasks_.pop();
                                 }
-                                idl_thr_num--;
+                                idl_thr_num_--;
                                 task();
-                                idl_thr_num++;
+                                idl_thr_num_++;
                             }
                         });
                 }
@@ -69,9 +69,9 @@ namespace robosense
 
             ~ThreadPool()
             {
-                stoped.store(true);
-                cv_task.notify_all();
-                for (std::thread &thread : pool)
+                stop_flag_.store(true);
+                cv_task_.notify_all();
+                for (std::thread &thread : pool_)
                 {
                     thread.detach();
                 }
@@ -81,31 +81,31 @@ namespace robosense
             template <class F, class... Args>
             inline auto commit(F &&f, Args &&... args) -> std::future<decltype(f(args...))>
             {
-                if (stoped.load())
+                if (stop_flag_.load())
                     throw std::runtime_error("Commit on LiDAR threadpool is stopped.");
                 using RetType = decltype(f(args...));
                 auto task = std::make_shared<std::packaged_task<RetType()>>(
                     std::bind(std::forward<F>(f), std::forward<Args>(args)...)); // wtf !
                 std::future<RetType> future = task->get_future();
                 {
-                    std::lock_guard<std::mutex> lock{m_lock};
-                    tasks.emplace(
+                    std::lock_guard<std::mutex> lock{m_lock_};
+                    tasks_.emplace(
                         [task]() {
                             (*task)();
                         });
                 }
-                cv_task.notify_one();
+                cv_task_.notify_one();
                 return future;
             }
 
         private:
             using Task = std::function<void()>;
-            std::vector<std::thread> pool;
-            std::queue<Task> tasks;
-            std::mutex m_lock;
-            std::condition_variable cv_task;
-            std::atomic<bool> stoped;
-            std::atomic<int> idl_thr_num;
+            std::vector<std::thread> pool_;
+            std::queue<Task> tasks_;
+            std::mutex m_lock_;
+            std::condition_variable cv_task_;
+            std::atomic<bool> stop_flag_;
+            std::atomic<int> idl_thr_num_;
         };
     } // namespace lidar
 } // namespace robosense

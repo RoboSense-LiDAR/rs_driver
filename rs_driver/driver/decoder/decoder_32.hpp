@@ -42,24 +42,24 @@ namespace robosense
         {
             uint16_t id;
             uint16_t azimuth;
-            RS_Channel channels[RS32_CHANNELS_PER_BLOCK];
+            RSChannel channels[RS32_CHANNELS_PER_BLOCK];
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS32_MsopBlock;
+        RS32MsopBlock;
 
         typedef struct
         {
-            RS_MsopHeader header;
-            RS32_MsopBlock blocks[RS32_BLOCKS_PER_PKT];
+            RSMsopHeader header;
+            RS32MsopBlock blocks[RS32_BLOCKS_PER_PKT];
             uint32_t index;
             uint16_t tail;
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS32_MsopPkt;
+        RS32MsopPkt;
 
         typedef struct
         {
@@ -70,26 +70,26 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS32_Intensity;
+        RS32Intensity;
 
         typedef struct
         {
             uint64_t id;
             uint16_t rpm;
-            RS_EthNet eth;
-            RS_ROV fov;
+            RSEthNet eth;
+            RSROV fov;
             uint16_t reserved0;
             uint16_t phase_lock_angle;
-            RS_Version version;
-            RS32_Intensity intensity;
-            RS_SN sn;
+            RSVersion version;
+            RS32Intensity intensity;
+            RSSn sn;
             uint16_t zero_cali;
             uint8_t return_mode;
             uint16_t sw_ver;
-            RS_Timestamp timestamp;
-            RS_Status status;
+            RSTimestamp timestamp;
+            RSStatus status;
             uint8_t reserved1[11];
-            RS_Diagno diagno;
+            RSDiagno diagno;
             uint8_t gprmc[86];
             uint8_t pitch_cali[96];
             uint8_t yaw_cali[96];
@@ -99,7 +99,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS32_DifopPkt;
+        RS32DifopPkt;
 
 #ifdef _MSC_VER
 #pragma pack(pop)
@@ -109,7 +109,7 @@ namespace robosense
         class Decoder32 : public DecoderBase<vpoint>
         {
         public:
-            Decoder32(const RSDecoder_Param &param);
+            Decoder32(const RSDecoderParam &param);
             int32_t decodeDifopPkt(const uint8_t *pkt);
             int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height);
             double getLidarTime(const uint8_t *pkt);
@@ -117,7 +117,7 @@ namespace robosense
         };
 
         template <typename vpoint>
-        Decoder32<vpoint>::Decoder32(const RSDecoder_Param &param) : DecoderBase<vpoint>(param)
+        Decoder32<vpoint>::Decoder32(const RSDecoderParam &param) : DecoderBase<vpoint>(param)
         {
             this->Rx_ = 0.03997;
             this->Ry_ = -0.01087;
@@ -137,7 +137,7 @@ namespace robosense
         template <typename vpoint>
         double Decoder32<vpoint>::getLidarTime(const uint8_t *pkt)
         {
-            RS32_MsopPkt *mpkt_ptr = (RS32_MsopPkt *)pkt;
+            RS32MsopPkt *mpkt_ptr = (RS32MsopPkt *)pkt;
             std::tm stm;
             memset(&stm, 0, sizeof(stm));
             stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
@@ -153,7 +153,7 @@ namespace robosense
         int Decoder32<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height)
         {
             height = 32;
-            RS32_MsopPkt *mpkt_ptr = (RS32_MsopPkt *)pkt;
+            RS32MsopPkt *mpkt_ptr = (RS32MsopPkt *)pkt;
             if (mpkt_ptr->header.id != RS32_MSOP_ID)
             {
                 //      rs_print(RS_ERROR, "[RS32] MSOP pkt ID no match.");
@@ -174,7 +174,7 @@ namespace robosense
                 int azimuth_blk = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
                 int azi_prev = 0;
                 int azi_cur = 0;
-                if (this->echo_mode_ == RS_ECHO_DUAL)
+                if (this->echo_mode_ == ECHO_DUAL)
                 {
                     if (blk_idx < (RS32_BLOCKS_PER_PKT - 2)) // 12
                     {
@@ -255,7 +255,7 @@ namespace robosense
 #ifdef RS_POINT_COMPLEX
                     point.distance = distance_cali;
                     point.ring_id = channel_idx;
-                    point.echo_id = (this->echo_mode_ == RS_ECHO_DUAL) ? (blk_idx % 2) : 0;
+                    point.echo_id = (this->echo_mode_ == ECHO_DUAL) ? (blk_idx % 2) : 0;
 #endif
                     vec.push_back(point);
                 }
@@ -268,7 +268,7 @@ namespace robosense
         int32_t Decoder32<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         {
 
-            RS32_DifopPkt *rs32_ptr = (RS32_DifopPkt *)pkt;
+            RS32DifopPkt *rs32_ptr = (RS32DifopPkt *)pkt;
             if (rs32_ptr->id != RS32_DIFOP_ID)
             {
                 //		rs_print(RS_ERROR, "[RS32] DIFOP pkt ID no match.");
@@ -281,12 +281,12 @@ namespace robosense
             }
             else
             {
-                this->echo_mode_ = RS_ECHO_DUAL;
+                this->echo_mode_ = ECHO_DUAL;
             }
 
             int pkt_rate = ceil(RS32_POINTS_CHANNEL_PER_SECOND / RS32_BLOCKS_CHANNEL_PER_PKT);
 
-            if (this->echo_mode_ == RS_ECHO_DUAL)
+            if (this->echo_mode_ == ECHO_DUAL)
             {
                 pkt_rate = pkt_rate * 2;
             }
@@ -296,7 +296,7 @@ namespace robosense
             {
                 bool angle_flag = true;
                 const uint8_t *p_ver_cali;
-                p_ver_cali = ((RS32_DifopPkt *)pkt)->pitch_cali;
+                p_ver_cali = ((RS32DifopPkt *)pkt)->pitch_cali;
                 if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) &&
                     (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
                     (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF))
@@ -306,7 +306,7 @@ namespace robosense
                 if (angle_flag)
                 {
                     int lsb, mid, msb, neg = 1;
-                    const uint8_t *p_hori_cali = ((RS32_DifopPkt *)pkt)->yaw_cali;
+                    const uint8_t *p_hori_cali = ((RS32DifopPkt *)pkt)->yaw_cali;
                     for (int i = 0; i < 32; i++)
                     {
                         /* vert angle calibration data */

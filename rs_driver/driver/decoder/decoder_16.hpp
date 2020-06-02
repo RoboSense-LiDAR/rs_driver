@@ -43,24 +43,24 @@ namespace robosense
         {
             uint16_t id;
             uint16_t azimuth;
-            RS_Channel channels[RS16_CHANNELS_PER_BLOCK];
+            RSChannel channels[RS16_CHANNELS_PER_BLOCK];
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS16_MsopBlock;
+        RS16MsopBlock;
 
         typedef struct
         {
-            RS_MsopHeader header;
-            RS16_MsopBlock blocks[RS16_BLOCKS_PER_PKT];
+            RSMsopHeader header;
+            RS16MsopBlock blocks[RS16_BLOCKS_PER_PKT];
             uint32_t index;
             uint16_t tail;
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS16_MsopPkt;
+        RS16MsopPkt;
 
         typedef struct
         {
@@ -71,26 +71,26 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS16_Intensity;
+        RS16Intensity;
 
         typedef struct
         {
             uint64_t id;
             uint16_t rpm;
-            RS_EthNet eth;
-            RS_ROV fov;
+            RSEthNet eth;
+            RSROV fov;
             uint16_t static_base;
             uint16_t phase_lock_angle;
-            RS_Version version;
-            RS16_Intensity intensity;
-            RS_SN sn;
+            RSVersion version;
+            RS16Intensity intensity;
+            RSSn sn;
             uint16_t zero_cali;
             uint8_t return_mode;
             uint16_t sw_ver;
-            RS_Timestamp timestamp;
-            RS_Status status;
+            RSTimestamp timestamp;
+            RSStatus status;
             uint8_t reserved1[11];
-            RS_Diagno diagno;
+            RSDiagno diagno;
             uint8_t gprmc[86];
             uint8_t static_cali[697];
             uint8_t pitch_cali[48];
@@ -100,7 +100,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS16_DifopPkt;
+        RS16DifopPkt;
 
 #ifdef _MSC_VER
 #pragma pack(pop)
@@ -110,7 +110,7 @@ namespace robosense
         class Decoder16 : public DecoderBase<vpoint>
         {
         public:
-            Decoder16(const RSDecoder_Param &param);
+            Decoder16(const RSDecoderParam &param);
             int32_t decodeDifopPkt(const uint8_t *pkt);
             int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height);
             double getLidarTime(const uint8_t *pkt);
@@ -118,7 +118,7 @@ namespace robosense
         };
 
         template <typename vpoint>
-        Decoder16<vpoint>::Decoder16(const RSDecoder_Param &param) : DecoderBase<vpoint>(param)
+        Decoder16<vpoint>::Decoder16(const RSDecoderParam &param) : DecoderBase<vpoint>(param)
         {
             this->Rx_ = 0.03825;
             this->Ry_ = -0.01088;
@@ -138,7 +138,7 @@ namespace robosense
         template <typename vpoint>
         double Decoder16<vpoint>::getLidarTime(const uint8_t *pkt)
         {
-            RS16_MsopPkt *mpkt_ptr = (RS16_MsopPkt *)pkt;
+            RS16MsopPkt *mpkt_ptr = (RS16MsopPkt *)pkt;
             std::tm stm;
             memset(&stm, 0, sizeof(stm));
             stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
@@ -154,7 +154,7 @@ namespace robosense
         int Decoder16<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height)
         {
             height = 16;
-            RS16_MsopPkt *mpkt_ptr = (RS16_MsopPkt *)pkt;
+            RS16MsopPkt *mpkt_ptr = (RS16MsopPkt *)pkt;
             if (mpkt_ptr->header.id != RS16_MSOP_ID)
             {
                 //      rs_print(RS_ERROR, "[RS16] MSOP pkt ID no match.");
@@ -190,7 +190,7 @@ namespace robosense
                 {
                     int azimuth_final;
 
-                    if (this->echo_mode_ == RS_ECHO_DUAL)
+                    if (this->echo_mode_ == ECHO_DUAL)
                     {
                         azimuth_channel = azimuth_blk + azimuth_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
                     }
@@ -243,7 +243,7 @@ namespace robosense
 #ifdef RS_POINT_COMPLEX
                     point.distance = distance_cali;
                     point.ring_id = channel_idx % 16;
-                    point.echo_id = (this->echo_mode_ == RS_ECHO_DUAL) ? (channel_idx / 16) : 0;
+                    point.echo_id = (this->echo_mode_ == ECHO_DUAL) ? (channel_idx / 16) : 0;
 #endif
                     vec.push_back(point);
                 }
@@ -254,7 +254,7 @@ namespace robosense
         template <typename vpoint>
         int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         {
-            RS16_DifopPkt *rs16_ptr = (RS16_DifopPkt *)pkt;
+            RS16DifopPkt *rs16_ptr = (RS16DifopPkt *)pkt;
             if (rs16_ptr->id != RS16_DIFOP_ID)
             {
                 //        rs_print(RS_ERROR, "[RS16] DIFOP pkt ID no match.");
@@ -267,11 +267,11 @@ namespace robosense
             }
             else
             {
-                this->echo_mode_ = RS_ECHO_DUAL;
+                this->echo_mode_ = ECHO_DUAL;
             }
 
             int pkt_rate = ceil(RS16_POINTS_CHANNEL_PER_SECOND / RS16_BLOCKS_CHANNEL_PER_PKT);
-            if (this->echo_mode_ == RS_ECHO_LAST || this->echo_mode_ == RS_ECHO_STRONGEST)
+            if (this->echo_mode_ == ECHO_LAST || this->echo_mode_ == ECHO_STRONGEST)
             {
                 pkt_rate = ceil(pkt_rate / 2);
             }

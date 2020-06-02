@@ -42,12 +42,12 @@ namespace robosense
             uint8_t id;
             uint8_t ret_id;
             uint16_t azimuth;
-            RS_Channel channels[RS128_CHANNELS_PER_BLOCK];
+            RSChannel channels[RS128_CHANNELS_PER_BLOCK];
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS128_MsopBlock;
+        RS128MsopBlock;
 
         typedef struct
         {
@@ -56,24 +56,24 @@ namespace robosense
             uint8_t wave_mode;
             uint8_t temp_low;
             uint8_t temp_high;
-            RS_TimestampUTC timestamp_utc;
+            RSTimestampUTC timestamp_utc;
             uint8_t reserved2[60];
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS128_MsopHeader;
+        RS128MsopHeader;
 
         typedef struct
         {
-            RS128_MsopHeader header;
-            RS128_MsopBlock blocks[RS128_BLOCKS_PER_PKT];
+            RS128MsopHeader header;
+            RS128MsopBlock blocks[RS128_BLOCKS_PER_PKT];
             uint32_t index;
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS128_MsopPkt;
+        RS128MsopPkt;
 
         typedef struct
         {
@@ -82,18 +82,18 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS128_Reserved;
+        RS128Reserved;
 
         typedef struct
         {
             uint8_t sync_mode;
             uint8_t sync_sts;
-            RS_Timestamp timestamp;
+            RSTimestamp timestamp;
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS128_TimeInfo;
+        RS128TimeInfo;
 
         typedef struct
         {
@@ -108,7 +108,7 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS128_EthNet;
+        RS128EthNet;
 
         typedef struct
         {
@@ -121,35 +121,35 @@ namespace robosense
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS128_Version;
+        RS128Version;
 
         typedef struct
         {
             uint64_t id;
             uint16_t rpm;
-            RS128_EthNet eth;
-            RS_ROV fov;
+            RS128EthNet eth;
+            RSROV fov;
             uint16_t reserved_0;
             uint16_t phase_lock_angle;
-            RS128_Version version;
+            RS128Version version;
             uint8_t reserved_1[229];
-            RS_SN sn;
+            RSSn sn;
             uint16_t zero_cali;
             uint8_t return_mode;
-            RS128_TimeInfo time_info;
-            RS_Status status;
+            RS128TimeInfo time_info;
+            RSStatus status;
             uint8_t reserved_2[11];
-            RS_Diagno diagno;
+            RSDiagno diagno;
             uint8_t gprmc[86];
-            RS_CorAngle ver_angle_cali[128];
-            RS_CorAngle hori_angle_cali[128];
+            RSCorAngle ver_angle_cali[128];
+            RSCorAngle hori_angle_cali[128];
             uint8_t reserved_3[10];
             uint16_t tail;
         }
 #ifdef __GNUC__
         __attribute__((packed))
 #endif
-        RS128_DifopPkt;
+        RS128DifopPkt;
 
 #ifdef _MSC_VER
 #pragma pack(pop)
@@ -159,7 +159,7 @@ namespace robosense
         class Decoder128 : public DecoderBase<vpoint>
         {
         public:
-            Decoder128(const RSDecoder_Param &param);
+            Decoder128(const RSDecoderParam &param);
             int32_t decodeDifopPkt(const uint8_t *pkt);
             int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height);
             double getLidarTime(const uint8_t *pkt);
@@ -168,7 +168,7 @@ namespace robosense
         };
 
         template <typename vpoint>
-        Decoder128<vpoint>::Decoder128(const RSDecoder_Param &param) : DecoderBase<vpoint>(param)
+        Decoder128<vpoint>::Decoder128(const RSDecoderParam &param) : DecoderBase<vpoint>(param)
         {
             this->Rx_ = 0.03615;
             this->Ry_ = -0.017;
@@ -202,7 +202,7 @@ namespace robosense
         template <typename vpoint>
         double Decoder128<vpoint>::getLidarTime(const uint8_t *pkt)
         {
-            RS128_MsopPkt *mpkt_ptr = (RS128_MsopPkt *)pkt;
+            RS128MsopPkt *mpkt_ptr = (RS128MsopPkt *)pkt;
             union u_ts {
                 uint8_t data[8];
                 double ts;
@@ -243,7 +243,7 @@ namespace robosense
         int Decoder128<vpoint>::decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height)
         {
             height = 128;
-            RS128_MsopPkt *mpkt_ptr = (RS128_MsopPkt *)pkt;
+            RS128MsopPkt *mpkt_ptr = (RS128MsopPkt *)pkt;
             if (mpkt_ptr->header.id != RS128_MSOP_ID)
             {
                 //      rs_print(RS_ERROR, "[RS128] MSOP pkt ID no match.");
@@ -265,7 +265,7 @@ namespace robosense
                 int azimuth_blk = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
                 int azi_prev = 0;
                 int azi_cur = 0;
-                if (this->echo_mode_ == RS_ECHO_DUAL)
+                if (this->echo_mode_ == ECHO_DUAL)
                 {
                     if (blk_idx < (RS128_BLOCKS_PER_PKT - 2)) // 3
                     {
@@ -349,7 +349,7 @@ namespace robosense
         template <typename vpoint>
         int Decoder128<vpoint>::decodeDifopPkt(const uint8_t *pkt)
         {
-            RS128_DifopPkt *rs128_ptr = (RS128_DifopPkt *)pkt;
+            RS128DifopPkt *rs128_ptr = (RS128DifopPkt *)pkt;
             if (rs128_ptr->id != RS128_DIFOP_ID)
             {
                 //		rs_print(RS_ERROR, "[RS128] DIFOP pkt ID no match.");
@@ -365,10 +365,10 @@ namespace robosense
             }
             else
             { // 3: dual echo
-                this->echo_mode_ = RS_ECHO_DUAL;
+                this->echo_mode_ = ECHO_DUAL;
             }
 
-            if (this->echo_mode_ == RS_ECHO_DUAL)
+            if (this->echo_mode_ == ECHO_DUAL)
             {
                 pkt_rate = pkt_rate * 2;
             }
