@@ -73,7 +73,7 @@ void exceptionCallback(const Error &code)
 Instanciate the driver object
 
 ```c++
- LidarDriverInterface<PointXYZI> driver;          ///< Declare the driver object
+ LidarDriver<PointXYZI> driver;          ///< Declare the driver object
 ```
 
 

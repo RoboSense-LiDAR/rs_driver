@@ -9,7 +9,7 @@
 ### **constructor**
 
   ```C++
-      LidarDriverInterface() 
+      LidarDriver() 
   ```
 
 ### **member functions**

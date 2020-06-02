@@ -20,7 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#include "rs_driver/interface/lidar_interface.h"
+#include "rs_driver/interface/lidar_driver.h"
 using namespace robosense::lidar;
 
 struct PointXYZI ///< user defined point type
@@ -56,15 +56,18 @@ void exceptionCallback(const Error &code)
 
 int main(int argc, char *argv[])
 {
-    LidarDriverInterface<PointXYZI> driver;          ///< Declare the driver object
-    RSDriverParam param;                             ///< Creat a parameter object
-    param.input_param.msop_port = 6699;              ///< Set the lidar msop port number the default 6699
-    param.input_param.difop_port = 7788;             ///< Set the lidar difop port number the default 7788
-    param.lidar_type = LidarType::RS16;              ///< Set the lidar type. Make sure this type is correct!
+    LidarDriver<PointXYZI> driver; ///< Declare the driver object
+
+    RSDriverParam param;                 ///< Creat a parameter object
+    param.input_param.msop_port = 6699;  ///< Set the lidar msop port number the default 6699
+    param.input_param.difop_port = 7788; ///< Set the lidar difop port number the default 7788
+    param.lidar_type = LidarType::RS16;  ///< Set the lidar type. Make sure this type is correct!
+
     driver.init(param);                              ///< Call the init funtion and pass the parameter
     driver.regPointRecvCallback(pointCloudCallback); ///< Register the point cloud callback funtion into the driver
     driver.regExceptionCallback(exceptionCallback);  ///<Register the exception callback funtion into the driver
     driver.start();                                  ///< Call the start funtion. The driver thread will start.
+
     std::cout << "Robosense Lidar-Driver Linux pcap demo start......" << std::endl;
     while (true)
     {

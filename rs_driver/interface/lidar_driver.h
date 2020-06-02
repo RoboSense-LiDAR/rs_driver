@@ -20,7 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include <rs_driver/driver/lidar_driver.hpp>
+#include <rs_driver/driver/lidar_driver_impl.hpp>
 
 namespace robosense
 {
@@ -31,7 +31,7 @@ namespace robosense
      *                 Now support RS16,RS32, RSBP & RS128.
      */
     template <typename PointT>
-    class LidarDriverInterface
+    class LidarDriver
     {
     public:
       /**
@@ -39,7 +39,7 @@ namespace robosense
        * @param Null 
        * @return: Null
        */
-      LidarDriverInterface()
+      LidarDriver()
       {
         std::cout << "\033[1m\033[35m"
                   << "------------------------------------------------------" << std::endl;
@@ -49,14 +49,14 @@ namespace robosense
                   << "------------------------------------------------------"
                   << "\033[0m" << std::endl;
 
-        driver_ptr_ = std::make_shared<LidarDriver<PointT>>();
+        driver_ptr_ = std::make_shared<LidarDriverImpl<PointT>>();
       };
       /**
        * @description: Deconstructor, stop all threads
        * @param Null
        * @return: Null
        */
-      ~LidarDriverInterface() { stop(); }
+      ~LidarDriver() { stop(); }
       /**
        * @description: The initialize function, used to set the realated parameters and instance objects, 
        *               used when get packets from online lidar or pcap.
@@ -159,7 +159,7 @@ namespace robosense
       }
 
     private:
-      std::shared_ptr<LidarDriver<PointT>> driver_ptr_; ///< The driver pointer
+      std::shared_ptr<LidarDriverImpl<PointT>> driver_ptr_; ///< The driver pointer
     };
 
   } // namespace lidar
