@@ -20,10 +20,7 @@
        * @param The struct->RSLiDAR_Driver_Param 
        * @return: Null
        */
-      inline void init(const RSLiDAR_Driver_Param &param)
-      {
-        driver_ptr_->init(param);
-      }
+      inline void init(const RSLiDAR_Driver_Param &param);
 ```
 
 ```c++
@@ -32,10 +29,7 @@
        * @param The struct->RSLiDAR_Driver_Param 
        * @return: Null
        */
-      inline void initDecoderOnly(const RSLiDAR_Driver_Param &param)
-      {
-        driver_ptr_->initDecoderOnly(param);
-      }
+      inline void initDecoderOnly(const RSLiDAR_Driver_Param &param);
 ```
 
 
@@ -46,10 +40,7 @@
        * @param Null
        * @return: Null
        */
-      inline void start()
-      {
-        driver_ptr_->start();
-      }
+      inline void start();
 ```
 
 ```c++
@@ -58,10 +49,7 @@
        * @param Null 
        * @return: Null
        */
-      inline void stop()
-      {
-        driver_ptr_->stop();
-      }
+      inline void stop();
 ```
 
 ```c++
@@ -71,10 +59,7 @@
        * @param callBack the callback funtion  
        * @return: Null
        */
-      inline void regPointRecvCallback(const std::function<void(const PointcloudMsg<PointT> &)> callBack)
-      {
-        driver_ptr_->regPointRecvCallback(callBack);
-      }
+      inline void regPointRecvCallback(const std::function<void(const PointcloudMsg<PointT> &)> callBack);
 ```
 
 ```c++
@@ -84,10 +69,7 @@
        * @param callBack the callback funtion  
        * @return: Null
        */
-      inline void regRecvCallback(const std::function<void(const ScanMsg &)> callBack)
-      {
-        driver_ptr_->regRecvCallback(callBack);
-      }
+      inline void regRecvCallback(const std::function<void(const ScanMsg &)> callBack);
 ```
 
 ```c++
@@ -97,10 +79,7 @@
        * @param callBack the callback funtion  
        * @return: Null
        */
-      inline void regRecvCallback(const std::function<void(const PacketMsg &)> callBack)
-      {
-        driver_ptr_->regRecvCallback(callBack);
-      }
+      inline void regRecvCallback(const std::function<void(const PacketMsg &)> callBack);
 ```
 
 ```c++
@@ -110,10 +89,7 @@
        * @param excallBack The callback funtion  
        * @return: Null
        */
-      inline void regExceptionCallback(const std::function<void(const Error &)> excallBack)
-      {
-        driver_ptr_->regExceptionCallback(excallBack);
-      }
+      inline void regExceptionCallback(const std::function<void(const Error &)> excallBack);
 ```
 
 ```c++
@@ -125,10 +101,7 @@
        * @param point_msg The output point cloud message
        * @return: Null
        */
-      inline void decodeMsopScan(const ScanMsg &pkt_scan_msg, PointcloudMsg<PointT> &point_msg)
-      {
-        driver_ptr_->decodeMsopScan(pkt_scan_msg, point_msg);
-      }
+      inline void decodeMsopScan(const ScanMsg &pkt_scan_msg, PointcloudMsg<PointT> &point_msg);
 ```
 
 ```c++
@@ -137,9 +110,6 @@
        * @param pkt_msg The lidar difop packet 
        * @return: Null
        */
-      inline void decodeDifopPkt(const PacketMsg &pkt_msg)
-      {
-        driver_ptr_->decodeDifopPkt(pkt_msg);
-      }
+      inline void decodeDifopPkt(const PacketMsg &pkt_msg);
 ```
 

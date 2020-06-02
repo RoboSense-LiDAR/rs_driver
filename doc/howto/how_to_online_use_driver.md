@@ -4,25 +4,27 @@
 
 ### Introduction
 
-​	This document will show you how to use the interface to get point cloud from lidar when online connecting a lidar.
+​	This document will show you how to use the interface to get point cloud from LiDAR
 
 ### Steps
 
 1， define a point type
 
-2， define a point cloud callback funtion
+2， define a point cloud callback function
 
 3， define a exception callback function
 
-4， instanciate the driver object
+4， instantiate the driver object
 
-5， define the parameter, config the parameter
+5， define the parameter, configure the parameter
 
-6， call the driver initialize fuction
+6， call the driver initialize function
 
 7， register the point cloud callback and exception callback
 
 8， start the driver
+
+9,    hint for compile
 
 
 
@@ -116,6 +118,24 @@ Call the start function to start the driver
 
 ```c++
  driver.start();                                  ///< Call the start funtion. The driver thread will start.
+```
+
+
+
+#### Step9
+
+Since the driver core only has header files, user need to link the related libraries when compile. Here is an example for CMakelists.txt. You need to link to boost, pcap & pthread. 
+
+```cmake
+find_package(Boost COMPONENTS system REQUIRED)
+add_executable(demo
+              demo/demo.cpp
+              )
+target_link_libraries(demo
+                    ${Boost_LIBRARIES}       
+                      pcap
+                      pthread
+)
 ```
 
 

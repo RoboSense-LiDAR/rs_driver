@@ -78,7 +78,7 @@ sudo apt-get install -y  libpcap-dev
 
 Boost and pthread are libraries of system, that can be linked directly. 
 
-Pcap need to install as follow:
+Pcap need to be installed as follow:
 
 ```sh
 sudo apt-get install -y  libpcap-dev
