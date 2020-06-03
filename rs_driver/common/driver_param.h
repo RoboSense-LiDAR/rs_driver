@@ -43,8 +43,8 @@ namespace robosense
             float start_angle = 0.0f;      ///< The start angle of point cloud
             float end_angle = 360.0f;      ///< The end angle of point cloud
             uint16_t mode_split_frame = 1; ///< 1: Split frame depends on cut_angle; 2:Split frame depends on packet rate; 3:Split frame depends on num_pkts_split
-            uint32_t num_pkts_split = 0;   ///< The number of packets in one frame, only be used when mode_split_frame=3
-            float cut_angle = 0.0f;        ///< The cut angle used to split frame, only be used when mode_split_frame=1
+            uint32_t num_pkts_split = 1;   ///< The number of packets in one frame, only be used when mode_split_frame=3
+            float cut_angle = 0.0f;        ///< The cut angle(degree) used to split frame, only be used when mode_split_frame=1
             void print() const             ///< This function is used to print all the parameters for debug
             {
                 std::cout << "\033[1m\033[32m"
