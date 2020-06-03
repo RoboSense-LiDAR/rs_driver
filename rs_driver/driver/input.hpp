@@ -20,10 +20,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#define RS16_PCAP_SLEEP_DURATION 1150
-#define RS32_PCAP_SLEEP_DURATION 500
-#define RSBP_PCAP_SLEEP_DURATION 500
-#define RS128_PCAP_SLEEP_DURATION 95
+#define RS16_PCAP_SLEEP_DURATION 2400
+#define RS32_PCAP_SLEEP_DURATION 1200
+#define RSBP_PCAP_SLEEP_DURATION 1200
+#define RS128_PCAP_SLEEP_DURATION 200
 
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
@@ -214,7 +214,9 @@ namespace robosense
           case LidarType::RS128:
             usleep(RS128_PCAP_SLEEP_DURATION);
             break;
-          default:
+          }
+          if (!pcap_thread_.start.load())
+          {
             break;
           }
           if ((ret = pcap_next_ex(pcap_, &header, &pkt_data)) >= 0)
