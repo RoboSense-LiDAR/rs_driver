@@ -63,6 +63,7 @@ namespace robosense
         difop_flag_ = false;
         points_seq_ = 0;
         scan_seq_ = 0;
+        ndifop_count_ = 0;
       }
 
       inline void initDecoderOnly(const RSDriverParam &param)
@@ -119,9 +120,14 @@ namespace robosense
         typename PointcloudMsg<PointT>::PointCloudPtr output_pointcloud_ptr = typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
         if (!difop_flag_)
         {
-          reportError(ErrCode_NoDifopRecv);
+          ndifop_count_++;
+          if (ndifop_count_ > 200)
+          {
+            reportError(ErrCode_NoDifopRecv);
+            ndifop_count_ = 0;
+          }
           point_msg.pointcloud_ptr = output_pointcloud_ptr;
-          usleep(100000);
+          usleep(10000);
           return;
         }
 
@@ -229,7 +235,12 @@ namespace robosense
       {
         if (!difop_flag_)
         {
-          reportError(ErrCode_NoDifopRecv);
+          ndifop_count_++;
+          if (ndifop_count_ > 200)
+          {
+            reportError(ErrCode_NoDifopRecv);
+            ndifop_count_ = 0;
+          }
           usleep(10000);
           msop_pkt_queue_.clear();
           msop_pkt_queue_.is_task_finished_.store(true);
@@ -327,6 +338,7 @@ namespace robosense
       std::shared_ptr<ScanMsg> scan_ptr_;
       uint32_t scan_seq_;
       uint32_t points_seq_;
+      uint32_t ndifop_count_;
       bool thread_flag_;
       bool difop_flag_;
       RSDriverParam driver_param_;
