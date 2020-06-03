@@ -76,6 +76,7 @@ namespace robosense
        */
       inline void initDecoderOnly(const RSDriverParam &param)
       {
+        param.print();
         driver_ptr_->initDecoderOnly(param);
       }
       /**
