@@ -39,6 +39,7 @@ namespace robosense
         {
 
         public:
+            typedef std::shared_ptr<ThreadPool> Ptr;
             ThreadPool() : stop_flag_{false}
             {
                 idl_thr_num_ = MAX_THREAD_NUM;
