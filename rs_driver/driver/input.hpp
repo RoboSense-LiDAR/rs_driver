@@ -246,7 +246,6 @@ namespace robosense
           }
           else
           {
-            sleep(1);
             excb_(ErrCode_PcapFinished);
             if (input_param_.pcap_repeat)
             {
