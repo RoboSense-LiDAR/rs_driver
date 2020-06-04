@@ -41,14 +41,6 @@ namespace robosense
        */
       LidarDriver()
       {
-        std::cout << "\033[1m\033[35m"
-                  << "------------------------------------------------------" << std::endl;
-        std::cout << "            RS_Driver Core Version: V" << VERSION_MAJOR << "."
-                  << VERSION_MINOR << "." << VERSION_PATCH << std::endl;
-        std::cout << "\033[1m\033[35m"
-                  << "------------------------------------------------------"
-                  << "\033[0m" << std::endl;
-
         driver_ptr_ = std::make_shared<LidarDriverImpl<PointT>>();
       };
       /**
