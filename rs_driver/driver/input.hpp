@@ -202,6 +202,7 @@ private:
       difop_deadline_->expires_at(boost::posix_time::pos_infin);
       checkDifopDeadline();
     }
+    return true;
   }
   inline void getPcapPacket()
   {

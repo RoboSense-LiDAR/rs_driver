@@ -4,7 +4,7 @@
 
 ### Introduction
 
-​	This document will show you how to use the interface to get point cloud from LiDAR
+​	This document will show you how to use the API to get point cloud from LiDAR
 
 ### Steps
 
@@ -48,7 +48,7 @@ struct PointXYZI ///< user defined point type
 
 #### Step2
 
-​	Define the point cloud callback function. The PointXYZI in template is the point type we defined in step1. When point cloud message is ready, this function will be called by driver. **Note! Please dont add and time-consuming operations in this function!** User can make a copy of the message and process it in another thread.  Or user can add some quick operations such like ros publish in the callback function.
+​	Define the point cloud callback function. The template argument PointXYZI is the point type we defined in step1. When point cloud message is ready, this function will be called by driver. **Note! Please dont add any time-consuming operations in this function!** User can make a copy of the message and process it in another thread.  Or user can add some quick operations such like ros publish in the callback function.
 
 ```c++
 void pointCloudCallback(const PointcloudMsg<PointXYZI> &msg)
@@ -80,7 +80,7 @@ void exceptionCallback(const Error &code)
 
 #### Step5
 
-​	Define the parameter and config it. The msop port and difop port number of lidar can be got from **wireshark(a network socket capture software)**. The default value is 6699 and 7788. User also need to make sure the **lidar type** is set correctly.
+​	Define a parameter object and config it. The msop port and difop port number of lidar can be got from **wireshark(a network socket capture software)**. The default value is 6699 and 7788. User also need to make sure the **lidar type** is set correctly.
 
 ```c++
  RSDriverParam param;                      ///< Creat a parameter object
@@ -144,4 +144,4 @@ target_link_libraries(demo
 
 
 
-### *Congratulations! You have finished the first simple demo of Robosense lidar driver! You can find the whole demo code in the demo folder under the project. Feel free to connect with us if you have and question about the driver.*
+### *Congratulations! You have finished the first simple demo tutorial of Robosense lidar driver! You can find the complete demo code in the demo floder under the project directory. Feel free to connect us if you have and question about the driver.*
