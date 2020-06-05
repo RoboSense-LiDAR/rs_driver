@@ -104,10 +104,14 @@ void exceptionCallback(const Error &code)
 
 #### Step7
 
-​	Call the initialize function and pass the parameter into the driver. Since we need to get packets from online lidar, we call init() function.
+​	Call the initialize function and pass the parameter into the driver. Since we need to get packets from online lidar, we call init() function. Remember to check whether the initialization is successful, if not, please check the error code, and modify parameters.
 
 ```c++
- driver.init(param);                              ///< Call the init funtion and pass the parameter
+if (!driver.init(param))                         ///< Call the init funtion and pass the parameter
+{
+    std::cout << "Driver Initialize Error..." << std::endl;
+    return 0;
+}
 ```
 
 

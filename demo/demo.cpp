@@ -20,7 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#include "rs_driver/interface/lidar_driver.h"
+#include "rs_driver/api/lidar_driver.h"
 using namespace robosense::lidar;
 
 struct PointXYZI ///< user defined point type
@@ -74,12 +74,18 @@ int main(int argc, char *argv[])
 
     driver.regExceptionCallback(exceptionCallback);  ///<Register the exception callback funtion into the driver
     driver.regPointRecvCallback(pointCloudCallback); ///< Register the point cloud callback funtion into the driver
-    driver.init(param);                              ///< Call the init funtion and pass the parameter
-    driver.start();                                  ///< Call the start funtion. The driver thread will start.
+    if (!driver.init(param))                         ///< Call the init funtion and pass the parameter
+    {
+        std::cout << "Driver Initialize Error..." << std::endl;
+        return 0;
+    }
+    driver.start(); ///< Call the start funtion. The driver thread will start.
 
     std::cout << "Robosense Lidar-Driver Linux pcap demo start......" << std::endl;
     while (true)
     {
         sleep(1);
     }
+
+    return 0;
 }

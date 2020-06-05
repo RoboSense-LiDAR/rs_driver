@@ -48,7 +48,7 @@ namespace robosense
         stop();
       }
 
-      inline void init(const RSDriverParam &param)
+      inline bool init(const RSDriverParam &param)
       {
         driver_param_ = param;
         lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param);
@@ -56,6 +56,10 @@ namespace robosense
         lidar_input_ptr_ = std::make_shared<Input>(driver_param_.lidar_type, driver_param_.input_param, std::bind(&LidarDriverImpl::reportError, this, std::placeholders::_1));
         lidar_input_ptr_->regRecvMsopCallback(std::bind(&LidarDriverImpl::msopCallback, this, std::placeholders::_1));
         lidar_input_ptr_->regRecvDifopCallback(std::bind(&LidarDriverImpl::difopCallback, this, std::placeholders::_1));
+        if (!lidar_input_ptr_->init())
+        {
+          return false;
+        }
         thread_pool_ptr_ = std::make_shared<ThreadPool>();
         pointcloud_ptr_ = typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
         scan_ptr_ = std::make_shared<ScanMsg>();
@@ -64,6 +68,7 @@ namespace robosense
         points_seq_ = 0;
         scan_seq_ = 0;
         ndifop_count_ = 0;
+        return true;
       }
 
       inline void initDecoderOnly(const RSDriverParam &param)
@@ -80,9 +85,9 @@ namespace robosense
         scan_seq_ = 0;
       }
 
-      inline void start()
+      inline bool start()
       {
-        lidar_input_ptr_->start();
+        return lidar_input_ptr_->start();
       }
 
       inline void stop()

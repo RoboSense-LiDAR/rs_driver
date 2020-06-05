@@ -48,10 +48,10 @@ namespace robosense
             ErrCode_DifopPktIncomplete = 0x44, ///< The received difop packets incomplete.
             ErrCode_NoDifopRecv = 0x45,        ///< The point cloud decoding will not start until the difop packet receive
             ErrCode_ZeroPoints = 0x46,         ///< The size of point cloud is zero. Please check the lidar type parameter when this error occur.
-            ErrCode_PcapWrongDirectory = 0x81, ///< The input directory of pcap file is wrong
-            ErrCode_PcapContradiction = 0x82,  ///< The pcap function is disable but try to decode pcap file
-            ErrCode_MsopPortBuzy = 0x83,       ///< The input msop port is already used
-            ErrCode_DifopPortBuzy = 0x84,      ///< The input difop port is already used
+            ErrCode_StartBeforeInit = 0x47,    ///< The start function is called before init() successfully
+            ErrCode_PcapWrongDirectory = 0x48, ///< The input directory of pcap file is wrong
+            ErrCode_MsopPortBuzy = 0x49,       ///< The input msop port is already used
+            ErrCode_DifopPortBuzy = 0x50,      ///< The input difop port is already used
 
         };
 
@@ -80,8 +80,6 @@ namespace robosense
                 {
                 case ErrCode_PcapWrongDirectory:
                     return "ErrCode_PcapWrongDirectory";
-                case ErrCode_PcapContradiction:
-                    return "ErrCode_PcapContradiction";
                 case ErrCode_MsopPortBuzy:
                     return "ErrCode_MsopPortBuzy";
                 case ErrCode_DifopPortBuzy:
@@ -102,6 +100,8 @@ namespace robosense
                     return "ErrCode_NoDifopRecv";
                 case ErrCode_ZeroPoints:
                     return "ErrCode_ZeroPoints";
+                case ErrCode_StartBeforeInit:
+                    return "ErrCode_StartBeforeInit";
                 default:
                     return "ErrCode_Success";
                 }

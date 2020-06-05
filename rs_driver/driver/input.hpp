@@ -52,7 +52,11 @@ namespace robosense
       Input(const LidarType &_lidar_type, const RSInputParam &_input_param,
             const std::function<void(const Error &)> _excb) : lidar_type_(_lidar_type),
                                                               input_param_(_input_param),
-                                                              excb_(_excb)
+                                                              excb_(_excb),
+                                                              init_flag_(false)
+      {
+      }
+      inline bool init()
       {
         if (input_param_.read_pcap)
         {
@@ -60,7 +64,7 @@ namespace robosense
           if ((pcap_ = pcap_open_offline(input_param_.pcap_file_dir.c_str(), errbuf)) == NULL)
           {
             excb_(Error(ErrCode_PcapWrongDirectory));
-            exit(-1);
+            return false;
           }
           else
           {
@@ -76,9 +80,13 @@ namespace robosense
         }
         else
         {
-          setSocket("msop", input_param_.msop_port);
-          setSocket("difop", input_param_.difop_port);
+          if (!setSocket("msop", input_param_.msop_port) || !setSocket("difop", input_param_.difop_port))
+          {
+            return false;
+          }
         }
+        init_flag_ = true;
+        return true;
       }
       ~Input()
       {
@@ -92,8 +100,13 @@ namespace robosense
       {
         difop_cb_.emplace_back(callBack);
       }
-      inline void start()
+      inline bool start()
       {
+        if (!init_flag_)
+        {
+          excb_(Error(ErrCode_StartBeforeInit));
+          return false;
+        }
         if (!input_param_.read_pcap)
         {
           msop_thread_.start.store(true);
@@ -106,6 +119,7 @@ namespace robosense
           pcap_thread_.start.store(true);
           pcap_thread_.m_thread.reset(new std::thread([this]() { getPcapPacket(); }));
         }
+        return true;
       }
       inline void stop()
       {
@@ -160,7 +174,7 @@ namespace robosense
         *out_ec = ec;
         *out_length = length;
       }
-      inline void setSocket(const std::string &pkt_type, const uint16_t &port)
+      inline bool setSocket(const std::string &pkt_type, const uint16_t &port)
       {
         if (pkt_type == "msop")
         {
@@ -172,7 +186,7 @@ namespace robosense
           catch (...)
           {
             excb_(ErrCode_MsopPortBuzy);
-            exit(-1);
+            return false;
           }
           msop_deadline_->expires_at(boost::posix_time::pos_infin);
           checkMsopDeadline();
@@ -187,7 +201,7 @@ namespace robosense
           catch (...)
           {
             excb_(ErrCode_DifopPortBuzy);
-            exit(-1);
+            return false;
           }
           difop_deadline_->expires_at(boost::posix_time::pos_infin);
           checkDifopDeadline();
@@ -336,6 +350,7 @@ namespace robosense
       RSInputParam input_param_;
       LidarType lidar_type_;
       std::function<void(const Error &)> excb_;
+      bool init_flag_;
       /* pcap file parse */
       pcap_t *pcap_;
       bpf_program pcap_msop_filter_;

@@ -48,7 +48,7 @@ sudo apt-get install -y  libpcap-dev
 
 [异常简介](doc/intro/errcode_intro.md)
 
-[接口简介](doc/intro/interface_intro.md)
+[接口简介](doc/intro/api_intro.md)
 
 
 
@@ -103,7 +103,7 @@ sudo apt-get install -y  libpcap-dev
 
 [Intro to error codes](doc/intro/errcode_intro.md)
 
-[Intro to interface](doc/intro/interface_intro.md)
+[Intro to api](doc/intro/api_intro.md)
 
 
 
