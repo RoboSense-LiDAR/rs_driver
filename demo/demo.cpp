@@ -58,8 +58,8 @@ int main(int argc, char* argv[])
 {
   std::cout << "\033[1m\033[35m"
             << "------------------------------------------------------" << std::endl;
-  std::cout << "            RS_Driver Core Version: V " << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_PATCH
-            << std::endl;
+  std::cout << "            RS_Driver Core Version: V " << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
+            << RSLIDAR_VERSION_PATCH << std::endl;
   std::cout << "\033[1m\033[35m"
             << "------------------------------------------------------"
             << "\033[0m" << std::endl;

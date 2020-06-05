@@ -164,7 +164,7 @@ public:
   int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
   void loadCalibrationFile(const std::string& angle_path);
-  float computeTemperatue(const uint8_t temp_low, const uint8_t temp_high);
+  float computeTemperature(const uint8_t temp_low, const uint8_t temp_high);
 };
 
 template <typename vpoint>
@@ -222,7 +222,7 @@ double Decoder128<vpoint>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename vpoint>
-float Decoder128<vpoint>::computeTemperatue(const uint8_t temp_low, const uint8_t temp_high)
+float Decoder128<vpoint>::computeTemperature(const uint8_t temp_low, const uint8_t temp_high)
 {
   float neg_flag = temp_low & 0x80;
   float msb = temp_low & 0x7F;
@@ -253,7 +253,7 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& v
 
   float azimuth_corrected_float;
   int azimuth_corrected;
-  float temperature = computeTemperatue(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
+  float temperature = computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
 
   for (int blk_idx = 0; blk_idx < RS128_BLOCKS_PER_PKT; blk_idx++)

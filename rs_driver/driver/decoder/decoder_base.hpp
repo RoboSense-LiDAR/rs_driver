@@ -232,11 +232,11 @@ protected:
   uint32_t cali_data_flag_;
   float vert_angle_list_[128];
   float hori_angle_list_[128];
-  std::vector<double> cos_lookup_table_;
-  std::vector<double> sin_lookup_table_;
+  static std::vector<double> cos_lookup_table_;
+  static std::vector<double> sin_lookup_table_;
 
 protected:
-  virtual float computeTemperatue(const uint16_t temp_raw);
+  virtual float computeTemperature(const uint16_t temp_raw);
   virtual int32_t azimuthCalibration(float azimuth, int32_t channel);
   virtual int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height) = 0;
   virtual int32_t decodeDifopPkt(const uint8_t* pkt) = 0;
@@ -288,8 +288,6 @@ DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
 template <typename vpoint>
 DecoderBase<vpoint>::~DecoderBase()
 {
-  this->cos_lookup_table_.clear();
-  this->sin_lookup_table_.clear();
 
   //	rs_print(RS_INFO, "[RSBASE] Destructor.");
 }
@@ -359,7 +357,7 @@ RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t* pkt, std::vec
 }
 
 template <typename vpoint>
-float DecoderBase<vpoint>::computeTemperatue(const uint16_t temp_raw)
+float DecoderBase<vpoint>::computeTemperature(const uint16_t temp_raw)
 {
   uint8_t neg_flag = (temp_raw >> 8) & 0x80;
   float msb = (temp_raw >> 8) & 0x7F;
@@ -395,5 +393,9 @@ int DecoderBase<vpoint>::azimuthCalibration(float azimuth, int channel)
 
   return azi_ret;
 }
+template <typename vpoint>
+std::vector<double> DecoderBase<vpoint>::cos_lookup_table_;
+template <typename vpoint>
+std::vector<double> DecoderBase<vpoint>::sin_lookup_table_;
 }  // namespace lidar
 }  // namespace robosense
