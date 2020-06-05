@@ -271,7 +271,7 @@ private:
       }
     }
   }
-  void getMsopPacket()
+  inline void getMsopPacket()
   {
     char* precv_buffer = (char*)malloc(RSLIDAR_PKT_LEN);
     while (msop_thread_.start.load())
@@ -305,7 +305,7 @@ private:
     }
     free(precv_buffer);
   }
-  void getDifopPacket()
+  inline void getDifopPacket()
   {
     while (difop_thread_.start.load())
     {

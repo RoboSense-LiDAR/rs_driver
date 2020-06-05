@@ -204,11 +204,14 @@ class DecoderBase
 {
 public:
   DecoderBase(const RSDecoderParam& param);
+  DecoderBase(DecoderBase&) = delete;
+  DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase();
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& pointcloud_vec, int& height);
   virtual int32_t processDifopPkt(const uint8_t* pkt);
   virtual double getLidarTime(const uint8_t* pkt) = 0;
   virtual void loadCalibrationFile(const std::string& angle_path) = 0;
+
 
 protected:
   int32_t rpm_;
@@ -288,7 +291,6 @@ DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
 template <typename vpoint>
 DecoderBase<vpoint>::~DecoderBase()
 {
-
   //	rs_print(RS_INFO, "[RSBASE] Destructor.");
 }
 
