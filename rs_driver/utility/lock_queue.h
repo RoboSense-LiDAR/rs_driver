@@ -23,50 +23,50 @@
 #include <rs_driver/common/common_header.h>
 namespace robosense
 {
-    namespace lidar
+namespace lidar
+{
+template <typename T>
+class Queue
+{
+public:
+  Queue()
+  {
+    is_task_finished_ = true;
+  }
+  void push(const T& value)
+  {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_quque_.push(value);
+  }
+
+  void pop()
+  {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_quque_.empty())
     {
-        template <typename T>
-        class Queue
-        {
-        public:
-            Queue()
-            {
-                is_task_finished_ = true;
-            }
-            void push(const T &value)
-            {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                m_quque_.push(value);
-            }
+      m_quque_.pop();
+    }
+  }
 
-            void pop()
-            {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                if (!m_quque_.empty())
-                {
-                    m_quque_.pop();
-                }
-            }
+  void clear()
+  {
+    std::queue<T> empty;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    swap(empty, m_quque_);
+  }
 
-            void clear()
-            {
-                std::queue<T> empty;
-                std::lock_guard<std::mutex> lock(m_mutex);
-                swap(empty, m_quque_);
-            }
+  size_t size()
+  {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_quque_.size();
+  }
 
-            size_t size()
-            {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                return m_quque_.size();
-            }
+public:
+  std::queue<T> m_quque_;
+  std::atomic<bool> is_task_finished_;
 
-        public:
-            std::queue<T> m_quque_;
-            std::atomic<bool> is_task_finished_;
-
-        private:
-            mutable std::mutex m_mutex;
-        };
-    } // namespace lidar
-} // namespace robosense
+private:
+  mutable std::mutex m_mutex;
+};
+}  // namespace lidar
+}  // namespace robosense

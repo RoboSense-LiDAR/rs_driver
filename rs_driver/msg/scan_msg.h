@@ -25,23 +25,23 @@
 #include <rs_driver/msg/packet_msg.h>
 namespace robosense
 {
-  namespace lidar
-  {
+namespace lidar
+{
 #ifdef _MSC_VER
 #pragma pack(push, 2)
-    struct ScanMsg
+struct ScanMsg
 #elif __GNUC__
-    struct alignas(16) ScanMsg
+struct alignas(16) ScanMsg
 #endif
-    {
-      double timestamp = 0.0;
-      uint32_t seq = 0;
-      std::string parent_frame_id = ""; ///< which coordinate the message is in
-      std::string frame_id = "";
-      std::vector<PacketMsg> packets; ///< A vector which store a scan of packets (the size of the vector is not fix)
-    };
+{
+  double timestamp = 0.0;
+  uint32_t seq = 0;
+  std::string parent_frame_id = "";  ///< which coordinate the message is in
+  std::string frame_id = "";
+  std::vector<PacketMsg> packets;  ///< A vector which store a scan of packets (the size of the vector is not fix)
+};
 #ifdef _MSC_VER
 #pragma pack(pop)
 #endif
-  } // namespace lidar
-} // namespace robosense
+}  // namespace lidar
+}  // namespace robosense

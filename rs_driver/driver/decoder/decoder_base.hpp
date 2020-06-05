@@ -23,375 +23,377 @@
 #include <rs_driver/common/common_header.h>
 namespace robosense
 {
-    namespace lidar
-    {
+namespace lidar
+{
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
 #define RS_RESOLUTION_5mm_DISTANCE_COEF (0.005)
 #define RS_RESOLUTION_10mm_DISTANCE_COEF (0.01)
 
-        enum RSEchoMode
-        {
-            ECHO_DUAL = 0,
-            ECHO_STRONGEST,
-            ECHO_LAST
-        };
+enum RSEchoMode
+{
+  ECHO_DUAL = 0,
+  ECHO_STRONGEST,
+  ECHO_LAST
+};
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #endif
-        enum RSDecoderResult
-        {
-            DECODE_FAIL = -2,
-            PARAM_INVALID = -1,
-            DECODE_OK = 0,
-            FRAME_SPLIT = 1
-        };
+enum RSDecoderResult
+{
+  DECODE_FAIL = -2,
+  PARAM_INVALID = -1,
+  DECODE_OK = 0,
+  FRAME_SPLIT = 1
+};
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #endif
 
-        typedef struct
-        {
-            uint8_t year;
-            uint8_t month;
-            uint8_t day;
-            uint8_t hour;
-            uint8_t minute;
-            uint8_t second;
-            uint16_t ms;
-            uint16_t us;
-        }
+typedef struct
+{
+  uint8_t year;
+  uint8_t month;
+  uint8_t day;
+  uint8_t hour;
+  uint8_t minute;
+  uint8_t second;
+  uint16_t ms;
+  uint16_t us;
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSTimestamp;
+RSTimestamp;
 
-        typedef struct
-        {
-            uint8_t sec[6];
-            uint32_t ns;
-        }
+typedef struct
+{
+  uint8_t sec[6];
+  uint32_t ns;
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSTimestampUTC;
+RSTimestampUTC;
 
-        typedef struct
-        {
-            uint64_t id;
-            uint8_t reserved1[12];
-            RSTimestamp timestamp;
-            uint8_t lidar_type;
-            uint8_t reserved2[7];
-            uint16_t temp_raw;
-            uint8_t reserved3[2];
-        }
+typedef struct
+{
+  uint64_t id;
+  uint8_t reserved1[12];
+  RSTimestamp timestamp;
+  uint8_t lidar_type;
+  uint8_t reserved2[7];
+  uint16_t temp_raw;
+  uint8_t reserved3[2];
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSMsopHeader;
+RSMsopHeader;
 
-        typedef struct
-        {
-            uint8_t lidar_ip[4];
-            uint8_t host_ip[4];
-            uint8_t mac_addr[6];
-            uint16_t local_port;
-            uint16_t dest_port;
-            uint16_t port3;
-            uint16_t port4;
-        }
+typedef struct
+{
+  uint8_t lidar_ip[4];
+  uint8_t host_ip[4];
+  uint8_t mac_addr[6];
+  uint16_t local_port;
+  uint16_t dest_port;
+  uint16_t port3;
+  uint16_t port4;
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSEthNet;
+RSEthNet;
 
-        typedef struct
-        {
-            uint16_t start_angle;
-            uint16_t end_angle;
-        }
+typedef struct
+{
+  uint16_t start_angle;
+  uint16_t end_angle;
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSROV;
+RSROV;
 
-        typedef struct
-        {
-            uint8_t sign;
-            uint8_t value[2];
-        }
+typedef struct
+{
+  uint8_t sign;
+  uint8_t value[2];
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSCorAngle;
+RSCorAngle;
 
-        typedef struct
-        {
-            uint16_t distance;
-            uint8_t intensity;
-        }
+typedef struct
+{
+  uint16_t distance;
+  uint8_t intensity;
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSChannel;
+RSChannel;
 
-        typedef struct
-        {
-            uint8_t top_ver[5];
-            uint8_t bottom_ver[5];
-        }
+typedef struct
+{
+  uint8_t top_ver[5];
+  uint8_t bottom_ver[5];
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSVersion;
+RSVersion;
 
-        typedef struct
-        {
-            uint8_t num[6];
-        }
+typedef struct
+{
+  uint8_t num[6];
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSSn;
+RSSn;
 
-        typedef struct
-        {
-            uint8_t device_current[3];
-            uint8_t main_current[3];
-            uint16_t vol_12v;
-            uint16_t vol_12vm;
-            uint16_t vol_5v;
-            uint16_t vol_3v3;
-            uint16_t vol_2v5;
-            uint16_t vol_1v2;
-        }
+typedef struct
+{
+  uint8_t device_current[3];
+  uint8_t main_current[3];
+  uint16_t vol_12v;
+  uint16_t vol_12vm;
+  uint16_t vol_5v;
+  uint16_t vol_3v3;
+  uint16_t vol_2v5;
+  uint16_t vol_1v2;
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSStatus;
+RSStatus;
 
-        typedef struct
-        {
-            uint8_t reserved1[10];
-            uint8_t checksum;
-            uint16_t manc_err1;
-            uint16_t manc_err2;
-            uint8_t gps_status;
-            uint16_t temperature1;
-            uint16_t temperature2;
-            uint16_t temperature3;
-            uint16_t temperature4;
-            uint16_t temperature5;
-            uint8_t reserved2[5];
-            uint16_t cur_rpm;
-            uint8_t reserved3[7];
-        }
+typedef struct
+{
+  uint8_t reserved1[10];
+  uint8_t checksum;
+  uint16_t manc_err1;
+  uint16_t manc_err2;
+  uint8_t gps_status;
+  uint16_t temperature1;
+  uint16_t temperature2;
+  uint16_t temperature3;
+  uint16_t temperature4;
+  uint16_t temperature5;
+  uint8_t reserved2[5];
+  uint16_t cur_rpm;
+  uint8_t reserved3[7];
+}
 #ifdef __GNUC__
-        __attribute__((packed))
+__attribute__((packed))
 #endif
-        RSDiagno;
+RSDiagno;
 
 #ifdef _MSC_VER
 #pragma pack(pop)
 #endif
 
-        //----------------- Decoder ---------------------
-        template <typename vpoint>
-        class DecoderBase
-        {
-        public:
-            DecoderBase(const RSDecoderParam &param);
-            virtual ~DecoderBase();
-            virtual RSDecoderResult processMsopPkt(const uint8_t *pkt, std::vector<vpoint> &pointcloud_vec, int &height);
-            virtual int32_t processDifopPkt(const uint8_t *pkt);
-            virtual double getLidarTime(const uint8_t *pkt) = 0;
-            virtual void loadCalibrationFile(const std::string &angle_path) = 0;
+//----------------- Decoder ---------------------
+template <typename vpoint>
+class DecoderBase
+{
+public:
+  DecoderBase(const RSDecoderParam& param);
+  virtual ~DecoderBase();
+  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& pointcloud_vec, int& height);
+  virtual int32_t processDifopPkt(const uint8_t* pkt);
+  virtual double getLidarTime(const uint8_t* pkt) = 0;
+  virtual void loadCalibrationFile(const std::string& angle_path) = 0;
 
-        protected:
-            int32_t rpm_;
-            uint8_t echo_mode_;
-            uint8_t channel_num_;
-            float Rx_;
-            float Ry_;
-            float Rz_;
-            float max_distance_;
-            float min_distance_;
-            int start_angle_;
-            int end_angle_;
-            bool angle_flag_;
-            uint32_t pkts_per_frame_;
-            uint32_t pkt_counter_;
-            uint16_t mode_split_frame_; // 1 - angle,  2 - theoretical packets; 3 - setting packets
-            uint32_t num_pkts_split_;   // number of setting packets
-            int32_t cut_angle_;
-            int32_t last_azimuth_;
-            //calibration data
-            uint32_t cali_data_flag_;
-            float vert_angle_list_[128];
-            float hori_angle_list_[128];
-            std::vector<double> cos_lookup_table_;
-            std::vector<double> sin_lookup_table_;
+protected:
+  int32_t rpm_;
+  uint8_t echo_mode_;
+  uint8_t channel_num_;
+  float Rx_;
+  float Ry_;
+  float Rz_;
+  float max_distance_;
+  float min_distance_;
+  int start_angle_;
+  int end_angle_;
+  bool angle_flag_;
+  uint32_t pkts_per_frame_;
+  uint32_t pkt_counter_;
+  uint16_t mode_split_frame_;  // 1 - angle,  2 - theoretical packets; 3 - setting packets
+  uint32_t num_pkts_split_;    // number of setting packets
+  int32_t cut_angle_;
+  int32_t last_azimuth_;
+  // calibration data
+  uint32_t cali_data_flag_;
+  float vert_angle_list_[128];
+  float hori_angle_list_[128];
+  std::vector<double> cos_lookup_table_;
+  std::vector<double> sin_lookup_table_;
 
-        protected:
-            virtual float computeTemperatue(const uint16_t temp_raw);
-            virtual int32_t azimuthCalibration(float azimuth, int32_t channel);
-            virtual int32_t decodeMsopPkt(const uint8_t *pkt, std::vector<vpoint> &vec, int &height) = 0;
-            virtual int32_t decodeDifopPkt(const uint8_t *pkt) = 0;
-        };
+protected:
+  virtual float computeTemperatue(const uint16_t temp_raw);
+  virtual int32_t azimuthCalibration(float azimuth, int32_t channel);
+  virtual int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height) = 0;
+  virtual int32_t decodeDifopPkt(const uint8_t* pkt) = 0;
+};
 
-        template <typename vpoint>
-        DecoderBase<vpoint>::DecoderBase(const RSDecoderParam &param) : rpm_(600),
-                                                                        pkts_per_frame_(84),
-                                                                        pkt_counter_(0),
-                                                                        last_azimuth_(-36001),
-                                                                        cali_data_flag_(0x00),
-                                                                        angle_flag_(true),
-                                                                        start_angle_(param.start_angle * 100),
-                                                                        end_angle_(param.end_angle * 100),
-                                                                        echo_mode_(ECHO_STRONGEST),
-                                                                        max_distance_(param.max_distance),
-                                                                        min_distance_(param.min_distance),
-                                                                        mode_split_frame_(param.mode_split_frame),
-                                                                        num_pkts_split_(param.num_pkts_split),
-                                                                        cut_angle_(param.cut_angle * 100)
-        {
-            if (cut_angle_ > 36000)
-            {
-                cut_angle_ = 0;
-            }
+template <typename vpoint>
+DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
+  : rpm_(600)
+  , pkts_per_frame_(84)
+  , pkt_counter_(0)
+  , last_azimuth_(-36001)
+  , cali_data_flag_(0x00)
+  , angle_flag_(true)
+  , start_angle_(param.start_angle * 100)
+  , end_angle_(param.end_angle * 100)
+  , echo_mode_(ECHO_STRONGEST)
+  , max_distance_(param.max_distance)
+  , min_distance_(param.min_distance)
+  , mode_split_frame_(param.mode_split_frame)
+  , num_pkts_split_(param.num_pkts_split)
+  , cut_angle_(param.cut_angle * 100)
+{
+  if (cut_angle_ > 36000)
+  {
+    cut_angle_ = 0;
+  }
 
-            if (this->start_angle_ > 36000 || this->start_angle_ < 0 || this->end_angle_ > 36000 || this->end_angle_ < 0)
-            {
-                this->start_angle_ = 0;
-                this->end_angle_ = 36000;
-            }
-            if (this->start_angle_ > this->end_angle_)
-            {
-                this->angle_flag_ = false;
-            }
-            cos_lookup_table_.resize(36000);
-            sin_lookup_table_.resize(36000);
-            for (unsigned int i = 0; i < 36000; i++)
-            {
-                double rad = RS_TO_RADS(i / 100.0f);
-                cos_lookup_table_[i] = std::cos(rad);
-                sin_lookup_table_[i] = std::sin(rad);
-            }
+  if (this->start_angle_ > 36000 || this->start_angle_ < 0 || this->end_angle_ > 36000 || this->end_angle_ < 0)
+  {
+    this->start_angle_ = 0;
+    this->end_angle_ = 36000;
+  }
+  if (this->start_angle_ > this->end_angle_)
+  {
+    this->angle_flag_ = false;
+  }
+  cos_lookup_table_.resize(36000);
+  sin_lookup_table_.resize(36000);
+  for (unsigned int i = 0; i < 36000; i++)
+  {
+    double rad = RS_TO_RADS(i / 100.0f);
+    cos_lookup_table_[i] = std::cos(rad);
+    sin_lookup_table_[i] = std::sin(rad);
+  }
 
-            //    rs_print(RS_INFO, "[RSBASE] Constructor.");
-        }
+  //    rs_print(RS_INFO, "[RSBASE] Constructor.");
+}
 
-        template <typename vpoint>
-        DecoderBase<vpoint>::~DecoderBase()
-        {
-            this->cos_lookup_table_.clear();
-            this->sin_lookup_table_.clear();
+template <typename vpoint>
+DecoderBase<vpoint>::~DecoderBase()
+{
+  this->cos_lookup_table_.clear();
+  this->sin_lookup_table_.clear();
 
-            //	rs_print(RS_INFO, "[RSBASE] Destructor.");
-        }
+  //	rs_print(RS_INFO, "[RSBASE] Destructor.");
+}
 
-        template <typename vpoint>
-        int32_t DecoderBase<vpoint>::processDifopPkt(const uint8_t *pkt)
-        {
-            if (pkt == NULL)
-            {
-                //		rs_print(RS_ERROR, "[RSBASE] DIFOP pkt buffer NULL.");
-                return -1;
-            }
-            return decodeDifopPkt(pkt);
-        }
+template <typename vpoint>
+int32_t DecoderBase<vpoint>::processDifopPkt(const uint8_t* pkt)
+{
+  if (pkt == NULL)
+  {
+    //		rs_print(RS_ERROR, "[RSBASE] DIFOP pkt buffer NULL.");
+    return -1;
+  }
+  return decodeDifopPkt(pkt);
+}
 
-        template <typename vpoint>
-        RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t *pkt, std::vector<vpoint> &pointcloud_vec, int &height)
-        {
-            if (pkt == NULL)
-            {
-                //	rs_print(RS_ERROR, "[RSBASE] MSOP pkt buffer NULL.");
-                return PARAM_INVALID;
-            }
+template <typename vpoint>
+RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& pointcloud_vec,
+                                                    int& height)
+{
+  if (pkt == NULL)
+  {
+    //	rs_print(RS_ERROR, "[RSBASE] MSOP pkt buffer NULL.");
+    return PARAM_INVALID;
+  }
 
-            int azimuth = decodeMsopPkt(pkt, pointcloud_vec, height);
-            if (azimuth < 0)
-            {
-                //   rs_print(RS_ERROR, "[RSBASE] MSOP pkt decode fail.");
-                return DECODE_FAIL;
-            }
+  int azimuth = decodeMsopPkt(pkt, pointcloud_vec, height);
+  if (azimuth < 0)
+  {
+    //   rs_print(RS_ERROR, "[RSBASE] MSOP pkt decode fail.");
+    return DECODE_FAIL;
+  }
 
-            this->pkt_counter_++;
+  this->pkt_counter_++;
 
-            if (mode_split_frame_ == 1)
-            {
-                if (azimuth < this->last_azimuth_)
-                {
-                    this->last_azimuth_ -= 36000;
-                }
-                if (this->last_azimuth_ != -36001 && this->last_azimuth_ < this->cut_angle_ && azimuth >= this->cut_angle_)
-                {
-                    this->last_azimuth_ = azimuth;
-                    this->pkt_counter_ = 0;
-                    return FRAME_SPLIT;
-                }
-                this->last_azimuth_ = azimuth;
-            }
-            else if (mode_split_frame_ == 2)
-            {
-                if (this->pkt_counter_ >= this->pkts_per_frame_)
-                {
-                    this->pkt_counter_ = 0;
-                    return FRAME_SPLIT;
-                }
-            }
-            else if (mode_split_frame_ == 3)
-            {
-                if (this->pkt_counter_ >= this->num_pkts_split_)
-                {
-                    this->pkt_counter_ = 0;
-                    return FRAME_SPLIT;
-                }
-            }
+  if (mode_split_frame_ == 1)
+  {
+    if (azimuth < this->last_azimuth_)
+    {
+      this->last_azimuth_ -= 36000;
+    }
+    if (this->last_azimuth_ != -36001 && this->last_azimuth_ < this->cut_angle_ && azimuth >= this->cut_angle_)
+    {
+      this->last_azimuth_ = azimuth;
+      this->pkt_counter_ = 0;
+      return FRAME_SPLIT;
+    }
+    this->last_azimuth_ = azimuth;
+  }
+  else if (mode_split_frame_ == 2)
+  {
+    if (this->pkt_counter_ >= this->pkts_per_frame_)
+    {
+      this->pkt_counter_ = 0;
+      return FRAME_SPLIT;
+    }
+  }
+  else if (mode_split_frame_ == 3)
+  {
+    if (this->pkt_counter_ >= this->num_pkts_split_)
+    {
+      this->pkt_counter_ = 0;
+      return FRAME_SPLIT;
+    }
+  }
 
-            return DECODE_OK;
-        }
+  return DECODE_OK;
+}
 
-        template <typename vpoint>
-        float DecoderBase<vpoint>::computeTemperatue(const uint16_t temp_raw)
-        {
-            uint8_t neg_flag = (temp_raw >> 8) & 0x80;
-            float msb = (temp_raw >> 8) & 0x7F;
-            float lsb = (temp_raw & 0xFF00) >> 3;
-            float temp;
-            if (neg_flag == 0x80)
-            {
-                temp = -1 * (msb * 32 + lsb) * 0.0625f;
-            }
-            else
-            {
-                temp = (msb * 32 + lsb) * 0.0625f;
-            }
+template <typename vpoint>
+float DecoderBase<vpoint>::computeTemperatue(const uint16_t temp_raw)
+{
+  uint8_t neg_flag = (temp_raw >> 8) & 0x80;
+  float msb = (temp_raw >> 8) & 0x7F;
+  float lsb = (temp_raw & 0xFF00) >> 3;
+  float temp;
+  if (neg_flag == 0x80)
+  {
+    temp = -1 * (msb * 32 + lsb) * 0.0625f;
+  }
+  else
+  {
+    temp = (msb * 32 + lsb) * 0.0625f;
+  }
 
-            return temp;
-        }
+  return temp;
+}
 
-        template <typename vpoint>
-        int DecoderBase<vpoint>::azimuthCalibration(float azimuth, int channel)
-        {
-            int azi_ret;
+template <typename vpoint>
+int DecoderBase<vpoint>::azimuthCalibration(float azimuth, int channel)
+{
+  int azi_ret;
 
-            if (azimuth > 0.0 && azimuth < 3000.0)
-            {
-                azimuth = azimuth + this->hori_angle_list_[channel] + 36000.0f;
-            }
-            else
-            {
-                azimuth = azimuth + this->hori_angle_list_[channel];
-            }
-            azi_ret = (int)azimuth;
-            azi_ret %= 36000;
+  if (azimuth > 0.0 && azimuth < 3000.0)
+  {
+    azimuth = azimuth + this->hori_angle_list_[channel] + 36000.0f;
+  }
+  else
+  {
+    azimuth = azimuth + this->hori_angle_list_[channel];
+  }
+  azi_ret = (int)azimuth;
+  azi_ret %= 36000;
 
-            return azi_ret;
-        }
-    } // namespace lidar
-} // namespace robosense
+  return azi_ret;
+}
+}  // namespace lidar
+}  // namespace robosense

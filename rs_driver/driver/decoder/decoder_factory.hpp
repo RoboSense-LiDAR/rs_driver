@@ -25,35 +25,35 @@
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 namespace robosense
 {
-    namespace lidar
+namespace lidar
+{
+template <typename vpoint>
+class DecoderFactory
+{
+public:
+  inline static std::shared_ptr<DecoderBase<vpoint>> createDecoder(const LidarType& _lidar_type,
+                                                                   const RSDecoderParam& _param)
+  {
+    switch (_lidar_type)
     {
-        template <typename vpoint>
-        class DecoderFactory
-        {
+      case LidarType::RS16:
+        return std::make_shared<Decoder16<vpoint>>(_param);
+        break;
+      case LidarType::RS32:
+        return std::make_shared<Decoder32<vpoint>>(_param);
+        break;
+      case LidarType::RSBP:
+        return std::make_shared<DecoderBP<vpoint>>(_param);
+        break;
+      case LidarType::RS128:
+        return std::make_shared<Decoder128<vpoint>>(_param);
+        break;
+      default:
+        std::cout << "Wrong LiDAR Type. Abort! " << std::endl;
+        exit(-1);
+    }
+  }
+};
 
-        public:
-            inline static std::shared_ptr<DecoderBase<vpoint>> createDecoder(const LidarType &_lidar_type, const RSDecoderParam &_param)
-            {
-                switch (_lidar_type)
-                {
-                case LidarType::RS16:
-                    return std::make_shared<Decoder16<vpoint>>(_param);
-                    break;
-                case LidarType::RS32:
-                    return std::make_shared<Decoder32<vpoint>>(_param);
-                    break;
-                case LidarType::RSBP:
-                    return std::make_shared<DecoderBP<vpoint>>(_param);
-                    break;
-                case LidarType::RS128:
-                    return std::make_shared<Decoder128<vpoint>>(_param);
-                    break;
-                default:
-                    std::cout << "Wrong LiDAR Type. Abort! " << std::endl;
-                    exit(-1);
-                }
-            }
-        };
-
-    } // namespace lidar
-} // namespace robosense
+}  // namespace lidar
+}  // namespace robosense
