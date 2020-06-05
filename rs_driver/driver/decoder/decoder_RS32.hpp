@@ -257,7 +257,7 @@ namespace robosense
                     point.ring_id = channel_idx;
                     point.echo_id = (this->echo_mode_ == ECHO_DUAL) ? (blk_idx % 2) : 0;
 #endif
-                    vec.push_back(point);
+                    vec.emplace_back(std::move(point));
                 }
             }
 
@@ -368,7 +368,7 @@ namespace robosense
                     std::vector<std::string> vect_str;
                     while (std::getline(ss, str, ','))
                     {
-                        vect_str.push_back(str);
+                        vect_str.emplace_back(std::move(str));
                     }
                     this->vert_angle_list_[row_index] = std::stof(vect_str[0]) * 100; // degree
                     this->hori_angle_list_[row_index] = std::stof(vect_str[1]) * 100; // degree

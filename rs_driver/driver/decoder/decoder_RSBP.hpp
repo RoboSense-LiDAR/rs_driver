@@ -251,7 +251,7 @@ namespace robosense
                         point.z = NAN;
                         point.intensity = NAN;
                     }
-                    vec.push_back(point);
+                    vec.emplace_back(std::move(point));
                 }
             }
 
@@ -367,7 +367,7 @@ namespace robosense
                     std::vector<std::string> vect_str;
                     while (std::getline(ss, str, ','))
                     {
-                        vect_str.push_back(str);
+                        vect_str.emplace_back(std::move(str));
                     }
                     this->vert_angle_list_[row_index] = std::stof(vect_str[0]) * 100; // degree
                     this->hori_angle_list_[row_index] = std::stof(vect_str[1]) * 100; // degree

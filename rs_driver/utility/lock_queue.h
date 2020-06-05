@@ -41,9 +41,9 @@ namespace robosense
 
             void pop()
             {
+                std::lock_guard<std::mutex> lock(m_mutex);
                 if (!m_quque_.empty())
                 {
-                    std::lock_guard<std::mutex> lock(m_mutex);
                     m_quque_.pop();
                 }
             }
@@ -53,6 +53,12 @@ namespace robosense
                 std::queue<T> empty;
                 std::lock_guard<std::mutex> lock(m_mutex);
                 swap(empty, m_quque_);
+            }
+
+            size_t size()
+            {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                return m_quque_.size();
             }
 
         public:

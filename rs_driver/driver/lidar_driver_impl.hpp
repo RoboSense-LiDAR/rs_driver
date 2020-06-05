@@ -211,8 +211,7 @@ namespace robosense
 
       void msopCallback(const PacketMsg &msg)
       {
-        PacketMsg pkt_msg = msg;
-        msop_pkt_queue_.push(pkt_msg);
+        msop_pkt_queue_.push(msg);
         if (msop_pkt_queue_.is_task_finished_.load())
         {
           msop_pkt_queue_.is_task_finished_.store(false);
@@ -222,8 +221,7 @@ namespace robosense
 
       void difopCallback(const PacketMsg &msg)
       {
-        PacketMsg pkt_msg = msg;
-        difop_pkt_queue_.push(pkt_msg);
+        difop_pkt_queue_.push(msg);
         if (difop_pkt_queue_.is_task_finished_.load())
         {
           difop_pkt_queue_.is_task_finished_.store(false);
@@ -247,14 +245,14 @@ namespace robosense
           return;
         }
 
-        while (msop_pkt_queue_.m_quque_.size() > 0)
+        while (msop_pkt_queue_.size() > 0)
         {
           PacketMsg pkt = msop_pkt_queue_.m_quque_.front();
-          scan_ptr_->packets.emplace_back(pkt);
           msop_pkt_queue_.pop();
           std::vector<PointT> point_vec;
           int height = 1;
           int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), point_vec, height);
+          scan_ptr_->packets.emplace_back(std::move(pkt));
           if (ret == DECODE_OK || ret == FRAME_SPLIT)
           {
             for (auto iter = point_vec.cbegin(); iter != point_vec.cend(); iter++)
@@ -291,7 +289,7 @@ namespace robosense
 
       void processDifop()
       {
-        while (difop_pkt_queue_.m_quque_.size() > 0)
+        while (difop_pkt_queue_.size() > 0)
         {
           PacketMsg pkt = difop_pkt_queue_.m_quque_.front();
           difop_pkt_queue_.pop();

@@ -245,7 +245,7 @@ namespace robosense
                     point.ring_id = channel_idx % 16;
                     point.echo_id = (this->echo_mode_ == ECHO_DUAL) ? (channel_idx / 16) : 0;
 #endif
-                    vec.push_back(point);
+                    vec.emplace_back(std::move(point));
                 }
             }
             return first_azimuth;

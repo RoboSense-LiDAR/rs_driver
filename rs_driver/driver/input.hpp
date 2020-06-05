@@ -86,11 +86,11 @@ namespace robosense
       }
       inline void regRecvMsopCallback(const std::function<void(const PacketMsg &)> callBack)
       {
-        msop_cb_.push_back(callBack);
+        msop_cb_.emplace_back(callBack);
       }
       inline void regRecvDifopCallback(const std::function<void(const PacketMsg &)> callBack)
       {
-        difop_cb_.push_back(callBack);
+        difop_cb_.emplace_back(callBack);
       }
       inline void start()
       {
@@ -262,9 +262,9 @@ namespace robosense
       }
       void getMsopPacket()
       {
+        char *precv_buffer = (char *)malloc(RSLIDAR_PKT_LEN);
         while (msop_thread_.start.load())
         {
-          char *precv_buffer = (char *)malloc(RSLIDAR_PKT_LEN);
           msop_deadline_->expires_from_now(boost::posix_time::seconds(1));
           boost::system::error_code ec = boost::asio::error::would_block;
           std::size_t ret = 0;
@@ -277,13 +277,11 @@ namespace robosense
           } while (ec == boost::asio::error::would_block);
           if (ec)
           {
-            free(precv_buffer);
             excb_(ErrCode_MsopPktTimeout);
             continue;
           }
           if (ret < RSLIDAR_PKT_LEN)
           {
-            free(precv_buffer);
             excb_(ErrCode_MsopPktIncomplete);
             continue;
           }
@@ -293,8 +291,8 @@ namespace robosense
           {
             iter(msg);
           }
-          free(precv_buffer);
         }
+        free(precv_buffer);
       }
       void getDifopPacket()
       {
