@@ -1,11 +1,11 @@
 /******************************************************************************
- * Copyright 2020 RoboSense All rights reserved.
+ * Copyright 2020 Robosense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
- * This software is provided to you directly by RoboSense and might
- * only be used to access RoboSense LiDAR. Any compilation,
+ * This software is provided to you directly by Robosense and might
+ * only be used to access Robosense LiDAR. Any compilation,
  * modification, exploration, reproduction and redistribution are
- * restricted without RoboSense's prior consent.
+ * restricted without Robosense's prior consent.
 
  * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -73,6 +73,7 @@ namespace robosense
             uint16_t msop_port = 6699;               ///< The msop packet port number
             uint16_t difop_port = 7788;              ///< The difop packet port number
             bool read_pcap = false;                  ///< True: The driver will process the pcap through pcap_file_dir. False: The driver will get data from online lidar
+            double pcap_rate = 1;                    ///< The rate to read the pcap file
             bool pcap_repeat = false;                ///< True: The pcap bag will repeat play
             std::string pcap_file_dir = "null";      ///< The absolute path of pcap file
             void print() const                       ///< This function is used to print all the parameters for debug

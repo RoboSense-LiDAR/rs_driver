@@ -1,11 +1,11 @@
 /******************************************************************************
- * Copyright 2020 RoboSense All rights reserved.
+ * Copyright 2020 Robosense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
- * This software is provided to you directly by RoboSense and might
- * only be used to access RoboSense LiDAR. Any compilation,
+ * This software is provided to you directly by Robosense and might
+ * only be used to access Robosense LiDAR. Any compilation,
  * modification, exploration, reproduction and redistribution are
- * restricted without RoboSense's prior consent.
+ * restricted without Robosense's prior consent.
 
  * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -40,9 +40,8 @@ namespace robosense
         enum ErrCode
         {
             ErrCode_Success = 0x00,            ///< Normal
-            ErrCode_PcapFinished = 0x01,       ///< The pcap file is finished.
-            ErrCode_PcapRepeat = 0x02,         ///< The pcap file will repeat play.
-            ErrCode_PcapExit = 0x03,           ///< The pcap thread will exit.
+            ErrCode_PcapRepeat = 0x01,         ///< The pcap file will repeat play.
+            ErrCode_PcapExit = 0x02,           ///< The pcap thread will exit.
             ErrCode_MsopPktTimeout = 0x41,     ///< The msop packets receive timeout (1 sec).
             ErrCode_DifopPktTimeout = 0x42,    ///< The difop packets receive timeout (2 sec).oo
             ErrCode_MsopPktIncomplete = 0x43,  ///< The received msop packets incomplete.
@@ -87,8 +86,6 @@ namespace robosense
                     return "ErrCode_MsopPortBuzy";
                 case ErrCode_DifopPortBuzy:
                     return "ErrCode_DifopPortBuzy";
-                case ErrCode_PcapFinished:
-                    return "ErrCode_PcapFinished";
                 case ErrCode_PcapRepeat:
                     return "ErrCode_PcapRepeat";
                 case ErrCode_PcapExit:

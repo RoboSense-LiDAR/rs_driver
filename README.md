@@ -66,7 +66,7 @@ sudo apt-get install -y  libpcap-dev
 
 ### 1. Introduction
 
-  **rs_driver** is the driver code for RoboSense LiDAR,  include **RS-LiDAR-16**、**RS-LiDAR-32**、**RS-Bpearl** and **RS-128** . It can be used to extract packets from lidar to pointcloud, and it is convenient for users to do advanced development.
+  **rs_driver** is the driver code for Robosense LiDAR,  include **RS-LiDAR-16**、**RS-LiDAR-32**、**RS-Bpearl** and **RS-128** . It can be used to extract packets from lidar to pointcloud, and it is convenient for users to do advanced development.
 
 
 

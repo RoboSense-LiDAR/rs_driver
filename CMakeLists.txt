@@ -1,12 +1,12 @@
 
 #############################################################################
-#  Copyright 2020 RoboSense All rights reserved.
+#  Copyright 2020 Robosense All rights reserved.
 #  Suteng Innovation Technology Co., Ltd. www.robosense.ai
 #
-#  This software is provided to you directly by RoboSense and might
-#  only be used to access RoboSense LiDAR. Any compilation,
+#  This software is provided to you directly by Robosense and might
+#  only be used to access Robosense LiDAR. Any compilation,
 #  modification, exploration, reproduction and redistribution are
-#  restricted without RoboSense's prior consent.
+#  restricted without Robosense's prior consent.
 #
 #  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
 #  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES

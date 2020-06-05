@@ -1,11 +1,11 @@
 /******************************************************************************
- * Copyright 2020 RoboSense All rights reserved.
+ * Copyright 2020 Robosense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
- * This software is provided to you directly by RoboSense and might
- * only be used to access RoboSense LiDAR. Any compilation,
+ * This software is provided to you directly by Robosense and might
+ * only be used to access Robosense LiDAR. Any compilation,
  * modification, exploration, reproduction and redistribution are
- * restricted without RoboSense's prior consent.
+ * restricted without Robosense's prior consent.
 
  * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -23,7 +23,7 @@
 #define RS16_PCAP_SLEEP_DURATION 1150
 #define RS32_PCAP_SLEEP_DURATION 500
 #define RSBP_PCAP_SLEEP_DURATION 500
-#define RS128_PCAP_SLEEP_DURATION 95
+#define RS128_PCAP_SLEEP_DURATION 100
 
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
@@ -203,16 +203,16 @@ namespace robosense
           switch (lidar_type_)
           {
           case LidarType::RS16:
-            usleep(RS16_PCAP_SLEEP_DURATION);
+            usleep(RS16_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
             break;
           case LidarType::RS32:
-            usleep(RS32_PCAP_SLEEP_DURATION);
+            usleep(RS32_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
             break;
           case LidarType::RSBP:
-            usleep(RSBP_PCAP_SLEEP_DURATION);
+            usleep(RSBP_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
             break;
           case LidarType::RS128:
-            usleep(RS128_PCAP_SLEEP_DURATION);
+            usleep(RS128_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
             break;
           }
           if (!pcap_thread_.start.load())
@@ -246,7 +246,6 @@ namespace robosense
           }
           else
           {
-            excb_(ErrCode_PcapFinished);
             if (input_param_.pcap_repeat)
             {
               excb_(ErrCode_PcapRepeat);

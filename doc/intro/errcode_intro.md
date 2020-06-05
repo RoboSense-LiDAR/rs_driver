@@ -10,9 +10,8 @@
         enum ErrCode
         {
             ErrCode_Success = 0x00,            ///< Normal
-            ErrCode_PcapFinished = 0x01,       ///< The pcap file is finished.
-            ErrCode_PcapRepeat = 0x02,         ///< The pcap file will repeat play.
-            ErrCode_PcapExit = 0x03,           ///< The pcap thread will exit.
+            ErrCode_PcapRepeat = 0x01,         ///< The pcap file will repeat play.
+            ErrCode_PcapExit = 0x02,           ///< The pcap thread will exit.
             ErrCode_MsopPktTimeout = 0x41,     ///< The msop packets receive timeout (1 sec).
             ErrCode_DifopPktTimeout = 0x42,    ///< The difop packets receive timeout (2 sec).oo
             ErrCode_MsopPktIncomplete = 0x43,  ///< The received msop packets incomplete.

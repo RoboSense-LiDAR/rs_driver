@@ -1,11 +1,11 @@
 /******************************************************************************
- * Copyright 2020 RoboSense All rights reserved.
+ * Copyright 2020 Robosense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
- * This software is provided to you directly by RoboSense and might
- * only be used to access RoboSense LiDAR. Any compilation,
+ * This software is provided to you directly by Robosense and might
+ * only be used to access Robosense LiDAR. Any compilation,
  * modification, exploration, reproduction and redistribution are
- * restricted without RoboSense's prior consent.
+ * restricted without Robosense's prior consent.
 
  * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -19,10 +19,10 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
-#include <rs_driver/driver/decoder/decoder_16.hpp>
-#include <rs_driver/driver/decoder/decoder_32.hpp>
-#include <rs_driver/driver/decoder/decoder_128.hpp>
-#include <rs_driver/driver/decoder/decoder_bp.hpp>
+#include <rs_driver/driver/decoder/decoder_RS16.hpp>
+#include <rs_driver/driver/decoder/decoder_RS32.hpp>
+#include <rs_driver/driver/decoder/decoder_RS128.hpp>
+#include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 namespace robosense
 {
     namespace lidar
@@ -49,6 +49,7 @@ namespace robosense
                     return std::make_shared<Decoder128<vpoint>>(_param);
                     break;
                 default:
+                    std::cout << "Wrong LiDAR Type. Abort! " << std::endl;
                     exit(-1);
                 }
             }
