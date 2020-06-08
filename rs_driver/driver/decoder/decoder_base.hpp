@@ -37,9 +37,7 @@ enum RSEchoMode
   ECHO_STRONGEST,
   ECHO_LAST
 };
-#ifdef _MSC_VER
-#pragma pack(push, 1)
-#endif
+
 enum RSDecoderResult
 {
   DECODE_FAIL = -2,
