@@ -275,10 +275,9 @@ int32_t Decoder32<vpoint>::decodeDifopPkt(const uint8_t* pkt)
   RS32DifopPkt* rs32_ptr = (RS32DifopPkt*)pkt;
   if (rs32_ptr->id != RS32_DIFOP_ID)
   {
-    //		rs_print(RS_ERROR, "[RS32] DIFOP pkt ID no match.");
     return -2;
   }
-
+  this->rpm_ = rs32_ptr->rpm;
   if (rs32_ptr->return_mode == 0x01 || rs32_ptr->return_mode == 0x02)
   {
     this->echo_mode_ = rs32_ptr->return_mode;

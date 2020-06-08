@@ -274,16 +274,7 @@ DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
   {
     this->angle_flag_ = false;
   }
-  cos_lookup_table_.resize(36000);
-  sin_lookup_table_.resize(36000);
-  for (unsigned int i = 0; i < 36000; i++)
-  {
-    double rad = RS_TO_RADS(i / 100.0f);
-    cos_lookup_table_[i] = std::cos(rad);
-    sin_lookup_table_[i] = std::sin(rad);
-  }
 
-  //    rs_print(RS_INFO, "[RSBASE] Constructor.");
 }
 
 template <typename vpoint>
@@ -393,9 +384,24 @@ int DecoderBase<vpoint>::azimuthCalibration(float azimuth, int channel)
 
   return azi_ret;
 }
+
+
+inline const std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>  trigonometric_fun)
+{
+  std::vector<double> temp_table = std::vector<double>(36000, 0.0);
+
+  for (int i = 0; i < 36000; ++i)
+  {
+    const double rad = RS_TO_RADS(static_cast<double>(i) / 100.0);
+    temp_table[i] = trigonometric_fun(rad);
+  }
+  return temp_table;
+}
+
 template <typename vpoint>
-std::vector<double> DecoderBase<vpoint>::cos_lookup_table_;
+std::vector<double> DecoderBase<vpoint>::cos_lookup_table_ = initTrigonometricLookupTable([](const double rad)->double{return std::cos(rad);});
 template <typename vpoint>
-std::vector<double> DecoderBase<vpoint>::sin_lookup_table_;
+std::vector<double> DecoderBase<vpoint>::sin_lookup_table_ = initTrigonometricLookupTable([](const double rad)->double{return std::sin(rad);});
+
 }  // namespace lidar
 }  // namespace robosense

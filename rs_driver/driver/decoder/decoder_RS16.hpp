@@ -268,7 +268,7 @@ int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t* pkt)
     //        rs_print(RS_ERROR, "[RS16] DIFOP pkt ID no match.");
     return -2;
   }
-
+  this->rpm_ = rs16_ptr->rpm;
   if (rs16_ptr->return_mode == 0x01 || rs16_ptr->return_mode == 0x02)
   {
     this->echo_mode_ = rs16_ptr->return_mode;

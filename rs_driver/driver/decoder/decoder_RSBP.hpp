@@ -272,6 +272,7 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t* pkt)
     //		rs_print(RS_ERROR, "[RSBP] DIFOP pkt ID no match.");
     return -2;
   }
+  this->rpm_ = rsBp_ptr->rpm;
 
   if (rsBp_ptr->return_mode == 0x01 || rsBp_ptr->return_mode == 0x02)
   {
