@@ -33,6 +33,13 @@ public:
   {
     is_task_finished_ = true;
   }
+
+  T front()
+  {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    return m_quque_.front();
+  }
+
   void push(const T& value)
   {
     std::lock_guard<std::mutex> lock(m_mutex);

@@ -251,7 +251,7 @@ private:
 
     while (msop_pkt_queue_.size() > 0)
     {
-      PacketMsg pkt = msop_pkt_queue_.m_quque_.front();
+      PacketMsg pkt = msop_pkt_queue_.front();
       msop_pkt_queue_.pop();
       std::vector<PointT> point_vec;
       int height = 1;
@@ -295,7 +295,7 @@ private:
   {
     while (difop_pkt_queue_.size() > 0)
     {
-      PacketMsg pkt = difop_pkt_queue_.m_quque_.front();
+      PacketMsg pkt = difop_pkt_queue_.front();
       difop_pkt_queue_.pop();
       decodeDifopPkt(pkt);
       runCallBack(pkt);
