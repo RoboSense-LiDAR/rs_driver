@@ -122,11 +122,11 @@ Decoder32<vpoint>::Decoder32(const RSDecoderParam& param) : DecoderBase<vpoint>(
   this->Ry_ = -0.01087;
   this->Rz_ = 0;
   this->channel_num_ = 32;
-  if (this->max_distance_ > 200.0f || this->max_distance_ < 0.4f)
+  if (this->max_distance_ > 200.0f)
   {
     this->max_distance_ = 200.0f;
   }
-  if (this->min_distance_ > 200.0f || this->min_distance_ > this->max_distance_)
+  if (this->min_distance_ < 0.4f|| this->min_distance_ > this->max_distance_)
   {
     this->min_distance_ = 0.4f;
   }

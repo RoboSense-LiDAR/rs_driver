@@ -176,28 +176,18 @@ Decoder128<vpoint>::Decoder128(const RSDecoderParam& param) : DecoderBase<vpoint
   this->Rz_ = 0;
   this->channel_num_ = 128;
 
-  if (param.max_distance > 230.0f || param.max_distance < 2.0f)
+  if (this->max_distance_ > 230.0f)
   {
     this->max_distance_ = 230.0f;
   }
-  else
-  {
-    this->max_distance_ = param.max_distance;
-  }
-
-  if (param.min_distance > 230.0f || param.min_distance > param.max_distance)
+  if (this->min_distance_ < 2.0f|| this->min_distance_ > this->max_distance_)
   {
     this->min_distance_ = 2.0f;
-  }
-  else
-  {
-    this->min_distance_ = param.min_distance;
   }
 
   int pkt_rate = 6000;
   this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
 
-  //    rs_print(RS_INFO, "[RS128] Constructor.");
 }
 
 template <typename vpoint>

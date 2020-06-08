@@ -122,15 +122,14 @@ DecoderBP<vpoint>::DecoderBP(const RSDecoderParam& param) : DecoderBase<vpoint>(
   this->Ry_ = 0.0085;
   this->Rz_ = 0.09427;
   this->channel_num_ = 32;
-  if (this->max_distance_ > 200.0f || this->max_distance_ < 0.2f)
+  if (this->max_distance_ > 100.0f)
   {
-    this->max_distance_ = 200.0f;
+    this->max_distance_ = 100.0f;
   }
-  if (this->min_distance_ > 200.0f || this->min_distance_ > this->max_distance_)
+  if (this->min_distance_ < 0.1f|| this->min_distance_ > this->max_distance_)
   {
-    this->min_distance_ = 0.2f;
+    this->min_distance_ = 0.1f;
   }
-  //    rs_print(RS_INFO, "[RSBP] Constructor.");
 }
 
 template <typename vpoint>

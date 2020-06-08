@@ -123,11 +123,11 @@ Decoder16<vpoint>::Decoder16(const RSDecoderParam& param) : DecoderBase<vpoint>(
   this->Ry_ = -0.01088;
   this->Rz_ = 0;
   this->channel_num_ = 16;
-  if (this->max_distance_ > 200.0f || this->max_distance_ < 0.2f)
+  if (this->max_distance_ > 200.0f)
   {
     this->max_distance_ = 200.0f;
   }
-  if (this->min_distance_ > 200.0f || this->min_distance_ > this->max_distance_)
+  if (this->min_distance_ < 0.2f|| this->min_distance_ > this->max_distance_)
   {
     this->min_distance_ = 0.2f;
   }
