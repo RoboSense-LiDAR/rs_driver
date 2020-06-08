@@ -228,17 +228,11 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& ve
            (!this->angle_flag_ && ((angle_horiz >= this->start_angle_ && angle_horiz <= 36000) ||
                                    (angle_horiz >= 0 && angle_horiz <= this->end_angle_)))))
       {
-        const double vert_cos_value = this->cos_lookup_table_[angle_vert];
-        const double horiz_cos_value = this->cos_lookup_table_[angle_horiz];
-        const double horiz_ori_cos_value = this->cos_lookup_table_[angle_horiz_ori];
-        point.x = distance_cali * vert_cos_value * horiz_cos_value + this->Rx_ * horiz_ori_cos_value;
-
-        const double horiz_sin_value = this->sin_lookup_table_[angle_horiz];
-        const double horiz_ori_sin_value = this->sin_lookup_table_[angle_horiz_ori];
-        point.y = -distance_cali * vert_cos_value * horiz_sin_value - this->Rx_ * horiz_ori_sin_value;
-
-        const double vert_sin_value = this->sin_lookup_table_[angle_vert];
-        point.z = distance_cali * vert_sin_value + this->Rz_;
+        point.x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[angle_horiz] +
+                  this->Rx_ * this->cos_lookup_table_[angle_horiz_ori];
+        point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[angle_horiz] -
+                  this->Rx_ * this->sin_lookup_table_[angle_horiz_ori];
+        point.z = distance_cali * this->sin_lookup_table_[angle_vert] + this->Rz_;
 
         point.intensity = intensity;
         if (std::isnan(point.intensity))
