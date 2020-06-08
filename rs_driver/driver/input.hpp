@@ -49,8 +49,8 @@ enum InputState
 class Input
 {
 public:
-  Input(const LidarType& _lidar_type, const RSInputParam& _input_param, const std::function<void(const Error&)> _excb)
-    : lidar_type_(_lidar_type), input_param_(_input_param), excb_(_excb), init_flag_(false)
+  Input(const RSInputParam& _input_param, const std::function<void(const Error&)> _excb)
+    : lidar_type_(LidarType::RS128), input_param_(_input_param), excb_(_excb), init_flag_(false)
   {
   }
   inline bool init()
@@ -143,7 +143,10 @@ public:
       }
     }
   }
-
+  void setLidarType(const LidarType& type)
+  {
+    lidar_type_ = type;
+  }
 private:
   inline void checkDifopDeadline()
   {

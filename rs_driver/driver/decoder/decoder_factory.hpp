@@ -23,6 +23,8 @@
 #include <rs_driver/driver/decoder/decoder_RS32.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
+#include <rs_driver/driver/input.hpp>
+#include <rs_driver/msg/packet_msg.h>
 namespace robosense
 {
 namespace lidar
@@ -31,10 +33,13 @@ template <typename vpoint>
 class DecoderFactory
 {
 public:
-  inline static std::shared_ptr<DecoderBase<vpoint>> createDecoder(const LidarType& _lidar_type,
-                                                                   const RSDecoderParam& _param)
+  inline static std::shared_ptr<DecoderBase<vpoint>> createDecoder(const RSDecoderParam& _param,
+                                                                   const PacketMsg& msop_pkt_msg,
+                                                                   const std::shared_ptr<Input>& input_ptr)
   {
-    switch (_lidar_type)
+    RSMsopHeader* header_ptr = (RSMsopHeader*)msop_pkt_msg.packet.data();
+    input_ptr->setLidarType((LidarType)header_ptr->lidar_type);
+    switch (header_ptr->lidar_type)
     {
       case LidarType::RS16:
         return std::make_shared<Decoder16<vpoint>>(_param);
@@ -49,7 +54,30 @@ public:
         return std::make_shared<Decoder128<vpoint>>(_param);
         break;
       default:
-        std::cout << "Wrong LiDAR Type. Abort! " << std::endl;
+        std::cout << "Wrong LiDAR Type. Please check your LiDAR Version! " << std::endl;
+        exit(-1);
+    }
+  }
+  inline static std::shared_ptr<DecoderBase<vpoint>> createDecoder(const RSDecoderParam& _param,
+                                                                   const PacketMsg& msop_pkt_msg)
+  {
+    RSMsopHeader* header_ptr = (RSMsopHeader*)msop_pkt_msg.packet.data();
+    switch (header_ptr->lidar_type)
+    {
+      case LidarType::RS16:
+        return std::make_shared<Decoder16<vpoint>>(_param);
+        break;
+      case LidarType::RS32:
+        return std::make_shared<Decoder32<vpoint>>(_param);
+        break;
+      case LidarType::RSBP:
+        return std::make_shared<DecoderBP<vpoint>>(_param);
+        break;
+      case LidarType::RS128:
+        return std::make_shared<Decoder128<vpoint>>(_param);
+        break;
+      default:
+        std::cout << "Wrong LiDAR Type. Please check your LiDAR Version! " << std::endl;
         exit(-1);
     }
   }

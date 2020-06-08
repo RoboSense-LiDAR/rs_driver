@@ -48,13 +48,11 @@ public:
   inline bool init(const RSDriverParam& param)
   {
     driver_param_ = param;
-    lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param);
-    lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
-    lidar_input_ptr_ = std::make_shared<Input>(driver_param_.lidar_type, driver_param_.input_param,
-                                               std::bind(&LidarDriverImpl::reportError, this, std::placeholders::_1));
-    lidar_input_ptr_->regRecvMsopCallback(std::bind(&LidarDriverImpl::msopCallback, this, std::placeholders::_1));
-    lidar_input_ptr_->regRecvDifopCallback(std::bind(&LidarDriverImpl::difopCallback, this, std::placeholders::_1));
-    if (!lidar_input_ptr_->init())
+    input_ptr_ = std::make_shared<Input>(driver_param_.input_param,
+                                         std::bind(&LidarDriverImpl::reportError, this, std::placeholders::_1));
+    input_ptr_->regRecvMsopCallback(std::bind(&LidarDriverImpl::msopCallback, this, std::placeholders::_1));
+    input_ptr_->regRecvDifopCallback(std::bind(&LidarDriverImpl::difopCallback, this, std::placeholders::_1));
+    if (!input_ptr_->init())
     {
       return false;
     }
@@ -72,8 +70,6 @@ public:
   inline void initDecoderOnly(const RSDriverParam& param)
   {
     driver_param_ = param;
-    lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param);
-    lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
     thread_pool_ptr_ = std::make_shared<ThreadPool>();
     pointcloud_ptr_ = typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
     scan_ptr_ = std::make_shared<ScanMsg>();
@@ -85,14 +81,14 @@ public:
 
   inline bool start()
   {
-    return lidar_input_ptr_->start();
+    return input_ptr_->start();
   }
 
   inline void stop()
   {
-    if (lidar_input_ptr_ != nullptr)
+    if (input_ptr_ != nullptr)
     {
-      lidar_input_ptr_->stop();
+      input_ptr_->stop();
     }
     msop_pkt_queue_.clear();
     difop_pkt_queue_.clear();
@@ -120,6 +116,13 @@ public:
 
   inline void decodeMsopScan(const ScanMsg& pkt_scan_msg, PointcloudMsg<PointT>& point_msg)
   {
+    if (lidar_decoder_ptr_ == nullptr)
+    {
+      lidar_decoder_ptr_ =
+          DecoderFactory<PointT>::createDecoder(driver_param_.decoder_param, pkt_scan_msg.packets[0]);
+      lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
+    }
+
     typename PointcloudMsg<PointT>::PointCloudPtr output_pointcloud_ptr =
         typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
     if (!difop_flag_)
@@ -170,6 +173,10 @@ public:
 
   void decodeDifopPkt(const PacketMsg& pkt_msg)
   {
+    if (lidar_decoder_ptr_ == nullptr)
+    {
+      return;
+    }
     lidar_decoder_ptr_->processDifopPkt(pkt_msg.packet.data());
     difop_flag_ = true;
   }
@@ -215,6 +222,11 @@ private:
 
   void msopCallback(const PacketMsg& msg)
   {
+    if (lidar_decoder_ptr_ == nullptr)
+    {
+      lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.decoder_param, msg, input_ptr_);
+      lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
+    }
     msop_pkt_queue_.push(msg);
     if (msop_pkt_queue_.is_task_finished_.load())
     {
@@ -335,7 +347,7 @@ private:
   std::vector<std::function<void(const Error&)>> excb_;
   std::shared_ptr<std::thread> lidar_thread_ptr_;
   std::shared_ptr<DecoderBase<PointT>> lidar_decoder_ptr_;
-  std::shared_ptr<Input> lidar_input_ptr_;
+  std::shared_ptr<Input> input_ptr_;
   std::shared_ptr<ThreadPool> thread_pool_ptr_;
   std::shared_ptr<ScanMsg> scan_ptr_;
   uint32_t scan_seq_;
