@@ -1,11 +1,11 @@
 /******************************************************************************
- * Copyright 2020 Robosense All rights reserved.
+ * Copyright 2020 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
- * This software is provided to you directly by Robosense and might
- * only be used to access Robosense LiDAR. Any compilation,
+ * This software is provided to you directly by RoboSense and might
+ * only be used to access RoboSense LiDAR. Any compilation,
  * modification, exploration, reproduction and redistribution are
- * restricted without Robosense's prior consent.
+ * restricted without RoboSense's prior consent.
 
  * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -27,7 +27,7 @@ namespace robosense
 namespace lidar
 {
 /**
- * @description:  This is the Robosense LiDAR driver interface class.
+ * @description:  This is the RoboSense LiDAR driver interface class.
  *                 Now support RS16,RS32, RSBP & RS128.
  */
 template <typename PointT>

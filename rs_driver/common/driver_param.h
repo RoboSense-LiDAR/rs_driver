@@ -1,11 +1,11 @@
 /******************************************************************************
- * Copyright 2020 Robosense All rights reserved.
+ * Copyright 2020 RoboSense All rights reserved.
  * Suteng Innovation Technology Co., Ltd. www.robosense.ai
 
- * This software is provided to you directly by Robosense and might
- * only be used to access Robosense LiDAR. Any compilation,
+ * This software is provided to you directly by RoboSense and might
+ * only be used to access RoboSense LiDAR. Any compilation,
  * modification, exploration, reproduction and redistribution are
- * restricted without Robosense's prior consent.
+ * restricted without RoboSense's prior consent.
 
  * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -50,7 +50,7 @@ typedef struct RSDecoderParam  ///< The lidar decoder parameter
               << "------------------------------------------------------"
               << "\033[0m" << std::endl;
     std::cout << "\033[1m\033[32m"
-              << "             Robosense Decoder Parameters "
+              << "             RoboSense Decoder Parameters "
               << "\033[0m" << std::endl;
     std::cout << "\033[32m"
               << "max_distance : " << max_distance << std::endl;
@@ -82,7 +82,7 @@ typedef struct RSInputParam  ///< The lidar input parameter
               << "------------------------------------------------------"
               << "\033[0m" << std::endl;
     std::cout << "\033[1m\033[32m"
-              << "             Robosense Input Parameters "
+              << "             RoboSense Input Parameters "
               << "\033[0m" << std::endl;
     std::cout << "\033[32m"
               << "device_ip : " << device_ip << std::endl;
@@ -115,7 +115,7 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
               << "------------------------------------------------------"
               << "\033[0m" << std::endl;
     std::cout << "\033[1m\033[32m"
-              << "             Robosense Driver Parameters "
+              << "             RoboSense Driver Parameters "
               << "\033[0m" << std::endl;
     std::cout << "\033[32m"
               << "angle_path : " << angle_path << std::endl;

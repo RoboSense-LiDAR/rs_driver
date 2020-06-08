@@ -2,7 +2,7 @@
 
 ```c++
         /**
-         * @description:Error Code for Robosense LiDAR Driver.
+         * @description:Error Code for RoboSense LiDAR Driver.
              * 0x01 ~ 0x40 for Infos, some infomation during the program running
              * 0x41 ~ 0x80 for Warning, the program may not work normally
              * 0x81 ~ 0xC0 for Critical Error, the program will exit
