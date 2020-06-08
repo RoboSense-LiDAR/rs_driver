@@ -119,9 +119,9 @@ public:
 template <typename vpoint>
 DecoderBP<vpoint>::DecoderBP(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
 {
-  this->Rx_ = 0.01697;
-  this->Ry_ = -0.0085;
-  this->Rz_ = 0.12644;
+  this->Rx_ = 0.01473;
+  this->Ry_ = 0.0085;
+  this->Rz_ = 0.09427;
   this->channel_num_ = 32;
   if (this->max_distance_ > 200.0f || this->max_distance_ < 0.2f)
   {
