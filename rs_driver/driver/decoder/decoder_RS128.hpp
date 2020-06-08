@@ -57,7 +57,9 @@ typedef struct
   uint8_t temp_low;
   uint8_t temp_high;
   RSTimestampUTC timestamp_utc;
-  uint8_t reserved2[60];
+  uint8_t reserved2[10];
+  uint8_t lidar_type;
+  uint8_t reserved3[49];
 }
 #ifdef __GNUC__
 __attribute__((packed))
