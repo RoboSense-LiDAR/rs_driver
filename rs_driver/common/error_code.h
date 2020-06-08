@@ -47,12 +47,12 @@ enum ErrCode
   ErrCode_MsopPktIncomplete = 0x43,   ///< The received msop packets incomplete.
   ErrCode_DifopPktIncomplete = 0x44,  ///< The received difop packets incomplete.
   ErrCode_NoDifopRecv = 0x45,         ///< The point cloud decoding will not start until the difop packet receive
-  ErrCode_ZeroPoints =
-      0x46,  ///< The size of point cloud is zero. Please check the lidar type parameter when this error occur.
+  ErrCode_ZeroPoints = 0x46,          ///< The size of point cloud is zero. Please check the lidar type parameter when this error occur.
   ErrCode_StartBeforeInit = 0x47,     ///< The start function is called before init() successfully
   ErrCode_PcapWrongDirectory = 0x48,  ///< The input directory of pcap file is wrong
   ErrCode_MsopPortBuzy = 0x49,        ///< The input msop port is already used
   ErrCode_DifopPortBuzy = 0x50,       ///< The input difop port is already used
+  ErrCode_DecodeFail = 0x51,          ///< Decode data fail, please check the lidar type parameter you set
 
 };
 
@@ -103,6 +103,8 @@ struct Error
         return "ErrCode_ZeroPoints";
       case ErrCode_StartBeforeInit:
         return "ErrCode_StartBeforeInit";
+      case ErrCode_DecodeFail:
+        return "ErrCode_DecodeFail";
       default:
         return "ErrCode_Success";
     }

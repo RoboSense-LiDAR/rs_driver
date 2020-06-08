@@ -180,14 +180,13 @@ Decoder128<vpoint>::Decoder128(const RSDecoderParam& param) : DecoderBase<vpoint
   {
     this->max_distance_ = 230.0f;
   }
-  if (this->min_distance_ < 2.0f|| this->min_distance_ > this->max_distance_)
+  if (this->min_distance_ < 2.0f || this->min_distance_ > this->max_distance_)
   {
     this->min_distance_ = 2.0f;
   }
 
   int pkt_rate = 6000;
   this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
-
 }
 
 template <typename vpoint>
@@ -288,7 +287,7 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& v
 
     for (int channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      int dsr_temp = (channel_idx / 4)%16;
+      int dsr_temp = (channel_idx / 4) % 16;
 
       azimuth_corrected_float = azimuth_blk + (azimuth_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
       azimuth_corrected = this->azimuthCalibration(azimuth_corrected_float, channel_idx);
@@ -301,16 +300,9 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& v
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
       vpoint point;
-      if ((distance_cali > this->max_distance_ || distance_cali < this->min_distance_) ||
-          (this->angle_flag_ && (angle_horiz < this->start_angle_ || angle_horiz > this->end_angle_)) ||
-          (!this->angle_flag_ && (angle_horiz > this->start_angle_ && angle_horiz < this->end_angle_)))
-      {
-        point.x = NAN;
-        point.y = NAN;
-        point.z = NAN;
-        point.intensity = 0;
-      }
-      else
+      if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
+          ((this->angle_flag_ && angle_horiz >= this->start_angle_ && angle_horiz <= this->end_angle_) ||
+           (!this->angle_flag_ && ((angle_horiz >= this->start_angle_) || (angle_horiz <= this->end_angle_)))))
       {
         point.x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[angle_horiz] +
                   this->Rx_ * this->cos_lookup_table_[angle_horiz_ori];
@@ -322,6 +314,13 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& v
         {
           point.intensity = 0;
         }
+      }
+      else
+      {
+        point.x = NAN;
+        point.y = NAN;
+        point.z = NAN;
+        point.intensity = 0;
       }
 
       vec.emplace_back(std::move(point));

@@ -250,7 +250,7 @@ private:
     if (!difop_flag_)
     {
       ndifop_count_++;
-      if (ndifop_count_ > 200)
+      if (ndifop_count_ > 100)
       {
         reportError(ErrCode_NoDifopRecv);
         ndifop_count_ = 0;
@@ -299,6 +299,12 @@ private:
           scan_ptr_.reset(new ScanMsg);
         }
       }
+      else
+      {
+        reportError(ErrCode_DecodeFail);
+        usleep(100000);
+      }
+      
     }
     msop_pkt_queue_.is_task_finished_.store(true);
   }

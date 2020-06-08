@@ -22,6 +22,7 @@
             ErrCode_PcapWrongDirectory = 0x48, ///< The input directory of pcap file is wrong
             ErrCode_MsopPortBuzy = 0x49,       ///< The input msop port is already used
             ErrCode_DifopPortBuzy = 0x50,      ///< The input difop port is already used
+            ErrCode_DecodeFail = 0x51,         ///< Decode data fail, please check the lidar type parameter you set
 
         };
 ```

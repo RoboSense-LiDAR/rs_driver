@@ -127,7 +127,7 @@ Decoder16<vpoint>::Decoder16(const RSDecoderParam& param) : DecoderBase<vpoint>(
   {
     this->max_distance_ = 200.0f;
   }
-  if (this->min_distance_ < 0.2f|| this->min_distance_ > this->max_distance_)
+  if (this->min_distance_ < 0.2f || this->min_distance_ > this->max_distance_)
   {
     this->min_distance_ = 0.2f;
   }
@@ -213,8 +213,7 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& ve
       vpoint point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
           ((this->angle_flag_ && angle_horiz >= this->start_angle_ && angle_horiz <= this->end_angle_) ||
-           (!this->angle_flag_ && ((angle_horiz >= this->start_angle_ && angle_horiz <= 36000) ||
-                                   (angle_horiz >= 0 && angle_horiz <= this->end_angle_)))))
+           (!this->angle_flag_ && ((angle_horiz >= this->start_angle_) || (angle_horiz <= this->end_angle_)))))
       {
         point.x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[angle_horiz] +
                   this->Rx_ * this->cos_lookup_table_[angle_horiz_ori];
