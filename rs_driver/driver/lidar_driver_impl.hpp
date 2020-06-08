@@ -119,7 +119,7 @@ public:
     if (lidar_decoder_ptr_ == nullptr)
     {
       lidar_decoder_ptr_ =
-          DecoderFactory<PointT>::createDecoder(driver_param_.decoder_param, pkt_scan_msg.packets[0]);
+          DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type,driver_param_.decoder_param, pkt_scan_msg.packets[0]);
       lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
     }
 
@@ -224,7 +224,7 @@ private:
   {
     if (lidar_decoder_ptr_ == nullptr)
     {
-      lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.decoder_param, msg, input_ptr_);
+      lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type,driver_param_.decoder_param, msg, input_ptr_);
       lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
     }
     msop_pkt_queue_.push(msg);

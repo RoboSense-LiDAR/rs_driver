@@ -40,10 +40,11 @@ typedef struct RSInputParam ///< The lidar input parameter
 ```c++
 typedef struct RSDriverParam ///< The lidar driver parameter
 {
-    RSInputParam input_param;                ///< The input parameter
-    RSDecoderParam decoder_param;            ///< The decoder parameter
+    RSInputParam input_param;                 ///< The input parameter
+    RSDecoderParam decoder_param;             ///< The decoder parameter
     std::string angle_path = "null";          ///< The path of angle calibration files(angle.csv)(for latest version lidar, this file is not needed)
     std::string frame_id = "rslidar";         ///< The frame id of lidar message
+    LidarType lidar_type = LidarType::RS16;   ///< Lidar type
     bool use_lidar_clock = false;             ///< True: lidar message timestamp is the lidar clock. False: timestamp is the computer system clock
     void print() const                        ///< This function is used to print all the parameters for debug
 } RSDriverParam;

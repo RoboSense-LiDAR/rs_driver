@@ -28,10 +28,12 @@ namespace lidar
 {
 enum LidarType  ///< The lidar type
 {
-  RS16=0x01,
-  RS32=0x02,
-  RSBP=0x03,
-  RS128=0x04
+  RSAUTO = 0x00,  ///< If LidarType is set to RSAUTO, the driver will check the lidar type automatically.(Only support
+                  ///< the latest version LiDARs)
+  RS16 = 0x01,
+  RS32 = 0x02,
+  RSBP = 0x03,
+  RS128 = 0x04
 };
 
 typedef struct RSDecoderParam  ///< The lidar decoder parameter
@@ -104,6 +106,7 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
   std::string angle_path =
       "null";  ///< The path of angle calibration files(angle.csv)(for latest version lidar, this file is not needed)
   std::string frame_id = "rslidar";        ///< The frame id of lidar message
+  LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   bool use_lidar_clock =
       false;  ///< True: lidar message timestamp is the lidar clock. False: timestamp is the computer system clock
   void print() const  ///< This function is used to print all the parameters for debug
@@ -120,6 +123,44 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
               << "angle_path : " << angle_path << std::endl;
     std::cout << "frame_id : " << frame_id << std::endl;
     std::cout << "use_lidar_clock : " << use_lidar_clock << std::endl;
+
+    switch (lidar_type)
+    {
+      case LidarType::RS16:
+        std::cout << "lidar_type : "
+                  << "\033[0m";
+        std::cout << "\033[1m\033[32m"
+                  << "RS16"
+                  << "\033[0m" << std::endl;
+        break;
+      case LidarType::RS32:
+        std::cout << "lidar_type : "
+                  << "\033[0m";
+        std::cout << "\033[1m\033[32m"
+                  << "RS32"
+                  << "\033[0m" << std::endl;
+        break;
+      case LidarType::RSBP:
+        std::cout << "lidar_type : "
+                  << "\033[0m";
+        std::cout << "\033[1m\033[32m"
+                  << "RSBP"
+                  << "\033[0m" << std::endl;
+        break;
+      case LidarType::RS128:
+        std::cout << "lidar_type : "
+                  << "\033[0m";
+        std::cout << "\033[1m\033[32m"
+                  << "RS128"
+                  << "\033[0m" << std::endl;
+        break;
+      default:
+        std::cout << "lidar_type : "
+                  << "\033[0m";
+        std::cout << "\033[1m\033[31m"
+                  << "ERROR"
+                  << "\033[0m" << std::endl;
+    }
 
     std::cout << "\033[1m\033[32m"
               << "------------------------------------------------------"
