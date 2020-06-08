@@ -237,7 +237,7 @@ protected:
 
 protected:
   virtual float computeTemperature(const uint16_t temp_raw);
-  virtual int32_t azimuthCalibration(float azimuth, int32_t channel);
+  virtual int32_t azimuthCalibration(float azimuth, const int& channel);
   virtual int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height) = 0;
   virtual int32_t decodeDifopPkt(const uint8_t* pkt) = 0;
 };
@@ -365,21 +365,12 @@ float DecoderBase<vpoint>::computeTemperature(const uint16_t temp_raw)
 }
 
 template <typename vpoint>
-int DecoderBase<vpoint>::azimuthCalibration(float azimuth, int channel)
+int DecoderBase<vpoint>::azimuthCalibration(float azimuth, const int& channel)
 {
   int azi_ret;
-
-  if (azimuth > 0.0 && azimuth < 3000.0)
-  {
-    azimuth = azimuth + this->hori_angle_list_[channel] + 36000.0f;
-  }
-  else
-  {
-    azimuth = azimuth + this->hori_angle_list_[channel];
-  }
+  azimuth += this->hori_angle_list_[channel];
   azi_ret = (int)azimuth;
-  azi_ret %= 36000;
-
+  azi_ret = ((azi_ret % 36000) + 36000) % 36000;
   return azi_ret;
 }
 

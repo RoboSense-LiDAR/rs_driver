@@ -128,7 +128,7 @@ public:
     if (!difop_flag_)
     {
       ndifop_count_++;
-      if (ndifop_count_ > 200)
+      if (ndifop_count_ > 20)
       {
         reportError(ErrCode_NoDifopRecv);
         ndifop_count_ = 0;
@@ -293,9 +293,9 @@ private:
           {
             runCallBack(msg);
           }
-          pointcloud_ptr_.reset(new typename PointcloudMsg<PointT>::PointCloud);
           prepareScanMsg(*scan_ptr_);
           runCallBack(*scan_ptr_);
+          pointcloud_ptr_.reset(new typename PointcloudMsg<PointT>::PointCloud);
           scan_ptr_.reset(new ScanMsg);
         }
       }
