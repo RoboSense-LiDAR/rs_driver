@@ -114,7 +114,6 @@ public:
   int32_t decodeDifopPkt(const uint8_t* pkt);
   int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
-  void loadCalibrationFile(const std::string& angle_path);
 };
 
 template <typename vpoint>
@@ -330,35 +329,5 @@ int32_t Decoder16<vpoint>::decodeDifopPkt(const uint8_t* pkt)
   return 0;
 }
 
-template <typename vpoint>
-void Decoder16<vpoint>::loadCalibrationFile(const std::string& angle_path)
-{
-  int row_index = 0;
-  int laser_num = 16;
-  std::string line_str;
-
-  // read angle.csv
-  std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
-  if (!fd_angle.is_open())
-  {
-    //        rs_print(RS_WARNING, "[RS16] Calibration file: %s does not exist!", angle_file_path.c_str());
-    // std::cout << angle_file_path << " does not exist"<< std::endl;
-  }
-  else
-  {
-    row_index = 0;
-    while (std::getline(fd_angle, line_str))
-    {
-      this->vert_angle_list_[row_index] = std::stof(line_str) * 100;  // degree
-      this->hori_angle_list_[row_index] = 0;                          // degree
-      row_index++;
-      if (row_index >= laser_num)
-      {
-        break;
-      }
-    }
-    fd_angle.close();
-  }
-}
 }  // namespace lidar
 }  // namespace robosense

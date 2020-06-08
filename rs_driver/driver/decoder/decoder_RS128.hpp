@@ -165,7 +165,6 @@ public:
   int32_t decodeDifopPkt(const uint8_t* pkt);
   int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
-  void loadCalibrationFile(const std::string& angle_path);
   float computeTemperature(const uint8_t temp_low, const uint8_t temp_high);
 };
 
@@ -427,44 +426,6 @@ int Decoder128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
     }
   }
   return 0;
-}
-
-template <typename vpoint>
-void Decoder128<vpoint>::loadCalibrationFile(const std::string& angle_path)
-{
-  int row_index = 0;
-  int laser_num = 128;
-  std::string line_str;
-
-  // read angle.csv
-  std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
-  if (!fd_angle.is_open())
-  {
-    //        rs_print(RS_WARNING, "[RS128] Calibration file: %s does not exist!", angle_file_path.c_str());
-    // std::cout << angle_file_path << " does not exist"<< std::endl;
-  }
-  else
-  {
-    row_index = 0;
-    while (std::getline(fd_angle, line_str))
-    {
-      std::stringstream ss(line_str);
-      std::string str;
-      std::vector<std::string> vect_str;
-      while (std::getline(ss, str, ','))
-      {
-        vect_str.emplace_back(str);
-      }
-      this->vert_angle_list_[row_index] = std::stof(vect_str[0]) * 100;  // degree
-      this->hori_angle_list_[row_index] = std::stof(vect_str[1]) * 100;  // degree
-      row_index++;
-      if (row_index >= laser_num)
-      {
-        break;
-      }
-    }
-    fd_angle.close();
-  }
 }
 
 }  // namespace lidar

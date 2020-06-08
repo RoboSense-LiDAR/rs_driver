@@ -207,9 +207,8 @@ public:
   virtual ~DecoderBase();
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& pointcloud_vec, int& height);
   virtual int32_t processDifopPkt(const uint8_t* pkt);
+  virtual void loadCalibrationFile(const std::string& angle_path);
   virtual double getLidarTime(const uint8_t* pkt) = 0;
-  virtual void loadCalibrationFile(const std::string& angle_path) = 0;
-
 
 protected:
   int32_t rpm_;
@@ -274,7 +273,6 @@ DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
   {
     this->angle_flag_ = false;
   }
-
 }
 
 template <typename vpoint>
@@ -385,8 +383,40 @@ int DecoderBase<vpoint>::azimuthCalibration(float azimuth, int channel)
   return azi_ret;
 }
 
+template <typename vpoint>
+void DecoderBase<vpoint>::loadCalibrationFile(const std::string& angle_path)
+{
+  int row_index = 0;
+  std::string line_str;
 
-inline const std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>  trigonometric_fun)
+  // read angle.csv
+  std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
+  if (fd_angle.is_open())
+  {
+    row_index = 0;
+    while (std::getline(fd_angle, line_str))
+    {
+      std::stringstream ss(line_str);
+      std::string str;
+      std::vector<std::string> vect_str;
+      while (std::getline(ss, str, ','))
+      {
+        vect_str.emplace_back(str);
+      }
+      this->vert_angle_list_[row_index] = std::stof(vect_str[0]) * 100;  // degree
+      this->hori_angle_list_[row_index] = std::stof(vect_str[1]) * 100;  // degree
+      row_index++;
+      if (row_index >= channel_num_)
+      {
+        break;
+      }
+    }
+    fd_angle.close();
+  }
+}
+
+inline const std::vector<double>
+initTrigonometricLookupTable(const std::function<double(const double)> trigonometric_fun)
 {
   std::vector<double> temp_table = std::vector<double>(36000, 0.0);
 
@@ -399,9 +429,11 @@ inline const std::vector<double> initTrigonometricLookupTable(const std::functio
 }
 
 template <typename vpoint>
-std::vector<double> DecoderBase<vpoint>::cos_lookup_table_ = initTrigonometricLookupTable([](const double rad)->double{return std::cos(rad);});
+std::vector<double> DecoderBase<vpoint>::cos_lookup_table_ =
+    initTrigonometricLookupTable([](const double rad) -> double { return std::cos(rad); });
 template <typename vpoint>
-std::vector<double> DecoderBase<vpoint>::sin_lookup_table_ = initTrigonometricLookupTable([](const double rad)->double{return std::sin(rad);});
+std::vector<double> DecoderBase<vpoint>::sin_lookup_table_ =
+    initTrigonometricLookupTable([](const double rad) -> double { return std::sin(rad); });
 
 }  // namespace lidar
 }  // namespace robosense

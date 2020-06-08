@@ -113,7 +113,6 @@ public:
   int32_t decodeDifopPkt(const uint8_t* pkt);
   int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
-  void loadCalibrationFile(const std::string& angle_path);
 };
 
 template <typename vpoint>
@@ -212,10 +211,8 @@ int DecoderBP<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& ve
           azimuth_blk + (azimuth_diff * RSBP_CHANNEL_TOFFSET * (channel_idx % 16) / RSBP_FIRING_TDURATION);
       azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
 
-      int idx_map = channel_idx;
-
-      float intensity = mpkt_ptr->blocks[blk_idx].channels[idx_map].intensity;
-      int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[idx_map].distance);
+      float intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
+      int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
       float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
 
       int angle_horiz_ori;
@@ -349,43 +346,6 @@ int32_t DecoderBP<vpoint>::decodeDifopPkt(const uint8_t* pkt)
   }
 
   return 0;
-}
-
-template <typename vpoint>
-void DecoderBP<vpoint>::loadCalibrationFile(const std::string& angle_path)
-{
-  int row_index = 0;
-  int laser_num = 32;
-  std::string line_str;
-  // read angle.csv
-  std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
-  if (!fd_angle.is_open())
-  {
-    //        rs_print(RS_WARNING, "[RSBP] Calibration file: %s does not exist!", angle_file_path.c_str());
-    // std::cout << angle_file_path << " does not exist"<< std::endl;
-  }
-  else
-  {
-    row_index = 0;
-    while (std::getline(fd_angle, line_str))
-    {
-      std::stringstream ss(line_str);
-      std::string str;
-      std::vector<std::string> vect_str;
-      while (std::getline(ss, str, ','))
-      {
-        vect_str.emplace_back(str);
-      }
-      this->vert_angle_list_[row_index] = std::stof(vect_str[0]) * 100;  // degree
-      this->hori_angle_list_[row_index] = std::stof(vect_str[1]) * 100;  // degree
-      row_index++;
-      if (row_index >= laser_num)
-      {
-        break;
-      }
-    }
-    fd_angle.close();
-  }
 }
 
 }  // namespace lidar
