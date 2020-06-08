@@ -298,13 +298,11 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& v
 
     for (int channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      int dsr_temp = channel_idx / 4;
-      dsr_temp = dsr_temp % 16;
+      int dsr_temp = (channel_idx / 4)%16;
 
       azimuth_corrected_float = azimuth_blk + (azimuth_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
       azimuth_corrected = this->azimuthCalibration(azimuth_corrected_float, channel_idx);
 
-      float intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
       float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
 
@@ -329,7 +327,7 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& v
         point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[angle_horiz] -
                   this->Rx_ * this->sin_lookup_table_[angle_horiz_ori];
         point.z = distance_cali * this->sin_lookup_table_[angle_vert] + this->Rz_;
-        point.intensity = intensity;
+        point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         if (std::isnan(point.intensity))
         {
           point.intensity = 0;

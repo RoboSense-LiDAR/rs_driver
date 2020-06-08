@@ -205,23 +205,16 @@ int Decoder32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& ve
     float azimuth_channel;
     for (int channel_idx = 0; channel_idx < RS32_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      int azimuth_final;
-
       azimuth_channel =
           azimuth_blk + (azimuth_diff * RS32_CHANNEL_TOFFSET * (channel_idx % 16) / RS32_FIRING_TDURATION);
-      azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
+      int azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
 
-      int idx_map = channel_idx;
-
-      float intensity = mpkt_ptr->blocks[blk_idx].channels[idx_map].intensity;
-      int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[idx_map].distance);
+      int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
       float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
 
-      int angle_horiz_ori;
       int angle_horiz = (azimuth_final + 36000) % 36000;
-      int angle_vert;
-      angle_horiz_ori = (int)(azimuth_channel + 36000) % 36000;
-      angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
+      int angle_horiz_ori = (int)(azimuth_channel + 36000) % 36000;
+      int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
       // store to pointcloud buffer
       vpoint point;
@@ -235,7 +228,7 @@ int Decoder32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& ve
         point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[angle_horiz] -
                   this->Rx_ * this->sin_lookup_table_[angle_horiz_ori];
         point.z = distance_cali * this->sin_lookup_table_[angle_vert] + this->Rz_;
-        point.intensity = intensity;
+        point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         if (std::isnan(point.intensity))
         {
           point.intensity = 0;

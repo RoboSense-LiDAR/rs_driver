@@ -188,8 +188,6 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& ve
     float azimuth_channel;
     for (int channel_idx = 0; channel_idx < RS16_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      int azimuth_final;
-
       if (this->echo_mode_ == ECHO_DUAL)
       {
         azimuth_channel =
@@ -202,18 +200,14 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& ve
                               (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) /
                               RS16_BLOCK_TDURATION_SINGLE;
       }
-      azimuth_final = ((int)round(azimuth_channel)) % 36000;
-      int idx_map = channel_idx;
-      float intensity = mpkt_ptr->blocks[blk_idx].channels[idx_map].intensity;
+      int azimuth_final = ((int)round(azimuth_channel)) % 36000;
 
-      int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[idx_map].distance);
+      int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
       float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
 
-      int angle_horiz_ori;
       int angle_horiz = (azimuth_final + 36000) % 36000;
-      int angle_vert;
-      angle_horiz_ori = angle_horiz;
-      angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16]) % 36000) + 36000) % 36000;
+      int angle_horiz_ori = angle_horiz;
+      int angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16]) % 36000) + 36000) % 36000;
 
       // store to pointcloud buffer
       vpoint point;
@@ -228,7 +222,7 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& ve
         point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[angle_horiz] -
                   this->Rx_ * this->sin_lookup_table_[angle_horiz_ori];
         point.z = distance_cali * this->sin_lookup_table_[angle_vert] + this->Rz_;
-        point.intensity = intensity;
+        point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         if (std::isnan(point.intensity))
         {
           point.intensity = 0;
