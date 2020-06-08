@@ -361,7 +361,7 @@ float DecoderBase<vpoint>::computeTemperature(const uint16_t temp_raw)
 {
   uint8_t neg_flag = (temp_raw >> 8) & 0x80;
   float msb = (temp_raw >> 8) & 0x7F;
-  float lsb = (temp_raw & 0xFF00) >> 3;
+  float lsb = (temp_raw & 0x00FF) >> 3;
   float temp;
   if (neg_flag == 0x80)
   {

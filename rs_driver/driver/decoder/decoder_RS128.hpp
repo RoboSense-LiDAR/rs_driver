@@ -226,7 +226,7 @@ double Decoder128<vpoint>::getLidarTime(const uint8_t* pkt)
 template <typename vpoint>
 float Decoder128<vpoint>::computeTemperature(const uint8_t temp_low, const uint8_t temp_high)
 {
-  float neg_flag = temp_low & 0x80;
+  uint8_t neg_flag = temp_low & 0x80;
   float msb = temp_low & 0x7F;
   float lsb = temp_high >> 4;
   float temp;
