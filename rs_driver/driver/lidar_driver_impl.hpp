@@ -38,7 +38,10 @@ template <typename PointT>
 class LidarDriverImpl
 {
 public:
-  LidarDriverImpl() = default;
+  LidarDriverImpl()
+    : init_flag_(false), start_flag_(false), difop_flag_(false), points_seq_(0), scan_seq_(0), ndifop_count_(0)
+  {
+  }
 
   ~LidarDriverImpl()
   {
@@ -47,6 +50,10 @@ public:
 
   inline bool init(const RSDriverParam& param)
   {
+    if (init_flag_)
+    {
+      return false;
+    }
     driver_param_ = param;
     input_ptr_ = std::make_shared<Input>(driver_param_.input_param,
                                          std::bind(&LidarDriverImpl::reportError, this, std::placeholders::_1));
@@ -59,28 +66,30 @@ public:
     thread_pool_ptr_ = std::make_shared<ThreadPool>();
     pointcloud_ptr_ = typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
     scan_ptr_ = std::make_shared<ScanMsg>();
-    thread_flag_ = false;
-    difop_flag_ = false;
-    points_seq_ = 0;
-    scan_seq_ = 0;
-    ndifop_count_ = 0;
+    init_flag_ = true;
     return true;
   }
 
   inline void initDecoderOnly(const RSDriverParam& param)
   {
+    if (init_flag_)
+    {
+      return;
+    }
     driver_param_ = param;
     thread_pool_ptr_ = std::make_shared<ThreadPool>();
     pointcloud_ptr_ = typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
     scan_ptr_ = std::make_shared<ScanMsg>();
-    thread_flag_ = false;
-    difop_flag_ = false;
-    points_seq_ = 0;
-    scan_seq_ = 0;
+    init_flag_ = true;
   }
 
   inline bool start()
   {
+    if (start_flag_)
+    {
+      return false;
+    }
+    start_flag_ = true;
     return input_ptr_->start();
   }
 
@@ -118,8 +127,8 @@ public:
   {
     if (lidar_decoder_ptr_ == nullptr)
     {
-      lidar_decoder_ptr_ =
-          DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type,driver_param_.decoder_param, pkt_scan_msg.packets[0]);
+      lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param,
+                                                                 pkt_scan_msg.packets[0]);
       lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
     }
 
@@ -224,7 +233,8 @@ private:
   {
     if (lidar_decoder_ptr_ == nullptr)
     {
-      lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type,driver_param_.decoder_param, msg, input_ptr_);
+      lidar_decoder_ptr_ =
+          DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param, msg, input_ptr_);
       lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
     }
     msop_pkt_queue_.push(msg);
@@ -303,7 +313,6 @@ private:
         reportError(ErrCode_DecodeFail);
         usleep(100000);
       }
-      
     }
     msop_pkt_queue_.is_task_finished_.store(true);
   }
@@ -357,7 +366,8 @@ private:
   uint32_t scan_seq_;
   uint32_t points_seq_;
   uint32_t ndifop_count_;
-  bool thread_flag_;
+  bool init_flag_;
+  bool start_flag_;
   bool difop_flag_;
   RSDriverParam driver_param_;
   typename PointcloudMsg<PointT>::PointCloudPtr pointcloud_ptr_;
