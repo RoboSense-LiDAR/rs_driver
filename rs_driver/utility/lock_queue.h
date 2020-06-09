@@ -55,6 +55,18 @@ public:
     }
   }
 
+  T popFront()
+  {
+    T value;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_quque_.empty())
+    {
+      value = std::move(m_quque_.front());
+      m_quque_.pop();
+    }
+    return value;
+  }
+
   void clear()
   {
     std::queue<T> empty;

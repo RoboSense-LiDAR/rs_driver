@@ -250,7 +250,7 @@ private:
     if (!difop_flag_)
     {
       ndifop_count_++;
-      if (ndifop_count_ > 100)
+      if (ndifop_count_ > 120)
       {
         reportError(ErrCode_NoDifopRecv);
         ndifop_count_ = 0;
@@ -263,8 +263,7 @@ private:
 
     while (msop_pkt_queue_.size() > 0)
     {
-      PacketMsg pkt = msop_pkt_queue_.front();
-      msop_pkt_queue_.pop();
+      PacketMsg pkt = msop_pkt_queue_.popFront();
       std::vector<PointT> point_vec;
       int height = 1;
       int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), point_vec, height);
@@ -313,8 +312,7 @@ private:
   {
     while (difop_pkt_queue_.size() > 0)
     {
-      PacketMsg pkt = difop_pkt_queue_.front();
-      difop_pkt_queue_.pop();
+      PacketMsg pkt = difop_pkt_queue_.popFront();
       decodeDifopPkt(pkt);
       runCallBack(pkt);
     }
