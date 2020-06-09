@@ -202,7 +202,7 @@ class DecoderBase
 {
 public:
   DecoderBase(const RSDecoderParam& param);
-  DecoderBase(DecoderBase&) = delete;
+  DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase();
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& pointcloud_vec, int& height);
