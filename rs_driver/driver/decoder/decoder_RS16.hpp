@@ -200,25 +200,24 @@ int Decoder16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& ve
                               (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) /
                               RS16_BLOCK_TDURATION_SINGLE;
       }
-      int azimuth_final = ((int)round(azimuth_channel)) % 36000;
+      int azimuth_final = (((int)azimuth_channel % 36000) + 36000) % 36000;
 
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
       float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
 
-      int angle_horiz = (azimuth_final + 36000) % 36000;
-      int angle_horiz_ori = angle_horiz;
+      int angle_horiz_ori = azimuth_final;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16]) % 36000) + 36000) % 36000;
 
       // store to pointcloud buffer
       vpoint point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
-          ((this->angle_flag_ && angle_horiz >= this->start_angle_ && angle_horiz <= this->end_angle_) ||
-           (!this->angle_flag_ && ((angle_horiz >= this->start_angle_) || (angle_horiz <= this->end_angle_)))))
+          ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
+           (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
       {
-        point.x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[angle_horiz] +
+        point.x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azimuth_final] +
                   this->Rx_ * this->cos_lookup_table_[angle_horiz_ori];
 
-        point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[angle_horiz] -
+        point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azimuth_final] -
                   this->Rx_ * this->sin_lookup_table_[angle_horiz_ori];
         point.z = distance_cali * this->sin_lookup_table_[angle_vert] + this->Rz_;
         point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
