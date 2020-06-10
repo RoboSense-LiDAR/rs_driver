@@ -134,7 +134,7 @@ public:
 
     typename PointcloudMsg<PointT>::PointCloudPtr output_pointcloud_ptr =
         typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
-    if (!difop_flag_)
+    if (!difop_flag_&&driver_param_.wait_for_difop)
     {
       ndifop_count_++;
       if (ndifop_count_ > 20)
@@ -257,7 +257,7 @@ private:
 
   void processMsop()
   {
-    if (!difop_flag_)
+    if (!difop_flag_&&driver_param_.wait_for_difop)
     {
       ndifop_count_++;
       if (ndifop_count_ > 120)
