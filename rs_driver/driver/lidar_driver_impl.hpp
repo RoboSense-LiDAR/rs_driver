@@ -123,7 +123,7 @@ public:
     excb_.emplace_back(_excb);
   }
 
-  inline void decodeMsopScan(const ScanMsg& pkt_scan_msg, PointcloudMsg<PointT>& point_msg)
+  inline bool decodeMsopScan(const ScanMsg& pkt_scan_msg, PointcloudMsg<PointT>& point_msg)
   {
     if (lidar_decoder_ptr_ == nullptr)
     {
@@ -144,7 +144,7 @@ public:
       }
       point_msg.pointcloud_ptr = output_pointcloud_ptr;
       usleep(10000);
-      return;
+      return false;
     }
 
     std::vector<std::vector<PointT>> point_vvec;
@@ -177,7 +177,9 @@ public:
     if (point_msg.pointcloud_ptr->size() == 0)
     {
       reportError(ErrCode_ZeroPoints);
+      return false;
     }
+    return true;
   }
 
   void decodeDifopPkt(const PacketMsg& pkt_msg)

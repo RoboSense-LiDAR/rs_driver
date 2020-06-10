@@ -124,10 +124,11 @@ public:
             because the driver need difop packet to help to decode scan message.
    * @param pkt_scan_msg The lidar scan message used to be decode
    * @param point_msg The output point cloud message
+   * @return: bool
    */
-  inline void decodeMsopScan(const ScanMsg& pkt_scan_msg, PointcloudMsg<PointT>& point_msg)
+  inline bool decodeMsopScan(const ScanMsg& pkt_scan_msg, PointcloudMsg<PointT>& point_msg)
   {
-    driver_ptr_->decodeMsopScan(pkt_scan_msg, point_msg);
+    return driver_ptr_->decodeMsopScan(pkt_scan_msg, point_msg);
   }
   /**
    * @description: Decode the lidar difop message. **Must** be called when processing offline lidar message.

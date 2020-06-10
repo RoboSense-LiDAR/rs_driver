@@ -92,8 +92,9 @@
                 because the driver need difop packet to help to decode scan message.
        * @param pkt_scan_msg The lidar scan message used to be decode
        * @param point_msg The output point cloud message
+       * @return bool
        */
-      inline void decodeMsopScan(const ScanMsg &pkt_scan_msg, PointcloudMsg<PointT> &point_msg);
+      inline bool decodeMsopScan(const ScanMsg &pkt_scan_msg, PointcloudMsg<PointT> &point_msg);
 ```
 
 ```c++
