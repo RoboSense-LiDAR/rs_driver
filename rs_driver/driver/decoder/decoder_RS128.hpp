@@ -196,7 +196,7 @@ double Decoder128<vpoint>::getLidarTime(const uint8_t* pkt)
   union u_ts
   {
     uint8_t data[8];
-    double ts;
+    uint64_t ts;
   } t;
 
   t.data[7] = 0;
@@ -207,8 +207,7 @@ double Decoder128<vpoint>::getLidarTime(const uint8_t* pkt)
   t.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
   t.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
   t.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
-
-  return t.ts;
+  return (double)t.ts+((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns)))/1000000000.0d;
 }
 
 template <typename vpoint>
