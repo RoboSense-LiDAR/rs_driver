@@ -274,7 +274,7 @@ int32_t DecoderRSBP<vpoint>::decodeDifopPkt(const uint8_t* pkt)
   }
   this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
 
-  if (!(this->cali_data_flag_ & 0x2))
+  if (!this->difop_flag_)
   {
     bool angle_flag = true;
     const uint8_t* p_ver_cali;
@@ -325,7 +325,7 @@ int32_t DecoderRSBP<vpoint>::decodeDifopPkt(const uint8_t* pkt)
         this->hori_angle_list_[i] = (mid * 256 + msb) * neg;
       }
 
-      this->cali_data_flag_ = this->cali_data_flag_ | 0x2;
+      this->difop_flag_ = true;
 
       // std::cout << "[RS_decoder][difop][INFO] angle data is wrote in difop packet!" << std::endl;
     }

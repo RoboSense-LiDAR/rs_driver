@@ -270,7 +270,7 @@ int32_t DecoderRS16<vpoint>::decodeDifopPkt(const uint8_t* pkt)
   }
   this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
 
-  if (!(this->cali_data_flag_ & 0x2))
+  if (!this->difop_flag_)
   {
     bool angle_flag = true;
     const uint8_t* p_ver_cali;
@@ -308,7 +308,7 @@ int32_t DecoderRS16<vpoint>::decodeDifopPkt(const uint8_t* pkt)
         this->hori_angle_list_[i] = 0;
       }
 
-      this->cali_data_flag_ = this->cali_data_flag_ | 0x2;
+      this->difop_flag_ = true;
     }
   }
 

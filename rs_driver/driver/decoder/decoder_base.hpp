@@ -222,6 +222,7 @@ protected:
   int start_angle_;
   int end_angle_;
   bool angle_flag_;
+  bool difop_flag_;
   uint32_t pkts_per_frame_;
   uint32_t pkt_counter_;
   uint16_t mode_split_frame_;  // 1 - angle,  2 - theoretical packets; 3 - setting packets
@@ -229,7 +230,6 @@ protected:
   int32_t cut_angle_;
   int32_t last_azimuth_;
   // calibration data
-  uint32_t cali_data_flag_;
   float vert_angle_list_[128];
   float hori_angle_list_[128];
   static std::vector<double> cos_lookup_table_;
@@ -248,7 +248,7 @@ DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
   , pkts_per_frame_(84)
   , pkt_counter_(0)
   , last_azimuth_(-36001)
-  , cali_data_flag_(0x00)
+  , difop_flag_(false)
   , angle_flag_(true)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)

@@ -207,7 +207,7 @@ double DecoderRS128<vpoint>::getLidarTime(const uint8_t* pkt)
   t.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
   t.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
   t.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
-  return (double)t.ts+((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns)))/1000000000.0d;
+  return (double)t.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
 }
 
 template <typename vpoint>
@@ -355,7 +355,7 @@ int DecoderRS128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
   }
   this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
 
-  if (!(this->cali_data_flag_ & 0x2))
+  if (!this->difop_flag_)
   {
     bool angle_flag = true;
     const uint8_t* p_ver_cali;
@@ -399,7 +399,7 @@ int DecoderRS128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
         }
         this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
       }
-      this->cali_data_flag_ = this->cali_data_flag_ | 0x2;
+      this->difop_flag_ = true;
     }
   }
   return 0;
