@@ -45,16 +45,16 @@ public:
       switch (header_ptr->lidar_type)
       {
         case LidarType::RS16:
-          return std::make_shared<Decoder16<vpoint>>(_param);
+          return std::make_shared<DecoderRS16<vpoint>>(_param);
           break;
         case LidarType::RS32:
-          return std::make_shared<Decoder32<vpoint>>(_param);
+          return std::make_shared<DecoderRS32<vpoint>>(_param);
           break;
         case LidarType::RSBP:
-          return std::make_shared<DecoderBP<vpoint>>(_param);
+          return std::make_shared<DecoderRSBP<vpoint>>(_param);
           break;
         case LidarType::RS128:
-          return std::make_shared<Decoder128<vpoint>>(_param);
+          return std::make_shared<DecoderRS128<vpoint>>(_param);
           break;
         default:
           std::cout << "Wrong LiDAR Type. Please check your LiDAR Version! " << std::endl;
@@ -67,16 +67,16 @@ public:
       switch (param_lidar_type)
       {
         case LidarType::RS16:
-          return std::make_shared<Decoder16<vpoint>>(_param);
+          return std::make_shared<DecoderRS16<vpoint>>(_param);
           break;
         case LidarType::RS32:
-          return std::make_shared<Decoder32<vpoint>>(_param);
+          return std::make_shared<DecoderRS32<vpoint>>(_param);
           break;
         case LidarType::RSBP:
-          return std::make_shared<DecoderBP<vpoint>>(_param);
+          return std::make_shared<DecoderRSBP<vpoint>>(_param);
           break;
         case LidarType::RS128:
-          return std::make_shared<Decoder128<vpoint>>(_param);
+          return std::make_shared<DecoderRS128<vpoint>>(_param);
           break;
         default:
           std::cout << "Wrong LiDAR Type. Abort! " << std::endl;
@@ -94,16 +94,16 @@ public:
       switch (header_ptr->lidar_type)
       {
         case LidarType::RS16:
-          return std::make_shared<Decoder16<vpoint>>(_param);
+          return std::make_shared<DecoderRS16<vpoint>>(_param);
           break;
         case LidarType::RS32:
-          return std::make_shared<Decoder32<vpoint>>(_param);
+          return std::make_shared<DecoderRS32<vpoint>>(_param);
           break;
         case LidarType::RSBP:
-          return std::make_shared<DecoderBP<vpoint>>(_param);
+          return std::make_shared<DecoderRSBP<vpoint>>(_param);
           break;
         case LidarType::RS128:
-          return std::make_shared<Decoder128<vpoint>>(_param);
+          return std::make_shared<DecoderRS128<vpoint>>(_param);
           break;
         default:
           std::cout << "Wrong LiDAR Type. Please check your LiDAR Version! " << std::endl;
@@ -115,16 +115,16 @@ public:
       switch (param_lidar_type)
       {
         case LidarType::RS16:
-          return std::make_shared<Decoder16<vpoint>>(_param);
+          return std::make_shared<DecoderRS16<vpoint>>(_param);
           break;
         case LidarType::RS32:
-          return std::make_shared<Decoder32<vpoint>>(_param);
+          return std::make_shared<DecoderRS32<vpoint>>(_param);
           break;
         case LidarType::RSBP:
-          return std::make_shared<DecoderBP<vpoint>>(_param);
+          return std::make_shared<DecoderRSBP<vpoint>>(_param);
           break;
         case LidarType::RS128:
-          return std::make_shared<Decoder128<vpoint>>(_param);
+          return std::make_shared<DecoderRS128<vpoint>>(_param);
           break;
         default:
           std::cout << "Wrong LiDAR Type. Abort! " << std::endl;

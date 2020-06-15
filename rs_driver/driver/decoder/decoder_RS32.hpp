@@ -106,17 +106,17 @@ RS32DifopPkt;
 #endif
 
 template <typename vpoint>
-class Decoder32 : public DecoderBase<vpoint>
+class DecoderRS32 : public DecoderBase<vpoint>
 {
 public:
-  Decoder32(const RSDecoderParam& param);
+  DecoderRS32(const RSDecoderParam& param);
   int32_t decodeDifopPkt(const uint8_t* pkt);
   int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
 };
 
 template <typename vpoint>
-Decoder32<vpoint>::Decoder32(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
+DecoderRS32<vpoint>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
 {
   this->Rx_ = 0.03997;
   this->Ry_ = -0.01087;
@@ -134,7 +134,7 @@ Decoder32<vpoint>::Decoder32(const RSDecoderParam& param) : DecoderBase<vpoint>(
 }
 
 template <typename vpoint>
-double Decoder32<vpoint>::getLidarTime(const uint8_t* pkt)
+double DecoderRS32<vpoint>::getLidarTime(const uint8_t* pkt)
 {
   RS32MsopPkt* mpkt_ptr = (RS32MsopPkt*)pkt;
   std::tm stm;
@@ -150,7 +150,7 @@ double Decoder32<vpoint>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename vpoint>
-int Decoder32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
+int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
 {
   height = 32;
   RS32MsopPkt* mpkt_ptr = (RS32MsopPkt*)pkt;
@@ -252,7 +252,7 @@ int Decoder32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& ve
 }
 
 template <typename vpoint>
-int32_t Decoder32<vpoint>::decodeDifopPkt(const uint8_t* pkt)
+int32_t DecoderRS32<vpoint>::decodeDifopPkt(const uint8_t* pkt)
 {
   RS32DifopPkt* rs32_ptr = (RS32DifopPkt*)pkt;
   if (rs32_ptr->id != RS32_DIFOP_ID)

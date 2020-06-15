@@ -158,10 +158,10 @@ RS128DifopPkt;
 #endif
 
 template <typename vpoint>
-class Decoder128 : public DecoderBase<vpoint>
+class DecoderRS128 : public DecoderBase<vpoint>
 {
 public:
-  Decoder128(const RSDecoderParam& param);
+  DecoderRS128(const RSDecoderParam& param);
   int32_t decodeDifopPkt(const uint8_t* pkt);
   int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
@@ -169,7 +169,7 @@ public:
 };
 
 template <typename vpoint>
-Decoder128<vpoint>::Decoder128(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
+DecoderRS128<vpoint>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
 {
   this->Rx_ = 0.03615;
   this->Ry_ = -0.017;
@@ -190,7 +190,7 @@ Decoder128<vpoint>::Decoder128(const RSDecoderParam& param) : DecoderBase<vpoint
 }
 
 template <typename vpoint>
-double Decoder128<vpoint>::getLidarTime(const uint8_t* pkt)
+double DecoderRS128<vpoint>::getLidarTime(const uint8_t* pkt)
 {
   RS128MsopPkt* mpkt_ptr = (RS128MsopPkt*)pkt;
   union u_ts
@@ -211,7 +211,7 @@ double Decoder128<vpoint>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename vpoint>
-float Decoder128<vpoint>::computeTemperature(const uint8_t temp_low, const uint8_t temp_high)
+float DecoderRS128<vpoint>::computeTemperature(const uint8_t temp_low, const uint8_t temp_high)
 {
   uint8_t neg_flag = temp_low & 0x80;
   float msb = temp_low & 0x7F;
@@ -230,7 +230,7 @@ float Decoder128<vpoint>::computeTemperature(const uint8_t temp_low, const uint8
 }
 
 template <typename vpoint>
-int Decoder128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
+int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
 {
   height = 128;
   RS128MsopPkt* mpkt_ptr = (RS128MsopPkt*)pkt;
@@ -328,7 +328,7 @@ int Decoder128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& v
 }
 
 template <typename vpoint>
-int Decoder128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
+int DecoderRS128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
 {
   RS128DifopPkt* rs128_ptr = (RS128DifopPkt*)pkt;
   if (rs128_ptr->id != RS128_DIFOP_ID)
