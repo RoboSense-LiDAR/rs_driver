@@ -67,8 +67,8 @@ int main(int argc, char* argv[])
   LidarDriver<PointXYZI> driver;  ///< Declare the driver object
 
   RSDriverParam param;                  ///< Creat a parameter object
-  param.input_param.msop_port = 6688;   ///< Set the lidar msop port number the default 6699
-  param.input_param.difop_port = 7799;  ///< Set the lidar difop port number the default 7788
+  param.input_param.msop_port = 6699;   ///< Set the lidar msop port number the default 6699
+  param.input_param.difop_port = 7788;  ///< Set the lidar difop port number the default 7788
   param.lidar_type = LidarType::RS16;   ///< Set the lidar type. Make sure this type is correct!
   param.print();
 

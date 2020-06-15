@@ -394,8 +394,16 @@ void DecoderBase<vpoint>::loadCalibrationFile(const std::string& angle_path)
       {
         vect_str.emplace_back(str);
       }
-      this->vert_angle_list_[row_index] = std::stof(vect_str[0]) * 100;  // degree
-      this->hori_angle_list_[row_index] = std::stof(vect_str[1]) * 100;  // degree
+      try
+      {
+        this->vert_angle_list_[row_index] = std::stof(vect_str.at(0)) * 100;  // degree
+        this->hori_angle_list_[row_index] = std::stof(vect_str.at(1)) * 100;  // degree
+      }
+      catch (...)
+      {
+        WARNING << "Wrong calibration file format! Please check your angle.csv file!" << REND;
+        break;
+      }
       row_index++;
       if (row_index >= channel_num_)
       {

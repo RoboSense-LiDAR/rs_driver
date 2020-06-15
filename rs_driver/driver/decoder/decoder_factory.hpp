@@ -57,7 +57,7 @@ public:
           return std::make_shared<DecoderRS128<vpoint>>(_param);
           break;
         default:
-          std::cout << "Wrong LiDAR Type. Please check your LiDAR Version! " << std::endl;
+          ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << REND;
           exit(-1);
       }
     }
@@ -79,7 +79,7 @@ public:
           return std::make_shared<DecoderRS128<vpoint>>(_param);
           break;
         default:
-          std::cout << "Wrong LiDAR Type. Abort! " << std::endl;
+          ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << REND;
           exit(-1);
       }
     }
@@ -106,7 +106,7 @@ public:
           return std::make_shared<DecoderRS128<vpoint>>(_param);
           break;
         default:
-          std::cout << "Wrong LiDAR Type. Please check your LiDAR Version! " << std::endl;
+          ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << REND;
           exit(-1);
       }
     }
@@ -127,7 +127,7 @@ public:
           return std::make_shared<DecoderRS128<vpoint>>(_param);
           break;
         default:
-          std::cout << "Wrong LiDAR Type. Abort! " << std::endl;
+          ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << REND;
           exit(-1);
       }
     }
