@@ -338,7 +338,7 @@ int DecoderRS128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
   }
 
   int pkt_rate = 6000;
-  this->rpm_ = rs128_ptr->rpm;
+  this->rpm_ = RS_SWAP_SHORT(rs128_ptr->rpm);
 
   if (rs128_ptr->return_mode == 0x01 || rs128_ptr->return_mode == 0x02)
   {  // 1,2: single echo

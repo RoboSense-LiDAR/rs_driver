@@ -259,7 +259,7 @@ int32_t DecoderRS32<vpoint>::decodeDifopPkt(const uint8_t* pkt)
   {
     return -2;
   }
-  this->rpm_ = rs32_ptr->rpm;
+  this->rpm_ = RS_SWAP_SHORT(rs32_ptr->rpm);
   if (rs32_ptr->return_mode == 0x01 || rs32_ptr->return_mode == 0x02)
   {
     this->echo_mode_ = rs32_ptr->return_mode;
