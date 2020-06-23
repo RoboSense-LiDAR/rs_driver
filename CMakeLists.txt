@@ -36,15 +36,15 @@ add_definitions(-O3)
 add_definitions(-std=c++11)
 add_compile_options(-W)
 configure_file (
-  "${PROJECT_SOURCE_DIR}/rs_driver/macro/version.h.in"
-  "${PROJECT_SOURCE_DIR}/rs_driver/macro/version.h"
+  "${PROJECT_SOURCE_DIR}/src/rs_driver/macro/version.h.in"
+  "${PROJECT_SOURCE_DIR}/src/rs_driver/macro/version.h"
 )
 
 #========================
 # Installation Setup
 #========================
 SET(CMAKE_INSTALL_PREFIX /usr/include)
-set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/rs_driver)
+set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX})
 
 #========================
 # Dependencies Setup
@@ -54,7 +54,7 @@ find_package(Boost COMPONENTS system REQUIRED)
 #========================
 # Build Setup
 #========================
-include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR}/src)
 add_executable(demo
               demo/demo.cpp
               )
@@ -67,11 +67,11 @@ target_link_libraries(demo
 #========================
 # Installation
 #========================        
-install(DIRECTORY rs_driver/
+install(DIRECTORY src/rs_driver
         DESTINATION ${INSTALL_DRIVER_DIR}
         FILES_MATCHING PATTERN "*.h")
 
-install(DIRECTORY rs_driver/
+install(DIRECTORY src/rs_driver
         DESTINATION ${INSTALL_DRIVER_DIR}
         FILES_MATCHING PATTERN "*.hpp")
 
