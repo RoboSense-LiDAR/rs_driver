@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(rs_driver)
 set (PROJECT_VERSION_MAJOR 1)
-set (PROJECT_VERSION_MINOR 0)
+set (PROJECT_VERSION_MINOR 1)
 set (PROJECT_VERSION_PATCH 0)
 #========================
 # Project details / setup

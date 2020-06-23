@@ -1,3 +1,18 @@
+# 2020-07-01
+
+### Version 
+
+1.1.0
+
+### Updates
+
+- Fix the bug in calculating the timestamp of 128
+- Fix the bug in calculating RPM
+- Add the limit of the length of the msop queue 
+- Add the exception capture when loading .csv file
+
+
+
 # 2020-06-01
 
 ### Version 

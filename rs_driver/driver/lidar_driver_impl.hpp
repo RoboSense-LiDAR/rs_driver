@@ -29,7 +29,7 @@
 #include <rs_driver/common/error_code.h>
 #include <rs_driver/driver/input.hpp>
 #include <rs_driver/driver/decoder/decoder_factory.hpp>
-
+#define MAX_PACKETS_BUFFER_SIZE 100000
 namespace robosense
 {
 namespace lidar
@@ -239,7 +239,7 @@ private:
           DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param, msg, input_ptr_);
       lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
     }
-    if (msop_pkt_queue_.size() > 100)
+    if (msop_pkt_queue_.size() > MAX_PACKETS_BUFFER_SIZE)
     {
       msop_pkt_queue_.clear();
     }
