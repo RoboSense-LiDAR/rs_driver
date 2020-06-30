@@ -77,7 +77,7 @@ typedef struct
   uint64_t id;
   uint16_t rpm;
   RSEthNet eth;
-  RSROV fov;
+  RSFOV fov;
   uint16_t reserved0;
   uint16_t phase_lock_angle;
   RSVersion version;

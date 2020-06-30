@@ -130,7 +130,7 @@ typedef struct
   uint64_t id;
   uint16_t rpm;
   RS128EthNet eth;
-  RSROV fov;
+  RSFOV fov;
   uint16_t reserved_0;
   uint16_t phase_lock_angle;
   RS128Version version;

@@ -114,7 +114,7 @@ typedef struct
 #ifdef __GNUC__
 __attribute__((packed))
 #endif
-RSROV;
+RSFOV;
 
 typedef struct
 {
