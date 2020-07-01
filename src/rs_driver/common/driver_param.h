@@ -73,12 +73,12 @@ typedef struct RSInputParam  ///< The lidar input parameter
   std::string device_ip = "192.168.1.200";  ///< The ip of lidar
   uint16_t msop_port = 6699;                ///< The msop packet port number
   uint16_t difop_port = 7788;               ///< The difop packet port number
-  bool read_pcap = false;  ///< True: The driver will process the pcap through pcap_directory. False: The driver will get
-                           ///< data from online lidar
-  double pcap_rate = 1;    ///< The rate to read the pcap file
-  bool pcap_repeat = true;             ///< True: The pcap bag will repeat play
+  bool read_pcap = false;   ///< True: The driver will process the pcap through pcap_directory. False: The driver will
+                            ///< get data from online lidar
+  double pcap_rate = 1;     ///< The rate to read the pcap file
+  bool pcap_repeat = true;  ///< True: The pcap bag will repeat play
   std::string pcap_directory = "null";  ///< The absolute path of pcap file
-  void print() const                   ///< This function is used to print all the parameters for debug
+  void print() const                    ///< This function is used to print all the parameters for debug
   {
     std::cout << "\033[1m\033[32m"
               << "------------------------------------------------------"
@@ -107,9 +107,10 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
       "null";  ///< The path of angle calibration files(angle.csv)(for latest version lidar, this file is not needed)
   std::string frame_id = "rslidar";        ///< The frame id of lidar message
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
-  bool use_lidar_clock =false;            ///< True: lidar message timestamp is the lidar clock. False: timestamp is the computer system clock
-  bool wait_for_difop = true;             ///< True: start sending pointcloud until receive difop packet
-  void print() const  ///< This function is used to print all the parameters for debug
+  bool use_lidar_clock =
+      false;  ///< True: lidar message timestamp is the lidar clock. False: timestamp is the computer system clock
+  bool wait_for_difop = true;  ///< True: start sending pointcloud until receive difop packet
+  void print() const           ///< This function is used to print all the parameters for debug
   {
     input_param.print();
     decoder_param.print();
@@ -165,6 +166,37 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     std::cout << "\033[1m\033[32m"
               << "------------------------------------------------------"
               << "\033[0m" << std::endl;
+  }
+  LidarType strToLidarType(const std::string& type)
+  {
+    if (type == "RS16")
+    {
+      return lidar::LidarType::RS16;
+    }
+    else if (type == "RS32")
+    {
+      return lidar::LidarType::RS32;
+    }
+    else if (type == "RSBP")
+    {
+      return lidar::LidarType::RSBP;
+    }
+    else if (type == "RS128")
+    {
+      return lidar::LidarType::RS128;
+    }
+    else if (type == "RSAUTO")
+    {
+      return lidar::LidarType::RSAUTO;
+    }
+    else
+    {
+      std::cout << "\033[1m\033[31m"
+                << "Wrong lidar type : " << type << std::endl;
+      std::cout << "\033[1m\033[31m"
+                << "Please setup the correct type: RS16, RS32, RSBP, RS128, RSAUTO" << std::endl;
+      exit(-1);
+    }
   }
 } RSDriverParam;
 }  // namespace lidar
