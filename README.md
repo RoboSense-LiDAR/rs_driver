@@ -8,12 +8,12 @@
 
 
 
-### 1. 工程简介
+### 1 工程简介
   **rs_driver**为速腾聚创雷达驱动内核。支持**RS-LiDAR-16**、**RS-LiDAR-32**、**RS-Bpearl**和**RS-128**的点云数据解析，方便用户二次开发使用。
 
 
 
-### 2. 依赖介绍
+### 2 依赖介绍
 
 - Boost
 - pthread
@@ -29,7 +29,7 @@ sudo apt-get install -y  libpcap-dev
 
 
 
-### 3. 驱动安装
+### 3 驱动安装
 
 ```sh
     cd rs_driver
@@ -40,7 +40,7 @@ sudo apt-get install -y  libpcap-dev
 
 
 
-### 4. 其他资料
+### 4 其他资料
 
 [参数简介](doc/intro/parameter_intro.md)
 
@@ -52,7 +52,7 @@ sudo apt-get install -y  libpcap-dev
 
 
 
-### 5. 快速上手
+### 5 快速上手
 
 [快速上手](doc/howto/how_to_online_use_driver.md)
 
@@ -64,13 +64,13 @@ sudo apt-get install -y  libpcap-dev
 
 
 
-### 1. Introduction
+### 1 Introduction
 
   **rs_driver** is the driver code for RoboSense LiDAR,  include **RS-LiDAR-16**、**RS-LiDAR-32**、**RS-Bpearl** and **RS-128** . It can be used to extract packets from lidar to pointcloud, and it is convenient for users to do advanced development.
 
 
 
-### 2. Dependency 
+### 2 Dependency 
 
 - Boost
 - pthread
@@ -84,7 +84,7 @@ Pcap need to be installed as follow:
 sudo apt-get install -y  libpcap-dev
 ```
 
-### 3. Driver Install
+### 3 Driver Install
 
 ```sh
     cd rs_driver
@@ -95,7 +95,7 @@ sudo apt-get install -y  libpcap-dev
 
 
 
-### 4. Others
+### 4 Others
 
 [Intro to parameters](doc/intro/parameter_intro.md)
 
@@ -107,7 +107,7 @@ sudo apt-get install -y  libpcap-dev
 
 
 
-### 5. Quick Start
+### 5 Quick Start
 
 [Quick Start](doc/howto/how_to_online_use_driver.md)
 

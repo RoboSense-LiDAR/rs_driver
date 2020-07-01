@@ -36,7 +36,7 @@ struct PointXYZI  ///< user defined point type
  *              When the point cloud message is ready, driver can send out message through this function.
  * @param msg  The lidar point cloud message.
  */
-void pointCloudCallback(const PointcloudMsg<PointXYZI>& msg)
+void pointcloudCallback(const PointcloudMsg<PointXYZI>& msg)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the message and process it in another thread is recommended*/
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
   param.print();
 
   driver.regExceptionCallback(exceptionCallback);   ///< Register the exception callback funtion into the driver
-  driver.regPointRecvCallback(pointCloudCallback);  ///< Register the point cloud callback funtion into the driver
+  driver.regRecvCallback(pointcloudCallback);  ///< Register the point cloud callback funtion into the driver
   if (!driver.init(param))                          ///< Call the init funtion and pass the parameter
   {
     std::cout << "Driver Initialize Error..." << std::endl;

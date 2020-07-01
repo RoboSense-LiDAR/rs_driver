@@ -2,11 +2,13 @@
 
 
 
-### Introduction
+## 1 Introduction
 
 ​	This document will show you how to use the API to get point cloud from LiDAR
 
-### Steps
+
+
+## 2 Steps
 
 1， define a point type
 
@@ -51,7 +53,7 @@ struct PointXYZI ///< user defined point type
 ​	Define the point cloud callback function. The template argument PointXYZI is the point type we defined in step1. When point cloud message is ready, this function will be called by driver. **Note! Please dont add any time-consuming operations in this function!** User can make a copy of the message and process it in another thread.  Or user can add some quick operations such like ros publish in the callback function.
 
 ```c++
-void pointCloudCallback(const PointcloudMsg<PointXYZI> &msg)
+void pointcloudCallback(const PointcloudMsg<PointXYZI> &msg)
 {
     std::cout << "msg: " << msg.seq << " pointcloud size: " << msg.pointcloud_ptr->size() << std::endl;
 }
@@ -76,8 +78,6 @@ void exceptionCallback(const Error &code)
  LidarDriver<PointXYZI> driver;          ///< Declare the driver object
 ```
 
-
-
 #### Step5
 
 ​	Define a parameter object and config it. The msop port and difop port number of lidar can be got from **wireshark(a network socket capture software)**. The default value is 6699 and 7788. User also need to make sure the **lidar type** is set correctly.
@@ -89,18 +89,14 @@ void exceptionCallback(const Error &code)
  param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct!
 ```
 
-
-
 #### Step6
 
 ​	Register the callback functions we defined in step2 and step3. Note: The exception callback function must be registered before the init() function is called because there may be an error during the initialization.
 
 ```c++
- driver.regPointRecvCallback(pointCloudCallback); ///< Register the point cloud callback funtion into the driver
+ driver.regRecvCallback(pointcloudCallback); ///< Register the point cloud callback funtion into the driver
  driver.regExceptionCallback(exceptionCallback);  ///<Register the exception callback funtion into the driver
 ```
-
-
 
 #### Step7
 
@@ -114,8 +110,6 @@ if (!driver.init(param))                         ///< Call the init funtion and 
 }
 ```
 
-
-
 #### Step8
 
 ​	Call the start function to start the driver
@@ -123,8 +117,6 @@ if (!driver.init(param))                         ///< Call the init funtion and 
 ```c++
  driver.start();                                  ///< Call the start funtion. The driver thread will start.
 ```
-
-
 
 #### Step9
 

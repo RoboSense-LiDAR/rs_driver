@@ -103,7 +103,7 @@ public:
     difop_pkt_queue_.clear();
   }
 
-  inline void regPointRecvCallback(const std::function<void(const PointcloudMsg<PointT>&)> _cb)
+  inline void regRecvCallback(const std::function<void(const PointcloudMsg<PointT>&)> _cb)
   {
     pointscb_.emplace_back(_cb);
   }

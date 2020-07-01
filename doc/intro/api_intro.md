@@ -55,7 +55,7 @@
        *  When pointcloud is prepared, this function will be called.
        * @param callBack the callback funtion  
        */
-      inline void regPointRecvCallback(const std::function<void(const PointcloudMsg<PointT> &)> callBack);
+      inline void regRecvCallback(const std::function<void(const PointcloudMsg<PointT> &)> callBack);
 ```
 
 ```c++
