@@ -40,8 +40,6 @@
       uint32_t height = 0;              ///< the height of point cloud
       uint32_t width = 0;               ///< the width of point cloud
       bool is_dense = false;            ///< if is_dense=true, the point cloud does not contain NAN points
-      bool is_transform = false;        ///< if is_transform=true, the point cloud has been transformed
-      bool is_motion_correct = false;   ///< if is_motion_correct=true, the point cloud has been compensated
       PointCloudPtr pointcloud_ptr;     ///< the point cloud pointer
       PointcloudMsg() = default;
       PointcloudMsg(const PointCloudPtr &_point_ptr) : pointcloud_ptr(_point_ptr)

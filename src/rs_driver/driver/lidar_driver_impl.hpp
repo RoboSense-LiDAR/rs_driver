@@ -351,8 +351,6 @@ private:
     msg.seq = points_seq_++;
     msg.frame_id = driver_param_.frame_id;
     msg.is_dense = false;
-    msg.is_transform = false;
-    msg.is_motion_correct = false;
   }
 
 private:
