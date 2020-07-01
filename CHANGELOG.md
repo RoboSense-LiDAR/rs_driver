@@ -11,6 +11,13 @@
 - Fix the bug in calculating the timestamp of 128
 - Fix the bug in calculating RPM
 
+### Changed
+- Update some functions' names
+- Update the program structure
+
+### Removed
+- Remove unused variables in pointcloud message
+
 ## v1.0.0 - 2020-06-01
 
 ### Added 
