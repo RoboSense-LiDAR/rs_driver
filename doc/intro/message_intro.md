@@ -19,7 +19,6 @@
     {
       double timestamp = 0.0;
       uint32_t seq = 0;
-      std::string parent_frame_id = ""; ///< which coordinate the message is in
       std::string frame_id = "";
       std::vector<PacketMsg> packets; ///< A vector which store a scan of packets (the size of the vector is not fix)
     };
@@ -37,7 +36,6 @@
       typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
       double timestamp = 0.0;
       uint32_t seq = 0;
-      std::string parent_frame_id = ""; ///< which coordinate the point cloud is in
       std::string frame_id = "";        ///< the point cloud frame id
       uint32_t height = 0;              ///< the height of point cloud
       uint32_t width = 0;               ///< the width of point cloud

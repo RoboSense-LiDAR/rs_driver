@@ -342,7 +342,6 @@ private:
       msg.timestamp = lidar_decoder_ptr_->getLidarTime(msg.packets.back().packet.data());
     }
     msg.seq = scan_seq_++;
-    msg.parent_frame_id = driver_param_.frame_id;
     msg.frame_id = driver_param_.frame_id;
   }
 
@@ -350,7 +349,6 @@ private:
   {
     msg.timestamp = getTime();
     msg.seq = points_seq_++;
-    msg.parent_frame_id = driver_param_.frame_id;
     msg.frame_id = driver_param_.frame_id;
     msg.is_dense = false;
     msg.is_transform = false;

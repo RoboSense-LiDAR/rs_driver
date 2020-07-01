@@ -40,7 +40,6 @@ struct alignas(16) PointcloudMsg
   typedef std::shared_ptr<PointCloud> PointCloudPtr;
   typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
   double timestamp = 0.0;
-  std::string parent_frame_id = "";  ///< which coordinate the point cloud is in
   std::string frame_id = "";         ///< the point cloud frame id
   uint32_t seq = 0;                  ///< the sequence number of message
   uint32_t height = 0;               ///< the height of point cloud
