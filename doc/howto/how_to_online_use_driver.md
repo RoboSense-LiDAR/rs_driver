@@ -10,23 +10,23 @@
 
 ## 2 Steps
 
-1， define a point type
+1. define a point type
 
-2， define a point cloud callback function
+2. define a point cloud callback function
 
-3， define a exception callback function
+3. define a exception callback function
 
-4， instantiate the driver object
+4. instantiate the driver object
 
-5， define the parameter, configure the parameter
+5. define the parameter, configure the parameter
 
-6， call the driver initialize function
+6. call the driver initialize function
 
-7， register the point cloud callback and exception callback
+7. register the point cloud callback and exception callback
 
-8， start the driver
+8. start the driver
 
-9,    hint for compile
+9. hint for compile
 
 
 

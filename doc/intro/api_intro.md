@@ -88,7 +88,7 @@
 ```c++
       /**
        * @description: Decode the scan message. Can be called when processing offline lidar message.
-       **NOTE** This function will only work after decodeDifopPkt is called,
+       **NOTE** This function will only work after decodeDifopPkt is called unless wait_for_difop is set to false,
                 because the driver need difop packet to help to decode scan message.
        * @param pkt_scan_msg The lidar scan message used to be decode
        * @param point_msg The output point cloud message
