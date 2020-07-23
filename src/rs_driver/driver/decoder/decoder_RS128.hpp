@@ -176,13 +176,13 @@ DecoderRS128<vpoint>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<vp
   this->Rz_ = 0;
   this->channel_num_ = 128;
 
-  if (this->max_distance_ > 230.0f)
+  if (this->max_distance_ > 250.0f)
   {
-    this->max_distance_ = 230.0f;
+    this->max_distance_ = 250.0f;
   }
-  if (this->min_distance_ < 2.0f || this->min_distance_ > this->max_distance_)
+  if (this->min_distance_ < 1.0f || this->min_distance_ > this->max_distance_)
   {
-    this->min_distance_ = 2.0f;
+    this->min_distance_ = 1.0f;
   }
 
   int pkt_rate = 6000;
