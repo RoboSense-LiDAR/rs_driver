@@ -136,4 +136,4 @@ target_link_libraries(demo
 
 
 
-### *Congratulations! You have finished the first simple demo tutorial of RoboSense lidar driver! You can find the complete demo code in the demo floder under the project directory. Feel free to connect us if you have and question about the driver.*
+### *Congratulations! You have finished the first simple demo tutorial of RoboSense lidar driver! You can find the complete demo code in the demo floder under the project directory. Feel free to connect us if you have any questions about the driver.*
