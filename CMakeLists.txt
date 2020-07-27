@@ -33,15 +33,22 @@ find_package(Boost COMPONENTS system REQUIRED)
 # Build Setup
 #========================
 include_directories(${PROJECT_SOURCE_DIR}/src)
-add_executable(demo
-              demo/demo.cpp
+add_executable(demo_online
+              demo/demo_online.cpp
               )
-target_link_libraries(demo
+target_link_libraries(demo_online
                     ${Boost_LIBRARIES}       
                       pcap
                       pthread
 )
-
+add_executable(demo_pcap
+              demo/demo_pcap.cpp
+              )
+target_link_libraries(demo_pcap
+                    ${Boost_LIBRARIES}       
+                      pcap
+                      pthread
+)
 #========================
 # Installation
 #========================        

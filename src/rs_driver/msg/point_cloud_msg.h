@@ -31,27 +31,27 @@ namespace lidar
 #endif
 template <typename PointT>
 #ifdef _MSC_VER
-struct PointcloudMsg
+struct PointCloudMsg
 #elif __GNUC__
-struct alignas(16) PointcloudMsg
+struct alignas(16) PointCloudMsg
 #endif
 {
   typedef std::vector<PointT> PointCloud;
   typedef std::shared_ptr<PointCloud> PointCloudPtr;
   typedef std::shared_ptr<const PointCloud> PointCloudConstPtr;
   double timestamp = 0.0;
-  std::string frame_id = "";         ///< the point cloud frame id
-  uint32_t seq = 0;                  ///< the sequence number of message
-  uint32_t height = 0;               ///< the height of point cloud
-  uint32_t width = 0;                ///< the width of point cloud
-  bool is_dense = false;             ///< if is_dense=true, the point cloud does not contain NAN points
-  PointCloudPtr pointcloud_ptr;      ///< the point cloud pointer
-  PointcloudMsg() = default;
-  PointcloudMsg(const PointCloudPtr& _point_ptr) : pointcloud_ptr(_point_ptr)
+  std::string frame_id = "";      ///< the point cloud frame id
+  uint32_t seq = 0;               ///< the sequence number of message
+  uint32_t height = 0;            ///< the height of point cloud
+  uint32_t width = 0;             ///< the width of point cloud
+  bool is_dense = false;          ///< if is_dense=true, the point cloud does not contain NAN points
+  PointCloudPtr point_cloud_ptr;  ///< the point cloud pointer
+  PointCloudMsg() = default;
+  PointCloudMsg(const PointCloudPtr& ptr) : point_cloud_ptr(ptr)
   {
   }
-  typedef std::shared_ptr<PointcloudMsg> Ptr;
-  typedef std::shared_ptr<const PointcloudMsg> ConstPtr;
+  typedef std::shared_ptr<PointCloudMsg> Ptr;
+  typedef std::shared_ptr<const PointCloudMsg> ConstPtr;
 };
 #ifdef _MSC_VER
 #pragma pack(pop)

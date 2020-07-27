@@ -205,7 +205,7 @@ public:
   DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase();
-  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& pointcloud_vec, int& height);
+  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& point_cloud_vec, int& height);
   virtual int32_t processDifopPkt(const uint8_t* pkt);
   virtual void loadCalibrationFile(const std::string& angle_path);
   virtual double getLidarTime(const uint8_t* pkt) = 0;
@@ -293,19 +293,17 @@ int32_t DecoderBase<vpoint>::processDifopPkt(const uint8_t* pkt)
 }
 
 template <typename vpoint>
-RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& pointcloud_vec,
+RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& point_cloud_vec,
                                                     int& height)
 {
   if (pkt == NULL)
   {
-    //	rs_print(RS_ERROR, "[RSBASE] MSOP pkt buffer NULL.");
     return PARAM_INVALID;
   }
 
-  int azimuth = decodeMsopPkt(pkt, pointcloud_vec, height);
+  int azimuth = decodeMsopPkt(pkt, point_cloud_vec, height);
   if (azimuth < 0)
   {
-    //   rs_print(RS_ERROR, "[RSBASE] MSOP pkt decode fail.");
     return DECODE_FAIL;
   }
 

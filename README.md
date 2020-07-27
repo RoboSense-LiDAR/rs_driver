@@ -1,10 +1,6 @@
 # **rs_driver** 
 
-# **v1.1.0**
-
-
-
----
+**v1.1.0**
 
 
 
@@ -32,10 +28,10 @@ sudo apt-get install -y  libpcap-dev
 ### 3 驱动安装
 
 ```sh
-    cd rs_driver
-    mkdir build && cd build
-    cmake .. && make -j4
-    sudo make install
+cd rs_driver
+mkdir build && cd build
+cmake .. && make -j4
+sudo make install
 ```
 
 
@@ -54,7 +50,9 @@ sudo apt-get install -y  libpcap-dev
 
 ### 5 快速上手
 
-[快速上手](doc/howto/how_to_online_use_driver.md)
+[在线连接雷达](doc/howto/how_to_online_use_driver.md)
+
+[离线解析pcap包](doc/howto/how_to_offline_decode_pcap.md)
 
 
 
@@ -66,7 +64,7 @@ sudo apt-get install -y  libpcap-dev
 
 ### 1 Introduction
 
-  **rs_driver** is the driver code for RoboSense LiDAR,  include **RS-LiDAR-16**、**RS-LiDAR-32**、**RS-Bpearl** and **RS-128** . It can be used to extract packets from lidar to pointcloud, and it is convenient for users to do advanced development.
+  **rs_driver** is the driver code for RoboSense LiDAR,  include **RS-LiDAR-16**、**RS-LiDAR-32**、**RS-Bpearl** and **RS-128** . It can be used to extract packets from lidar to point cloud, and it is convenient for users to do advanced development.
 
 
 
@@ -87,10 +85,10 @@ sudo apt-get install -y  libpcap-dev
 ### 3 Driver Install
 
 ```sh
-    cd rs_driver
-    mkdir build && cd build
-    cmake .. && make -j4
-    sudo make install
+cd rs_driver
+mkdir build && cd build
+cmake .. && make -j4
+sudo make install
 ```
 
 
@@ -109,7 +107,11 @@ sudo apt-get install -y  libpcap-dev
 
 ### 5 Quick Start
 
-[Quick Start](doc/howto/how_to_online_use_driver.md)
+[Online connect LiDAR](doc/howto/how_to_online_use_driver.md)
+
+[Offline decode pcap bag](doc/howto/how_to_offline_decode_pcap.md)
+
+
 
 
 

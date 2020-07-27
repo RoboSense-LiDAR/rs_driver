@@ -29,7 +29,7 @@ namespace lidar
 enum LidarType  ///< The lidar type
 {
   RSAUTO = 0x00,  ///< If LidarType is set to RSAUTO, the driver will check the lidar type automatically.(Only support
-                  ///< the latest version LiDARs)
+                  ///< the LiDARs of latest version, not support Bpearl yet.)
   RS16 = 0x01,
   RS32 = 0x02,
   RSBP = 0x03,
@@ -42,8 +42,8 @@ typedef struct RSDecoderParam  ///< The lidar decoder parameter
   float min_distance = 0.2f;      ///< The minimum distance of lidar detect range
   float start_angle = 0.0f;       ///< The start angle of point cloud
   float end_angle = 360.0f;       ///< The end angle of point cloud
-  uint16_t mode_split_frame = 1;  ///< 1: Split frame depends on cut_angle; 2:Split frame depends on packet rate;
-                                  ///< 3:Split frame depends on num_pkts_split
+  uint16_t mode_split_frame = 1;  ///< 1: Split frames by cut_angle; 2: Split frames by fixed number of packets; 3:
+                                  ///< Split frames by  custom number of packets (num_pkts_split)
   uint32_t num_pkts_split = 1;    ///< The number of packets in one frame, only be used when mode_split_frame=3
   float cut_angle = 0.0f;         ///< The cut angle(degree) used to split frame, only be used when mode_split_frame=1
   void print() const              ///< This function is used to print all the parameters for debug
@@ -109,7 +109,7 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   bool use_lidar_clock = false;            ///< True: lidar message timestamp is the lidar clock.
                                            ///< False: timestamp is the computer system clock
-  bool wait_for_difop = true;              ///< True: start sending pointcloud until receive difop packet
+  bool wait_for_difop = true;              ///< True: start sending point cloud until receive difop packet
   void print() const                       ///< This function is used to print all the parameters for debug
   {
     input_param.print();
@@ -153,6 +153,13 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
                   << "\033[0m";
         std::cout << "\033[1m\033[32m"
                   << "RS128"
+                  << "\033[0m" << std::endl;
+        break;
+      case LidarType::RSAUTO:
+        std::cout << "lidar_type : "
+                  << "\033[0m";
+        std::cout << "\033[1m\033[32m"
+                  << "RSAUTO"
                   << "\033[0m" << std::endl;
         break;
       default:

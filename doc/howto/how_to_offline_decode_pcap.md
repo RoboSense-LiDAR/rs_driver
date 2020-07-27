@@ -1,10 +1,10 @@
-# How to online use driver
+# How to offline decode pcap bag
 
 
 
 ## 1 Introduction
 
-This document will show you how to use the API to get point cloud from LiDAR.
+This document will show you how to use the API to decode pcap bag.
 
 
 
@@ -60,12 +60,15 @@ LidarDriver<PointXYZI> driver;          ///< Declare the driver object
 
 #### 2.5 Define the parameter, configure the parameter
 
-Define a parameter object and config it. The msop port and difop port number of lidar can be got from **wireshark(a network socket capture software)**. The default value is 6699 and 7788. User also need to make sure the **lidar type** is set correctly.
+Define a parameter object and config it. Since we want to decode pcap bag, please set the read_pcap to true and set up the correct pcap file directory. The ip address, msop port and difop port number of lidar can be got from **wireshark(a network socket capture software)**. The default value is ip: 192.168.1.200, msop: 6699, difop: 7788. User also need to make sure the **lidar type** is set correctly.
 
 ```c++
-RSDriverParam param;                      		  ///< Creat a parameter object
-param.input_param.msop_port = 6699;              ///< Set the lidar msop port number the default 6699
-param.input_param.difop_port = 7788;             ///< Set the lidar difop port number the default 7788
+RSDriverParam param;                                             ///< Creat a parameter object
+param.input_param.read_pcap = true;                              ///< Set read_pcap to true
+param.input_param.pcap_directory = "/home/robosense/rs16.pcap";  ///< Set the pcap file directory
+param.input_param.device_ip = "192.168.1.200";  ///< Set the lidar ip address, the default is 192.168.1.200
+param.input_param.msop_port = 6699;             ///< Set the lidar msop port number, the default is 6699
+param.input_param.difop_port = 7788;            ///< Set the lidar difop port number, the default is 7788
 param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct
 ```
 
@@ -80,7 +83,7 @@ driver.regExceptionCallback(exceptionCallback);  ///<Register the exception call
 
 #### 2.7 Call the driver initialize function
 
-Call the initialize function and pass the parameter into the driver. Since we need to get packets from online lidar, we call init() function instead of initDecoderOnly(). Remember to check whether the initialization is successful, if not, please check the error code, and modify parameters.
+Call the initialize function and pass the parameter into the driver. Since we need to get packets from pcap bag, we call init() function instead of initDecoderOnly(). Remember to check whether the initialization is successful, if not, please check the error code, and modify parameters.
 
 ```c++
 if (!driver.init(param))                         ///< Call the init funtion and pass the parameter

@@ -214,7 +214,7 @@ int DecoderRSBP<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
       int angle_horiz_ori = (int)(azimuth_channel + 36000) % 36000;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
-      // store to pointcloud buffer
+      // store to point cloud buffer
       vpoint point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
           ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||

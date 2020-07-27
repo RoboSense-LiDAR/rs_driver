@@ -89,13 +89,13 @@ public:
   {
     stop();
   }
-  inline void regRecvMsopCallback(const std::function<void(const PacketMsg&)> callBack)
+  inline void regRecvMsopCallback(const std::function<void(const PacketMsg&)> callback)
   {
-    msop_cb_.emplace_back(callBack);
+    msop_cb_.emplace_back(callback);
   }
-  inline void regRecvDifopCallback(const std::function<void(const PacketMsg&)> callBack)
+  inline void regRecvDifopCallback(const std::function<void(const PacketMsg&)> callback)
   {
-    difop_cb_.emplace_back(callBack);
+    difop_cb_.emplace_back(callback);
   }
   inline bool start()
   {

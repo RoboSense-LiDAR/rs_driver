@@ -20,7 +20,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#include <rs_driver/msg/pointcloud_msg.h>
+#include <rs_driver/msg/point_cloud_msg.h>
 #include <rs_driver/msg/packet_msg.h>
 #include <rs_driver/msg/scan_msg.h>
 #include <rs_driver/utility/lock_queue.h>
@@ -64,7 +64,7 @@ public:
       return false;
     }
     thread_pool_ptr_ = std::make_shared<ThreadPool>();
-    pointcloud_ptr_ = typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
+    point_cloud_ptr_ = typename PointCloudMsg<PointT>::PointCloudPtr(new typename PointCloudMsg<PointT>::PointCloud);
     scan_ptr_ = std::make_shared<ScanMsg>();
     init_flag_ = true;
     return true;
@@ -78,7 +78,7 @@ public:
     }
     driver_param_ = param;
     thread_pool_ptr_ = std::make_shared<ThreadPool>();
-    pointcloud_ptr_ = typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
+    point_cloud_ptr_ = typename PointCloudMsg<PointT>::PointCloudPtr(new typename PointCloudMsg<PointT>::PointCloud);
     scan_ptr_ = std::make_shared<ScanMsg>();
     init_flag_ = true;
   }
@@ -103,7 +103,7 @@ public:
     difop_pkt_queue_.clear();
   }
 
-  inline void regRecvCallback(const std::function<void(const PointcloudMsg<PointT>&)> _cb)
+  inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>&)> _cb)
   {
     pointscb_.emplace_back(_cb);
   }
@@ -123,7 +123,7 @@ public:
     excb_.emplace_back(_excb);
   }
 
-  inline bool decodeMsopScan(const ScanMsg& pkt_scan_msg, PointcloudMsg<PointT>& point_msg)
+  inline bool decodeMsopScan(const ScanMsg& pkt_scan_msg, PointCloudMsg<PointT>& point_msg)
   {
     if (lidar_decoder_ptr_ == nullptr)
     {
@@ -132,9 +132,9 @@ public:
       lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
     }
 
-    typename PointcloudMsg<PointT>::PointCloudPtr output_pointcloud_ptr =
-        typename PointcloudMsg<PointT>::PointCloudPtr(new typename PointcloudMsg<PointT>::PointCloud);
-    if (!difop_flag_&&driver_param_.wait_for_difop)
+    typename PointCloudMsg<PointT>::PointCloudPtr output_point_cloud_ptr =
+        typename PointCloudMsg<PointT>::PointCloudPtr(new typename PointCloudMsg<PointT>::PointCloud);
+    if (!difop_flag_ && driver_param_.wait_for_difop)
     {
       ndifop_count_++;
       if (ndifop_count_ > 20)
@@ -142,7 +142,7 @@ public:
         reportError(ErrCode_NoDifopRecv);
         ndifop_count_ = 0;
       }
-      point_msg.pointcloud_ptr = output_pointcloud_ptr;
+      point_msg.point_cloud_ptr = output_point_cloud_ptr;
       usleep(10000);
       return false;
     }
@@ -165,16 +165,16 @@ public:
     {
       for (auto iter = iiter.cbegin(); iter != iiter.cend(); iter++)
       {
-        output_pointcloud_ptr->push_back(*iter);
+        output_point_cloud_ptr->push_back(*iter);
       }
     }
 
-    point_msg.pointcloud_ptr = output_pointcloud_ptr;
+    point_msg.point_cloud_ptr = output_point_cloud_ptr;
     point_msg.height = height;
-    point_msg.width = point_msg.pointcloud_ptr->size() / point_msg.height;
+    point_msg.width = point_msg.point_cloud_ptr->size() / point_msg.height;
     preparePointsMsg(point_msg);
     point_msg.timestamp = pkt_scan_msg.timestamp;
-    if (point_msg.pointcloud_ptr->size() == 0)
+    if (point_msg.point_cloud_ptr->size() == 0)
     {
       reportError(ErrCode_ZeroPoints);
       return false;
@@ -212,7 +212,7 @@ private:
     }
   }
 
-  inline void runCallBack(const PointcloudMsg<PointT>& points_msg)
+  inline void runCallBack(const PointCloudMsg<PointT>& points_msg)
   {
     if (points_msg.seq != 0)
     {
@@ -263,7 +263,7 @@ private:
 
   void processMsop()
   {
-    if (!difop_flag_&&driver_param_.wait_for_difop)
+    if (!difop_flag_ && driver_param_.wait_for_difop)
     {
       ndifop_count_++;
       if (ndifop_count_ > 120)
@@ -288,19 +288,19 @@ private:
       {
         for (auto iter = point_vec.cbegin(); iter != point_vec.cend(); iter++)
         {
-          pointcloud_ptr_->push_back(*iter);
+          point_cloud_ptr_->push_back(*iter);
         }
         if (ret == FRAME_SPLIT)
         {
-          PointcloudMsg<PointT> msg(pointcloud_ptr_);
+          PointCloudMsg<PointT> msg(point_cloud_ptr_);
           msg.height = height;
-          msg.width = pointcloud_ptr_->size() / msg.height;
+          msg.width = point_cloud_ptr_->size() / msg.height;
           preparePointsMsg(msg);
           if (driver_param_.use_lidar_clock == true)
           {
             msg.timestamp = lidar_decoder_ptr_->getLidarTime(pkt.packet.data());
           }
-          if (msg.pointcloud_ptr->size() == 0)
+          if (msg.point_cloud_ptr->size() == 0)
           {
             reportError(ErrCode_ZeroPoints);
           }
@@ -310,7 +310,7 @@ private:
           }
           prepareScanMsg(*scan_ptr_);
           runCallBack(*scan_ptr_);
-          pointcloud_ptr_.reset(new typename PointcloudMsg<PointT>::PointCloud);
+          point_cloud_ptr_.reset(new typename PointCloudMsg<PointT>::PointCloud);
           scan_ptr_.reset(new ScanMsg);
         }
       }
@@ -345,7 +345,7 @@ private:
     msg.frame_id = driver_param_.frame_id;
   }
 
-  void preparePointsMsg(PointcloudMsg<PointT>& msg)
+  void preparePointsMsg(PointCloudMsg<PointT>& msg)
   {
     msg.timestamp = getTime();
     msg.seq = points_seq_++;
@@ -358,7 +358,7 @@ private:
   Queue<PacketMsg> difop_pkt_queue_;
   std::vector<std::function<void(const ScanMsg&)>> pkts_msop_cb_;
   std::vector<std::function<void(const PacketMsg&)>> pkts_difop_cb_;
-  std::vector<std::function<void(const PointcloudMsg<PointT>&)>> pointscb_;
+  std::vector<std::function<void(const PointCloudMsg<PointT>&)>> pointscb_;
   std::vector<std::function<void(const Error&)>> excb_;
   std::shared_ptr<std::thread> lidar_thread_ptr_;
   std::shared_ptr<DecoderBase<PointT>> lidar_decoder_ptr_;
@@ -372,7 +372,7 @@ private:
   bool start_flag_;
   bool difop_flag_;
   RSDriverParam driver_param_;
-  typename PointcloudMsg<PointT>::PointCloudPtr pointcloud_ptr_;
+  typename PointCloudMsg<PointT>::PointCloudPtr point_cloud_ptr_;
 };
 
 }  // namespace lidar

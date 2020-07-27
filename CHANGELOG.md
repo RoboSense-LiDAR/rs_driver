@@ -16,7 +16,7 @@
 - Update the program structure
 
 ### Removed
-- Remove unused variables in pointcloud message
+- Remove unused variables in point cloud message
 
 ## v1.0.0 - 2020-06-01
 

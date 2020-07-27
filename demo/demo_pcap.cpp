@@ -32,19 +32,19 @@ struct PointXYZI  ///< user defined point type
 };
 
 /**
- * @description: The point cloud callback function. This funciton will be registered to lidar driver.
+ * @brief: The point cloud callback function. This funciton will be registered to lidar driver.
  *              When the point cloud message is ready, driver can send out message through this function.
  * @param msg  The lidar point cloud message.
  */
-void pointcloudCallback(const PointcloudMsg<PointXYZI>& msg)
+void pointCloudCallback(const PointCloudMsg<PointXYZI>& msg)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the message and process it in another thread is recommended*/
-  std::cout << "msg: " << msg.seq << " pointcloud size: " << msg.pointcloud_ptr->size() << std::endl;
+  std::cout << "msg: " << msg.seq << " point cloud size: " << msg.point_cloud_ptr->size() << std::endl;
 }
 
 /**
- * @description: The exception callback function. This function will be registered to lidar driver.
+ * @brief: The exception callback function. This function will be registered to lidar driver.
  * @param code The error code struct.
  */
 void exceptionCallback(const Error& code)
@@ -66,22 +66,25 @@ int main(int argc, char* argv[])
 
   LidarDriver<PointXYZI> driver;  ///< Declare the driver object
 
-  RSDriverParam param;                  ///< Creat a parameter object
-  param.input_param.msop_port = 6699;   ///< Set the lidar msop port number the default 6699
-  param.input_param.difop_port = 7788;  ///< Set the lidar difop port number the default 7788
-  param.lidar_type = LidarType::RS16;   ///< Set the lidar type. Make sure this type is correct!
+  RSDriverParam param;                                             ///< Creat a parameter object
+  param.input_param.read_pcap = true;                              ///< Set read_pcap to true
+  param.input_param.pcap_directory = "/home/robosense/rs16.pcap";  ///< Set the pcap file directory
+  param.input_param.device_ip = "192.168.1.200";  ///< Set the lidar ip address, the default is 192.168.1.200
+  param.input_param.msop_port = 6699;             ///< Set the lidar msop port number, the default is 6699
+  param.input_param.difop_port = 7788;            ///< Set the lidar difop port number, the default is 7788
+  param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct
   param.print();
 
-  driver.regExceptionCallback(exceptionCallback);   ///< Register the exception callback funtion into the driver
-  driver.regRecvCallback(pointcloudCallback);  ///< Register the point cloud callback funtion into the driver
-  if (!driver.init(param))                          ///< Call the init funtion and pass the parameter
+  driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback funtion into the driver
+  driver.regRecvCallback(pointCloudCallback);      ///< Register the point cloud callback funtion into the driver
+  if (!driver.init(param))                         ///< Call the init funtion and pass the parameter
   {
     std::cout << "Driver Initialize Error..." << std::endl;
     return 0;
   }
-  driver.start();  ///< Call the start funtion. The driver thread will start.
-
+  driver.start();  ///< The driver thread will start
   std::cout << "RoboSense Lidar-Driver Linux pcap demo start......" << std::endl;
+
   while (true)
   {
     sleep(1);
