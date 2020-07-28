@@ -1,6 +1,6 @@
 # Message Introcution
 
-#### 1 LidarPacketMsg
+#### 1 PacketMsg
 ```c++
 struct alignas(16) PacketMsg ///< LiDAR single packet message
 {

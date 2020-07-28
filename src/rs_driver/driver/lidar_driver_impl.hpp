@@ -39,7 +39,7 @@ class LidarDriverImpl
 {
 public:
   LidarDriverImpl()
-    : init_flag_(false), start_flag_(false), difop_flag_(false), points_seq_(0), scan_seq_(0), ndifop_count_(0)
+    : init_flag_(false), start_flag_(false), difop_flag_(false), point_cloud_seq_(0), scan_seq_(0), ndifop_count_(0)
   {
   }
 
@@ -105,7 +105,7 @@ public:
 
   inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>&)> _cb)
   {
-    pointscb_.emplace_back(_cb);
+    point_cloud_cb_vec_.emplace_back(_cb);
   }
 
   inline void regRecvCallback(const std::function<void(const ScanMsg&)> _cb)
@@ -212,13 +212,13 @@ private:
     }
   }
 
-  inline void runCallBack(const PointCloudMsg<PointT>& points_msg)
+  inline void runCallBack(const PointCloudMsg<PointT>& msg)
   {
-    if (points_msg.seq != 0)
+    if (msg.seq != 0)
     {
-      for (auto& it : pointscb_)
+      for (auto& it : point_cloud_cb_vec_)
       {
-        it(points_msg);
+        it(msg);
       }
     }
   }
@@ -348,7 +348,7 @@ private:
   void preparePointsMsg(PointCloudMsg<PointT>& msg)
   {
     msg.timestamp = getTime();
-    msg.seq = points_seq_++;
+    msg.seq = point_cloud_seq_++;
     msg.frame_id = driver_param_.frame_id;
     msg.is_dense = false;
   }
@@ -358,7 +358,7 @@ private:
   Queue<PacketMsg> difop_pkt_queue_;
   std::vector<std::function<void(const ScanMsg&)>> pkts_msop_cb_;
   std::vector<std::function<void(const PacketMsg&)>> pkts_difop_cb_;
-  std::vector<std::function<void(const PointCloudMsg<PointT>&)>> pointscb_;
+  std::vector<std::function<void(const PointCloudMsg<PointT>&)>> point_cloud_cb_vec_;
   std::vector<std::function<void(const Error&)>> excb_;
   std::shared_ptr<std::thread> lidar_thread_ptr_;
   std::shared_ptr<DecoderBase<PointT>> lidar_decoder_ptr_;
@@ -366,7 +366,7 @@ private:
   std::shared_ptr<ThreadPool> thread_pool_ptr_;
   std::shared_ptr<ScanMsg> scan_ptr_;
   uint32_t scan_seq_;
-  uint32_t points_seq_;
+  uint32_t point_cloud_seq_;
   uint32_t ndifop_count_;
   bool init_flag_;
   bool start_flag_;
