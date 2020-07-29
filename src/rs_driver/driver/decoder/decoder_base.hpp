@@ -209,6 +209,7 @@ public:
   virtual int32_t processDifopPkt(const uint8_t* pkt);
   virtual void loadCalibrationFile(const std::string& angle_path);
   virtual double getLidarTime(const uint8_t* pkt) = 0;
+  virtual double getLidarTemperature();
 
 protected:
   int32_t rpm_;
@@ -229,6 +230,7 @@ protected:
   uint32_t num_pkts_split_;    // number of setting packets
   int32_t cut_angle_;
   int32_t last_azimuth_;
+  double current_temperature_;
   // calibration data
   float vert_angle_list_[128];
   float hori_angle_list_[128];
@@ -248,6 +250,7 @@ DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
   , pkts_per_frame_(84)
   , pkt_counter_(0)
   , last_azimuth_(-36001)
+  , current_temperature_(0)
   , difop_flag_(false)
   , angle_flag_(true)
   , start_angle_(param.start_angle * 100)
@@ -341,6 +344,12 @@ RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t* pkt, std::vec
   }
 
   return DECODE_OK;
+}
+
+template <typename vpoint>
+double DecoderBase<vpoint>::getLidarTemperature()
+{
+  return current_temperature_;
 }
 
 template <typename vpoint>

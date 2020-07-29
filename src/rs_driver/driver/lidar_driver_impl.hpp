@@ -124,6 +124,15 @@ public:
     excb_.emplace_back(_excb);
   }
 
+  inline double getLidarTemperature()
+  {
+    if (lidar_decoder_ptr_ != nullptr)
+    {
+      return lidar_decoder_ptr_->getLidarTemperature();
+    }
+    return 0;
+  }
+
   inline bool decodeMsopScan(const ScanMsg& pkt_scan_msg, PointCloudMsg<PointT>& point_msg)
   {
     if (lidar_decoder_ptr_ == nullptr)

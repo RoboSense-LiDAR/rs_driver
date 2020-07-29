@@ -241,7 +241,7 @@ int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>&
   }
 
   float azimuth_corrected_float;
-  float temperature = computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
+  this->current_temperature_ = computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
 
   for (int blk_idx = 0; blk_idx < RS128_BLOCKS_PER_PKT; blk_idx++)
