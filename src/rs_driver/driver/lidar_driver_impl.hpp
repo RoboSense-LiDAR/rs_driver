@@ -99,6 +99,7 @@ public:
     {
       input_ptr_->stop();
     }
+    start_flag_ = false;
     msop_pkt_queue_.clear();
     difop_pkt_queue_.clear();
   }
