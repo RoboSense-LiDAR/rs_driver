@@ -30,7 +30,7 @@ struct PointXYZI ///< user defined point type
 
 #### 2.2 Define a point cloud callback function
 
-Define the point cloud callback function. The template argument PointXYZI is the point type we defined in 2.1. When point cloud message is ready, this function will be called by driver. **Note! Please dont add any time-consuming operations in this function!** User can make a copy of the message and process it in another thread.  Or user can add some quick operations such like ros publish in the callback function.
+Define the point cloud callback function. The template argument PointXYZI is the point type we defined in 2.1. When point cloud message is ready, this function will be called by driver. **Note! Please don't add any time-consuming operations in this function!** User can make a copy of the message and process it in another thread.  Or user can add some quick operations such like ros publish in the callback function.
 
 ```c++
 void pointCloudCallback(const PointCloudMsg<PointXYZI> &msg)
@@ -63,7 +63,7 @@ LidarDriver<PointXYZI> driver;          ///< Declare the driver object
 Define a parameter object and config it. The msop port and difop port number of lidar can be got from **wireshark(a network socket capture software)**. The default value is 6699 and 7788. User also need to make sure the **lidar type** is set correctly.
 
 ```c++
-RSDriverParam param;                      		  ///< Creat a parameter object
+RSDriverParam param;                      		  ///< Create a parameter object
 param.input_param.msop_port = 6699;              ///< Set the lidar msop port number the default 6699
 param.input_param.difop_port = 7788;             ///< Set the lidar difop port number the default 7788
 param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct
@@ -78,9 +78,9 @@ driver.regRecvCallback(pointCloudCallback); ///< Register the point cloud callba
 driver.regExceptionCallback(exceptionCallback);  ///<Register the exception callback funtion into the driver
 ```
 
-#### 2.7 Call the driver initialize function
+#### 2.7 Call the driver initialization function
 
-Call the initialize function and pass the parameter into the driver. Since we need to get packets from online lidar, we call init() function instead of initDecoderOnly(). Remember to check whether the initialization is successful, if not, please check the error code, and modify parameters.
+Call the initialization function and pass the parameter into the driver. Since we need to get packets from online lidar, we call init() function instead of initDecoderOnly(). Remember to check whether the initialization is successful, if not, please check the error code, and modify parameters.
 
 ```c++
 if (!driver.init(param))                         ///< Call the init funtion and pass the parameter

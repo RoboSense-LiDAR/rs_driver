@@ -49,8 +49,8 @@ enum InputState
 class Input
 {
 public:
-  Input(const RSInputParam& _input_param, const std::function<void(const Error&)> _excb)
-    : lidar_type_(LidarType::RS128), input_param_(_input_param), excb_(_excb), init_flag_(false)
+  Input(const RSInputParam& input_param, const std::function<void(const Error&)> excb)
+    : lidar_type_(LidarType::RS128), input_param_(input_param), excb_(excb), init_flag_(false)
   {
   }
   inline bool init()
@@ -147,6 +147,7 @@ public:
   {
     lidar_type_ = type;
   }
+
 private:
   inline void checkDifopDeadline()
   {
@@ -211,7 +212,6 @@ private:
   {
     while (pcap_thread_.start.load())
     {
-      int ret;
       struct pcap_pkthdr* header;
       const u_char* pkt_data;
       switch (lidar_type_)
@@ -233,7 +233,7 @@ private:
       {
         break;
       }
-      if ((ret = pcap_next_ex(pcap_, &header, &pkt_data)) >= 0)
+      if (pcap_next_ex(pcap_, &header, &pkt_data) >= 0)
       {
         if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
         {
