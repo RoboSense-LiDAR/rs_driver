@@ -88,6 +88,10 @@ public:
   ~Input()
   {
     stop();
+    if (input_param_.read_pcap)
+    {
+      pcap_close(this->pcap_);
+    }
   }
   inline void regRecvMsopCallback(const std::function<void(const PacketMsg&)> callback)
   {
@@ -118,28 +122,28 @@ public:
     }
     return true;
   }
+
   inline void stop()
   {
     if (!input_param_.read_pcap)
     {
-      if (msop_thread_.start.load())
+      msop_thread_.start.store(false);
+      difop_thread_.start.store(false);
+      if (msop_thread_.m_thread->joinable())
       {
-        msop_thread_.start.store(false);
         msop_thread_.m_thread->join();
       }
-      if (difop_thread_.start.load())
+      if (difop_thread_.m_thread->joinable())
       {
-        difop_thread_.start.store(false);
         difop_thread_.m_thread->join();
       }
     }
     else
     {
-      if (pcap_thread_.start.load())
+      pcap_thread_.start.store(false);
+      if (pcap_thread_.m_thread->joinable())
       {
-        pcap_thread_.start.store(false);
         pcap_thread_.m_thread->join();
-        pcap_close(this->pcap_);
       }
     }
   }
