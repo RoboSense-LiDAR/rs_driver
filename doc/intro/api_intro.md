@@ -83,6 +83,16 @@ inline void regExceptionCallback(const std::function<void(const Error &)> callba
 
 ```c++
 /**
+ * @brief Get the current lidar temperature
+ * @return The temperature of lidar
+ */
+inline double getLidarTemperature();
+```
+
+
+
+```c++
+/**
  * @brief Decode the lidar scan message to point cloud
  * @note This function will only work after decodeDifopPkt is called unless wait_for_difop is set to false
  * @param pkt_scan_msg The lidar scan message
