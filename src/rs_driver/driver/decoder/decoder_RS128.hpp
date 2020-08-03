@@ -243,6 +243,8 @@ int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>&
   float azimuth_corrected_float;
   this->current_temperature_ = computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
+  int second_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[1].azimuth);
+  int third_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[2].azimuth);
 
   for (int blk_idx = 0; blk_idx < RS128_BLOCKS_PER_PKT; blk_idx++)
   {
@@ -250,44 +252,31 @@ int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>&
     {
       break;
     }
-
-    int azimuth_blk = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-    int azi_prev = 0;
-    int azi_cur = 0;
+    float azimuth_diff = 0;
     if (this->echo_mode_ == ECHO_DUAL)
     {
-      if (blk_idx < (RS128_BLOCKS_PER_PKT - 2))  // 3
-      {
-        azi_prev = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 2].azimuth);
-        azi_cur = azimuth_blk;
-      }
-      else
-      {
-        azi_prev = azimuth_blk;
-        azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 2].azimuth);
-      }
+      azimuth_diff = (float)((36000 + third_azimuth - first_azimuth) % 36000);
     }
     else
     {
-      if (blk_idx < (RS128_BLOCKS_PER_PKT - 1))  // 3
+      switch (blk_idx)
       {
-        azi_prev = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth);
-        azi_cur = azimuth_blk;
-      }
-      else
-      {
-        azi_prev = azimuth_blk;
-        azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth);
+        case 0:
+          azimuth_diff = (float)((36000 + second_azimuth - first_azimuth) % 36000);
+          break;
+        case 1:
+        case 2:
+          azimuth_diff = (float)((36000 + third_azimuth - second_azimuth) % 36000);
+          break;
       }
     }
-
-    float azimuth_diff = (float)((36000 + azi_prev - azi_cur) % 36000);
 
     for (int channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
 
-      azimuth_corrected_float = azimuth_blk + (azimuth_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
+      azimuth_corrected_float = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) +
+                                (azimuth_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
       int azimuth_final = this->azimuthCalibration(azimuth_corrected_float, channel_idx);
 
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
