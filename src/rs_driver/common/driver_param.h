@@ -36,32 +36,28 @@ enum LidarType  ///< The lidar type
   RS128 = 0x04
 };
 
-typedef struct RSSerialParam  ///< The serial port parameters
+typedef struct RSCameraTriggerParam  ///< The serial port parameters
 {
-  int toggle_angle = -1;  ///< If <0, not toggle camera. If >0, the driver will togle camera when lidar ratate to toggle_angle
-  int rising_edge_length = 100;  ///< Unit: ms, the length of rising_edge
-  std::string port_name = "/dev/ttyUSB0";
-  int baudrate = 115200;
-  int character_size = 8;
+  std::map<double,std::string> trigger_map;
   void print() const  ///< This function is used to print all the parameters for debug
   {
     std::cout << "\033[1m\033[32m"
               << "------------------------------------------------------"
               << "\033[0m" << std::endl;
     std::cout << "\033[1m\033[32m"
-              << "             RoboSense Serial Parameters "
+              << "             RoboSense Camera Trigger Parameters "
               << "\033[0m" << std::endl;
-    std::cout << "\033[32m"
-              << "toggle_angle : " << toggle_angle << std::endl;
-    std::cout << "rising_edge_length : " << rising_edge_length << std::endl;
-    std::cout << "port_name : " << port_name << std::endl;
-    std::cout << "baudrate : " << baudrate << std::endl;
-    std::cout << "character_size : " << character_size << "\033[0m" << std::endl;
+    for (auto iter : trigger_map)
+    {
+      std::cout << "\033[32m"
+                << "camera_frame_id : " << iter.first << " trigger_angle : " << iter.second << std::endl;
+    }
+    std::cout << "\033[0m" << std::endl;
     std::cout << "\033[1m\033[32m"
               << "------------------------------------------------------"
               << "\033[0m" << std::endl;
   }
-} RSSerialParam;
+} RSCameraTriggerParam;
 
 typedef struct RSDecoderParam  ///< The lidar decoder parameter
 {
@@ -73,10 +69,12 @@ typedef struct RSDecoderParam  ///< The lidar decoder parameter
                                   ///< Split frames by  custom number of packets (num_pkts_split)
   uint32_t num_pkts_split = 1;    ///< The number of packets in one frame, only be used when mode_split_frame=3
   float cut_angle = 0.0f;         ///< The cut angle(degree) used to split frame, only be used when mode_split_frame=1
-  RSSerialParam serial_param;     ///< The serial port parameters, used to toggle camera
-  void print() const              ///< This function is used to print all the parameters for debug
+  bool use_lidar_clock = false;   ///< True: lidar message timestamp is the lidar clock.
+                                  ///< False: timestamp is the computer system cloc
+  RSCameraTriggerParam trigger_param;  ///< The parameter used to trigger camera
+  void print() const                   ///< This function is used to print all the parameters for debug
   {
-    serial_param.print();
+    trigger_param.print();
     std::cout << "\033[1m\033[32m"
               << "------------------------------------------------------"
               << "\033[0m" << std::endl;
@@ -88,9 +86,11 @@ typedef struct RSDecoderParam  ///< The lidar decoder parameter
     std::cout << "min_distance : " << min_distance << std::endl;
     std::cout << "start_angle : " << start_angle << std::endl;
     std::cout << "end_angle : " << end_angle << std::endl;
+    std::cout << "use_lidar_clock : " << use_lidar_clock << std::endl;
     std::cout << "mode_split_frame : " << mode_split_frame << std::endl;
     std::cout << "num_pkts_split : " << num_pkts_split << std::endl;
     std::cout << "cut_angle : " << cut_angle << "\033[0m" << std::endl;
+
     std::cout << "\033[1m\033[32m"
               << "------------------------------------------------------"
               << "\033[0m" << std::endl;
@@ -136,8 +136,6 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
                                            ///< For latest version lidar, this file is not needed
   std::string frame_id = "rslidar";        ///< The frame id of lidar message
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
-  bool use_lidar_clock = false;            ///< True: lidar message timestamp is the lidar clock.
-                                           ///< False: timestamp is the computer system clock
   bool wait_for_difop = true;              ///< True: start sending point cloud until receive difop packet
   void print() const                       ///< This function is used to print all the parameters for debug
   {
@@ -152,7 +150,6 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     std::cout << "\033[32m"
               << "angle_path : " << angle_path << std::endl;
     std::cout << "frame_id : " << frame_id << std::endl;
-    std::cout << "use_lidar_clock : " << use_lidar_clock << std::endl;
 
     switch (lidar_type)
     {

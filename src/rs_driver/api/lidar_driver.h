@@ -119,6 +119,15 @@ public:
   }
 
   /**
+   * @brief Register the camera trigger message callback funtion to driver. 
+   * @param callback The callback funtion
+   */
+  inline void regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
+  {
+    driver_ptr_->regRecvCallback(callback);
+  }
+
+  /**
    * @brief Register the exception message callback funtion to driver. When error occurs, this function will be called
    * @param callback The callback funtion
    */

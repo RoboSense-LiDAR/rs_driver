@@ -59,6 +59,9 @@
 /*Pcap*/
 #include <pcap.h>
 
+/*Camera*/
+typedef std::pair<std::string, double> CameraTrigger;
+
 /*Output style*/
 #define RESET "\033[0m"
 #define BOLDBLACK "\033[1m\033[30m"   /* Bold Black */
