@@ -245,9 +245,22 @@ int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>&
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   int second_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[1].azimuth);
   int third_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[2].azimuth);
-
+  if (this->trigger_flag_)
+  {
+    double timestamp = 0;
+    if (this->use_lidar_clock_)
+    {
+      timestamp = getLidarTime(pkt);
+    }
+    else
+    {
+      timestamp = getTime();
+    }
+    this->checkTriggerAngle(first_azimuth, timestamp);
+  }
   for (int blk_idx = 0; blk_idx < RS128_BLOCKS_PER_PKT; blk_idx++)
   {
+    int cur_azimuith = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
     if (mpkt_ptr->blocks[blk_idx].id != RS128_BLOCK_ID)
     {
       break;
@@ -275,8 +288,7 @@ int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>&
     {
       int dsr_temp = (channel_idx / 4) % 16;
 
-      azimuth_corrected_float = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) +
-                                (azimuth_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
+      azimuth_corrected_float = cur_azimuith + (azimuth_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
       int azimuth_final = this->azimuthCalibration(azimuth_corrected_float, channel_idx);
 
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);

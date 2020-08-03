@@ -111,12 +111,17 @@ public:
 
   inline void regRecvCallback(const std::function<void(const ScanMsg&)> callback)
   {
-    pkts_msop_cb_.emplace_back(callback);
+    msop_pkt_cb_vec_.emplace_back(callback);
   }
 
   inline void regRecvCallback(const std::function<void(const PacketMsg&)> callback)
   {
-    pkts_difop_cb_.emplace_back(callback);
+    difop_pkt_cb_vec_.emplace_back(callback);
+  }
+
+  inline void regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
+  {
+    camera_trigger_cb_vec_.emplace_back(callback);
   }
 
   inline void regExceptionCallback(const std::function<void(const Error&)> callback)
@@ -140,6 +145,8 @@ public:
       lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param,
                                                                  scan_msg.packets[0]);
       lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
+      lidar_decoder_ptr_->regRecvCallback(
+          std::bind(&LidarDriverImpl::localCameraTriggerCallback, this, std::placeholders::_1));
     }
 
     typename PointCloudMsg<PointT>::PointCloudPtr output_point_cloud_ptr =
@@ -192,7 +199,7 @@ public:
     return true;
   }
 
-  void decodeDifopPkt(const PacketMsg& msg)
+  inline void decodeDifopPkt(const PacketMsg& msg)
   {
     if (lidar_decoder_ptr_ == nullptr)
     {
@@ -207,7 +214,7 @@ private:
   {
     if (msg.seq != 0)
     {
-      for (auto& it : pkts_msop_cb_)
+      for (auto& it : msop_pkt_cb_vec_)
       {
         it(msg);
       }
@@ -216,7 +223,7 @@ private:
 
   inline void runCallBack(const PacketMsg& msg)
   {
-    for (auto& it : pkts_difop_cb_)
+    for (auto& it : difop_pkt_cb_vec_)
     {
       it(msg);
     }
@@ -248,6 +255,8 @@ private:
       lidar_decoder_ptr_ =
           DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param, msg, input_ptr_);
       lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
+      lidar_decoder_ptr_->regRecvCallback(
+          std::bind(&LidarDriverImpl::localCameraTriggerCallback, this, std::placeholders::_1));
     }
     if (msop_pkt_queue_.size() > MAX_PACKETS_BUFFER_SIZE)
     {
@@ -306,7 +315,7 @@ private:
           msg.height = height;
           msg.width = point_cloud_ptr_->size() / msg.height;
           preparePointsMsg(msg);
-          if (driver_param_.use_lidar_clock == true)
+          if (driver_param_.decoder_param.use_lidar_clock == true)
           {
             msg.timestamp = lidar_decoder_ptr_->getLidarTime(pkt.packet.data());
           }
@@ -333,7 +342,15 @@ private:
     msop_pkt_queue_.is_task_finished_.store(true);
   }
 
-  void processDifop()
+  inline void localCameraTriggerCallback(const CameraTrigger& msg)
+  {
+    for (auto& it : camera_trigger_cb_vec_)
+    {
+      it(msg);
+    }
+  }
+
+  inline void processDifop()
   {
     while (difop_pkt_queue_.size() > 0)
     {
@@ -344,10 +361,10 @@ private:
     difop_pkt_queue_.is_task_finished_.store(true);
   }
 
-  void prepareScanMsg(ScanMsg& msg)
+  inline void prepareScanMsg(ScanMsg& msg)
   {
     msg.timestamp = getTime();
-    if (driver_param_.use_lidar_clock == true)
+    if (driver_param_.decoder_param.use_lidar_clock == true)
     {
       msg.timestamp = lidar_decoder_ptr_->getLidarTime(msg.packets.back().packet.data());
     }
@@ -355,7 +372,7 @@ private:
     msg.frame_id = driver_param_.frame_id;
   }
 
-  void preparePointsMsg(PointCloudMsg<PointT>& msg)
+  inline void preparePointsMsg(PointCloudMsg<PointT>& msg)
   {
     msg.timestamp = getTime();
     msg.seq = point_cloud_seq_++;
@@ -366,9 +383,10 @@ private:
 private:
   Queue<PacketMsg> msop_pkt_queue_;
   Queue<PacketMsg> difop_pkt_queue_;
-  std::vector<std::function<void(const ScanMsg&)>> pkts_msop_cb_;
-  std::vector<std::function<void(const PacketMsg&)>> pkts_difop_cb_;
+  std::vector<std::function<void(const ScanMsg&)>> msop_pkt_cb_vec_;
+  std::vector<std::function<void(const PacketMsg&)>> difop_pkt_cb_vec_;
   std::vector<std::function<void(const PointCloudMsg<PointT>&)>> point_cloud_cb_vec_;
+  std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   std::vector<std::function<void(const Error&)>> excb_;
   std::shared_ptr<std::thread> lidar_thread_ptr_;
   std::shared_ptr<DecoderBase<PointT>> lidar_decoder_ptr_;

@@ -161,7 +161,19 @@ int DecoderRSBP<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
 
   int first_azimuth;
   first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
-
+ if (this->trigger_flag_)
+  {
+    double timestamp = 0;
+    if (this->use_lidar_clock_)
+    {
+      timestamp = getLidarTime(pkt);
+    }
+    else
+    {
+      timestamp = getTime();
+    }
+    this->checkTriggerAngle(first_azimuth, timestamp);
+  }
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
 
   for (int blk_idx = 0; blk_idx < RSBP_BLOCKS_PER_PKT; blk_idx++)

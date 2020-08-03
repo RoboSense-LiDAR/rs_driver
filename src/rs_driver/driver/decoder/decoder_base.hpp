@@ -30,7 +30,6 @@ namespace lidar
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
 #define RS_RESOLUTION_5mm_DISTANCE_COEF (0.005)
 #define RS_RESOLUTION_10mm_DISTANCE_COEF (0.01)
-
 enum RSEchoMode
 {
   ECHO_DUAL = 0,
@@ -208,6 +207,7 @@ public:
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& point_cloud_vec, int& height);
   virtual int32_t processDifopPkt(const uint8_t* pkt);
   virtual void loadCalibrationFile(const std::string& angle_path);
+  virtual void regRecvCallback(const std::function<void(const CameraTrigger&)> callback);  ///< Camera trigger
   virtual double getLidarTime(const uint8_t* pkt) = 0;
   virtual double getLidarTemperature();
 
@@ -224,35 +224,47 @@ protected:
   int end_angle_;
   bool angle_flag_;
   bool difop_flag_;
+  bool trigger_flag_;
+  bool use_lidar_clock_;
   uint32_t pkts_per_frame_;
   uint32_t pkt_counter_;
   uint16_t mode_split_frame_;  // 1 - angle,  2 - theoretical packets; 3 - setting packets
   uint32_t num_pkts_split_;    // number of setting packets
   int32_t cut_angle_;
   int32_t last_azimuth_;
+  unsigned int trigger_index_;
+  unsigned int prev_angle_diff_;
+  RSDecoderParam param_;
   double current_temperature_;
   // calibration data
   float vert_angle_list_[128];
   float hori_angle_list_[128];
+  std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   static std::vector<double> cos_lookup_table_;
   static std::vector<double> sin_lookup_table_;
 
 protected:
   virtual float computeTemperature(const uint16_t temp_raw);
   virtual int32_t azimuthCalibration(float azimuth, const int& channel);
+  virtual void checkTriggerAngle(const int& angle, const double& timestamp);
   virtual int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height) = 0;
   virtual int32_t decodeDifopPkt(const uint8_t* pkt) = 0;
 };
 
 template <typename vpoint>
 DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
-  : rpm_(600)
+  : param_(param)
+  , rpm_(600)
   , pkts_per_frame_(84)
   , pkt_counter_(0)
   , last_azimuth_(-36001)
   , current_temperature_(0)
+  , trigger_index_(0)
+  , prev_angle_diff_(36000)
   , difop_flag_(false)
   , angle_flag_(true)
+  , trigger_flag_(false)
+  , use_lidar_clock_(param.use_lidar_clock)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)
   , echo_mode_(ECHO_STRONGEST)
@@ -276,12 +288,16 @@ DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
   {
     this->angle_flag_ = false;
   }
+
+  if (param.trigger_param.trigger_map.size() != 0)
+  {
+    trigger_flag_ = true;
+  }
 }
 
 template <typename vpoint>
 DecoderBase<vpoint>::~DecoderBase()
 {
-  //	rs_print(RS_INFO, "[RSBASE] Destructor.");
 }
 
 template <typename vpoint>
@@ -322,6 +338,8 @@ RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t* pkt, std::vec
     {
       this->last_azimuth_ = azimuth;
       this->pkt_counter_ = 0;
+      this->trigger_index_ = 0;
+      this->prev_angle_diff_ = 36000;
       return FRAME_SPLIT;
     }
     this->last_azimuth_ = azimuth;
@@ -331,6 +349,8 @@ RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t* pkt, std::vec
     if (this->pkt_counter_ >= this->pkts_per_frame_)
     {
       this->pkt_counter_ = 0;
+      this->trigger_index_ = 0;
+      this->prev_angle_diff_ = 36000;
       return FRAME_SPLIT;
     }
   }
@@ -339,11 +359,47 @@ RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t* pkt, std::vec
     if (this->pkt_counter_ >= this->num_pkts_split_)
     {
       this->pkt_counter_ = 0;
+      this->trigger_index_ = 0;
+      this->prev_angle_diff_ = 36000;
       return FRAME_SPLIT;
     }
   }
 
   return DECODE_OK;
+}
+
+template <typename vpoint>
+void DecoderBase<vpoint>::checkTriggerAngle(const int& angle, const double& timestamp)
+{
+  std::map<double, std::string>::iterator iter = param_.trigger_param.trigger_map.begin();
+  for (size_t i = 0; i < trigger_index_; i++)
+  {
+    iter++;
+  }
+  if (iter != param_.trigger_param.trigger_map.end())
+  {
+    unsigned int angle_diff = std::abs(iter->first * 100 - angle);
+    if (angle_diff < prev_angle_diff_)
+    {
+      prev_angle_diff_ = angle_diff;
+      return;
+    }
+    else
+    {
+      trigger_index_++;
+      prev_angle_diff_ = 36000;
+      for (auto cb : camera_trigger_cb_vec_)
+      {
+        cb(std::make_pair(iter->second, timestamp));
+      }
+    }
+  }
+}
+
+template <typename vpoint>
+void DecoderBase<vpoint>::regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
+{
+  camera_trigger_cb_vec_.emplace_back(callback);
 }
 
 template <typename vpoint>
