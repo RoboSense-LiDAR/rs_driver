@@ -99,36 +99,46 @@ public:
     {
       input_ptr_->stop();
     }
+    start_flag_ = false;
     msop_pkt_queue_.clear();
     difop_pkt_queue_.clear();
   }
 
-  inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>&)> _cb)
+  inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>&)> callback)
   {
-    point_cloud_cb_vec_.emplace_back(_cb);
+    point_cloud_cb_vec_.emplace_back(callback);
   }
 
-  inline void regRecvCallback(const std::function<void(const ScanMsg&)> _cb)
+  inline void regRecvCallback(const std::function<void(const ScanMsg&)> callback)
   {
-    pkts_msop_cb_.emplace_back(_cb);
+    pkts_msop_cb_.emplace_back(callback);
   }
 
-  inline void regRecvCallback(const std::function<void(const PacketMsg&)> _cb)
+  inline void regRecvCallback(const std::function<void(const PacketMsg&)> callback)
   {
-    pkts_difop_cb_.emplace_back(_cb);
+    pkts_difop_cb_.emplace_back(callback);
   }
 
-  inline void regExceptionCallback(const std::function<void(const Error&)> _excb)
+  inline void regExceptionCallback(const std::function<void(const Error&)> callback)
   {
-    excb_.emplace_back(_excb);
+    excb_.emplace_back(callback);
   }
 
-  inline bool decodeMsopScan(const ScanMsg& pkt_scan_msg, PointCloudMsg<PointT>& point_msg)
+  inline double getLidarTemperature()
+  {
+    if (lidar_decoder_ptr_ != nullptr)
+    {
+      return lidar_decoder_ptr_->getLidarTemperature();
+    }
+    return 0;
+  }
+
+  inline bool decodeMsopScan(const ScanMsg& scan_msg, PointCloudMsg<PointT>& point_cloud_msg)
   {
     if (lidar_decoder_ptr_ == nullptr)
     {
       lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param,
-                                                                 pkt_scan_msg.packets[0]);
+                                                                 scan_msg.packets[0]);
       lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
     }
 
@@ -142,19 +152,19 @@ public:
         reportError(ErrCode_NoDifopRecv);
         ndifop_count_ = 0;
       }
-      point_msg.point_cloud_ptr = output_point_cloud_ptr;
+      point_cloud_msg.point_cloud_ptr = output_point_cloud_ptr;
       usleep(10000);
       return false;
     }
 
     std::vector<std::vector<PointT>> point_vvec;
     int height = 1;
-    point_vvec.resize(pkt_scan_msg.packets.size());
+    point_vvec.resize(scan_msg.packets.size());
 #pragma omp parallel for
-    for (uint32_t i = 0; i < pkt_scan_msg.packets.size(); i++)
+    for (uint32_t i = 0; i < scan_msg.packets.size(); i++)
     {
       std::vector<PointT> point_vec;
-      int ret = lidar_decoder_ptr_->processMsopPkt(pkt_scan_msg.packets[i].packet.data(), point_vec, height);
+      int ret = lidar_decoder_ptr_->processMsopPkt(scan_msg.packets[i].packet.data(), point_vec, height);
       if (ret == DECODE_OK || ret == FRAME_SPLIT)
       {
         point_vvec[i] = std::move(point_vec);
@@ -169,12 +179,12 @@ public:
       }
     }
 
-    point_msg.point_cloud_ptr = output_point_cloud_ptr;
-    point_msg.height = height;
-    point_msg.width = point_msg.point_cloud_ptr->size() / point_msg.height;
-    preparePointsMsg(point_msg);
-    point_msg.timestamp = pkt_scan_msg.timestamp;
-    if (point_msg.point_cloud_ptr->size() == 0)
+    point_cloud_msg.point_cloud_ptr = output_point_cloud_ptr;
+    point_cloud_msg.height = height;
+    point_cloud_msg.width = point_cloud_msg.point_cloud_ptr->size() / point_cloud_msg.height;
+    preparePointsMsg(point_cloud_msg);
+    point_cloud_msg.timestamp = scan_msg.timestamp;
+    if (point_cloud_msg.point_cloud_ptr->size() == 0)
     {
       reportError(ErrCode_ZeroPoints);
       return false;
@@ -182,33 +192,33 @@ public:
     return true;
   }
 
-  void decodeDifopPkt(const PacketMsg& pkt_msg)
+  void decodeDifopPkt(const PacketMsg& msg)
   {
     if (lidar_decoder_ptr_ == nullptr)
     {
       return;
     }
-    lidar_decoder_ptr_->processDifopPkt(pkt_msg.packet.data());
+    lidar_decoder_ptr_->processDifopPkt(msg.packet.data());
     difop_flag_ = true;
   }
 
 private:
-  inline void runCallBack(const ScanMsg& scan_msg)
+  inline void runCallBack(const ScanMsg& msg)
   {
-    if (scan_msg.seq != 0)
+    if (msg.seq != 0)
     {
       for (auto& it : pkts_msop_cb_)
       {
-        it(scan_msg);
+        it(msg);
       }
     }
   }
 
-  inline void runCallBack(const PacketMsg& pkts_msg)
+  inline void runCallBack(const PacketMsg& msg)
   {
     for (auto& it : pkts_difop_cb_)
     {
-      it(pkts_msg);
+      it(msg);
     }
   }
 

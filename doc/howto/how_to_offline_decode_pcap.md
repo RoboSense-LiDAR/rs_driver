@@ -30,7 +30,7 @@ struct PointXYZI ///< user defined point type
 
 #### 2.2 Define a point cloud callback function
 
-Define the point cloud callback function. The template argument PointXYZI is the point type we defined in 2.1. When point cloud message is ready, this function will be called by driver. **Note! Please dont add any time-consuming operations in this function!** User can make a copy of the message and process it in another thread.  Or user can add some quick operations such like ros publish in the callback function.
+Define the point cloud callback function. The template argument PointXYZI is the point type we defined in 2.1. When point cloud message is ready, this function will be called by driver. **Note! Please don't add any time-consuming operations in this function!** User can make a copy of the message and process it in another thread.  Or user can add some quick operations such like ros publish in the callback function.
 
 ```c++
 void pointCloudCallback(const PointCloudMsg<PointXYZI> &msg)
@@ -63,7 +63,7 @@ LidarDriver<PointXYZI> driver;          ///< Declare the driver object
 Define a parameter object and config it. Since we want to decode pcap bag, please set the read_pcap to true and set up the correct pcap file directory. The ip address, msop port and difop port number of lidar can be got from **wireshark(a network socket capture software)**. The default value is ip: 192.168.1.200, msop: 6699, difop: 7788. User also need to make sure the **lidar type** is set correctly.
 
 ```c++
-RSDriverParam param;                                             ///< Creat a parameter object
+RSDriverParam param;                                             ///< Create a parameter object
 param.input_param.read_pcap = true;                              ///< Set read_pcap to true
 param.input_param.pcap_directory = "/home/robosense/rs16.pcap";  ///< Set the pcap file directory
 param.input_param.device_ip = "192.168.1.200";  ///< Set the lidar ip address, the default is 192.168.1.200
@@ -81,9 +81,9 @@ driver.regRecvCallback(pointCloudCallback); ///< Register the point cloud callba
 driver.regExceptionCallback(exceptionCallback);  ///<Register the exception callback funtion into the driver
 ```
 
-#### 2.7 Call the driver initialize function
+#### 2.7 Call the driver initialization function
 
-Call the initialize function and pass the parameter into the driver. Since we need to get packets from pcap bag, we call init() function instead of initDecoderOnly(). Remember to check whether the initialization is successful, if not, please check the error code, and modify parameters.
+Call the initialization function and pass the parameter into the driver. Since we need to get packets from pcap bag, we call init() function instead of initDecoderOnly(). Remember to check whether the initialization is successful, if not, please check the error code, and modify parameters.
 
 ```c++
 if (!driver.init(param))                         ///< Call the init funtion and pass the parameter

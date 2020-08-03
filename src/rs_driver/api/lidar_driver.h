@@ -51,7 +51,7 @@ public:
   }
 
   /**
-   * @brief The initialize function, used to set the realated parameters and instance objects,
+   * @brief The initialization function, used to set the realated parameters and instance objects,
    *        used when get packets from online lidar or pcap
    * @param param The custom struct RSDriverParam
    * @return If success, return ture; else return false
@@ -62,7 +62,7 @@ public:
   }
 
   /**
-   * @brief The initialize function which only initialize decoder(not include input module). If lidar packets are from
+   * @brief The initialization function which only initialize decoder(not include input module). If lidar packets are from
    * ROS or other ways excluding online lidar and pcap, call this function to initialize instead of calling init()
    * @param param The custom struct RSDriverParam
    */
@@ -125,6 +125,15 @@ public:
   inline void regExceptionCallback(const std::function<void(const Error&)> callback)
   {
     driver_ptr_->regExceptionCallback(callback);
+  }
+
+  /**
+   * @brief Get the current lidar temperature
+   * @return The temperature of lidar
+   */
+  inline double getLidarTemperature()
+  {
+    return driver_ptr_->getLidarTemperature();
   }
 
   /**

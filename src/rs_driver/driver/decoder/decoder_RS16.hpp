@@ -162,7 +162,7 @@ int DecoderRS16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
   }
   int first_azimuth;
   first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
-  float temperature = this->computeTemperature(mpkt_ptr->header.temp_raw);
+  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   for (int blk_idx = 0; blk_idx < RS16_BLOCKS_PER_PKT; blk_idx++)
   {
     if (mpkt_ptr->blocks[blk_idx].id != RS16_BLOCK_ID)

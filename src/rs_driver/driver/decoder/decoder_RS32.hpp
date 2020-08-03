@@ -163,7 +163,7 @@ int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
   int first_azimuth;
   first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
 
-  float temperature = this->computeTemperature(mpkt_ptr->header.temp_raw);
+  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
 
   for (int blk_idx = 0; blk_idx < RS32_BLOCKS_PER_PKT; blk_idx++)
   {
@@ -205,7 +205,8 @@ int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
     float azimuth_channel;
     for (int channel_idx = 0; channel_idx < RS32_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      azimuth_channel = azimuth_blk + (azimuth_diff * RS32_CHANNEL_TOFFSET * (channel_idx % 16) / RS32_FIRING_TDURATION);
+      azimuth_channel =
+          azimuth_blk + (azimuth_diff * RS32_CHANNEL_TOFFSET * (channel_idx % 16) / RS32_FIRING_TDURATION);
       int azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
 
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);

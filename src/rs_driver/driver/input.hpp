@@ -49,8 +49,8 @@ enum InputState
 class Input
 {
 public:
-  Input(const RSInputParam& _input_param, const std::function<void(const Error&)> _excb)
-    : lidar_type_(LidarType::RS128), input_param_(_input_param), excb_(_excb), init_flag_(false)
+  Input(const RSInputParam& input_param, const std::function<void(const Error&)> excb)
+    : lidar_type_(LidarType::RS128), input_param_(input_param), excb_(excb), init_flag_(false)
   {
   }
   inline bool init()
@@ -88,6 +88,10 @@ public:
   ~Input()
   {
     stop();
+    if (input_param_.read_pcap)
+    {
+      pcap_close(this->pcap_);
+    }
   }
   inline void regRecvMsopCallback(const std::function<void(const PacketMsg&)> callback)
   {
@@ -118,28 +122,28 @@ public:
     }
     return true;
   }
+
   inline void stop()
   {
     if (!input_param_.read_pcap)
     {
-      if (msop_thread_.start.load())
+      msop_thread_.start.store(false);
+      difop_thread_.start.store(false);
+      if (msop_thread_.m_thread->joinable())
       {
-        msop_thread_.start.store(false);
         msop_thread_.m_thread->join();
       }
-      if (difop_thread_.start.load())
+      if (difop_thread_.m_thread->joinable())
       {
-        difop_thread_.start.store(false);
         difop_thread_.m_thread->join();
       }
     }
     else
     {
-      if (pcap_thread_.start.load())
+      pcap_thread_.start.store(false);
+      if (pcap_thread_.m_thread->joinable())
       {
-        pcap_thread_.start.store(false);
         pcap_thread_.m_thread->join();
-        pcap_close(this->pcap_);
       }
     }
   }
@@ -147,6 +151,7 @@ public:
   {
     lidar_type_ = type;
   }
+
 private:
   inline void checkDifopDeadline()
   {
@@ -211,7 +216,6 @@ private:
   {
     while (pcap_thread_.start.load())
     {
-      int ret;
       struct pcap_pkthdr* header;
       const u_char* pkt_data;
       switch (lidar_type_)
@@ -233,7 +237,7 @@ private:
       {
         break;
       }
-      if ((ret = pcap_next_ex(pcap_, &header, &pkt_data)) >= 0)
+      if (pcap_next_ex(pcap_, &header, &pkt_data) >= 0)
       {
         if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
         {

@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 
   LidarDriver<PointXYZI> driver;  ///< Declare the driver object
 
-  RSDriverParam param;                  ///< Creat a parameter object
+  RSDriverParam param;                  ///< Create a parameter object
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number the default 6699
   param.input_param.difop_port = 7788;  ///< Set the lidar difop port number the default 7788
   param.lidar_type = LidarType::RS16;   ///< Set the lidar type. Make sure this type is correct
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
   if (!driver.init(param))                         ///< Call the init funtion and pass the parameter
   {
     std::cout << "Driver Initialize Error..." << std::endl;
-    return 0;
+    return -1;
   }
   driver.start();  ///< The driver thread will start
   std::cout << "RoboSense Lidar-Driver Linux online demo start......" << std::endl;

@@ -16,7 +16,7 @@ LidarDriver()
 
 ```c++
 /**
- * @brief The initialize function, used to set the related parameters and instance objects, 
+ * @brief The initialization function, used to set the related parameters and instance objects, 
  *        used when get packets from online lidar or pcap 
  * @param param The custom struct RSDriverParam 
  * @return If success, return ture; else return false
@@ -26,7 +26,7 @@ inline bool init(const RSDriverParam &param);
 
 ```c++
 /**
- * @brief The initialize function which only initialize decoder(not include input module). If lidar packets are from ROS or other ways excluding online lidar and pcap, call this function to initialize instead of calling init()
+ * @brief The initialization function which only initializes decoder(not include input module). If lidar packets are from ROS or other ways excluding online lidar and pcap, call this function to initialize instead of calling init()
  * @param param The custom struct RSDriverParam 
  */
 inline void initDecoderOnly(const RSDriverParam &param);
@@ -80,6 +80,16 @@ inline void regRecvCallback(const std::function<void(const PacketMsg &)> callbac
  */
 inline void regExceptionCallback(const std::function<void(const Error &)> callback);
 ```
+
+```c++
+/**
+ * @brief Get the current lidar temperature
+ * @return The temperature of lidar
+ */
+inline double getLidarTemperature();
+```
+
+
 
 ```c++
 /**

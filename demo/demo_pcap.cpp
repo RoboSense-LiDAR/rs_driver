@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 
   LidarDriver<PointXYZI> driver;  ///< Declare the driver object
 
-  RSDriverParam param;                                             ///< Creat a parameter object
+  RSDriverParam param;                                             ///< Create a parameter object
   param.input_param.read_pcap = true;                              ///< Set read_pcap to true
   param.input_param.pcap_directory = "/home/robosense/rs16.pcap";  ///< Set the pcap file directory
   param.input_param.device_ip = "192.168.1.200";  ///< Set the lidar ip address, the default is 192.168.1.200
@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
   if (!driver.init(param))                         ///< Call the init funtion and pass the parameter
   {
     std::cout << "Driver Initialize Error..." << std::endl;
-    return 0;
+    return -1;
   }
   driver.start();  ///< The driver thread will start
   std::cout << "RoboSense Lidar-Driver Linux pcap demo start......" << std::endl;
