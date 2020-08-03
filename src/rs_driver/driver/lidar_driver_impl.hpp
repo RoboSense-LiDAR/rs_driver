@@ -305,10 +305,7 @@ private:
       scan_ptr_->packets.emplace_back(std::move(pkt));
       if (ret == DECODE_OK || ret == FRAME_SPLIT)
       {
-        for (auto iter = point_vec.cbegin(); iter != point_vec.cend(); iter++)
-        {
-          point_cloud_ptr_->push_back(*iter);
-        }
+        point_cloud_ptr_->insert(point_cloud_ptr_->end(),point_vec.begin(), point_vec.end());
         if (ret == FRAME_SPLIT)
         {
           PointCloudMsg<PointT> msg(point_cloud_ptr_);
