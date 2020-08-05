@@ -27,15 +27,15 @@ namespace robosense
 namespace lidar
 {
 /**
- * @brief:  This is the RoboSense LiDAR driver interface class.
- *                 Now support RS16,RS32, RSBP & RS128.
+ * @brief This is the RoboSense LiDAR driver interface class
+ *        Now support RS16, RS32, RSBP & RS128
  */
 template <typename PointT>
 class LidarDriver
 {
 public:
   /**
-   * @brief: Constructor, instanciate the driver pointer.
+   * @brief Constructor, instanciate the driver pointer
    */
   LidarDriver()
   {
@@ -43,7 +43,7 @@ public:
   }
 
   /**
-   * @brief: Deconstructor, stop all threads
+   * @brief Deconstructor, stop all threads
    */
   ~LidarDriver()
   {
@@ -51,10 +51,10 @@ public:
   }
 
   /**
-   * @brief The initialization function, used to set the realated parameters and instance objects,
+   * @brief The initialization function, used to set up parameters and instance objects,
    *        used when get packets from online lidar or pcap
    * @param param The custom struct RSDriverParam
-   * @return If success, return ture; else return false
+   * @return If successful, return ture; else return false
    */
   inline bool init(const RSDriverParam& param)
   {
@@ -62,8 +62,8 @@ public:
   }
 
   /**
-   * @brief The initialization function which only initialize decoder(not include input module). If lidar packets are from
-   * ROS or other ways excluding online lidar and pcap, call this function to initialize instead of calling init()
+   * @brief The initialization function which only initialize decoder(not include input module). If lidar packets are
+   * from ROS or other ways excluding online lidar and pcap, call this function to initialize instead of calling init()
    * @param param The custom struct RSDriverParam
    */
   inline void initDecoderOnly(const RSDriverParam& param)
@@ -72,8 +72,8 @@ public:
   }
 
   /**
-   * @brief Start the thread to receive packets, and decode packets
-   * @return If success, return ture; else return false
+   * @brief Start the thread to receive and decode packets
+   * @return If successful, return ture; else return false
    */
   inline bool start()
   {
@@ -81,7 +81,7 @@ public:
   }
 
   /**
-   * @brief: Stop all threads
+   * @brief Stop all threads
    */
   inline void stop()
   {
@@ -119,7 +119,8 @@ public:
   }
 
   /**
-   * @brief Register the camera trigger message callback funtion to driver. 
+   * @brief Register the camera trigger message callback funtion to driver. When trigger message is ready, this function
+   * will be called
    * @param callback The callback funtion
    */
   inline void regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
@@ -146,11 +147,11 @@ public:
   }
 
   /**
-   * @brief Decode the lidar scan message to point cloud
+   * @brief Decode lidar scan messages to point cloud
    * @note This function will only work after decodeDifopPkt is called unless wait_for_difop is set to false
    * @param pkt_scan_msg The lidar scan message
    * @param point_cloud_msg The output point cloud message
-   * @return if decode success, return true; else return false
+   * @return if decode successfully, return true; else return false
    */
   inline bool decodeMsopScan(const ScanMsg& pkt_scan_msg, PointCloudMsg<PointT>& point_msg)
   {
@@ -158,7 +159,7 @@ public:
   }
 
   /**
-   * @brief: Decode the lidar difop message
+   * @brief Decode lidar difop messages
    * @param pkt_msg The lidar difop packet
    */
   inline void decodeDifopPkt(const PacketMsg& pkt_msg)

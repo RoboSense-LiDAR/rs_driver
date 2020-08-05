@@ -38,7 +38,7 @@ enum LidarType  ///< The lidar type
 
 typedef struct RSCameraTriggerParam  ///< The serial port parameters
 {
-  std::map<double,std::string> trigger_map;
+  std::map<double,std::string> trigger_map; ///< The map stored the trigger angle and camera frame id
   void print() const  ///< This function is used to print all the parameters for debug
   {
     std::cout << "\033[1m\033[32m"
@@ -61,8 +61,8 @@ typedef struct RSCameraTriggerParam  ///< The serial port parameters
 
 typedef struct RSDecoderParam  ///< The lidar decoder parameter
 {
-  float max_distance = 200.0f;    ///< The max distance of lidar detect range
-  float min_distance = 0.2f;      ///< The minimum distance of lidar detect range
+  float max_distance = 200.0f;    ///< The max distance of point cloud range
+  float min_distance = 0.2f;      ///< The minimum distance of point cloud range
   float start_angle = 0.0f;       ///< The start angle of point cloud
   float end_angle = 360.0f;       ///< The end angle of point cloud
   uint16_t mode_split_frame = 1;  ///< 1: Split frames by cut_angle; 2: Split frames by fixed number of packets; 3:

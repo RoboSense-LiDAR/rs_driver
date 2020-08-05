@@ -19,7 +19,7 @@ LidarDriver()
  * @brief The initialization function, used to set the related parameters and instance objects, 
  *        used when get packets from online lidar or pcap 
  * @param param The custom struct RSDriverParam 
- * @return If success, return ture; else return false
+ * @return If successful, return ture; else return false
  */
 inline bool init(const RSDriverParam &param);
 ```
@@ -36,8 +36,8 @@ inline void initDecoderOnly(const RSDriverParam &param);
 
 ```c++
 /**
- * @brief Start the threads to receive packets and decode packets
- * @return If success, return ture; else return false
+ * @brief Start the threads to receive decode packets
+ * @return If successful, return ture; else return false
  */
 inline bool start();
 ```
@@ -74,6 +74,18 @@ inline void regRecvCallback(const std::function<void(const PacketMsg &)> callbac
 ```
 
 ```c++
+  /**
+   * @brief Register the camera trigger message callback funtion to driver. When trigger message is ready, this function
+   * will be called
+   * @param callback The callback funtion
+   */
+  inline void regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
+  {
+    driver_ptr_->regRecvCallback(callback);
+  }
+```
+
+```c++
 /**
  * @brief Register the exception message callback funtion to driver. When error occurs, this function will be called
  * @param callback The callback funtion  
@@ -93,18 +105,18 @@ inline double getLidarTemperature();
 
 ```c++
 /**
- * @brief Decode the lidar scan message to point cloud
+ * @brief Decode lidar scan messages to point cloud
  * @note This function will only work after decodeDifopPkt is called unless wait_for_difop is set to false
  * @param pkt_scan_msg The lidar scan message
  * @param point_cloud_msg The output point cloud message
- * @return if decode success, return true; else return false
+ * @return if decode successfully, return true; else return false
  */
 inline bool decodeMsopScan(const ScanMsg &pkt_scan_msg, PointCloudMsg<PointT> &point_cloud_msg);
 ```
 
 ```c++
 /**
- * @brief Decode the lidar difop message
+ * @brief Decode lidar difop messages
  * @param packet_msg The lidar difop packet 
  */
 inline void decodeDifopPkt(const PacketMsg &packet_msg);

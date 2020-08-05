@@ -32,8 +32,8 @@ struct PointXYZI  ///< user defined point type
 };
 
 /**
- * @brief: The point cloud callback function. This funciton will be registered to lidar driver.
- *              When the point cloud message is ready, driver can send out message through this function.
+ * @brief The point cloud callback function. This function will be registered to lidar driver.
+ *              When the point cloud message is ready, driver can send out messages through this function.
  * @param msg  The lidar point cloud message.
  */
 void pointCloudCallback(const PointCloudMsg<PointXYZI>& msg)
@@ -44,7 +44,7 @@ void pointCloudCallback(const PointCloudMsg<PointXYZI>& msg)
 }
 
 /**
- * @brief: The exception callback function. This function will be registered to lidar driver.
+ * @brief The exception callback function. This function will be registered to lidar driver.
  * @param code The error code struct.
  */
 void exceptionCallback(const Error& code)
@@ -67,8 +67,8 @@ int main(int argc, char* argv[])
   LidarDriver<PointXYZI> driver;  ///< Declare the driver object
 
   RSDriverParam param;                  ///< Create a parameter object
-  param.input_param.msop_port = 6699;   ///< Set the lidar msop port number the default 6699
-  param.input_param.difop_port = 7788;  ///< Set the lidar difop port number the default 7788
+  param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
+  param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
   param.lidar_type = LidarType::RS16;   ///< Set the lidar type. Make sure this type is correct
   param.print();
 

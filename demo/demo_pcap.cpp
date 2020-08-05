@@ -32,8 +32,8 @@ struct PointXYZI  ///< user defined point type
 };
 
 /**
- * @brief: The point cloud callback function. This funciton will be registered to lidar driver.
- *              When the point cloud message is ready, driver can send out message through this function.
+ * @brief The point cloud callback function. This function will be registered to lidar driver.
+ *              When the point cloud message is ready, driver can send out messages through this function.
  * @param msg  The lidar point cloud message.
  */
 void pointCloudCallback(const PointCloudMsg<PointXYZI>& msg)
@@ -44,7 +44,7 @@ void pointCloudCallback(const PointCloudMsg<PointXYZI>& msg)
 }
 
 /**
- * @brief: The exception callback function. This function will be registered to lidar driver.
+ * @brief The exception callback function. This function will be registered to lidar driver.
  * @param code The error code struct.
  */
 void exceptionCallback(const Error& code)
