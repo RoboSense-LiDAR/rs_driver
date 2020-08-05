@@ -89,7 +89,7 @@ typedef struct
   uint16_t sw_ver;
   RSTimestamp timestamp;
   RSStatus status;
-  uint8_t reserved1[11];
+  uint8_t reserved1[5];
   RSDiagno diagno;
   uint8_t gprmc[86];
   uint8_t static_cali[697];
@@ -119,6 +119,7 @@ public:
 template <typename vpoint>
 DecoderRS16<vpoint>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
 {
+  this->point_cloud_height_ = 16;
   this->Rx_ = 0.03825;
   this->Ry_ = -0.01088;
   this->Rz_ = 0;
@@ -153,15 +154,14 @@ double DecoderRS16<vpoint>::getLidarTime(const uint8_t* pkt)
 template <typename vpoint>
 int DecoderRS16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
 {
-  height = 16;
+  height = this->point_cloud_height_;
   RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS16_MSOP_ID)
   {
-    //      rs_print(RS_ERROR, "[RS16] MSOP pkt ID no match.");
     return -2;
   }
-  int first_azimuth;
-  first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
+  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
+  int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   if (this->trigger_flag_)
   {
     double timestamp = 0;
@@ -175,7 +175,6 @@ int DecoderRS16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
     }
     this->checkTriggerAngle(first_azimuth, timestamp);
   }
-  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   for (int blk_idx = 0; blk_idx < RS16_BLOCKS_PER_PKT; blk_idx++)
   {
     if (mpkt_ptr->blocks[blk_idx].id != RS16_BLOCK_ID)
@@ -216,7 +215,7 @@ int DecoderRS16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
       int azimuth_final = (((int)azimuth_channel % 36000) + 36000) % 36000;
 
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
-      float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
+      float distance_cali = distance * RS_RESOLUTION;
 
       int angle_horiz_ori = azimuth_final;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16]) % 36000) + 36000) % 36000;

@@ -28,8 +28,7 @@ namespace lidar
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
-#define RS_RESOLUTION_5mm_DISTANCE_COEF (0.005)
-#define RS_RESOLUTION_10mm_DISTANCE_COEF (0.01)
+#define RS_RESOLUTION (0.005)
 enum RSEchoMode
 {
   ECHO_DUAL = 0,
@@ -159,11 +158,14 @@ typedef struct
   uint8_t device_current[3];
   uint8_t main_current[3];
   uint16_t vol_12v;
-  uint16_t vol_12vm;
-  uint16_t vol_5v;
-  uint16_t vol_3v3;
-  uint16_t vol_2v5;
-  uint16_t vol_1v2;
+  uint16_t vol_sim_1v8;
+  uint16_t vol_dig_3v3;
+  uint16_t vol_sim_3v3;
+  uint16_t vol_dig_5v4;
+  uint16_t vol_sim_5v;
+  uint16_t vol_ejc_5v;
+  uint16_t vol_recv_5v;
+  uint16_t vol_apd;
 }
 #ifdef __GNUC__
 __attribute__((packed))
@@ -172,8 +174,8 @@ RSStatus;
 
 typedef struct
 {
-  uint8_t reserved1[10];
-  uint8_t checksum;
+  uint8_t reserved1[9];
+  uint16_t checksum;
   uint16_t manc_err1;
   uint16_t manc_err2;
   uint8_t gps_status;
@@ -205,14 +207,15 @@ public:
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase();
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& point_cloud_vec, int& height);
-  virtual int32_t processDifopPkt(const uint8_t* pkt);
+  virtual int processDifopPkt(const uint8_t* pkt);
   virtual void loadCalibrationFile(const std::string& angle_path);
   virtual void regRecvCallback(const std::function<void(const CameraTrigger&)> callback);  ///< Camera trigger
   virtual double getLidarTime(const uint8_t* pkt) = 0;
   virtual double getLidarTemperature();
 
 protected:
-  int32_t rpm_;
+  int point_cloud_height_;
+  int rpm_;
   uint8_t echo_mode_;
   uint8_t channel_num_;
   float Rx_;
@@ -442,7 +445,6 @@ void DecoderBase<vpoint>::loadCalibrationFile(const std::string& angle_path)
 {
   int row_index = 0;
   std::string line_str;
-
   // read angle.csv
   std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
   if (fd_angle.is_open())

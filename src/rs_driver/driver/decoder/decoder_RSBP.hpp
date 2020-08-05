@@ -88,7 +88,7 @@ typedef struct
   uint16_t sw_ver;
   RSTimestamp timestamp;
   RSStatus status;
-  uint8_t reserved1[11];
+  uint8_t reserved1[5];
   RSDiagno diagno;
   uint8_t gprmc[86];
   uint8_t pitch_cali[96];
@@ -221,7 +221,7 @@ int DecoderRSBP<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
       int azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
 
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
-      float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
+      float distance_cali = distance * RS_RESOLUTION;
 
       int angle_horiz_ori = (int)(azimuth_channel + 36000) % 36000;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;

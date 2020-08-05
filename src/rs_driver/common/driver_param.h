@@ -33,13 +33,14 @@ enum LidarType  ///< The lidar type
   RS16 = 0x01,
   RS32 = 0x02,
   RSBP = 0x03,
-  RS128 = 0x04
+  RS128 = 0x04,
+  RS80 = 0x05
 };
 
 typedef struct RSCameraTriggerParam  ///< The serial port parameters
 {
-  std::map<double,std::string> trigger_map; ///< The map stored the trigger angle and camera frame id
-  void print() const  ///< This function is used to print all the parameters for debug
+  std::map<double, std::string> trigger_map;  ///< The map stored the trigger angle and camera frame id
+  void print() const                          ///< This function is used to print all the parameters for debug
   {
     std::cout << "\033[1m\033[32m"
               << "------------------------------------------------------"
@@ -181,6 +182,13 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
                   << "RS128"
                   << "\033[0m" << std::endl;
         break;
+      case LidarType::RS80:
+        std::cout << "lidar_type : "
+                  << "\033[0m";
+        std::cout << "\033[1m\033[32m"
+                  << "RS80"
+                  << "\033[0m" << std::endl;
+        break;
       case LidarType::RSAUTO:
         std::cout << "lidar_type : "
                   << "\033[0m";
@@ -218,6 +226,10 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     {
       return lidar::LidarType::RS128;
     }
+    else if (type == "RS80")
+    {
+      return lidar::LidarType::RS80;
+    }
     else if (type == "RSAUTO")
     {
       return lidar::LidarType::RSAUTO;
@@ -227,7 +239,7 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
       std::cout << "\033[1m\033[31m"
                 << "Wrong lidar type : " << type << std::endl;
       std::cout << "\033[1m\033[31m"
-                << "Please setup the correct type: RS16, RS32, RSBP, RS128, RSAUTO" << std::endl;
+                << "Please setup the correct type: RS16, RS32, RSBP, RS128, RS80, RSAUTO" << std::endl;
       exit(-1);
     }
   }

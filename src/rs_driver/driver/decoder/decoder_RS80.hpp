@@ -24,15 +24,15 @@ namespace robosense
 {
 namespace lidar
 {
-#define RS128_MSOP_ID (0x5A05AA55)  // big endian
-#define RS128_BLOCK_ID (0xFE)
-#define RS128_DIFOP_ID (0x555511115A00FFA5)  // big endian
-#define RS128_CHANNELS_PER_BLOCK (128)
-#define RS128_BLOCKS_PER_PKT (3)
-#define RS128_TEMPERATURE_MIN (31)
-#define RS128_TEMPERATURE_RANGE (50)
-#define RS128_DSR_TOFFSET (3.23)
-#define RS128_BLOCK_TDURATION (55.55)
+#define RS80_MSOP_ID (0x5A05AA55)  // big endian
+#define RS80_BLOCK_ID (0xFE)
+#define RS80_DIFOP_ID (0x555511115A00FFA5)  // big endian
+#define RS80_CHANNELS_PER_BLOCK (80)
+#define RS80_BLOCKS_PER_PKT (4)
+#define RS80_TEMPERATURE_MIN (31)
+#define RS80_TEMPERATURE_RANGE (50)
+#define RS80_DSR_TOFFSET (3.23)
+#define RS80_BLOCK_TDURATION (55.55)
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
@@ -42,12 +42,12 @@ typedef struct
   uint8_t id;
   uint8_t ret_id;
   uint16_t azimuth;
-  RSChannel channels[RS128_CHANNELS_PER_BLOCK];
+  RSChannel channels[RS80_CHANNELS_PER_BLOCK];
 }
 #ifdef __GNUC__
 __attribute__((packed))
 #endif
-RS128MsopBlock;
+RS80MsopBlock;
 
 typedef struct
 {
@@ -64,18 +64,19 @@ typedef struct
 #ifdef __GNUC__
 __attribute__((packed))
 #endif
-RS128MsopHeader;
+RS80MsopHeader;
 
 typedef struct
 {
-  RS128MsopHeader header;
-  RS128MsopBlock blocks[RS128_BLOCKS_PER_PKT];
+  RS80MsopHeader header;
+  RS80MsopBlock blocks[RS80_BLOCKS_PER_PKT];
+  uint8_t reserved[188];
   uint32_t index;
 }
 #ifdef __GNUC__
 __attribute__((packed))
 #endif
-RS128MsopPkt;
+RS80MsopPkt;
 
 typedef struct
 {
@@ -86,7 +87,7 @@ typedef struct
 #ifdef __GNUC__
 __attribute__((packed))
 #endif
-RS128TimeInfo;
+RS80TimeInfo;
 
 typedef struct
 {
@@ -101,7 +102,7 @@ typedef struct
 #ifdef __GNUC__
 __attribute__((packed))
 #endif
-RS128EthNet;
+RS80EthNet;
 
 typedef struct
 {
@@ -114,22 +115,22 @@ typedef struct
 #ifdef __GNUC__
 __attribute__((packed))
 #endif
-RS128Version;
+RS80Version;
 
 typedef struct
 {
   uint64_t id;
   uint16_t rpm;
-  RS128EthNet eth;
+  RS80EthNet eth;
   RSFOV fov;
   uint16_t reserved_0;
   uint16_t phase_lock_angle;
-  RS128Version version;
+  RS80Version version;
   uint8_t reserved_1[229];
   RSSn sn;
   uint16_t zero_cali;
   uint8_t return_mode;
-  RS128TimeInfo time_info;
+  RS80TimeInfo time_info;
   RSStatus status;
   uint8_t reserved_2[5];
   RSDiagno diagno;
@@ -142,17 +143,17 @@ typedef struct
 #ifdef __GNUC__
 __attribute__((packed))
 #endif
-RS128DifopPkt;
+RS80DifopPkt;
 
 #ifdef _MSC_VER
 #pragma pack(pop)
 #endif
 
 template <typename vpoint>
-class DecoderRS128 : public DecoderBase<vpoint>
+class DecoderRS80 : public DecoderBase<vpoint>
 {
 public:
-  DecoderRS128(const RSDecoderParam& param);
+  DecoderRS80(const RSDecoderParam& param);
   int32_t decodeDifopPkt(const uint8_t* pkt);
   int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
@@ -160,13 +161,12 @@ public:
 };
 
 template <typename vpoint>
-DecoderRS128<vpoint>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
+DecoderRS80<vpoint>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
 {
-  this->point_cloud_height_ = 128;
   this->Rx_ = 0.03615;
   this->Ry_ = -0.017;
   this->Rz_ = 0;
-  this->channel_num_ = 128;
+  this->channel_num_ = 80;
 
   if (this->max_distance_ > 250.0f)
   {
@@ -182,9 +182,9 @@ DecoderRS128<vpoint>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<vp
 }
 
 template <typename vpoint>
-double DecoderRS128<vpoint>::getLidarTime(const uint8_t* pkt)
+double DecoderRS80<vpoint>::getLidarTime(const uint8_t* pkt)
 {
-  RS128MsopPkt* mpkt_ptr = (RS128MsopPkt*)pkt;
+  RS80MsopPkt* mpkt_ptr = (RS80MsopPkt*)pkt;
   union u_ts
   {
     uint8_t data[8];
@@ -203,7 +203,7 @@ double DecoderRS128<vpoint>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename vpoint>
-float DecoderRS128<vpoint>::computeTemperature(const uint8_t temp_low, const uint8_t temp_high)
+float DecoderRS80<vpoint>::computeTemperature(const uint8_t temp_low, const uint8_t temp_high)
 {
   uint8_t neg_flag = temp_low & 0x80;
   float msb = temp_low & 0x7F;
@@ -222,19 +222,23 @@ float DecoderRS128<vpoint>::computeTemperature(const uint8_t temp_low, const uin
 }
 
 template <typename vpoint>
-int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
+int DecoderRS80<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
 {
-  height = this->point_cloud_height_;
-  RS128MsopPkt* mpkt_ptr = (RS128MsopPkt*)pkt;
-  if (mpkt_ptr->header.id != RS128_MSOP_ID)
+  height = 80;
+  RS80MsopPkt* mpkt_ptr = (RS80MsopPkt*)pkt;
+  if (mpkt_ptr->header.id != RS80_MSOP_ID)
   {
+    //      rs_print(RS_ERROR, "[RS80] MSOP pkt ID no match.");
     return -2;
   }
 
+  float azimuth_corrected_float;
   this->current_temperature_ = computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   int second_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[1].azimuth);
   int third_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[2].azimuth);
+  int forth_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[3].azimuth);
+
   if (this->trigger_flag_)
   {
     double timestamp = 0;
@@ -248,10 +252,10 @@ int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>&
     }
     this->checkTriggerAngle(first_azimuth, timestamp);
   }
-  for (int blk_idx = 0; blk_idx < RS128_BLOCKS_PER_PKT; blk_idx++)
+  for (int blk_idx = 0; blk_idx < RS80_BLOCKS_PER_PKT; blk_idx++)
   {
     int cur_azimuith = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-    if (mpkt_ptr->blocks[blk_idx].id != RS128_BLOCK_ID)
+    if (mpkt_ptr->blocks[blk_idx].id != RS80_BLOCK_ID)
     {
       break;
     }
@@ -268,18 +272,20 @@ int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>&
           azimuth_diff = (float)((36000 + second_azimuth - first_azimuth) % 36000);
           break;
         case 1:
-        case 2:
           azimuth_diff = (float)((36000 + third_azimuth - second_azimuth) % 36000);
+          break;
+        case 2:
+        case 3:
+          azimuth_diff = (float)((36000 + forth_azimuth - third_azimuth) % 36000);
           break;
       }
     }
-  float azimuth_corrected_float;
 
-    for (int channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
+    for (int channel_idx = 0; channel_idx < RS80_CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
 
-      azimuth_corrected_float = cur_azimuith + (azimuth_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
+      azimuth_corrected_float = cur_azimuith + (azimuth_diff * (dsr_temp * RS80_DSR_TOFFSET) / RS80_BLOCK_TDURATION);
       int azimuth_final = this->azimuthCalibration(azimuth_corrected_float, channel_idx);
 
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
@@ -287,6 +293,7 @@ int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>&
 
       int angle_horiz_ori = (int)(azimuth_corrected_float + 36000) % 36000;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
+
 
       vpoint point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
@@ -320,21 +327,21 @@ int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>&
 }
 
 template <typename vpoint>
-int DecoderRS128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
+int DecoderRS80<vpoint>::decodeDifopPkt(const uint8_t* pkt)
 {
-  RS128DifopPkt* rs128_ptr = (RS128DifopPkt*)pkt;
-  if (rs128_ptr->id != RS128_DIFOP_ID)
+  RS80DifopPkt* difop_ptr = (RS80DifopPkt*)pkt;
+  if (difop_ptr->id != RS80_DIFOP_ID)
   {
-    //		rs_print(RS_ERROR, "[RS128] DIFOP pkt ID no match.");
+    //		rs_print(RS_ERROR, "[RS80] DIFOP pkt ID no match.");
     return -2;
   }
 
   int pkt_rate = 6000;
-  this->rpm_ = RS_SWAP_SHORT(rs128_ptr->rpm);
+  this->rpm_ = RS_SWAP_SHORT(difop_ptr->rpm);
 
-  if (rs128_ptr->return_mode == 0x01 || rs128_ptr->return_mode == 0x02)
+  if (difop_ptr->return_mode == 0x01 || difop_ptr->return_mode == 0x02)
   {  // 1,2: single echo
-    this->echo_mode_ = rs128_ptr->return_mode;
+    this->echo_mode_ = difop_ptr->return_mode;
   }
   else
   {  // 3: dual echo
@@ -351,7 +358,7 @@ int DecoderRS128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
   {
     bool angle_flag = true;
     const uint8_t* p_ver_cali;
-    p_ver_cali = (uint8_t*)(rs128_ptr->ver_angle_cali);
+    p_ver_cali = (uint8_t*)(difop_ptr->ver_angle_cali);
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
     {
@@ -364,9 +371,9 @@ int DecoderRS128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
       for (int i = 0; i < 128; i++)
       {
         // calculation of vertical angle
-        lsb = rs128_ptr->ver_angle_cali[i].sign;
-        mid = rs128_ptr->ver_angle_cali[i].value[0];
-        msb = rs128_ptr->ver_angle_cali[i].value[1];
+        lsb = difop_ptr->ver_angle_cali[i].sign;
+        mid = difop_ptr->ver_angle_cali[i].value[0];
+        msb = difop_ptr->ver_angle_cali[i].value[1];
         if (lsb == 0)
         {
           neg = 1;
@@ -378,9 +385,9 @@ int DecoderRS128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
         this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
 
         // horizontal offset angle
-        lsb = rs128_ptr->hori_angle_cali[i].sign;
-        mid = rs128_ptr->hori_angle_cali[i].value[0];
-        msb = rs128_ptr->hori_angle_cali[i].value[1];
+        lsb = difop_ptr->hori_angle_cali[i].sign;
+        mid = difop_ptr->hori_angle_cali[i].value[0];
+        msb = difop_ptr->hori_angle_cali[i].value[1];
         if (lsb == 0)
         {
           neg = 1;
@@ -392,6 +399,7 @@ int DecoderRS128<vpoint>::decodeDifopPkt(const uint8_t* pkt)
         this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
       }
       this->difop_flag_ = true;
+
     }
   }
   return 0;

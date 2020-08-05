@@ -21,6 +21,7 @@
  *****************************************************************************/
 #include <rs_driver/driver/decoder/decoder_RS16.hpp>
 #include <rs_driver/driver/decoder/decoder_RS32.hpp>
+#include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #include <rs_driver/driver/input.hpp>
@@ -56,6 +57,9 @@ public:
         case LidarType::RS128:
           return std::make_shared<DecoderRS128<vpoint>>(param);
           break;
+        case LidarType::RS80:
+          return std::make_shared<DecoderRS80<vpoint>>(param);
+          break;
         default:
           ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << REND;
           exit(-1);
@@ -77,6 +81,9 @@ public:
           break;
         case LidarType::RS128:
           return std::make_shared<DecoderRS128<vpoint>>(param);
+          break;
+        case LidarType::RS80:
+          return std::make_shared<DecoderRS80<vpoint>>(param);
           break;
         default:
           ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << REND;
@@ -105,6 +112,9 @@ public:
         case LidarType::RS128:
           return std::make_shared<DecoderRS128<vpoint>>(param);
           break;
+        case LidarType::RS80:
+          return std::make_shared<DecoderRS80<vpoint>> (param);
+          break;
         default:
           ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << REND;
           exit(-1);
@@ -125,6 +135,9 @@ public:
           break;
         case LidarType::RS128:
           return std::make_shared<DecoderRS128<vpoint>>(param);
+          break;
+        case LidarType::RS80:
+          return std::make_shared<DecoderRS80<vpoint>>(param);
           break;
         default:
           ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << REND;

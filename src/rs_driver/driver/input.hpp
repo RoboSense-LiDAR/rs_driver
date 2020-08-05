@@ -24,6 +24,7 @@
 #define RS32_PCAP_SLEEP_DURATION 500
 #define RSBP_PCAP_SLEEP_DURATION 500
 #define RS128_PCAP_SLEEP_DURATION 100
+#define RS80_PCAP_SLEEP_DURATION 120
 
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
@@ -231,6 +232,9 @@ private:
           break;
         case LidarType::RS128:
           usleep(RS128_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
+          break;
+        case LidarType::RS80:
+          usleep(RS80_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
           break;
       }
       if (!pcap_thread_.start.load())
