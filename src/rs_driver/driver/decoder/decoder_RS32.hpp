@@ -121,7 +121,7 @@ DecoderRS32<vpoint>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<vpoi
   this->Rx_ = 0.03997;
   this->Ry_ = -0.01087;
   this->Rz_ = 0;
-  this->channel_num_ = 32;
+  this->beam_num_ = 32;
   if (this->max_distance_ > 200.0f)
   {
     this->max_distance_ = 200.0f;
@@ -130,7 +130,6 @@ DecoderRS32<vpoint>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<vpoi
   {
     this->min_distance_ = 0.4f;
   }
-  //    rs_print(RS_INFO, "[RS32] Constructor.");
 }
 
 template <typename vpoint>
@@ -152,30 +151,25 @@ double DecoderRS32<vpoint>::getLidarTime(const uint8_t* pkt)
 template <typename vpoint>
 int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
 {
-  height = 32;
+  height = this->beam_num_;
   RS32MsopPkt* mpkt_ptr = (RS32MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS32_MSOP_ID)
   {
-    //      rs_print(RS_ERROR, "[RS32] MSOP pkt ID no match.");
-    return -2;
+    return RSDecoderResult::DECODE_FAIL;
   }
-
-  int first_azimuth;
-  first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
+  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
+  int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   if (this->trigger_flag_)
   {
-    double timestamp = 0;
     if (this->use_lidar_clock_)
     {
-      timestamp = getLidarTime(pkt);
+      this->checkTriggerAngle(first_azimuth, getLidarTime(pkt));
     }
     else
     {
-      timestamp = getTime();
+      this->checkTriggerAngle(first_azimuth, getTime());
     }
-    this->checkTriggerAngle(first_azimuth, timestamp);
   }
-  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
 
   for (int blk_idx = 0; blk_idx < RS32_BLOCKS_PER_PKT; blk_idx++)
   {
@@ -183,42 +177,34 @@ int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
     {
       break;
     }
-    int azimuth_blk = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-    int azi_prev = 0;
-    int azi_cur = 0;
+    int cur_azi = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
+    float azi_diff = 0;
     if (this->echo_mode_ == ECHO_DUAL)
     {
       if (blk_idx < (RS32_BLOCKS_PER_PKT - 2))  // 12
       {
-        azi_prev = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 2].azimuth);
-        azi_cur = azimuth_blk;
+        azi_diff = (float)((36000 + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 2].azimuth) - cur_azi) % 36000);
       }
       else
       {
-        azi_prev = azimuth_blk;
-        azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 2].azimuth);
+        azi_diff = (float)((36000 + cur_azi - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 2].azimuth)) % 36000);
       }
     }
     else
     {
       if (blk_idx < (RS32_BLOCKS_PER_PKT - 1))  // 12
       {
-        azi_prev = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth);
-        azi_cur = azimuth_blk;
+        azi_diff = (float)((36000 + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth) - cur_azi) % 36000);
       }
       else
       {
-        azi_prev = azimuth_blk;
-        azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth);
+        azi_diff = (float)((36000 + cur_azi - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) % 36000);
       }
     }
-
-    float azimuth_diff = (float)((36000 + azi_prev - azi_cur) % 36000);
     float azimuth_channel;
     for (int channel_idx = 0; channel_idx < RS32_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      azimuth_channel =
-          azimuth_blk + (azimuth_diff * RS32_CHANNEL_TOFFSET * (channel_idx % 16) / RS32_FIRING_TDURATION);
+      azimuth_channel = cur_azi + (azi_diff * RS32_CHANNEL_TOFFSET * (channel_idx % 16) / RS32_FIRING_TDURATION);
       int azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
 
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);

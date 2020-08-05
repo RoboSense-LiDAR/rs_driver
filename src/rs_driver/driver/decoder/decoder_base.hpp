@@ -214,10 +214,9 @@ public:
   virtual double getLidarTemperature();
 
 protected:
-  int point_cloud_height_;
   int rpm_;
   uint8_t echo_mode_;
-  uint8_t channel_num_;
+  int beam_num_;
   float Rx_;
   float Ry_;
   float Rz_;
@@ -247,7 +246,8 @@ protected:
   static std::vector<double> sin_lookup_table_;
 
 protected:
-  virtual float computeTemperature(const uint16_t temp_raw);
+  virtual float computeTemperature(const uint16_t& temp_raw);
+  virtual float computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high);
   virtual int32_t azimuthCalibration(float azimuth, const int& channel);
   virtual void checkTriggerAngle(const int& angle, const double& timestamp);
   virtual int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height) = 0;
@@ -411,8 +411,9 @@ double DecoderBase<vpoint>::getLidarTemperature()
   return current_temperature_;
 }
 
+/* 16, 32, & BP */
 template <typename vpoint>
-float DecoderBase<vpoint>::computeTemperature(const uint16_t temp_raw)
+float DecoderBase<vpoint>::computeTemperature(const uint16_t& temp_raw)
 {
   uint8_t neg_flag = (temp_raw >> 8) & 0x80;
   float msb = (temp_raw >> 8) & 0x7F;
@@ -425,6 +426,26 @@ float DecoderBase<vpoint>::computeTemperature(const uint16_t temp_raw)
   else
   {
     temp = (msb * 32 + lsb) * 0.0625f;
+  }
+
+  return temp;
+}
+
+/* 128 & 80 */
+template <typename vpoint>
+float DecoderBase<vpoint>::computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high)
+{
+  uint8_t neg_flag = temp_low & 0x80;
+  float msb = temp_low & 0x7F;
+  float lsb = temp_high >> 4;
+  float temp;
+  if (neg_flag == 0x80)
+  {
+    temp = -1 * (msb * 16 + lsb) * 0.0625f;
+  }
+  else
+  {
+    temp = (msb * 16 + lsb) * 0.0625f;
   }
 
   return temp;
@@ -470,7 +491,7 @@ void DecoderBase<vpoint>::loadCalibrationFile(const std::string& angle_path)
         break;
       }
       row_index++;
-      if (row_index >= channel_num_)
+      if (row_index >= beam_num_)
       {
         break;
       }

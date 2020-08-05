@@ -156,18 +156,15 @@ public:
   int32_t decodeDifopPkt(const uint8_t* pkt);
   int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
-  float computeTemperature(const uint8_t temp_low, const uint8_t temp_high);
 };
 
 template <typename vpoint>
 DecoderRS128<vpoint>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
 {
-  this->point_cloud_height_ = 128;
   this->Rx_ = 0.03615;
   this->Ry_ = -0.017;
   this->Rz_ = 0;
-  this->channel_num_ = 128;
-
+  this->beam_num_ = 128;
   if (this->max_distance_ > 250.0f)
   {
     this->max_distance_ = 250.0f;
@@ -176,9 +173,6 @@ DecoderRS128<vpoint>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<vp
   {
     this->min_distance_ = 1.0f;
   }
-
-  int pkt_rate = 6000;
-  this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
 }
 
 template <typename vpoint>
@@ -189,115 +183,88 @@ double DecoderRS128<vpoint>::getLidarTime(const uint8_t* pkt)
   {
     uint8_t data[8];
     uint64_t ts;
-  } t;
+  } timestamp;
 
-  t.data[7] = 0;
-  t.data[6] = 0;
-  t.data[5] = mpkt_ptr->header.timestamp_utc.sec[0];
-  t.data[4] = mpkt_ptr->header.timestamp_utc.sec[1];
-  t.data[3] = mpkt_ptr->header.timestamp_utc.sec[2];
-  t.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
-  t.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
-  t.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
-  return (double)t.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
-}
-
-template <typename vpoint>
-float DecoderRS128<vpoint>::computeTemperature(const uint8_t temp_low, const uint8_t temp_high)
-{
-  uint8_t neg_flag = temp_low & 0x80;
-  float msb = temp_low & 0x7F;
-  float lsb = temp_high >> 4;
-  float temp;
-  if (neg_flag == 0x80)
-  {
-    temp = -1 * (msb * 16 + lsb) * 0.0625f;
-  }
-  else
-  {
-    temp = (msb * 16 + lsb) * 0.0625f;
-  }
-
-  return temp;
+  timestamp.data[7] = 0;
+  timestamp.data[6] = 0;
+  timestamp.data[5] = mpkt_ptr->header.timestamp_utc.sec[0];
+  timestamp.data[4] = mpkt_ptr->header.timestamp_utc.sec[1];
+  timestamp.data[3] = mpkt_ptr->header.timestamp_utc.sec[2];
+  timestamp.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
+  timestamp.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
+  timestamp.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
+  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
 }
 
 template <typename vpoint>
 int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
 {
-  height = this->point_cloud_height_;
+  height = this->beam_num_;
   RS128MsopPkt* mpkt_ptr = (RS128MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS128_MSOP_ID)
   {
-    return -2;
+    return RSDecoderResult::DECODE_FAIL;
   }
-
-  this->current_temperature_ = computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
+  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   int second_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[1].azimuth);
   int third_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[2].azimuth);
   if (this->trigger_flag_)
   {
-    double timestamp = 0;
     if (this->use_lidar_clock_)
     {
-      timestamp = getLidarTime(pkt);
+      this->checkTriggerAngle(first_azimuth, getLidarTime(pkt));
     }
     else
     {
-      timestamp = getTime();
+      this->checkTriggerAngle(first_azimuth, getTime());
     }
-    this->checkTriggerAngle(first_azimuth, timestamp);
   }
   for (int blk_idx = 0; blk_idx < RS128_BLOCKS_PER_PKT; blk_idx++)
   {
-    int cur_azimuith = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
     if (mpkt_ptr->blocks[blk_idx].id != RS128_BLOCK_ID)
     {
       break;
     }
-    float azimuth_diff = 0;
+    int cur_azi = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
+    float azi_diff = 0;
     if (this->echo_mode_ == ECHO_DUAL)
     {
-      azimuth_diff = (float)((36000 + third_azimuth - first_azimuth) % 36000);
+      azi_diff = (float)((36000 + third_azimuth - first_azimuth) % 36000);
     }
     else
     {
       switch (blk_idx)
       {
         case 0:
-          azimuth_diff = (float)((36000 + second_azimuth - first_azimuth) % 36000);
+          azi_diff = (float)((36000 + second_azimuth - first_azimuth) % 36000);
           break;
         case 1:
         case 2:
-          azimuth_diff = (float)((36000 + third_azimuth - second_azimuth) % 36000);
+          azi_diff = (float)((36000 + third_azimuth - second_azimuth) % 36000);
           break;
       }
     }
-  float azimuth_corrected_float;
-
+    
     for (int channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
-
-      azimuth_corrected_float = cur_azimuith + (azimuth_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
-      int azimuth_final = this->azimuthCalibration(azimuth_corrected_float, channel_idx);
-
-      int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
-      float distance_cali = distance * RS_RESOLUTION;
-
-      int angle_horiz_ori = (int)(azimuth_corrected_float + 36000) % 36000;
+      float azi_channel_ori = cur_azi + (azi_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
+      int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
+      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance)* RS_RESOLUTION;
+      int angle_horiz = (int)(azi_channel_ori + 36000) % 36000;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
       vpoint point;
-      if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
-          ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
-           (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
+      if ((distance <= this->max_distance_ && distance >= this->min_distance_) &&
+          ((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
+           (!this->angle_flag_ && ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
-        point.x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azimuth_final] +
-                  this->Rx_ * this->cos_lookup_table_[angle_horiz_ori];
-        point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azimuth_final] -
-                  this->Rx_ * this->sin_lookup_table_[angle_horiz_ori];
-        point.z = distance_cali * this->sin_lookup_table_[angle_vert] + this->Rz_;
+        point.x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
+                  this->Rx_ * this->cos_lookup_table_[angle_horiz];
+        point.y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
+                  this->Rx_ * this->sin_lookup_table_[angle_horiz];
+        point.z = distance * this->sin_lookup_table_[angle_vert] + this->Rz_;
         point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         if (std::isnan(point.intensity))
         {
@@ -311,11 +278,9 @@ int DecoderRS128<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>&
         point.z = NAN;
         point.intensity = 0;
       }
-
       vec.emplace_back(std::move(point));
     }
   }
-
   return first_azimuth;
 }
 

@@ -166,7 +166,7 @@ DecoderRS80<vpoint>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<vpoi
   this->Rx_ = 0.03615;
   this->Ry_ = -0.017;
   this->Rz_ = 0;
-  this->channel_num_ = 80;
+  this->beam_num_ = 80;
 
   if (this->max_distance_ > 250.0f)
   {
