@@ -158,6 +158,13 @@ public:
   int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
   float computeTemperature(const uint8_t temp_low, const uint8_t temp_high);
+
+private:
+  int azimuthCalibration(float azimuth, const int& channel);
+  void initBeamTable();
+
+private:
+  std::array<int, 80> beam_table_;
 };
 
 template <typename T_Point>
@@ -166,7 +173,7 @@ DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_P
   this->Rx_ = 0.03615;
   this->Ry_ = -0.017;
   this->Rz_ = 0;
-  this->beam_num_ = 80;
+  this->angle_file_index_ = 128;
 
   if (this->max_distance_ > 250.0f)
   {
@@ -177,8 +184,7 @@ DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_P
     this->min_distance_ = 1.0f;
   }
 
-  int pkt_rate = 6000;
-  this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
+  initBeamTable();
 }
 
 template <typename T_Point>
@@ -200,6 +206,16 @@ double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
   t.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
   t.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
   return (double)t.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
+}
+
+template <typename T_Point>
+int DecoderRS80<T_Point>::azimuthCalibration(float azimuth, const int& channel)
+{
+  int azi_ret;
+  azimuth += this->hori_angle_list_[beam_table_[channel]];
+  azi_ret = (int)azimuth;
+  azi_ret = ((azi_ret % 36000) + 36000) % 36000;
+  return azi_ret;
 }
 
 template <typename T_Point>
@@ -280,7 +296,10 @@ int DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>
           break;
       }
     }
-
+    // for(int i=0;i<128;i++)
+    // {
+    //   DEBUG<<"i: "<<i<<"~~~"<<this->vert_angle_list_[i]<<REND;
+    // }
     for (int channel_idx = 0; channel_idx < RS80_CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
@@ -292,8 +311,7 @@ int DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>
       float distance_cali = distance * RS_RESOLUTION;
 
       int angle_horiz_ori = (int)(azimuth_corrected_float + 36000) % 36000;
-      int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
-
+      int angle_vert = (((int)(this->vert_angle_list_[beam_table_[channel_idx]]) % 36000) + 36000) % 36000;
 
       T_Point point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
@@ -399,10 +417,94 @@ int DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
         this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
       }
       this->difop_flag_ = true;
-
     }
   }
   return 0;
+}
+
+template <typename T_Point>
+void DecoderRS80<T_Point>::initBeamTable()
+{
+  beam_table_[0] = 0;
+  beam_table_[1] = 1;
+  beam_table_[2] = 2;
+  beam_table_[3] = 5;
+  beam_table_[4] = 6;
+  beam_table_[5] = 8;
+  beam_table_[6] = 9;
+  beam_table_[7] = 10;
+  beam_table_[8] = 11;
+  beam_table_[9] = 12;
+  beam_table_[10] = 14;
+  beam_table_[11] = 15;
+  beam_table_[12] = 16;
+  beam_table_[13] = 18;
+  beam_table_[14] = 19;
+  beam_table_[15] = 20;
+  beam_table_[16] = 22;
+  beam_table_[17] = 23;
+  beam_table_[18] = 24;
+  beam_table_[19] = 26;
+  beam_table_[20] = 27;
+  beam_table_[21] = 28;
+  beam_table_[22] = 30;
+  beam_table_[23] = 32;
+  beam_table_[24] = 35;
+  beam_table_[25] = 36;
+  beam_table_[26] = 39;
+  beam_table_[27] = 40;
+  beam_table_[28] = 41;
+  beam_table_[29] = 44;
+  beam_table_[30] = 45;
+  beam_table_[31] = 49;
+  beam_table_[32] = 50;
+  beam_table_[33] = 53;
+  beam_table_[34] = 54;
+  beam_table_[35] = 58;
+  beam_table_[36] = 59;
+  beam_table_[37] = 60;
+  beam_table_[38] = 62;
+  beam_table_[39] = 63;
+  beam_table_[40] = 64;
+  beam_table_[41] = 65;
+  beam_table_[42] = 66;
+  beam_table_[43] = 68;
+  beam_table_[44] = 69;
+  beam_table_[45] = 70;
+  beam_table_[46] = 72;
+  beam_table_[47] = 73;
+  beam_table_[48] = 74;
+  beam_table_[49] = 76;
+  beam_table_[50] = 78;
+  beam_table_[51] = 80;
+  beam_table_[52] = 81;
+  beam_table_[53] = 82;
+  beam_table_[54] = 83;
+  beam_table_[55] = 84;
+  beam_table_[56] = 87;
+  beam_table_[57] = 88;
+  beam_table_[58] = 90;
+  beam_table_[59] = 91;
+  beam_table_[60] = 92;
+  beam_table_[61] = 93;
+  beam_table_[62] = 94;
+  beam_table_[63] = 96;
+  beam_table_[64] = 99;
+  beam_table_[65] = 100;
+  beam_table_[66] = 103;
+  beam_table_[67] = 104;
+  beam_table_[68] = 105;
+  beam_table_[69] = 108;
+  beam_table_[70] = 109;
+  beam_table_[71] = 110;
+  beam_table_[72] = 113;
+  beam_table_[73] = 114;
+  beam_table_[74] = 118;
+  beam_table_[75] = 122;
+  beam_table_[76] = 123;
+  beam_table_[77] = 124;
+  beam_table_[78] = 126;
+  beam_table_[79] = 127;
 }
 
 }  // namespace lidar

@@ -122,7 +122,7 @@ DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_P
   this->Rx_ = 0.03825;
   this->Ry_ = -0.01088;
   this->Rz_ = 0;
-  this->beam_num_ = 16;
+  this->angle_file_index_ = 16;
   if (this->max_distance_ > 200.0f)
   {
     this->max_distance_ = 200.0f;
@@ -153,7 +153,7 @@ double DecoderRS16<T_Point>::getLidarTime(const uint8_t* pkt)
 template <typename T_Point>
 int DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
 {
-  height = this->beam_num_;
+  height = 16;
   RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS16_MSOP_ID)
   {

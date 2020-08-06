@@ -216,7 +216,7 @@ public:
 protected:
   int rpm_;
   uint8_t echo_mode_;
-  int beam_num_;
+  int angle_file_index_;
   float Rx_;
   float Ry_;
   float Rz_;
@@ -491,7 +491,7 @@ void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
         break;
       }
       row_index++;
-      if (row_index >= beam_num_)
+      if (row_index >= angle_file_index_)
       {
         break;
       }

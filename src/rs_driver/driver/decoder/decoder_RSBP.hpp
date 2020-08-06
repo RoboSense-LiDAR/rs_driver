@@ -121,7 +121,7 @@ DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_P
   this->Rx_ = 0.01473;
   this->Ry_ = 0.0085;
   this->Rz_ = 0.09427;
-  this->beam_num_ = 32;
+  this->angle_file_index_ = 32;
   if (this->max_distance_ > 100.0f)
   {
     this->max_distance_ = 100.0f;
@@ -151,7 +151,7 @@ double DecoderRSBP<T_Point>::getLidarTime(const uint8_t* pkt)
 template <typename T_Point>
 int DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
 {
-  height = this->beam_num_;
+  height = 32;
   RSBPMsopPkt* mpkt_ptr = (RSBPMsopPkt*)pkt;
   if (mpkt_ptr->header.id != RSBP_MSOP_ID)
   {
@@ -292,7 +292,7 @@ int32_t DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       int lsb, mid, msb, neg = 1;
 
       const uint8_t* p_hori_cali = ((RSBPDifopPkt*)pkt)->yaw_cali;
-      for (int i = 0; i < this->beam_num_; i++)
+      for (int i = 0; i < this->angle_file_index_; i++)
       {
         /* vert angle calibration data */
         lsb = p_ver_cali[i * 3];
