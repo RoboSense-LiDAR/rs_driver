@@ -26,13 +26,12 @@ namespace lidar
 {
 #define RS32_CHANNELS_PER_BLOCK (32)
 #define RS32_BLOCKS_PER_PKT (12)
-#define RS32_POINTS_CHANNEL_PER_SECOND (18000)
-#define RS32_BLOCKS_CHANNEL_PER_PKT (12)
 #define RS32_MSOP_ID (0xA050A55A0A05AA55)
 #define RS32_BLOCK_ID (0xEEFF)
 #define RS32_DIFOP_ID (0x555511115A00FFA5)
 #define RS32_CHANNEL_TOFFSET (3)
 #define RS32_FIRING_TDURATION (50)
+const int RS32_PKT_RATE = 1500;
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
@@ -88,7 +87,7 @@ typedef struct
   uint16_t sw_ver;
   RSTimestamp timestamp;
   RSStatus status;
-  uint8_t reserved1[11];
+  uint8_t reserved1[5];
   RSDiagno diagno;
   uint8_t gprmc[86];
   uint8_t pitch_cali[96];
@@ -105,23 +104,23 @@ RS32DifopPkt;
 #pragma pack(pop)
 #endif
 
-template <typename vpoint>
-class DecoderRS32 : public DecoderBase<vpoint>
+template <typename T_Point>
+class DecoderRS32 : public DecoderBase<T_Point>
 {
 public:
   DecoderRS32(const RSDecoderParam& param);
   int32_t decodeDifopPkt(const uint8_t* pkt);
-  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
+  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
 };
 
-template <typename vpoint>
-DecoderRS32<vpoint>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
+template <typename T_Point>
+DecoderRS32<T_Point>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
   this->Rx_ = 0.03997;
   this->Ry_ = -0.01087;
   this->Rz_ = 0;
-  this->channel_num_ = 32;
+  this->angle_file_index_ = 32;
   if (this->max_distance_ > 200.0f)
   {
     this->max_distance_ = 200.0f;
@@ -130,11 +129,10 @@ DecoderRS32<vpoint>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<vpoi
   {
     this->min_distance_ = 0.4f;
   }
-  //    rs_print(RS_INFO, "[RS32] Constructor.");
 }
 
-template <typename vpoint>
-double DecoderRS32<vpoint>::getLidarTime(const uint8_t* pkt)
+template <typename T_Point>
+double DecoderRS32<T_Point>::getLidarTime(const uint8_t* pkt)
 {
   RS32MsopPkt* mpkt_ptr = (RS32MsopPkt*)pkt;
   std::tm stm;
@@ -149,33 +147,28 @@ double DecoderRS32<vpoint>::getLidarTime(const uint8_t* pkt)
          (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
 }
 
-template <typename vpoint>
-int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
+template <typename T_Point>
+int DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
 {
   height = 32;
   RS32MsopPkt* mpkt_ptr = (RS32MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS32_MSOP_ID)
   {
-    //      rs_print(RS_ERROR, "[RS32] MSOP pkt ID no match.");
-    return -2;
+    return RSDecoderResult::DECODE_FAIL;
   }
-
-  int first_azimuth;
-  first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
+  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
+  int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   if (this->trigger_flag_)
   {
-    double timestamp = 0;
     if (this->use_lidar_clock_)
     {
-      timestamp = getLidarTime(pkt);
+      this->checkTriggerAngle(first_azimuth, getLidarTime(pkt));
     }
     else
     {
-      timestamp = getTime();
+      this->checkTriggerAngle(first_azimuth, getTime());
     }
-    this->checkTriggerAngle(first_azimuth, timestamp);
   }
-  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
 
   for (int blk_idx = 0; blk_idx < RS32_BLOCKS_PER_PKT; blk_idx++)
   {
@@ -183,52 +176,44 @@ int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
     {
       break;
     }
-    int azimuth_blk = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-    int azi_prev = 0;
-    int azi_cur = 0;
+    int cur_azi = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
+    float azi_diff = 0;
     if (this->echo_mode_ == ECHO_DUAL)
     {
       if (blk_idx < (RS32_BLOCKS_PER_PKT - 2))  // 12
       {
-        azi_prev = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 2].azimuth);
-        azi_cur = azimuth_blk;
+        azi_diff = (float)((36000 + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 2].azimuth) - cur_azi) % 36000);
       }
       else
       {
-        azi_prev = azimuth_blk;
-        azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 2].azimuth);
+        azi_diff = (float)((36000 + cur_azi - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 2].azimuth)) % 36000);
       }
     }
     else
     {
       if (blk_idx < (RS32_BLOCKS_PER_PKT - 1))  // 12
       {
-        azi_prev = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth);
-        azi_cur = azimuth_blk;
+        azi_diff = (float)((36000 + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth) - cur_azi) % 36000);
       }
       else
       {
-        azi_prev = azimuth_blk;
-        azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth);
+        azi_diff = (float)((36000 + cur_azi - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) % 36000);
       }
     }
-
-    float azimuth_diff = (float)((36000 + azi_prev - azi_cur) % 36000);
     float azimuth_channel;
     for (int channel_idx = 0; channel_idx < RS32_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      azimuth_channel =
-          azimuth_blk + (azimuth_diff * RS32_CHANNEL_TOFFSET * (channel_idx % 16) / RS32_FIRING_TDURATION);
+      azimuth_channel = cur_azi + (azi_diff * RS32_CHANNEL_TOFFSET * (channel_idx % 16) / RS32_FIRING_TDURATION);
       int azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
 
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
-      float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
+      float distance_cali = distance * RS_RESOLUTION;
 
       int angle_horiz_ori = (int)(azimuth_channel + 36000) % 36000;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
       // store to point cloud buffer
-      vpoint point;
+      T_Point point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
           ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
            (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
@@ -264,8 +249,8 @@ int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
   return first_azimuth;
 }
 
-template <typename vpoint>
-int32_t DecoderRS32<vpoint>::decodeDifopPkt(const uint8_t* pkt)
+template <typename T_Point>
+int32_t DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
   RS32DifopPkt* rs32_ptr = (RS32DifopPkt*)pkt;
   if (rs32_ptr->id != RS32_DIFOP_ID)
@@ -282,13 +267,14 @@ int32_t DecoderRS32<vpoint>::decodeDifopPkt(const uint8_t* pkt)
     this->echo_mode_ = ECHO_DUAL;
   }
 
-  int pkt_rate = ceil(RS32_POINTS_CHANNEL_PER_SECOND / RS32_BLOCKS_CHANNEL_PER_PKT);
-
   if (this->echo_mode_ == ECHO_DUAL)
   {
-    pkt_rate = pkt_rate * 2;
+    this->pkts_per_frame_ = ceil(2 * RS32_PKT_RATE * 60 / this->rpm_);
   }
-  this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
+  else
+  {
+    this->pkts_per_frame_ = ceil(RS32_PKT_RATE * 60 / this->rpm_);
+  }
 
   if (!this->difop_flag_)
   {

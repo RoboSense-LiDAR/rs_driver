@@ -89,7 +89,7 @@ typedef struct
   uint16_t sw_ver;
   RSTimestamp timestamp;
   RSStatus status;
-  uint8_t reserved1[11];
+  uint8_t reserved1[5];
   RSDiagno diagno;
   uint8_t gprmc[86];
   uint8_t static_cali[697];
@@ -106,23 +106,23 @@ RS16DifopPkt;
 #pragma pack(pop)
 #endif
 
-template <typename vpoint>
-class DecoderRS16 : public DecoderBase<vpoint>
+template <typename T_Point>
+class DecoderRS16 : public DecoderBase<T_Point>
 {
 public:
   DecoderRS16(const RSDecoderParam& param);
   int32_t decodeDifopPkt(const uint8_t* pkt);
-  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
+  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
 };
 
-template <typename vpoint>
-DecoderRS16<vpoint>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
+template <typename T_Point>
+DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
   this->Rx_ = 0.03825;
   this->Ry_ = -0.01088;
   this->Rz_ = 0;
-  this->channel_num_ = 16;
+  this->angle_file_index_ = 16;
   if (this->max_distance_ > 200.0f)
   {
     this->max_distance_ = 200.0f;
@@ -134,8 +134,8 @@ DecoderRS16<vpoint>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<vpoi
   //    rs_print(RS_INFO, "[RS16] Constructor.");
 }
 
-template <typename vpoint>
-double DecoderRS16<vpoint>::getLidarTime(const uint8_t* pkt)
+template <typename T_Point>
+double DecoderRS16<T_Point>::getLidarTime(const uint8_t* pkt)
 {
   RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
   std::tm stm;
@@ -150,53 +150,44 @@ double DecoderRS16<vpoint>::getLidarTime(const uint8_t* pkt)
          (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
 }
 
-template <typename vpoint>
-int DecoderRS16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
+template <typename T_Point>
+int DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
 {
   height = 16;
   RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS16_MSOP_ID)
   {
-    //      rs_print(RS_ERROR, "[RS16] MSOP pkt ID no match.");
-    return -2;
+    return RSDecoderResult::DECODE_FAIL;
   }
-  int first_azimuth;
-  first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
+  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
+  int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   if (this->trigger_flag_)
   {
-    double timestamp = 0;
     if (this->use_lidar_clock_)
     {
-      timestamp = getLidarTime(pkt);
+      this->checkTriggerAngle(first_azimuth, getLidarTime(pkt));
     }
     else
     {
-      timestamp = getTime();
+      this->checkTriggerAngle(first_azimuth, getTime());
     }
-    this->checkTriggerAngle(first_azimuth, timestamp);
   }
-  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   for (int blk_idx = 0; blk_idx < RS16_BLOCKS_PER_PKT; blk_idx++)
   {
     if (mpkt_ptr->blocks[blk_idx].id != RS16_BLOCK_ID)
     {
       break;
     }
-    int azimuth_blk = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-    int azi_prev = 0;
-    int azi_cur = 0;
-
+    int cur_azimuith = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
+    float azimuth_diff = 0;
     if (blk_idx < (RS16_BLOCKS_PER_PKT - 1))  // 12
     {
-      azi_prev = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth);
-      azi_cur = azimuth_blk;
+      azimuth_diff = (float)((36000 + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth) - cur_azimuith) % 36000);
     }
     else
     {
-      azi_prev = azimuth_blk;
-      azi_cur = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth);
+      azimuth_diff = (float)((36000 + cur_azimuith - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) % 36000);
     }
-    float azimuth_diff = (float)((36000 + azi_prev - azi_cur) % 36000);
 
     float azimuth_channel;
     for (int channel_idx = 0; channel_idx < RS16_CHANNELS_PER_BLOCK; channel_idx++)
@@ -204,25 +195,25 @@ int DecoderRS16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
       if (this->echo_mode_ == ECHO_DUAL)
       {
         azimuth_channel =
-            azimuth_blk + azimuth_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
+            cur_azimuith + azimuth_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
       }
       else
       {
-        azimuth_channel =
-            azimuth_blk + azimuth_diff *
+        azimuth_channel = cur_azimuith +
+                          azimuth_diff *
                               (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) /
                               RS16_BLOCK_TDURATION_SINGLE;
       }
       int azimuth_final = (((int)azimuth_channel % 36000) + 36000) % 36000;
 
       int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
-      float distance_cali = distance * RS_RESOLUTION_5mm_DISTANCE_COEF;
+      float distance_cali = distance * RS_RESOLUTION;
 
       int angle_horiz_ori = azimuth_final;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16]) % 36000) + 36000) % 36000;
 
       // store to point cloud buffer
-      vpoint point;
+      T_Point point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
           ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
            (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
@@ -246,30 +237,25 @@ int DecoderRS16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
         point.z = NAN;
         point.intensity = NAN;
       }
-#ifdef RS_POINT_COMPLEX
-      point.distance = distance_cali;
-      point.ring_id = channel_idx % 16;
-      point.echo_id = (this->echo_mode_ == ECHO_DUAL) ? (channel_idx / 16) : 0;
-#endif
       vec.emplace_back(std::move(point));
     }
   }
   return first_azimuth;
 }
 
-template <typename vpoint>
-int32_t DecoderRS16<vpoint>::decodeDifopPkt(const uint8_t* pkt)
+template <typename T_Point>
+int32_t DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
-  RS16DifopPkt* rs16_ptr = (RS16DifopPkt*)pkt;
-  if (rs16_ptr->id != RS16_DIFOP_ID)
+  RS16DifopPkt* dpkt_ptr = (RS16DifopPkt*)pkt;
+  if (dpkt_ptr->id != RS16_DIFOP_ID)
   {
     //        rs_print(RS_ERROR, "[RS16] DIFOP pkt ID no match.");
     return -2;
   }
-  this->rpm_ = RS_SWAP_SHORT(rs16_ptr->rpm);
-  if (rs16_ptr->return_mode == 0x01 || rs16_ptr->return_mode == 0x02)
+  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
+  if (dpkt_ptr->return_mode == 0x01 || dpkt_ptr->return_mode == 0x02)
   {
-    this->echo_mode_ = rs16_ptr->return_mode;
+    this->echo_mode_ = dpkt_ptr->return_mode;
   }
   else
   {
@@ -288,7 +274,7 @@ int32_t DecoderRS16<vpoint>::decodeDifopPkt(const uint8_t* pkt)
     bool angle_flag = true;
     const uint8_t* p_ver_cali;
 
-    p_ver_cali = rs16_ptr->pitch_cali;
+    p_ver_cali = dpkt_ptr->pitch_cali;
 
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
