@@ -106,18 +106,18 @@ RS16DifopPkt;
 #pragma pack(pop)
 #endif
 
-template <typename vpoint>
-class DecoderRS16 : public DecoderBase<vpoint>
+template <typename T_Point>
+class DecoderRS16 : public DecoderBase<T_Point>
 {
 public:
   DecoderRS16(const RSDecoderParam& param);
   int32_t decodeDifopPkt(const uint8_t* pkt);
-  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
+  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
 };
 
-template <typename vpoint>
-DecoderRS16<vpoint>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
+template <typename T_Point>
+DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
   this->Rx_ = 0.03825;
   this->Ry_ = -0.01088;
@@ -134,8 +134,8 @@ DecoderRS16<vpoint>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<vpoi
   //    rs_print(RS_INFO, "[RS16] Constructor.");
 }
 
-template <typename vpoint>
-double DecoderRS16<vpoint>::getLidarTime(const uint8_t* pkt)
+template <typename T_Point>
+double DecoderRS16<T_Point>::getLidarTime(const uint8_t* pkt)
 {
   RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
   std::tm stm;
@@ -150,8 +150,8 @@ double DecoderRS16<vpoint>::getLidarTime(const uint8_t* pkt)
          (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
 }
 
-template <typename vpoint>
-int DecoderRS16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
+template <typename T_Point>
+int DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
 {
   height = this->beam_num_;
   RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
@@ -213,7 +213,7 @@ int DecoderRS16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16]) % 36000) + 36000) % 36000;
 
       // store to point cloud buffer
-      vpoint point;
+      T_Point point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
           ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
            (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
@@ -243,19 +243,19 @@ int DecoderRS16<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
   return first_azimuth;
 }
 
-template <typename vpoint>
-int32_t DecoderRS16<vpoint>::decodeDifopPkt(const uint8_t* pkt)
+template <typename T_Point>
+int32_t DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
-  RS16DifopPkt* rs16_ptr = (RS16DifopPkt*)pkt;
-  if (rs16_ptr->id != RS16_DIFOP_ID)
+  RS16DifopPkt* dpkt_ptr = (RS16DifopPkt*)pkt;
+  if (dpkt_ptr->id != RS16_DIFOP_ID)
   {
     //        rs_print(RS_ERROR, "[RS16] DIFOP pkt ID no match.");
     return -2;
   }
-  this->rpm_ = RS_SWAP_SHORT(rs16_ptr->rpm);
-  if (rs16_ptr->return_mode == 0x01 || rs16_ptr->return_mode == 0x02)
+  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
+  if (dpkt_ptr->return_mode == 0x01 || dpkt_ptr->return_mode == 0x02)
   {
-    this->echo_mode_ = rs16_ptr->return_mode;
+    this->echo_mode_ = dpkt_ptr->return_mode;
   }
   else
   {
@@ -274,7 +274,7 @@ int32_t DecoderRS16<vpoint>::decodeDifopPkt(const uint8_t* pkt)
     bool angle_flag = true;
     const uint8_t* p_ver_cali;
 
-    p_ver_cali = rs16_ptr->pitch_cali;
+    p_ver_cali = dpkt_ptr->pitch_cali;
 
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))

@@ -149,19 +149,19 @@ RS80DifopPkt;
 #pragma pack(pop)
 #endif
 
-template <typename vpoint>
-class DecoderRS80 : public DecoderBase<vpoint>
+template <typename T_Point>
+class DecoderRS80 : public DecoderBase<T_Point>
 {
 public:
   DecoderRS80(const RSDecoderParam& param);
   int32_t decodeDifopPkt(const uint8_t* pkt);
-  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
+  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
   float computeTemperature(const uint8_t temp_low, const uint8_t temp_high);
 };
 
-template <typename vpoint>
-DecoderRS80<vpoint>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
+template <typename T_Point>
+DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
   this->Rx_ = 0.03615;
   this->Ry_ = -0.017;
@@ -181,8 +181,8 @@ DecoderRS80<vpoint>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<vpoi
   this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
 }
 
-template <typename vpoint>
-double DecoderRS80<vpoint>::getLidarTime(const uint8_t* pkt)
+template <typename T_Point>
+double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
 {
   RS80MsopPkt* mpkt_ptr = (RS80MsopPkt*)pkt;
   union u_ts
@@ -202,8 +202,8 @@ double DecoderRS80<vpoint>::getLidarTime(const uint8_t* pkt)
   return (double)t.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
 }
 
-template <typename vpoint>
-float DecoderRS80<vpoint>::computeTemperature(const uint8_t temp_low, const uint8_t temp_high)
+template <typename T_Point>
+float DecoderRS80<T_Point>::computeTemperature(const uint8_t temp_low, const uint8_t temp_high)
 {
   uint8_t neg_flag = temp_low & 0x80;
   float msb = temp_low & 0x7F;
@@ -221,8 +221,8 @@ float DecoderRS80<vpoint>::computeTemperature(const uint8_t temp_low, const uint
   return temp;
 }
 
-template <typename vpoint>
-int DecoderRS80<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
+template <typename T_Point>
+int DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
 {
   height = 80;
   RS80MsopPkt* mpkt_ptr = (RS80MsopPkt*)pkt;
@@ -295,7 +295,7 @@ int DecoderRS80<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
 
-      vpoint point;
+      T_Point point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
           ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
            (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
@@ -326,8 +326,8 @@ int DecoderRS80<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
   return first_azimuth;
 }
 
-template <typename vpoint>
-int DecoderRS80<vpoint>::decodeDifopPkt(const uint8_t* pkt)
+template <typename T_Point>
+int DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
   RS80DifopPkt* difop_ptr = (RS80DifopPkt*)pkt;
   if (difop_ptr->id != RS80_DIFOP_ID)

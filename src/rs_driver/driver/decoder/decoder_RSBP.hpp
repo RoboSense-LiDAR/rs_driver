@@ -105,18 +105,18 @@ RSBPDifopPkt;
 #pragma pack(pop)
 #endif
 
-template <typename vpoint>
-class DecoderRSBP : public DecoderBase<vpoint>
+template <typename T_Point>
+class DecoderRSBP : public DecoderBase<T_Point>
 {
 public:
   DecoderRSBP(const RSDecoderParam& param);
   int32_t decodeDifopPkt(const uint8_t* pkt);
-  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
+  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
 };
 
-template <typename vpoint>
-DecoderRSBP<vpoint>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
+template <typename T_Point>
+DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
   this->Rx_ = 0.01473;
   this->Ry_ = 0.0085;
@@ -132,8 +132,8 @@ DecoderRSBP<vpoint>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<vpoi
   }
 }
 
-template <typename vpoint>
-double DecoderRSBP<vpoint>::getLidarTime(const uint8_t* pkt)
+template <typename T_Point>
+double DecoderRSBP<T_Point>::getLidarTime(const uint8_t* pkt)
 {
   RSBPMsopPkt* mpkt_ptr = (RSBPMsopPkt*)pkt;
   std::tm stm;
@@ -148,8 +148,8 @@ double DecoderRSBP<vpoint>::getLidarTime(const uint8_t* pkt)
          (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
 }
 
-template <typename vpoint>
-int DecoderRSBP<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
+template <typename T_Point>
+int DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
 {
   height = this->beam_num_;
   RSBPMsopPkt* mpkt_ptr = (RSBPMsopPkt*)pkt;
@@ -215,7 +215,7 @@ int DecoderRSBP<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
       // store to point cloud buffer
-      vpoint point;
+      T_Point point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
           ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
            (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
@@ -246,8 +246,8 @@ int DecoderRSBP<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
   return first_azimuth;
 }
 
-template <typename vpoint>
-int32_t DecoderRSBP<vpoint>::decodeDifopPkt(const uint8_t* pkt)
+template <typename T_Point>
+int32_t DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
   RSBPDifopPkt* rsBp_ptr = (RSBPDifopPkt*)pkt;
   if (rsBp_ptr->id != RSBP_DIFOP_ID)

@@ -198,7 +198,7 @@ RSDiagno;
 #endif
 
 //----------------- Decoder ---------------------
-template <typename vpoint>
+template <typename T_Point>
 class DecoderBase
 {
 public:
@@ -206,7 +206,7 @@ public:
   DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase();
-  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& point_cloud_vec, int& height);
+  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec, int& height);
   virtual int processDifopPkt(const uint8_t* pkt);
   virtual void loadCalibrationFile(const std::string& angle_path);
   virtual void regRecvCallback(const std::function<void(const CameraTrigger&)> callback);  ///< Camera trigger
@@ -250,12 +250,12 @@ protected:
   virtual float computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high);
   virtual int32_t azimuthCalibration(float azimuth, const int& channel);
   virtual void checkTriggerAngle(const int& angle, const double& timestamp);
-  virtual int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height) = 0;
+  virtual int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height) = 0;
   virtual int32_t decodeDifopPkt(const uint8_t* pkt) = 0;
 };
 
-template <typename vpoint>
-DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
+template <typename T_Point>
+DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   : param_(param)
   , rpm_(600)
   , pkts_per_frame_(84)
@@ -298,13 +298,13 @@ DecoderBase<vpoint>::DecoderBase(const RSDecoderParam& param)
   }
 }
 
-template <typename vpoint>
-DecoderBase<vpoint>::~DecoderBase()
+template <typename T_Point>
+DecoderBase<T_Point>::~DecoderBase()
 {
 }
 
-template <typename vpoint>
-int32_t DecoderBase<vpoint>::processDifopPkt(const uint8_t* pkt)
+template <typename T_Point>
+int32_t DecoderBase<T_Point>::processDifopPkt(const uint8_t* pkt)
 {
   if (pkt == NULL)
   {
@@ -314,8 +314,8 @@ int32_t DecoderBase<vpoint>::processDifopPkt(const uint8_t* pkt)
   return decodeDifopPkt(pkt);
 }
 
-template <typename vpoint>
-RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& point_cloud_vec,
+template <typename T_Point>
+RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec,
                                                     int& height)
 {
   if (pkt == NULL)
@@ -371,8 +371,8 @@ RSDecoderResult DecoderBase<vpoint>::processMsopPkt(const uint8_t* pkt, std::vec
   return DECODE_OK;
 }
 
-template <typename vpoint>
-void DecoderBase<vpoint>::checkTriggerAngle(const int& angle, const double& timestamp)
+template <typename T_Point>
+void DecoderBase<T_Point>::checkTriggerAngle(const int& angle, const double& timestamp)
 {
   std::map<double, std::string>::iterator iter = param_.trigger_param.trigger_map.begin();
   for (size_t i = 0; i < trigger_index_; i++)
@@ -399,21 +399,21 @@ void DecoderBase<vpoint>::checkTriggerAngle(const int& angle, const double& time
   }
 }
 
-template <typename vpoint>
-void DecoderBase<vpoint>::regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
+template <typename T_Point>
+void DecoderBase<T_Point>::regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
 {
   camera_trigger_cb_vec_.emplace_back(callback);
 }
 
-template <typename vpoint>
-double DecoderBase<vpoint>::getLidarTemperature()
+template <typename T_Point>
+double DecoderBase<T_Point>::getLidarTemperature()
 {
   return current_temperature_;
 }
 
 /* 16, 32, & BP */
-template <typename vpoint>
-float DecoderBase<vpoint>::computeTemperature(const uint16_t& temp_raw)
+template <typename T_Point>
+float DecoderBase<T_Point>::computeTemperature(const uint16_t& temp_raw)
 {
   uint8_t neg_flag = (temp_raw >> 8) & 0x80;
   float msb = (temp_raw >> 8) & 0x7F;
@@ -432,8 +432,8 @@ float DecoderBase<vpoint>::computeTemperature(const uint16_t& temp_raw)
 }
 
 /* 128 & 80 */
-template <typename vpoint>
-float DecoderBase<vpoint>::computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high)
+template <typename T_Point>
+float DecoderBase<T_Point>::computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high)
 {
   uint8_t neg_flag = temp_low & 0x80;
   float msb = temp_low & 0x7F;
@@ -451,8 +451,8 @@ float DecoderBase<vpoint>::computeTemperature(const uint8_t& temp_low, const uin
   return temp;
 }
 
-template <typename vpoint>
-int DecoderBase<vpoint>::azimuthCalibration(float azimuth, const int& channel)
+template <typename T_Point>
+int DecoderBase<T_Point>::azimuthCalibration(float azimuth, const int& channel)
 {
   int azi_ret;
   azimuth += this->hori_angle_list_[channel];
@@ -461,8 +461,8 @@ int DecoderBase<vpoint>::azimuthCalibration(float azimuth, const int& channel)
   return azi_ret;
 }
 
-template <typename vpoint>
-void DecoderBase<vpoint>::loadCalibrationFile(const std::string& angle_path)
+template <typename T_Point>
+void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
 {
   int row_index = 0;
   std::string line_str;
@@ -513,11 +513,11 @@ initTrigonometricLookupTable(const std::function<double(const double)> trigonome
   return temp_table;
 }
 
-template <typename vpoint>
-std::vector<double> DecoderBase<vpoint>::cos_lookup_table_ =
+template <typename T_Point>
+std::vector<double> DecoderBase<T_Point>::cos_lookup_table_ =
     initTrigonometricLookupTable([](const double rad) -> double { return std::cos(rad); });
-template <typename vpoint>
-std::vector<double> DecoderBase<vpoint>::sin_lookup_table_ =
+template <typename T_Point>
+std::vector<double> DecoderBase<T_Point>::sin_lookup_table_ =
     initTrigonometricLookupTable([](const double rad) -> double { return std::sin(rad); });
 
 }  // namespace lidar

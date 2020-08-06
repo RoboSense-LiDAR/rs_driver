@@ -26,13 +26,12 @@ namespace lidar
 {
 #define RS32_CHANNELS_PER_BLOCK (32)
 #define RS32_BLOCKS_PER_PKT (12)
-#define RS32_POINTS_CHANNEL_PER_SECOND (18000)
-#define RS32_BLOCKS_CHANNEL_PER_PKT (12)
 #define RS32_MSOP_ID (0xA050A55A0A05AA55)
 #define RS32_BLOCK_ID (0xEEFF)
 #define RS32_DIFOP_ID (0x555511115A00FFA5)
 #define RS32_CHANNEL_TOFFSET (3)
 #define RS32_FIRING_TDURATION (50)
+const int RS32_PKT_RATE = 1500;
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
@@ -105,18 +104,18 @@ RS32DifopPkt;
 #pragma pack(pop)
 #endif
 
-template <typename vpoint>
-class DecoderRS32 : public DecoderBase<vpoint>
+template <typename T_Point>
+class DecoderRS32 : public DecoderBase<T_Point>
 {
 public:
   DecoderRS32(const RSDecoderParam& param);
   int32_t decodeDifopPkt(const uint8_t* pkt);
-  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height);
+  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
   double getLidarTime(const uint8_t* pkt);
 };
 
-template <typename vpoint>
-DecoderRS32<vpoint>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<vpoint>(param)
+template <typename T_Point>
+DecoderRS32<T_Point>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
   this->Rx_ = 0.03997;
   this->Ry_ = -0.01087;
@@ -132,8 +131,8 @@ DecoderRS32<vpoint>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<vpoi
   }
 }
 
-template <typename vpoint>
-double DecoderRS32<vpoint>::getLidarTime(const uint8_t* pkt)
+template <typename T_Point>
+double DecoderRS32<T_Point>::getLidarTime(const uint8_t* pkt)
 {
   RS32MsopPkt* mpkt_ptr = (RS32MsopPkt*)pkt;
   std::tm stm;
@@ -148,8 +147,8 @@ double DecoderRS32<vpoint>::getLidarTime(const uint8_t* pkt)
          (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
 }
 
-template <typename vpoint>
-int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& vec, int& height)
+template <typename T_Point>
+int DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
 {
   height = this->beam_num_;
   RS32MsopPkt* mpkt_ptr = (RS32MsopPkt*)pkt;
@@ -214,7 +213,7 @@ int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
       // store to point cloud buffer
-      vpoint point;
+      T_Point point;
       if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
           ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
            (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
@@ -250,8 +249,8 @@ int DecoderRS32<vpoint>::decodeMsopPkt(const uint8_t* pkt, std::vector<vpoint>& 
   return first_azimuth;
 }
 
-template <typename vpoint>
-int32_t DecoderRS32<vpoint>::decodeDifopPkt(const uint8_t* pkt)
+template <typename T_Point>
+int32_t DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
   RS32DifopPkt* rs32_ptr = (RS32DifopPkt*)pkt;
   if (rs32_ptr->id != RS32_DIFOP_ID)
@@ -268,13 +267,14 @@ int32_t DecoderRS32<vpoint>::decodeDifopPkt(const uint8_t* pkt)
     this->echo_mode_ = ECHO_DUAL;
   }
 
-  int pkt_rate = ceil(RS32_POINTS_CHANNEL_PER_SECOND / RS32_BLOCKS_CHANNEL_PER_PKT);
-
   if (this->echo_mode_ == ECHO_DUAL)
   {
-    pkt_rate = pkt_rate * 2;
+    this->pkts_per_frame_ = ceil(2 * RS32_PKT_RATE * 60 / this->rpm_);
   }
-  this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
+  else
+  {
+    this->pkts_per_frame_ = ceil(RS32_PKT_RATE * 60 / this->rpm_);
+  }
 
   if (!this->difop_flag_)
   {
