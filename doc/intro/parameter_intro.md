@@ -8,9 +8,9 @@ typedef struct RSDecoderParam ///< The lidar decoder parameter
   float min_distance = 0.2f;     ///< The minimum distance of point cloud range
   float start_angle = 0.0f;      ///< The start angle of point cloud
   float end_angle = 360.0f;      ///< The end angle of point cloud
-  uint16_t mode_split_frame = 1; ///< 1: Split frames by cut_angle; 2: Split frames by fixed number of packets; 3: Split frames by  custom number of packets (num_pkts_split)
-  uint32_t num_pkts_split = 0;   ///< The number of packets in one frame, only be used when mode_split_frame=3
-  float cut_angle = 0.0f;        ///< The cut angle used to split frame, only be used when mode_split_frame=1
+  SplitFrameMode split_frame_mode = 1; ///< 1: Split frames by cut_angle; 2: Split frames by fixed number of packets; 3: Split frames by  custom number of packets (num_pkts_split)
+  uint32_t num_pkts_split = 0;   ///< The number of packets in one frame, only be used when split_frame_mode=3
+  float cut_angle = 0.0f;        ///< The cut angle used to split frame, only be used when split_frame_mode=1
   bool use_lidar_clock = false;  ///< True: lidar message timestamp is the lidar clock. False: timestamp is the computer system clock
   RSCameraTriggerParam trigger_param;  ///< The parameter used to trigger camera
 } RSDecoderParam;

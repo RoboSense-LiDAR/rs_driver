@@ -28,13 +28,20 @@ namespace lidar
 {
 enum LidarType  ///< The lidar type
 {
-  RSAUTO = 0x00,  ///< If LidarType is set to RSAUTO, the driver will check the lidar type automatically.(Only support
-                  ///< the LiDARs of latest version, not support Bpearl yet.)
-  RS16 = 0x01,
-  RS32 = 0x02,
-  RSBP = 0x03,
-  RS128 = 0x04,
-  RS80 = 0x05
+  RSAUTO = 0,  ///< If LidarType is set to RSAUTO, the driver will check the lidar type automatically.(Only support
+               ///< the LiDARs of latest version, not support Bpearl yet.)
+  RS16 = 1,
+  RS32 = 2,
+  RSBP = 3,
+  RS128 = 4,
+  RS80 = 5
+};
+
+enum SplitFrameMode
+{
+  SPLIT_BY_ANGLE = 1,
+  SPLIT_BY_FIXED_PKTS = 2,
+  SPLIT_BY_CUSTOM_PKTS = 3
 };
 
 typedef struct RSCameraTriggerParam  ///< The serial port parameters
@@ -66,10 +73,10 @@ typedef struct RSDecoderParam  ///< The lidar decoder parameter
   float min_distance = 0.2f;      ///< The minimum distance of point cloud range
   float start_angle = 0.0f;       ///< The start angle of point cloud
   float end_angle = 360.0f;       ///< The end angle of point cloud
-  uint16_t mode_split_frame = 1;  ///< 1: Split frames by cut_angle; 2: Split frames by fixed number of packets; 3:
+  SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;  ///< 1: Split frames by cut_angle; 2: Split frames by fixed number of packets; 3:
                                   ///< Split frames by  custom number of packets (num_pkts_split)
-  uint32_t num_pkts_split = 1;    ///< The number of packets in one frame, only be used when mode_split_frame=3
-  float cut_angle = 0.0f;         ///< The cut angle(degree) used to split frame, only be used when mode_split_frame=1
+  uint32_t num_pkts_split = 1;    ///< The number of packets in one frame, only be used when split_frame_mode=3
+  float cut_angle = 0.0f;         ///< The cut angle(degree) used to split frame, only be used when split_frame_mode=1
   bool use_lidar_clock = false;   ///< True: lidar message timestamp is the lidar clock.
                                   ///< False: timestamp is the computer system cloc
   RSCameraTriggerParam trigger_param;  ///< The parameter used to trigger camera
@@ -88,7 +95,7 @@ typedef struct RSDecoderParam  ///< The lidar decoder parameter
     std::cout << "start_angle : " << start_angle << std::endl;
     std::cout << "end_angle : " << end_angle << std::endl;
     std::cout << "use_lidar_clock : " << use_lidar_clock << std::endl;
-    std::cout << "mode_split_frame : " << mode_split_frame << std::endl;
+    std::cout << "split_frame_mode : " << split_frame_mode << std::endl;
     std::cout << "num_pkts_split : " << num_pkts_split << std::endl;
     std::cout << "cut_angle : " << cut_angle << "\033[0m" << std::endl;
 

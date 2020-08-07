@@ -34,6 +34,10 @@ namespace lidar
 #define RS80_DSR_TOFFSET (3.23)
 #define RS80_BLOCK_TDURATION (55.55)
 
+const double RS80_RX = 0.03615;
+const double RS80_RY = -0.017;
+const double RS80_RZ = 0;
+
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #endif
@@ -169,18 +173,15 @@ private:
 template <typename T_Point>
 DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->Rx_ = 0.03615;
-  this->Ry_ = -0.017;
-  this->Rz_ = 0;
   this->angle_file_index_ = 128;
 
-  if (this->max_distance_ > 250.0f)
+  if (this->param_.max_distance > 250.0f)
   {
-    this->max_distance_ = 250.0f;
+    this->param_.max_distance = 250.0f;
   }
-  if (this->min_distance_ < 1.0f || this->min_distance_ > this->max_distance_)
+  if (this->param_.min_distance < 1.0f || this->param_.min_distance > this->param_.max_distance)
   {
-    this->min_distance_ = 1.0f;
+    this->param_.min_distance = 1.0f;
   }
 
   initBeamTable();
@@ -218,7 +219,8 @@ int DecoderRS80<T_Point>::azimuthCalibration(float azimuth, const int& channel)
 }
 
 template <typename T_Point>
-RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,int& azimuth)
+RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
+                                                    int& azimuth)
 {
   height = 80;
   RS80MsopPkt* mpkt_ptr = (RS80MsopPkt*)pkt;
@@ -232,11 +234,11 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
   int second_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[1].azimuth);
   int third_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[2].azimuth);
   int forth_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[3].azimuth);
-  azimuth=first_azimuth;
+  azimuth = first_azimuth;
   if (this->trigger_flag_)
   {
     double timestamp = 0;
-    if (this->use_lidar_clock_)
+    if (this->param_.use_lidar_clock)
     {
       timestamp = getLidarTime(pkt);
     }
@@ -289,15 +291,15 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       int angle_vert = (((int)(this->vert_angle_list_[beam_table_[channel_idx]]) % 36000) + 36000) % 36000;
 
       T_Point point;
-      if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
+      if ((distance_cali <= this->param_.max_distance && distance_cali >= this->param_.min_distance) &&
           ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
            (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
       {
         point.x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azimuth_final] +
-                  this->Rx_ * this->cos_lookup_table_[angle_horiz_ori];
+                  RS80_RX * this->cos_lookup_table_[angle_horiz_ori];
         point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azimuth_final] -
-                  this->Rx_ * this->sin_lookup_table_[angle_horiz_ori];
-        point.z = distance_cali * this->sin_lookup_table_[angle_vert] + this->Rz_;
+                  RS80_RX * this->sin_lookup_table_[angle_horiz_ori];
+        point.z = distance_cali * this->sin_lookup_table_[angle_vert] + RS80_RZ;
         point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         if (std::isnan(point.intensity))
         {
@@ -322,23 +324,15 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
 template <typename T_Point>
 RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
-  RS80DifopPkt* difop_ptr = (RS80DifopPkt*)pkt;
-  if (difop_ptr->id != RS80_DIFOP_ID)
+  RS80DifopPkt* dpkt_ptr = (RS80DifopPkt*)pkt;
+  if (dpkt_ptr->id != RS80_DIFOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
 
   int pkt_rate = 6000;
-  this->rpm_ = RS_SWAP_SHORT(difop_ptr->rpm);
-
-  if (difop_ptr->return_mode == 0x01 || difop_ptr->return_mode == 0x02)
-  {  // 1,2: single echo
-    this->echo_mode_ = difop_ptr->return_mode;
-  }
-  else
-  {  // 3: dual echo
-    this->echo_mode_ = ECHO_DUAL;
-  }
+  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
+  this->echo_mode_ = (RSEchoMode)dpkt_ptr->return_mode;
 
   if (this->echo_mode_ == ECHO_DUAL)
   {
@@ -350,7 +344,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     bool angle_flag = true;
     const uint8_t* p_ver_cali;
-    p_ver_cali = (uint8_t*)(difop_ptr->ver_angle_cali);
+    p_ver_cali = (uint8_t*)(dpkt_ptr->ver_angle_cali);
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
     {
@@ -363,9 +357,9 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       for (int i = 0; i < 128; i++)
       {
         // calculation of vertical angle
-        lsb = difop_ptr->ver_angle_cali[i].sign;
-        mid = difop_ptr->ver_angle_cali[i].value[0];
-        msb = difop_ptr->ver_angle_cali[i].value[1];
+        lsb = dpkt_ptr->ver_angle_cali[i].sign;
+        mid = dpkt_ptr->ver_angle_cali[i].value[0];
+        msb = dpkt_ptr->ver_angle_cali[i].value[1];
         if (lsb == 0)
         {
           neg = 1;
@@ -377,9 +371,9 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
         this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
 
         // horizontal offset angle
-        lsb = difop_ptr->hori_angle_cali[i].sign;
-        mid = difop_ptr->hori_angle_cali[i].value[0];
-        msb = difop_ptr->hori_angle_cali[i].value[1];
+        lsb = dpkt_ptr->hori_angle_cali[i].sign;
+        mid = dpkt_ptr->hori_angle_cali[i].value[0];
+        msb = dpkt_ptr->hori_angle_cali[i].value[1];
         if (lsb == 0)
         {
           neg = 1;

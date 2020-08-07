@@ -33,8 +33,8 @@ const double RS_RESOLUTION = 0.005;
 /* Echo mode definition */
 enum RSEchoMode
 {
-  ECHO_STRONGEST = 0,
-  ECHO_LAST,
+  ECHO_LAST=1,
+  ECHO_STRONGEST,
   ECHO_DUAL
 };
 
@@ -225,23 +225,15 @@ protected:
 
 protected:
   int rpm_;
-  uint8_t echo_mode_;
+  RSEchoMode echo_mode_;
   int angle_file_index_;
-  float Rx_;
-  float Ry_;
-  float Rz_;
-  float max_distance_;
-  float min_distance_;
   int start_angle_;
   int end_angle_;
   bool angle_flag_;
   bool difop_flag_;
   bool trigger_flag_;
-  bool use_lidar_clock_;
   uint32_t pkts_per_frame_;
   uint32_t pkt_counter_;
-  uint16_t mode_split_frame_;  // 1 - angle,  2 - theoretical packets; 3 - setting packets
-  uint32_t num_pkts_split_;    // number of setting packets
   int32_t cut_angle_;
   int32_t last_azimuth_;
   unsigned int trigger_index_;
@@ -269,14 +261,9 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   , difop_flag_(false)
   , angle_flag_(true)
   , trigger_flag_(false)
-  , use_lidar_clock_(param.use_lidar_clock)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)
   , echo_mode_(ECHO_STRONGEST)
-  , max_distance_(param.max_distance)
-  , min_distance_(param.min_distance)
-  , mode_split_frame_(param.mode_split_frame)
-  , num_pkts_split_(param.num_pkts_split)
   , cut_angle_(param.cut_angle * 100)
 {
   if (cut_angle_ > 36000)
@@ -335,42 +322,45 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
     return ret;
   }
   this->pkt_counter_++;
-  if (mode_split_frame_ == 1)
+  switch (this->param_.split_frame_mode)
   {
-    if (azimuth < this->last_azimuth_)
-    {
-      this->last_azimuth_ -= 36000;
-    }
-    if (this->last_azimuth_ != -36001 && this->last_azimuth_ < this->cut_angle_ && azimuth >= this->cut_angle_)
-    {
+    case SplitFrameMode::SPLIT_BY_ANGLE:
+      if (azimuth < this->last_azimuth_)
+      {
+        this->last_azimuth_ -= 36000;
+      }
+      if (this->last_azimuth_ != -36001 && this->last_azimuth_ < this->cut_angle_ && azimuth >= this->cut_angle_)
+      {
+        this->last_azimuth_ = azimuth;
+        this->pkt_counter_ = 0;
+        this->trigger_index_ = 0;
+        this->prev_angle_diff_ = 36000;
+        return FRAME_SPLIT;
+      }
       this->last_azimuth_ = azimuth;
-      this->pkt_counter_ = 0;
-      this->trigger_index_ = 0;
-      this->prev_angle_diff_ = 36000;
-      return FRAME_SPLIT;
-    }
-    this->last_azimuth_ = azimuth;
+      break;
+    case SplitFrameMode::SPLIT_BY_FIXED_PKTS:
+      if (this->pkt_counter_ >= this->pkts_per_frame_)
+      {
+        this->pkt_counter_ = 0;
+        this->trigger_index_ = 0;
+        this->prev_angle_diff_ = 36000;
+        return FRAME_SPLIT;
+      }
+      break;
+    case SplitFrameMode::SPLIT_BY_CUSTOM_PKTS:
+      if (this->pkt_counter_ >= this->param_.num_pkts_split)
+      {
+        this->pkt_counter_ = 0;
+        this->trigger_index_ = 0;
+        this->prev_angle_diff_ = 36000;
+        return FRAME_SPLIT;
+      }
+      break;
+    default:
+      break;
   }
-  else if (mode_split_frame_ == 2)
-  {
-    if (this->pkt_counter_ >= this->pkts_per_frame_)
-    {
-      this->pkt_counter_ = 0;
-      this->trigger_index_ = 0;
-      this->prev_angle_diff_ = 36000;
-      return FRAME_SPLIT;
-    }
-  }
-  else if (mode_split_frame_ == 3)
-  {
-    if (this->pkt_counter_ >= this->num_pkts_split_)
-    {
-      this->pkt_counter_ = 0;
-      this->trigger_index_ = 0;
-      this->prev_angle_diff_ = 36000;
-      return FRAME_SPLIT;
-    }
-  }
+
   return DECODE_OK;
 }
 

@@ -33,6 +33,9 @@ namespace lidar
 #define RSBP_DIFOP_ID (0x555511115A00FFA5)
 #define RSBP_CHANNEL_TOFFSET (3)
 #define RSBP_FIRING_TDURATION (50)
+const double RSBP_RX = 0.01473;
+const double RSBP_RY = 0.0085;
+const double RSBP_RZ = 0.09427;
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
@@ -118,17 +121,14 @@ public:
 template <typename T_Point>
 DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->Rx_ = 0.01473;
-  this->Ry_ = 0.0085;
-  this->Rz_ = 0.09427;
   this->angle_file_index_ = 32;
-  if (this->max_distance_ > 100.0f)
+  if (this->param_.max_distance > 100.0f)
   {
-    this->max_distance_ = 100.0f;
+    this->param_.max_distance = 100.0f;
   }
-  if (this->min_distance_ < 0.1f || this->min_distance_ > this->max_distance_)
+  if (this->param_.min_distance < 0.1f || this->param_.min_distance > this->param_.max_distance)
   {
-    this->min_distance_ = 0.1f;
+    this->param_.min_distance = 0.1f;
   }
 }
 
@@ -163,7 +163,7 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
   azimuth = first_azimuth;
   if (this->trigger_flag_)
   {
-    if (this->use_lidar_clock_)
+    if (this->param_.use_lidar_clock)
     {
       this->checkTriggerAngle(first_azimuth, getLidarTime(pkt));
     }
@@ -218,15 +218,15 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
 
       // store to point cloud buffer
       T_Point point;
-      if ((distance_cali <= this->max_distance_ && distance_cali >= this->min_distance_) &&
+      if ((distance_cali <= this->param_.max_distance && distance_cali >= this->param_.min_distance) &&
           ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
            (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
       {
         point.x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azimuth_final] +
-                  this->Rx_ * this->cos_lookup_table_[angle_horiz_ori];
+                  RSBP_RX * this->cos_lookup_table_[angle_horiz_ori];
         point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azimuth_final] -
-                  this->Rx_ * this->sin_lookup_table_[angle_horiz_ori];
-        point.z = distance_cali * this->sin_lookup_table_[angle_vert] + this->Rz_;
+                  RSBP_RX * this->sin_lookup_table_[angle_horiz_ori];
+        point.z = distance_cali * this->sin_lookup_table_[angle_vert] + RSBP_RZ;
 
         point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         if (std::isnan(point.intensity))
@@ -251,22 +251,27 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
 template <typename T_Point>
 RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
-  RSBPDifopPkt* rsBp_ptr = (RSBPDifopPkt*)pkt;
-  if (rsBp_ptr->id != RSBP_DIFOP_ID)
+  RSBPDifopPkt* dpkt_ptr = (RSBPDifopPkt*)pkt;
+  if (dpkt_ptr->id != RSBP_DIFOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->rpm_ = RS_SWAP_SHORT(rsBp_ptr->rpm);
+  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
 
-  if (rsBp_ptr->return_mode == 0x01 || rsBp_ptr->return_mode == 0x02)
+  switch (dpkt_ptr->return_mode)
   {
-    this->echo_mode_ = rsBp_ptr->return_mode;
+    case 0x00:
+      this->echo_mode_ = RSEchoMode::ECHO_DUAL;
+      break;
+    case 0x01:
+      this->echo_mode_ = RSEchoMode::ECHO_STRONGEST;
+      break;
+    case 0x02:
+      this->echo_mode_ = RSEchoMode::ECHO_LAST;
+      break;
+    default:
+      break;
   }
-  else
-  {
-    this->echo_mode_ = ECHO_DUAL;
-  }
-
   int pkt_rate = ceil(RSBP_POINTS_CHANNEL_PER_SECOND / RSBP_BLOCKS_CHANNEL_PER_PKT);
 
   if (this->echo_mode_ == ECHO_DUAL)

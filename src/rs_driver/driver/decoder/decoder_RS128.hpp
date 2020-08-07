@@ -34,6 +34,10 @@ namespace lidar
 #define RS128_DSR_TOFFSET (3.23)
 #define RS128_BLOCK_TDURATION (55.55)
 const int RS128_PKT_RATE = 6000;
+const double RS128_RX = 0.03615;
+const double RS128_RY = -0.017;
+const double RS128_RZ = 0;
+
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #endif
@@ -154,24 +158,21 @@ class DecoderRS128 : public DecoderBase<T_Point>
 public:
   DecoderRS128(const RSDecoderParam& param);
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
-  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,int&azimuth);
+  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
 };
 
 template <typename T_Point>
 DecoderRS128<T_Point>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->Rx_ = 0.03615;
-  this->Ry_ = -0.017;
-  this->Rz_ = 0;
   this->angle_file_index_ = 128;
-  if (this->max_distance_ > 250.0f)
+  if (this->param_.max_distance > 250.0f)
   {
-    this->max_distance_ = 250.0f;
+    this->param_.max_distance = 250.0f;
   }
-  if (this->min_distance_ < 1.0f || this->min_distance_ > this->max_distance_)
+  if (this->param_.min_distance < 1.0f || this->param_.min_distance > this->param_.max_distance)
   {
-    this->min_distance_ = 1.0f;
+    this->param_.min_distance = 1.0f;
   }
 }
 
@@ -197,7 +198,8 @@ double DecoderRS128<T_Point>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename T_Point>
-RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,int&azimuth)
+RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
+                                                     int& azimuth)
 {
   height = 128;
   RS128MsopPkt* mpkt_ptr = (RS128MsopPkt*)pkt;
@@ -209,10 +211,10 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   int second_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[1].azimuth);
   int third_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[2].azimuth);
-  azimuth=first_azimuth;
+  azimuth = first_azimuth;
   if (this->trigger_flag_)
   {
-    if (this->use_lidar_clock_)
+    if (this->param_.use_lidar_clock)
     {
       this->checkTriggerAngle(first_azimuth, getLidarTime(pkt));
     }
@@ -257,16 +259,16 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
       T_Point point;
-      if ((distance <= this->max_distance_ && distance >= this->min_distance_) &&
+      if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
           ((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
            (!this->angle_flag_ &&
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
         point.x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
-                  this->Rx_ * this->cos_lookup_table_[angle_horiz];
+                  RS128_RX * this->cos_lookup_table_[angle_horiz];
         point.y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
-                  this->Rx_ * this->sin_lookup_table_[angle_horiz];
-        point.z = distance * this->sin_lookup_table_[angle_vert] + this->Rz_;
+                  RS128_RX * this->sin_lookup_table_[angle_horiz];
+        point.z = distance * this->sin_lookup_table_[angle_vert] + RS128_RZ;
         point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         if (std::isnan(point.intensity))
         {
@@ -296,17 +298,8 @@ RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   }
 
   this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
-
-  if (dpkt_ptr->return_mode == 0x01 || dpkt_ptr->return_mode == 0x02)
-  {
-    this->echo_mode_ = dpkt_ptr->return_mode;
-  }
-  else
-  {
-    this->echo_mode_ = ECHO_DUAL;
-  }
-
-  if (this->echo_mode_ == ECHO_DUAL)
+  this->echo_mode_ = (RSEchoMode)dpkt_ptr->return_mode;
+  if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
   {
     this->pkts_per_frame_ = ceil(2 * RS128_PKT_RATE * 60 / this->rpm_);
   }
