@@ -75,9 +75,9 @@ int main(int argc, char* argv[])
   param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct
   param.print();
 
-  driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback funtion into the driver
-  driver.regRecvCallback(pointCloudCallback);      ///< Register the point cloud callback funtion into the driver
-  if (!driver.init(param))                         ///< Call the init funtion and pass the parameter
+  driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
+  driver.regRecvCallback(pointCloudCallback);      ///< Register the point cloud callback function into the driver
+  if (!driver.init(param))                         ///< Call the init function and pass the parameter
   {
     std::cout << "Driver Initialize Error..." << std::endl;
     return -1;

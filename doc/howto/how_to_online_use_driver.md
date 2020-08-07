@@ -74,8 +74,8 @@ param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make su
 Register the callback functions we defined in 2.2 and 2.3. **Note:The exception callback function must be registered before the init() function is called because  error may occur during the initialization**.
 
 ```c++
-driver.regRecvCallback(pointCloudCallback); ///< Register the point cloud callback funtion into the driver
-driver.regExceptionCallback(exceptionCallback);  ///<Register the exception callback funtion into the driver
+driver.regRecvCallback(pointCloudCallback); ///< Register the point cloud callback function into the driver
+driver.regExceptionCallback(exceptionCallback);  ///<Register the exception callback function into the driver
 ```
 
 #### 2.7 Call the driver initialization function
@@ -83,7 +83,7 @@ driver.regExceptionCallback(exceptionCallback);  ///<Register the exception call
 Call the initialization function and pass the parameter into the driver. Since we need to get packets from online lidar, we call init() function instead of initDecoderOnly(). Remember to check whether the initialization is successful, if not, please check the error code, and modify parameters.
 
 ```c++
-if (!driver.init(param))                         ///< Call the init funtion and pass the parameter
+if (!driver.init(param))                         ///< Call the init function and pass the parameter
 {
   std::cout << "Driver Initialize Error..." << std::endl;
   return 0;
@@ -95,7 +95,7 @@ if (!driver.init(param))                         ///< Call the init funtion and 
 Call the start function to start the driver.
 
 ```c++
-driver.start();                                  ///< Call the start funtion. The driver thread will start
+driver.start();                                  ///< Call the start function. The driver thread will start
 ```
 
 

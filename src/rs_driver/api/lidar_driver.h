@@ -28,7 +28,6 @@ namespace lidar
 {
 /**
  * @brief This is the RoboSense LiDAR driver interface class
- *        Now support RS16, RS32, RSBP & RS128
  */
 template <typename PointT>
 class LidarDriver
@@ -91,7 +90,7 @@ public:
   /**
    * @brief Register the lidar point cloud callback function to driver. When point cloud is ready, this function will be
    * called
-   * @param callback The callback funtion
+   * @param callback The callback function
    */
   inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>&)> callback)
   {
@@ -99,9 +98,9 @@ public:
   }
 
   /**
-   * @brief Register the lidar scan message callback funtion to driver.When lidar scan message is ready, this function
+   * @brief Register the lidar scan message callback function to driver.When lidar scan message is ready, this function
    * will be called
-   * @param callback The callback funtion
+   * @param callback The callback function
    */
   inline void regRecvCallback(const std::function<void(const ScanMsg&)> callback)
   {
@@ -109,9 +108,9 @@ public:
   }
 
   /**
-   * @brief Register the lidar difop packet message callback funtion to driver. When lidar difop packet message is
+   * @brief Register the lidar difop packet message callback function to driver. When lidar difop packet message is
    * ready, this function will be called
-   * @param callback The callback funtion
+   * @param callback The callback function
    */
   inline void regRecvCallback(const std::function<void(const PacketMsg&)> callback)
   {
@@ -119,9 +118,9 @@ public:
   }
 
   /**
-   * @brief Register the camera trigger message callback funtion to driver. When trigger message is ready, this function
+   * @brief Register the camera trigger message callback function to driver. When trigger message is ready, this function
    * will be called
-   * @param callback The callback funtion
+   * @param callback The callback function
    */
   inline void regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
   {
@@ -129,8 +128,8 @@ public:
   }
 
   /**
-   * @brief Register the exception message callback funtion to driver. When error occurs, this function will be called
-   * @param callback The callback funtion
+   * @brief Register the exception message callback function to driver. When error occurs, this function will be called
+   * @param callback The callback function
    */
   inline void regExceptionCallback(const std::function<void(const Error&)> callback)
   {

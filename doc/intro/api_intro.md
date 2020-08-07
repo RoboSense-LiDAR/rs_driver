@@ -52,32 +52,32 @@ inline void stop();
 ```c++
 /**
  * @brief Register the lidar point cloud callback function to driver. When point cloud is ready, this function will be called
- * @param callback The callback funtion  
+ * @param callback The callback function  
  */
 inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT> &)> callback);
 ```
 
 ```c++
 /**
- * @brief Register the lidar scan message callback funtion to driver.When lidar scan message is ready, this function will be called
- * @param callback The callback funtion  
+ * @brief Register the lidar scan message callback function to driver.When lidar scan message is ready, this function will be called
+ * @param callback The callback function  
  */
 inline void regRecvCallback(const std::function<void(const ScanMsg &)> callback);
 ```
 
 ```c++
 /**
- * @brief Register the lidar difop packet message callback funtion to driver. When lidar difop packet message is ready, this function will be called
- * @param callback The callback funtion  
+ * @brief Register the lidar difop packet message callback function to driver. When lidar difop packet message is ready, this function will be called
+ * @param callback The callback function  
  */
 inline void regRecvCallback(const std::function<void(const PacketMsg &)> callback);
 ```
 
 ```c++
   /**
-   * @brief Register the camera trigger message callback funtion to driver. When trigger message is ready, this function
+   * @brief Register the camera trigger message callback function to driver. When trigger message is ready, this function
    * will be called
-   * @param callback The callback funtion
+   * @param callback The callback function
    */
   inline void regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
   {
@@ -87,8 +87,8 @@ inline void regRecvCallback(const std::function<void(const PacketMsg &)> callbac
 
 ```c++
 /**
- * @brief Register the exception message callback funtion to driver. When error occurs, this function will be called
- * @param callback The callback funtion  
+ * @brief Register the exception message callback function to driver. When error occurs, this function will be called
+ * @param callback The callback function  
  */
 inline void regExceptionCallback(const std::function<void(const Error &)> callback);
 ```
