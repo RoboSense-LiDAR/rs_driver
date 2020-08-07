@@ -57,7 +57,7 @@ typedef struct
 {
   RSMsopHeader header;
   RS16MsopBlock blocks[RS16_BLOCKS_PER_PKT];
-  uint32_t index;
+  unsigned int index;
   uint16_t tail;
 }
 #ifdef __GNUC__
@@ -137,21 +137,12 @@ DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_P
 template <typename T_Point>
 double DecoderRS16<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
-  std::tm stm;
-  memset(&stm, 0, sizeof(stm));
-  stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
-  stm.tm_mon = mpkt_ptr->header.timestamp.month - 1;
-  stm.tm_mday = mpkt_ptr->header.timestamp.day;
-  stm.tm_hour = mpkt_ptr->header.timestamp.hour;
-  stm.tm_min = mpkt_ptr->header.timestamp.minute;
-  stm.tm_sec = mpkt_ptr->header.timestamp.second;
-  return std::mktime(&stm) + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms) / 1000.0 +
-         (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
+  return this->template calculateTimeYMD<RS16MsopPkt>(pkt);
 }
 
 template <typename T_Point>
-RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth)
+RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
+                                                    int& azimuth)
 {
   height = 16;
   RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
@@ -161,7 +152,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
   }
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
-  azimuth=first_azimuth;
+  azimuth = first_azimuth;
   if (this->trigger_flag_)
   {
     if (this->param_.use_lidar_clock)
@@ -252,7 +243,6 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
   switch (dpkt_ptr->return_mode)
   {
     case 0x00:
@@ -272,7 +262,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     pkt_rate = ceil(pkt_rate / 2);
   }
-  this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
+  this->pkts_per_frame_ = ceil(pkt_rate * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
 
   if (!this->difop_flag_)
   {
@@ -316,7 +306,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     }
   }
 
-    return RSDecoderResult::DECODE_OK;
+  return RSDecoderResult::DECODE_OK;
 }
 
 }  // namespace lidar

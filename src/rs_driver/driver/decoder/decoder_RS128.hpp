@@ -24,13 +24,11 @@ namespace robosense
 {
 namespace lidar
 {
-#define RS128_MSOP_ID (0x5A05AA55)  // big endian
+#define RS128_MSOP_ID (0x5A05AA55)
+#define RS128_DIFOP_ID (0x555511115A00FFA5)
 #define RS128_BLOCK_ID (0xFE)
-#define RS128_DIFOP_ID (0x555511115A00FFA5)  // big endian
-#define RS128_CHANNELS_PER_BLOCK (128)
 #define RS128_BLOCKS_PER_PKT (3)
-#define RS128_TEMPERATURE_MIN (31)
-#define RS128_TEMPERATURE_RANGE (50)
+#define RS128_CHANNELS_PER_BLOCK (128)
 #define RS128_DSR_TOFFSET (3.23)
 #define RS128_BLOCK_TDURATION (55.55)
 const int RS128_PKT_RATE = 6000;
@@ -55,7 +53,7 @@ RS128MsopBlock;
 
 typedef struct
 {
-  uint32_t id;
+  unsigned int id;
   uint8_t reserved1[3];
   uint8_t wave_mode;
   uint8_t temp_low;
@@ -74,7 +72,7 @@ typedef struct
 {
   RS128MsopHeader header;
   RS128MsopBlock blocks[RS128_BLOCKS_PER_PKT];
-  uint32_t index;
+  unsigned int index;
 }
 #ifdef __GNUC__
 __attribute__((packed))
@@ -179,22 +177,7 @@ DecoderRS128<T_Point>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<T
 template <typename T_Point>
 double DecoderRS128<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  RS128MsopPkt* mpkt_ptr = (RS128MsopPkt*)pkt;
-  union u_ts
-  {
-    uint8_t data[8];
-    uint64_t ts;
-  } timestamp;
-
-  timestamp.data[7] = 0;
-  timestamp.data[6] = 0;
-  timestamp.data[5] = mpkt_ptr->header.timestamp_utc.sec[0];
-  timestamp.data[4] = mpkt_ptr->header.timestamp_utc.sec[1];
-  timestamp.data[3] = mpkt_ptr->header.timestamp_utc.sec[2];
-  timestamp.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
-  timestamp.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
-  timestamp.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
-  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
+  return this->template calculateTimeUTC<RS128MsopPkt>(pkt);
 }
 
 template <typename T_Point>
@@ -297,15 +280,14 @@ RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
 
-  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
   this->echo_mode_ = (RSEchoMode)dpkt_ptr->return_mode;
   if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
   {
-    this->pkts_per_frame_ = ceil(2 * RS128_PKT_RATE * 60 / this->rpm_);
+    this->pkts_per_frame_ = ceil(2 * RS128_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
   }
   else
   {
-    this->pkts_per_frame_ = ceil(RS128_PKT_RATE * 60 / this->rpm_);
+    this->pkts_per_frame_ = ceil(RS128_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
   }
 
   if (!this->difop_flag_)

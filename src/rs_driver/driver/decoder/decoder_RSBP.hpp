@@ -56,7 +56,7 @@ typedef struct
 {
   RSMsopHeader header;
   RSBPMsopBlock blocks[RSBP_BLOCKS_PER_PKT];
-  uint32_t index;
+  unsigned int index;
   uint16_t tail;
 }
 #ifdef __GNUC__
@@ -135,17 +135,7 @@ DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_P
 template <typename T_Point>
 double DecoderRSBP<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  RSBPMsopPkt* mpkt_ptr = (RSBPMsopPkt*)pkt;
-  std::tm stm;
-  memset(&stm, 0, sizeof(stm));
-  stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
-  stm.tm_mon = mpkt_ptr->header.timestamp.month - 1;
-  stm.tm_mday = mpkt_ptr->header.timestamp.day;
-  stm.tm_hour = mpkt_ptr->header.timestamp.hour;
-  stm.tm_min = mpkt_ptr->header.timestamp.minute;
-  stm.tm_sec = mpkt_ptr->header.timestamp.second;
-  return std::mktime(&stm) + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms) / 1000.0 +
-         (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
+  return this->template calculateTimeYMD<RSBPMsopPkt>(pkt);
 }
 
 template <typename T_Point>
@@ -256,7 +246,6 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
 
   switch (dpkt_ptr->return_mode)
   {
@@ -278,7 +267,7 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     pkt_rate = pkt_rate * 2;
   }
-  this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
+  this->pkts_per_frame_ = ceil(pkt_rate * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
 
   if (!this->difop_flag_)
   {

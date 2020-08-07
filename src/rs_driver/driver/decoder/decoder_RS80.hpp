@@ -24,16 +24,14 @@ namespace robosense
 {
 namespace lidar
 {
-#define RS80_MSOP_ID (0x5A05AA55)  // big endian
-#define RS80_BLOCK_ID (0xFE)
+#define RS80_MSOP_ID (0x5A05AA55)           // big endian
 #define RS80_DIFOP_ID (0x555511115A00FFA5)  // big endian
-#define RS80_CHANNELS_PER_BLOCK (80)
+#define RS80_BLOCK_ID (0xFE)
 #define RS80_BLOCKS_PER_PKT (4)
-#define RS80_TEMPERATURE_MIN (31)
-#define RS80_TEMPERATURE_RANGE (50)
+#define RS80_CHANNELS_PER_BLOCK (80)
 #define RS80_DSR_TOFFSET (3.23)
 #define RS80_BLOCK_TDURATION (55.55)
-
+const int RS80_PKT_RATE = 4500;
 const double RS80_RX = 0.03615;
 const double RS80_RY = -0.017;
 const double RS80_RZ = 0;
@@ -55,7 +53,7 @@ RS80MsopBlock;
 
 typedef struct
 {
-  uint32_t id;
+  unsigned int id;
   uint8_t reserved1[3];
   uint8_t wave_mode;
   uint8_t temp_low;
@@ -75,7 +73,7 @@ typedef struct
   RS80MsopHeader header;
   RS80MsopBlock blocks[RS80_BLOCKS_PER_PKT];
   uint8_t reserved[188];
-  uint32_t index;
+  unsigned int index;
 }
 #ifdef __GNUC__
 __attribute__((packed))
@@ -163,7 +161,7 @@ public:
   double getLidarTime(const uint8_t* pkt);
 
 private:
-  int azimuthCalibration(float azimuth, const int& channel);
+  int azimuthCalibration(const float& azimuth, const int& channel);
   void initBeamTable();
 
 private:
@@ -174,10 +172,9 @@ template <typename T_Point>
 DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
   this->angle_file_index_ = 128;
-
-  if (this->param_.max_distance > 250.0f)
+  if (this->param_.max_distance > 230.0f)
   {
-    this->param_.max_distance = 250.0f;
+    this->param_.max_distance = 230.0f;
   }
   if (this->param_.min_distance < 1.0f || this->param_.min_distance > this->param_.max_distance)
   {
@@ -190,32 +187,13 @@ DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_P
 template <typename T_Point>
 double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  RS80MsopPkt* mpkt_ptr = (RS80MsopPkt*)pkt;
-  union u_ts
-  {
-    uint8_t data[8];
-    uint64_t ts;
-  } t;
-
-  t.data[7] = 0;
-  t.data[6] = 0;
-  t.data[5] = mpkt_ptr->header.timestamp_utc.sec[0];
-  t.data[4] = mpkt_ptr->header.timestamp_utc.sec[1];
-  t.data[3] = mpkt_ptr->header.timestamp_utc.sec[2];
-  t.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
-  t.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
-  t.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
-  return (double)t.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
+  return this->template calculateTimeUTC<RS80MsopPkt>(pkt);
 }
 
 template <typename T_Point>
-int DecoderRS80<T_Point>::azimuthCalibration(float azimuth, const int& channel)
+int DecoderRS80<T_Point>::azimuthCalibration(const float& azimuth, const int& channel)
 {
-  int azi_ret;
-  azimuth += this->hori_angle_list_[beam_table_[channel]];
-  azi_ret = (int)azimuth;
-  azi_ret = ((azi_ret % 36000) + 36000) % 36000;
-  return azi_ret;
+  return ((int)(azimuth + this->hori_angle_list_[beam_table_[channel]]) + 36000) % 36000;
 }
 
 template <typename T_Point>
@@ -331,14 +309,13 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   }
 
   int pkt_rate = 6000;
-  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
   this->echo_mode_ = (RSEchoMode)dpkt_ptr->return_mode;
 
   if (this->echo_mode_ == ECHO_DUAL)
   {
     pkt_rate = pkt_rate * 2;
   }
-  this->pkts_per_frame_ = ceil(pkt_rate * 60 / this->rpm_);
+  this->pkts_per_frame_ = ceil(pkt_rate * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
 
   if (!this->difop_flag_)
   {

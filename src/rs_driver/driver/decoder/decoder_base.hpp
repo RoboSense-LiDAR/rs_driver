@@ -33,7 +33,7 @@ const double RS_RESOLUTION = 0.005;
 /* Echo mode definition */
 enum RSEchoMode
 {
-  ECHO_LAST=1,
+  ECHO_LAST = 1,
   ECHO_STRONGEST,
   ECHO_DUAL
 };
@@ -69,7 +69,7 @@ RSTimestamp;
 typedef struct
 {
   uint8_t sec[6];
-  uint32_t ns;
+  unsigned int ns;
 }
 #ifdef __GNUC__
 __attribute__((packed))
@@ -207,24 +207,27 @@ public:
   DecoderBase(const RSDecoderParam& param);
   DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
-  virtual ~DecoderBase();
+  virtual ~DecoderBase() = default;
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec, int& height);
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt);
   virtual void loadCalibrationFile(const std::string& angle_path);
   virtual void regRecvCallback(const std::function<void(const CameraTrigger&)> callback);  ///< Camera trigger
-  virtual double getLidarTime(const uint8_t* pkt) = 0;
   virtual double getLidarTemperature();
+  virtual double getLidarTime(const uint8_t* pkt) = 0;
 
 protected:
   virtual float computeTemperature(const uint16_t& temp_raw);
   virtual float computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high);
-  virtual int32_t azimuthCalibration(float azimuth, const int& channel);
+  virtual int azimuthCalibration(const float& azimuth, const int& channel);
   virtual void checkTriggerAngle(const int& angle, const double& timestamp);
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth) = 0;
   virtual RSDecoderResult decodeDifopPkt(const uint8_t* pkt) = 0;
+  template <typename T_Msop>
+  double calculateTimeUTC(const uint8_t* pkt);
+  template <typename T_Msop>
+  double calculateTimeYMD(const uint8_t* pkt);
 
 protected:
-  int rpm_;
   RSEchoMode echo_mode_;
   int angle_file_index_;
   int start_angle_;
@@ -232,15 +235,14 @@ protected:
   bool angle_flag_;
   bool difop_flag_;
   bool trigger_flag_;
-  uint32_t pkts_per_frame_;
-  uint32_t pkt_counter_;
-  int32_t cut_angle_;
-  int32_t last_azimuth_;
+  int cut_angle_;
+  int last_azimuth_;
+  unsigned int pkts_per_frame_;
+  unsigned int pkt_count_;
   unsigned int trigger_index_;
   unsigned int prev_angle_diff_;
+  float current_temperature_;
   RSDecoderParam param_;
-  double current_temperature_;
-  // calibration data
   float vert_angle_list_[128];
   float hori_angle_list_[128];
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
@@ -251,9 +253,8 @@ protected:
 template <typename T_Point>
 DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   : param_(param)
-  , rpm_(600)
-  , pkts_per_frame_(84)
-  , pkt_counter_(0)
+  , pkts_per_frame_(600)
+  , pkt_count_(0)
   , last_azimuth_(-36001)
   , current_temperature_(0)
   , trigger_index_(0)
@@ -261,16 +262,15 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   , difop_flag_(false)
   , angle_flag_(true)
   , trigger_flag_(false)
+  , echo_mode_(ECHO_STRONGEST)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)
-  , echo_mode_(ECHO_STRONGEST)
   , cut_angle_(param.cut_angle * 100)
 {
   if (cut_angle_ > 36000)
   {
     cut_angle_ = 0;
   }
-
   if (this->start_angle_ > 36000 || this->start_angle_ < 0 || this->end_angle_ > 36000 || this->end_angle_ < 0)
   {
     this->start_angle_ = 0;
@@ -280,16 +280,10 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   {
     this->angle_flag_ = false;
   }
-
   if (param.trigger_param.trigger_map.size() != 0)
   {
     trigger_flag_ = true;
   }
-}
-
-template <typename T_Point>
-DecoderBase<T_Point>::~DecoderBase()
-{
 }
 
 template <typename T_Point>
@@ -299,12 +293,7 @@ RSDecoderResult DecoderBase<T_Point>::processDifopPkt(const uint8_t* pkt)
   {
     return PKT_NULL;
   }
-  int ret = decodeDifopPkt(pkt);
-  if (ret < 0)
-  {
-    return WRONG_PKT_HEADER;
-  }
-  return DECODE_OK;
+  return decodeDifopPkt(pkt);
 }
 
 template <typename T_Point>
@@ -321,7 +310,7 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
   {
     return ret;
   }
-  this->pkt_counter_++;
+  this->pkt_count_++;
   switch (this->param_.split_frame_mode)
   {
     case SplitFrameMode::SPLIT_BY_ANGLE:
@@ -332,7 +321,7 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
       if (this->last_azimuth_ != -36001 && this->last_azimuth_ < this->cut_angle_ && azimuth >= this->cut_angle_)
       {
         this->last_azimuth_ = azimuth;
-        this->pkt_counter_ = 0;
+        this->pkt_count_ = 0;
         this->trigger_index_ = 0;
         this->prev_angle_diff_ = 36000;
         return FRAME_SPLIT;
@@ -340,18 +329,18 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
       this->last_azimuth_ = azimuth;
       break;
     case SplitFrameMode::SPLIT_BY_FIXED_PKTS:
-      if (this->pkt_counter_ >= this->pkts_per_frame_)
+      if (this->pkt_count_ >= this->pkts_per_frame_)
       {
-        this->pkt_counter_ = 0;
+        this->pkt_count_ = 0;
         this->trigger_index_ = 0;
         this->prev_angle_diff_ = 36000;
         return FRAME_SPLIT;
       }
       break;
     case SplitFrameMode::SPLIT_BY_CUSTOM_PKTS:
-      if (this->pkt_counter_ >= this->param_.num_pkts_split)
+      if (this->pkt_count_ >= this->param_.num_pkts_split)
       {
-        this->pkt_counter_ = 0;
+        this->pkt_count_ = 0;
         this->trigger_index_ = 0;
         this->prev_angle_diff_ = 36000;
         return FRAME_SPLIT;
@@ -360,8 +349,56 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
     default:
       break;
   }
-
   return DECODE_OK;
+}
+
+template <typename T_Point>
+void DecoderBase<T_Point>::regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
+{
+  camera_trigger_cb_vec_.emplace_back(callback);
+}
+
+template <typename T_Point>
+double DecoderBase<T_Point>::getLidarTemperature()
+{
+  return current_temperature_;
+}
+
+template <typename T_Point>
+void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
+{
+  std::string line_str;
+  std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
+  if (fd_angle.is_open())
+  {
+    int row_index = 0;
+    while (std::getline(fd_angle, line_str))
+    {
+      std::stringstream ss(line_str);
+      std::string str;
+      std::vector<std::string> vect_str;
+      while (std::getline(ss, str, ','))
+      {
+        vect_str.emplace_back(str);
+      }
+      try
+      {
+        this->vert_angle_list_[row_index] = std::stof(vect_str.at(0)) * 100;  // degree
+        this->hori_angle_list_[row_index] = std::stof(vect_str.at(1)) * 100;  // degree
+      }
+      catch (...)
+      {
+        WARNING << "Wrong calibration file format! Please check your angle.csv file!" << REND;
+        break;
+      }
+      row_index++;
+      if (row_index >= angle_file_index_)
+      {
+        break;
+      }
+    }
+    fd_angle.close();
+  }
 }
 
 template <typename T_Point>
@@ -390,18 +427,6 @@ void DecoderBase<T_Point>::checkTriggerAngle(const int& angle, const double& tim
       }
     }
   }
-}
-
-template <typename T_Point>
-void DecoderBase<T_Point>::regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
-{
-  camera_trigger_cb_vec_.emplace_back(callback);
-}
-
-template <typename T_Point>
-double DecoderBase<T_Point>::getLidarTemperature()
-{
-  return current_temperature_;
 }
 
 /* 16, 32, & BP */
@@ -445,63 +470,57 @@ float DecoderBase<T_Point>::computeTemperature(const uint8_t& temp_low, const ui
 }
 
 template <typename T_Point>
-int DecoderBase<T_Point>::azimuthCalibration(float azimuth, const int& channel)
+int DecoderBase<T_Point>::azimuthCalibration(const float& azimuth, const int& channel)
 {
-  int azi_ret;
-  azimuth += this->hori_angle_list_[channel];
-  azi_ret = (int)azimuth;
-  azi_ret = ((azi_ret % 36000) + 36000) % 36000;
-  return azi_ret;
+  return ((int)(azimuth + this->hori_angle_list_[channel]) + 36000) % 36000;
 }
 
 template <typename T_Point>
-void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
+template <typename T_Msop>
+double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
 {
-  int row_index = 0;
-  std::string line_str;
-  // read angle.csv
-  std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
-  if (fd_angle.is_open())
+  T_Msop* mpkt_ptr = (T_Msop*)pkt;
+  union u_ts
   {
-    row_index = 0;
-    while (std::getline(fd_angle, line_str))
-    {
-      std::stringstream ss(line_str);
-      std::string str;
-      std::vector<std::string> vect_str;
-      while (std::getline(ss, str, ','))
-      {
-        vect_str.emplace_back(str);
-      }
-      try
-      {
-        this->vert_angle_list_[row_index] = std::stof(vect_str.at(0)) * 100;  // degree
-        this->hori_angle_list_[row_index] = std::stof(vect_str.at(1)) * 100;  // degree
-      }
-      catch (...)
-      {
-        WARNING << "Wrong calibration file format! Please check your angle.csv file!" << REND;
-        break;
-      }
-      row_index++;
-      if (row_index >= angle_file_index_)
-      {
-        break;
-      }
-    }
-    fd_angle.close();
-  }
+    uint8_t data[8];
+    uint64_t ts;
+  } timestamp;
+  timestamp.data[7] = 0;
+  timestamp.data[6] = 0;
+  timestamp.data[5] = mpkt_ptr->header.timestamp_utc.sec[0];
+  timestamp.data[4] = mpkt_ptr->header.timestamp_utc.sec[1];
+  timestamp.data[3] = mpkt_ptr->header.timestamp_utc.sec[2];
+  timestamp.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
+  timestamp.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
+  timestamp.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
+  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
 }
 
-inline const std::vector<double>
-initTrigonometricLookupTable(const std::function<double(const double)> trigonometric_fun)
+template <typename T_Point>
+template <typename T_Msop>
+double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
+{
+  T_Msop* mpkt_ptr = (T_Msop*)pkt;
+  std::tm stm;
+  memset(&stm, 0, sizeof(stm));
+  stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
+  stm.tm_mon = mpkt_ptr->header.timestamp.month - 1;
+  stm.tm_mday = mpkt_ptr->header.timestamp.day;
+  stm.tm_hour = mpkt_ptr->header.timestamp.hour;
+  stm.tm_min = mpkt_ptr->header.timestamp.minute;
+  stm.tm_sec = mpkt_ptr->header.timestamp.second;
+  return std::mktime(&stm) + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms) / 1000.0 +
+         (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
+}
+
+inline const std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func)
 {
   std::vector<double> temp_table = std::vector<double>(36000, 0.0);
-
-  for (int i = 0; i < 36000; ++i)
+#pragma omp parallel for
+  for (size_t i = 0; i < 36000; i++)
   {
     const double rad = RS_TO_RADS(static_cast<double>(i) / 100.0);
-    temp_table[i] = trigonometric_fun(rad);
+    temp_table[i] = func(rad);
   }
   return temp_table;
 }
