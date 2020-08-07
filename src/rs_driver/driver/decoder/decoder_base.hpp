@@ -28,26 +28,28 @@ namespace lidar
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
-#define RS_RESOLUTION (0.005)
+const double RS_RESOLUTION = 0.005;
+
+/* Echo mode definition */
 enum RSEchoMode
 {
-  ECHO_DUAL = 0,
-  ECHO_STRONGEST,
-  ECHO_LAST
+  ECHO_STRONGEST = 0,
+  ECHO_LAST,
+  ECHO_DUAL
 };
 
+/* Decode result definition */
 enum RSDecoderResult
 {
-  DECODE_FAIL = -2,
-  PARAM_INVALID = -1,
   DECODE_OK = 0,
-  FRAME_SPLIT = 1
+  FRAME_SPLIT = 1,
+  WRONG_PKT_HEADER = -1,
+  PKT_NULL = -2
 };
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #endif
-
 typedef struct
 {
   uint8_t year;
@@ -207,11 +209,19 @@ public:
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase();
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec, int& height);
-  virtual int processDifopPkt(const uint8_t* pkt);
+  virtual RSDecoderResult processDifopPkt(const uint8_t* pkt);
   virtual void loadCalibrationFile(const std::string& angle_path);
   virtual void regRecvCallback(const std::function<void(const CameraTrigger&)> callback);  ///< Camera trigger
   virtual double getLidarTime(const uint8_t* pkt) = 0;
   virtual double getLidarTemperature();
+
+protected:
+  virtual float computeTemperature(const uint16_t& temp_raw);
+  virtual float computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high);
+  virtual int32_t azimuthCalibration(float azimuth, const int& channel);
+  virtual void checkTriggerAngle(const int& angle, const double& timestamp);
+  virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth) = 0;
+  virtual RSDecoderResult decodeDifopPkt(const uint8_t* pkt) = 0;
 
 protected:
   int rpm_;
@@ -244,14 +254,6 @@ protected:
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   static std::vector<double> cos_lookup_table_;
   static std::vector<double> sin_lookup_table_;
-
-protected:
-  virtual float computeTemperature(const uint16_t& temp_raw);
-  virtual float computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high);
-  virtual int32_t azimuthCalibration(float azimuth, const int& channel);
-  virtual void checkTriggerAngle(const int& angle, const double& timestamp);
-  virtual int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height) = 0;
-  virtual int32_t decodeDifopPkt(const uint8_t* pkt) = 0;
 };
 
 template <typename T_Point>
@@ -304,33 +306,35 @@ DecoderBase<T_Point>::~DecoderBase()
 }
 
 template <typename T_Point>
-int32_t DecoderBase<T_Point>::processDifopPkt(const uint8_t* pkt)
+RSDecoderResult DecoderBase<T_Point>::processDifopPkt(const uint8_t* pkt)
 {
   if (pkt == NULL)
   {
-    //		rs_print(RS_ERROR, "[RSBASE] DIFOP pkt buffer NULL.");
-    return -1;
+    return PKT_NULL;
   }
-  return decodeDifopPkt(pkt);
+  int ret = decodeDifopPkt(pkt);
+  if (ret < 0)
+  {
+    return WRONG_PKT_HEADER;
+  }
+  return DECODE_OK;
 }
 
 template <typename T_Point>
 RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec,
-                                                    int& height)
+                                                     int& height)
 {
   if (pkt == NULL)
   {
-    return PARAM_INVALID;
+    return PKT_NULL;
   }
-
-  int azimuth = decodeMsopPkt(pkt, point_cloud_vec, height);
-  if (azimuth < 0)
+  int azimuth = 0;
+  RSDecoderResult ret = decodeMsopPkt(pkt, point_cloud_vec, height, azimuth);
+  if (ret != RSDecoderResult::DECODE_OK)
   {
-    return DECODE_FAIL;
+    return ret;
   }
-
   this->pkt_counter_++;
-
   if (mode_split_frame_ == 1)
   {
     if (azimuth < this->last_azimuth_)
@@ -367,7 +371,6 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
       return FRAME_SPLIT;
     }
   }
-
   return DECODE_OK;
 }
 

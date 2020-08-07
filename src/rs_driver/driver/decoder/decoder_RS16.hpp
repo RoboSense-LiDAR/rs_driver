@@ -111,8 +111,8 @@ class DecoderRS16 : public DecoderBase<T_Point>
 {
 public:
   DecoderRS16(const RSDecoderParam& param);
-  int32_t decodeDifopPkt(const uint8_t* pkt);
-  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
+  RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
+  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
 };
 
@@ -151,16 +151,17 @@ double DecoderRS16<T_Point>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename T_Point>
-int DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
+RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth)
 {
   height = 16;
   RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS16_MSOP_ID)
   {
-    return RSDecoderResult::DECODE_FAIL;
+    return RSDecoderResult::WRONG_PKT_HEADER;
   }
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
+  azimuth=first_azimuth;
   if (this->trigger_flag_)
   {
     if (this->use_lidar_clock_)
@@ -240,17 +241,16 @@ int DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>
       vec.emplace_back(std::move(point));
     }
   }
-  return first_azimuth;
+  return RSDecoderResult::DECODE_OK;
 }
 
 template <typename T_Point>
-int32_t DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
+RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
   RS16DifopPkt* dpkt_ptr = (RS16DifopPkt*)pkt;
   if (dpkt_ptr->id != RS16_DIFOP_ID)
   {
-    //        rs_print(RS_ERROR, "[RS16] DIFOP pkt ID no match.");
-    return -2;
+    return RSDecoderResult::WRONG_PKT_HEADER;
   }
   this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
   if (dpkt_ptr->return_mode == 0x01 || dpkt_ptr->return_mode == 0x02)
@@ -311,7 +311,7 @@ int32_t DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     }
   }
 
-  return 0;
+    return RSDecoderResult::DECODE_OK;
 }
 
 }  // namespace lidar

@@ -154,10 +154,9 @@ class DecoderRS80 : public DecoderBase<T_Point>
 {
 public:
   DecoderRS80(const RSDecoderParam& param);
-  int32_t decodeDifopPkt(const uint8_t* pkt);
-  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
+  RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
+  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
-  float computeTemperature(const uint8_t temp_low, const uint8_t temp_high);
 
 private:
   int azimuthCalibration(float azimuth, const int& channel);
@@ -219,42 +218,21 @@ int DecoderRS80<T_Point>::azimuthCalibration(float azimuth, const int& channel)
 }
 
 template <typename T_Point>
-float DecoderRS80<T_Point>::computeTemperature(const uint8_t temp_low, const uint8_t temp_high)
-{
-  uint8_t neg_flag = temp_low & 0x80;
-  float msb = temp_low & 0x7F;
-  float lsb = temp_high >> 4;
-  float temp;
-  if (neg_flag == 0x80)
-  {
-    temp = -1 * (msb * 16 + lsb) * 0.0625f;
-  }
-  else
-  {
-    temp = (msb * 16 + lsb) * 0.0625f;
-  }
-
-  return temp;
-}
-
-template <typename T_Point>
-int DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
+RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,int& azimuth)
 {
   height = 80;
   RS80MsopPkt* mpkt_ptr = (RS80MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS80_MSOP_ID)
   {
-    //      rs_print(RS_ERROR, "[RS80] MSOP pkt ID no match.");
-    return -2;
+    return RSDecoderResult::WRONG_PKT_HEADER;
   }
-
   float azimuth_corrected_float;
-  this->current_temperature_ = computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
+  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   int second_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[1].azimuth);
   int third_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[2].azimuth);
   int forth_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[3].azimuth);
-
+  azimuth=first_azimuth;
   if (this->trigger_flag_)
   {
     double timestamp = 0;
@@ -296,10 +274,7 @@ int DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>
           break;
       }
     }
-    // for(int i=0;i<128;i++)
-    // {
-    //   DEBUG<<"i: "<<i<<"~~~"<<this->vert_angle_list_[i]<<REND;
-    // }
+
     for (int channel_idx = 0; channel_idx < RS80_CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
@@ -341,17 +316,16 @@ int DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>
     }
   }
 
-  return first_azimuth;
+  return RSDecoderResult::DECODE_OK;
 }
 
 template <typename T_Point>
-int DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
+RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
   RS80DifopPkt* difop_ptr = (RS80DifopPkt*)pkt;
   if (difop_ptr->id != RS80_DIFOP_ID)
   {
-    //		rs_print(RS_ERROR, "[RS80] DIFOP pkt ID no match.");
-    return -2;
+    return RSDecoderResult::WRONG_PKT_HEADER;
   }
 
   int pkt_rate = 6000;
@@ -419,7 +393,7 @@ int DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       this->difop_flag_ = true;
     }
   }
-  return 0;
+  return RSDecoderResult::DECODE_OK;
 }
 
 template <typename T_Point>

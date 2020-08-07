@@ -109,8 +109,8 @@ class DecoderRS32 : public DecoderBase<T_Point>
 {
 public:
   DecoderRS32(const RSDecoderParam& param);
-  int32_t decodeDifopPkt(const uint8_t* pkt);
-  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
+  RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
+  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,int&azimuth);
   double getLidarTime(const uint8_t* pkt);
 };
 
@@ -148,16 +148,17 @@ double DecoderRS32<T_Point>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename T_Point>
-int DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
+RSDecoderResult DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,int&azimuth)
 {
   height = 32;
   RS32MsopPkt* mpkt_ptr = (RS32MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS32_MSOP_ID)
   {
-    return RSDecoderResult::DECODE_FAIL;
+    return RSDecoderResult::WRONG_PKT_HEADER;
   }
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
+  azimuth=first_azimuth;
   if (this->trigger_flag_)
   {
     if (this->use_lidar_clock_)
@@ -245,22 +246,21 @@ int DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>
       vec.emplace_back(std::move(point));
     }
   }
-
-  return first_azimuth;
+  return RSDecoderResult::DECODE_OK;
 }
 
 template <typename T_Point>
-int32_t DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
+RSDecoderResult DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
-  RS32DifopPkt* rs32_ptr = (RS32DifopPkt*)pkt;
-  if (rs32_ptr->id != RS32_DIFOP_ID)
+  RS32DifopPkt* dpkt_ptr = (RS32DifopPkt*)pkt;
+  if (dpkt_ptr->id != RS32_DIFOP_ID)
   {
-    return -2;
+    return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->rpm_ = RS_SWAP_SHORT(rs32_ptr->rpm);
-  if (rs32_ptr->return_mode == 0x01 || rs32_ptr->return_mode == 0x02)
+  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
+  if (dpkt_ptr->return_mode == 0x01 || dpkt_ptr->return_mode == 0x02)
   {
-    this->echo_mode_ = rs32_ptr->return_mode;
+    this->echo_mode_ = dpkt_ptr->return_mode;
   }
   else
   {
@@ -324,8 +324,7 @@ int32_t DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       this->difop_flag_ = true;
     }
   }
-
-  return 0;
+  return RSDecoderResult::DECODE_OK;
 }
 
 }  // namespace lidar

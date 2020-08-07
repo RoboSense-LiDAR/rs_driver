@@ -135,7 +135,7 @@ public:
     {
       return lidar_decoder_ptr_->getLidarTemperature();
     }
-    return 0;
+    return -1;
   }
 
   inline bool decodeMsopScan(const ScanMsg& scan_msg, PointCloudMsg<PointT>& point_cloud_msg)
@@ -171,19 +171,27 @@ public:
     for (uint32_t i = 0; i < scan_msg.packets.size(); i++)
     {
       std::vector<PointT> point_vec;
-      int ret = lidar_decoder_ptr_->processMsopPkt(scan_msg.packets[i].packet.data(), point_vec, height);
-      if (ret == DECODE_OK || ret == FRAME_SPLIT)
+      RSDecoderResult ret = lidar_decoder_ptr_->processMsopPkt(scan_msg.packets[i].packet.data(), point_vec, height);
+      switch (ret)
       {
-        point_vvec[i] = std::move(point_vec);
+        case RSDecoderResult::DECODE_OK:
+        case RSDecoderResult::FRAME_SPLIT:
+          point_vvec[i] = std::move(point_vec);
+          break;
+        case RSDecoderResult::WRONG_PKT_HEADER:
+          reportError(ErrCode_WrongPktHeader);
+          break;
+        case RSDecoderResult::PKT_NULL:
+          reportError(ErrCode_PktNull);
+          break;
+        default:
+          break;
       }
     }
 
-    for (auto iiter : point_vvec)
+    for (auto iter : point_vvec)
     {
-      for (auto iter = iiter.cbegin(); iter != iiter.cend(); iter++)
-      {
-        output_point_cloud_ptr->push_back(*iter);
-      }
+      output_point_cloud_ptr->insert(output_point_cloud_ptr->end(), iter.begin(), iter.end());
     }
 
     point_cloud_msg.point_cloud_ptr = output_point_cloud_ptr;
@@ -305,7 +313,7 @@ private:
       scan_ptr_->packets.emplace_back(std::move(pkt));
       if (ret == DECODE_OK || ret == FRAME_SPLIT)
       {
-        point_cloud_ptr_->insert(point_cloud_ptr_->end(),point_vec.begin(), point_vec.end());
+        point_cloud_ptr_->insert(point_cloud_ptr_->end(), point_vec.begin(), point_vec.end());
         if (ret == FRAME_SPLIT)
         {
           PointCloudMsg<PointT> msg(point_cloud_ptr_);
@@ -332,7 +340,7 @@ private:
       }
       else
       {
-        reportError(ErrCode_DecodeFail);
+        reportError(ErrCode_WrongPktHeader);
         usleep(100000);
       }
     }

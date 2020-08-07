@@ -53,7 +53,8 @@ enum ErrCode
   ErrCode_PcapWrongDirectory = 0x48,  ///< The input directory of pcap file is wrong
   ErrCode_MsopPortBuzy = 0x49,        ///< The input msop port is already used
   ErrCode_DifopPortBuzy = 0x50,       ///< The input difop port is already used
-  ErrCode_DecodeFail = 0x51           ///< Decode data failed, please check the lidar type parameter you set
+  ErrCode_WrongPktHeader = 0x51,      ///< The packet header is wrong
+  ErrCode_PktNull = 0x52              ///< The input packet is null
 };
 
 struct Error
@@ -103,8 +104,10 @@ struct Error
         return "ErrCode_ZeroPoints";
       case ErrCode_StartBeforeInit:
         return "ErrCode_StartBeforeInit";
-      case ErrCode_DecodeFail:
-        return "ErrCode_DecodeFail";
+      case ErrCode_WrongPktHeader:
+        return "ErrCode_WrongPktHeader";
+      case ErrCode_PktNull:
+        return "ErrCode_PktNull";
       default:
         return "ErrCode_Success";
     }

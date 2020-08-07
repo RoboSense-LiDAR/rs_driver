@@ -110,8 +110,8 @@ class DecoderRSBP : public DecoderBase<T_Point>
 {
 public:
   DecoderRSBP(const RSDecoderParam& param);
-  int32_t decodeDifopPkt(const uint8_t* pkt);
-  int32_t decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height);
+  RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
+  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
 };
 
@@ -149,16 +149,18 @@ double DecoderRSBP<T_Point>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename T_Point>
-int DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height)
+RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
+                                                    int& azimuth)
 {
   height = 32;
   RSBPMsopPkt* mpkt_ptr = (RSBPMsopPkt*)pkt;
   if (mpkt_ptr->header.id != RSBP_MSOP_ID)
   {
-    return RSDecoderResult::DECODE_FAIL;
+    return RSDecoderResult::WRONG_PKT_HEADER;
   }
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
+  azimuth = first_azimuth;
   if (this->trigger_flag_)
   {
     if (this->use_lidar_clock_)
@@ -243,17 +245,16 @@ int DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>
     }
   }
 
-  return first_azimuth;
+  return RSDecoderResult::DECODE_OK;
 }
 
 template <typename T_Point>
-int32_t DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
+RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
   RSBPDifopPkt* rsBp_ptr = (RSBPDifopPkt*)pkt;
   if (rsBp_ptr->id != RSBP_DIFOP_ID)
   {
-    //		rs_print(RS_ERROR, "[RSBP] DIFOP pkt ID no match.");
-    return -2;
+    return RSDecoderResult::WRONG_PKT_HEADER;
   }
   this->rpm_ = RS_SWAP_SHORT(rsBp_ptr->rpm);
 
@@ -330,8 +331,7 @@ int32_t DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       // std::cout << "[RS_decoder][difop][INFO] angle data is wrote in difop packet!" << std::endl;
     }
   }
-
-  return 0;
+  return RSDecoderResult::DECODE_OK;
 }
 
 }  // namespace lidar
