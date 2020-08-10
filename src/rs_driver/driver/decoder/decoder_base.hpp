@@ -41,8 +41,8 @@ DEFINE_MEMBER_CHECKER(x)
 DEFINE_MEMBER_CHECKER(y)
 DEFINE_MEMBER_CHECKER(z)
 DEFINE_MEMBER_CHECKER(intensity)
-DEFINE_MEMBER_CHECKER(timestamp)
 DEFINE_MEMBER_CHECKER(ring)
+DEFINE_MEMBER_CHECKER(timestamp)
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
@@ -529,6 +529,65 @@ double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
   stm.tm_sec = mpkt_ptr->header.timestamp.second;
   return std::mktime(&stm) + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms) / 1000.0 +
          (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
+}
+
+template <typename T_Point>
+inline typename std::enable_if<!HAS_MEMBER(T_Point, x)>::type setX(T_Point& point, const double& value)
+{
+}
+
+template <typename T_Point>
+inline typename std::enable_if<HAS_MEMBER(T_Point, x)>::type setX(T_Point& point, const double& value)
+{
+  point.x = value;
+}
+
+template <typename T_Point>
+inline typename std::enable_if<!HAS_MEMBER(T_Point, y)>::type setY(T_Point& point, const double& value)
+{
+}
+
+template <typename T_Point>
+inline typename std::enable_if<HAS_MEMBER(T_Point, y)>::type setY(T_Point& point, const double& value)
+{
+  point.y = value;
+}
+
+template <typename T_Point>
+inline typename std::enable_if<!HAS_MEMBER(T_Point, z)>::type setZ(T_Point& point, const double& value)
+{
+}
+
+template <typename T_Point>
+inline typename std::enable_if<HAS_MEMBER(T_Point, z)>::type setZ(T_Point& point, const double& value)
+{
+  point.z = value;
+}
+
+template <typename T_Point>
+inline typename std::enable_if<!HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point, const double& value)
+{
+}
+
+template <typename T_Point>
+inline typename std::enable_if<HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point, const double& value)
+{
+  point.intensity = value;
+  if (std::isnan(point.intensity))
+  {
+    point.intensity = 0;
+  }
+}
+
+template <typename T_Point>
+inline typename std::enable_if<!HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const int& value)
+{
+}
+
+template <typename T_Point>
+inline typename std::enable_if<HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const int& value)
+{
+  point.ring = value;
 }
 
 inline const std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func)

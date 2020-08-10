@@ -234,7 +234,8 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
     for (size_t channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
-      float azi_channel_ori = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) + (azi_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
+      float azi_channel_ori = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) +
+                              (azi_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + 36000) % 36000;
@@ -246,23 +247,24 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
            (!this->angle_flag_ &&
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
-        point.x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
-                  RS128_RX * this->cos_lookup_table_[angle_horiz];
-        point.y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
-                  RS128_RX * this->sin_lookup_table_[angle_horiz];
-        point.z = distance * this->sin_lookup_table_[angle_vert] + RS128_RZ;
-        point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
-        if (std::isnan(point.intensity))
-        {
-          point.intensity = 0;
-        }
+        double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
+                   RS128_RX * this->cos_lookup_table_[angle_horiz];
+
+        double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
+                   RS128_RX * this->sin_lookup_table_[angle_horiz];
+        double z = distance * this->sin_lookup_table_[angle_vert] + RS128_RZ;
+        double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
+        setX(point, x);
+        setY(point, y);
+        setZ(point, z);
+        setIntensity(point, intensity);
       }
       else
       {
-        point.x = NAN;
-        point.y = NAN;
-        point.z = NAN;
-        point.intensity = 0;
+        setX(point, NAN);
+        setY(point, NAN);
+        setZ(point, NAN);
+        setIntensity(point, 0);
       }
       vec.emplace_back(std::move(point));
     }

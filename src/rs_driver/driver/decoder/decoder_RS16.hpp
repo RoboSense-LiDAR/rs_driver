@@ -210,24 +210,24 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
           ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
            (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
       {
-        point.x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azimuth_final] +
-                  RS16_RX * this->cos_lookup_table_[angle_horiz_ori];
+        double x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azimuth_final] +
+                   RS16_RX * this->cos_lookup_table_[angle_horiz_ori];
 
-        point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azimuth_final] -
-                  RS16_RX * this->sin_lookup_table_[angle_horiz_ori];
-        point.z = distance_cali * this->sin_lookup_table_[angle_vert] + RS16_RZ;
-        point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
-        if (std::isnan(point.intensity))
-        {
-          point.intensity = 0;
-        }
+        double y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azimuth_final] -
+                   RS16_RX * this->sin_lookup_table_[angle_horiz_ori];
+        double z = distance_cali * this->sin_lookup_table_[angle_vert] + RS16_RZ;
+        double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
+        setX(point, x);
+        setY(point, y);
+        setZ(point, z);
+        setIntensity(point, intensity);
       }
       else
       {
-        point.x = NAN;
-        point.y = NAN;
-        point.z = NAN;
-        point.intensity = NAN;
+        setX(point, NAN);
+        setY(point, NAN);
+        setZ(point, NAN);
+        setIntensity(point, 0);
       }
       vec.emplace_back(std::move(point));
     }
