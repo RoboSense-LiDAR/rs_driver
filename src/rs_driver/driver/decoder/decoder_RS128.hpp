@@ -184,7 +184,7 @@ template <typename T_Point>
 RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
                                                      int& azimuth)
 {
-  height = 128;
+  height = RS128_CHANNELS_PER_BLOCK;
   RS128MsopPkt* mpkt_ptr = (RS128MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS128_MSOP_ID)
   {
@@ -206,13 +206,12 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
       this->checkTriggerAngle(first_azimuth, getTime());
     }
   }
-  for (int blk_idx = 0; blk_idx < RS128_BLOCKS_PER_PKT; blk_idx++)
+  for (size_t blk_idx = 0; blk_idx < RS128_BLOCKS_PER_PKT; blk_idx++)
   {
     if (mpkt_ptr->blocks[blk_idx].id != RS128_BLOCK_ID)
     {
       break;
     }
-    int cur_azi = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
     float azi_diff = 0;
     if (this->echo_mode_ == ECHO_DUAL)
     {
@@ -232,10 +231,10 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
       }
     }
 
-    for (int channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
+    for (size_t channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
-      float azi_channel_ori = cur_azi + (azi_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
+      float azi_channel_ori = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) + (azi_diff * (dsr_temp * RS128_DSR_TOFFSET) / RS128_BLOCK_TDURATION);
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + 36000) % 36000;

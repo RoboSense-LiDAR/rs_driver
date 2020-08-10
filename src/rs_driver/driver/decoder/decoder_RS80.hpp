@@ -24,8 +24,8 @@ namespace robosense
 {
 namespace lidar
 {
-#define RS80_MSOP_ID (0x5A05AA55)           // big endian
-#define RS80_DIFOP_ID (0x555511115A00FFA5)  // big endian
+#define RS80_MSOP_ID (0x5A05AA55)
+#define RS80_DIFOP_ID (0x555511115A00FFA5)
 #define RS80_BLOCK_ID (0xFE)
 #define RS80_BLOCKS_PER_PKT (4)
 #define RS80_CHANNELS_PER_BLOCK (80)
@@ -200,13 +200,12 @@ template <typename T_Point>
 RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
                                                     int& azimuth)
 {
-  height = 80;
+  height = RS80_CHANNELS_PER_BLOCK;
   RS80MsopPkt* mpkt_ptr = (RS80MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS80_MSOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  float azimuth_corrected_float;
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   int second_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[1].azimuth);
@@ -215,69 +214,62 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
   azimuth = first_azimuth;
   if (this->trigger_flag_)
   {
-    double timestamp = 0;
     if (this->param_.use_lidar_clock)
     {
-      timestamp = getLidarTime(pkt);
+      this->checkTriggerAngle(first_azimuth, getLidarTime(pkt));
     }
     else
     {
-      timestamp = getTime();
+      this->checkTriggerAngle(first_azimuth, getTime());
     }
-    this->checkTriggerAngle(first_azimuth, timestamp);
   }
-  for (int blk_idx = 0; blk_idx < RS80_BLOCKS_PER_PKT; blk_idx++)
+  for (size_t blk_idx = 0; blk_idx < RS80_BLOCKS_PER_PKT; blk_idx++)
   {
-    int cur_azimuith = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
     if (mpkt_ptr->blocks[blk_idx].id != RS80_BLOCK_ID)
     {
       break;
     }
-    float azimuth_diff = 0;
+    float azi_diff = 0;
     if (this->echo_mode_ == ECHO_DUAL)
     {
-      azimuth_diff = (float)((36000 + third_azimuth - first_azimuth) % 36000);
+      azi_diff = (float)((36000 + third_azimuth - first_azimuth) % 36000);
     }
     else
     {
       switch (blk_idx)
       {
         case 0:
-          azimuth_diff = (float)((36000 + second_azimuth - first_azimuth) % 36000);
+          azi_diff = (float)((36000 + second_azimuth - first_azimuth) % 36000);
           break;
         case 1:
-          azimuth_diff = (float)((36000 + third_azimuth - second_azimuth) % 36000);
+          azi_diff = (float)((36000 + third_azimuth - second_azimuth) % 36000);
           break;
         case 2:
         case 3:
-          azimuth_diff = (float)((36000 + forth_azimuth - third_azimuth) % 36000);
+          azi_diff = (float)((36000 + forth_azimuth - third_azimuth) % 36000);
           break;
       }
     }
 
-    for (int channel_idx = 0; channel_idx < RS80_CHANNELS_PER_BLOCK; channel_idx++)
+    for (size_t channel_idx = 0; channel_idx < RS80_CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
-
-      azimuth_corrected_float = cur_azimuith + (azimuth_diff * (dsr_temp * RS80_DSR_TOFFSET) / RS80_BLOCK_TDURATION);
-      int azimuth_final = this->azimuthCalibration(azimuth_corrected_float, channel_idx);
-
-      int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
-      float distance_cali = distance * RS_RESOLUTION;
-
-      int angle_horiz_ori = (int)(azimuth_corrected_float + 36000) % 36000;
+      float azi_channel_ori = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) + (azi_diff * (dsr_temp * RS80_DSR_TOFFSET) / RS80_BLOCK_TDURATION);
+      int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
+      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance)* RS_RESOLUTION;
+      int angle_horiz = (int)(azi_channel_ori + 36000) % 36000;
       int angle_vert = (((int)(this->vert_angle_list_[beam_table_[channel_idx]]) % 36000) + 36000) % 36000;
 
       T_Point point;
-      if ((distance_cali <= this->param_.max_distance && distance_cali >= this->param_.min_distance) &&
-          ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
-           (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
+      if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
+          ((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
+           (!this->angle_flag_ && ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
-        point.x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azimuth_final] +
-                  RS80_RX * this->cos_lookup_table_[angle_horiz_ori];
-        point.y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azimuth_final] -
-                  RS80_RX * this->sin_lookup_table_[angle_horiz_ori];
-        point.z = distance_cali * this->sin_lookup_table_[angle_vert] + RS80_RZ;
+        point.x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
+                  RS80_RX * this->cos_lookup_table_[angle_horiz];
+        point.y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
+                  RS80_RX * this->sin_lookup_table_[angle_horiz];
+        point.z = distance * this->sin_lookup_table_[angle_vert] + RS80_RZ;
         point.intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         if (std::isnan(point.intensity))
         {

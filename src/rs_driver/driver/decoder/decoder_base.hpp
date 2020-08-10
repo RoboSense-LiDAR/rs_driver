@@ -25,6 +25,24 @@ namespace robosense
 {
 namespace lidar
 {
+#define DEFINE_MEMBER_CHECKER(member)                                                                                  \
+  template <typename T, typename V = bool>                                                                             \
+  struct has_##member : std::false_type                                                                                \
+  {                                                                                                                    \
+  };                                                                                                                   \
+  template <typename T>                                                                                                \
+  struct has_##member<                                                                                                 \
+      T, typename std::enable_if<!std::is_same<decltype(std::declval<T>().member), void>::value, bool>::type>          \
+    : std::true_type                                                                                                   \
+  {                                                                                                                    \
+  };
+#define HAS_MEMBER(C, member) has_##member<C>::value
+DEFINE_MEMBER_CHECKER(x)
+DEFINE_MEMBER_CHECKER(y)
+DEFINE_MEMBER_CHECKER(z)
+DEFINE_MEMBER_CHECKER(intensity)
+DEFINE_MEMBER_CHECKER(timestamp)
+DEFINE_MEMBER_CHECKER(ring)
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
