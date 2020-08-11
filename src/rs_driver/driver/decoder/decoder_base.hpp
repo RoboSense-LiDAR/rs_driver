@@ -248,6 +248,7 @@ protected:
 protected:
   RSEchoMode echo_mode_;
   unsigned int angle_file_index_;
+  unsigned int rpm_;
   int start_angle_;
   int end_angle_;
   bool angle_flag_;
@@ -259,6 +260,7 @@ protected:
   unsigned int pkt_count_;
   unsigned int trigger_index_;
   unsigned int prev_angle_diff_;
+  float time_duration_between_blocks_;
   float current_temperature_;
   RSDecoderParam param_;
   float vert_angle_list_[128];
@@ -272,11 +274,13 @@ template <typename T_Point>
 DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   : param_(param)
   , pkts_per_frame_(600)
+  , rpm_(600)
   , pkt_count_(0)
   , last_azimuth_(-36001)
   , current_temperature_(0)
   , trigger_index_(0)
   , prev_angle_diff_(36000)
+  , time_duration_between_blocks_(0)
   , difop_flag_(false)
   , angle_flag_(true)
   , trigger_flag_(false)
@@ -588,6 +592,17 @@ template <typename T_Point>
 inline typename std::enable_if<HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const int& value)
 {
   point.ring = value;
+}
+
+template <typename T_Point>
+inline typename std::enable_if<!HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point, const double& value)
+{
+}
+
+template <typename T_Point>
+inline typename std::enable_if<HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point, const double& value)
+{
+  point.timestamp = value;
 }
 
 inline const std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func)

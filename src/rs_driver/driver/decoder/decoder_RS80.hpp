@@ -207,6 +207,18 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+  double pkt_timestamp = 0;
+  if (HAS_MEMBER(T_Point, timestamp))
+  {
+    if (this->param_.use_lidar_clock)
+    {
+      pkt_timestamp = getLidarTime(pkt);
+    }
+    else
+    {
+      pkt_timestamp = getTime();
+    }
+  }
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   int second_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[1].azimuth);
@@ -251,7 +263,10 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
           break;
       }
     }
-
+    if (HAS_MEMBER(T_Point, timestamp))
+    {
+      pkt_timestamp += this->time_duration_between_blocks_ * blk_idx;
+    }
     for (size_t channel_idx = 0; channel_idx < RS80_CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
@@ -278,7 +293,6 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setY(point, y);
         setZ(point, z);
         setIntensity(point, intensity);
-        setRing(point, beam_ring_table_[channel_idx]);
       }
       else
       {
@@ -287,6 +301,8 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setZ(point, NAN);
         setIntensity(point, 0);
       }
+      setRing(point, beam_ring_table_[channel_idx]);
+      setTimestamp(point, pkt_timestamp);
       vec.emplace_back(std::move(point));
     }
   }
@@ -302,13 +318,16 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
   this->echo_mode_ = (RSEchoMode)dpkt_ptr->return_mode;
+  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
+  this->time_duration_between_blocks_ =
+      (60 / (float)this->rpm_) / ((RS80_PKT_RATE * 60 / this->rpm_) * RS80_BLOCKS_PER_PKT);
   if (this->echo_mode_ == ECHO_DUAL)
   {
-    this->pkts_per_frame_ = ceil(2 * RS80_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
+    this->pkts_per_frame_ = ceil(2 * RS80_PKT_RATE * 60 / this->rpm_);
   }
   else
   {
-    this->pkts_per_frame_ = ceil(RS80_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
+    this->pkts_per_frame_ = ceil(RS80_PKT_RATE * 60 / this->rpm_);
   }
   if (!this->difop_flag_)
   {

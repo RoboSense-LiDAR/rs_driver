@@ -153,6 +153,18 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+  double pkt_timestamp = 0;
+  if (HAS_MEMBER(T_Point, timestamp))
+  {
+    if (this->param_.use_lidar_clock)
+    {
+      pkt_timestamp = getLidarTime(pkt);
+    }
+    else
+    {
+      pkt_timestamp = getTime();
+    }
+  }
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   int first_azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   azimuth = first_azimuth;
@@ -197,6 +209,10 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         azi_diff = (float)((36000 + cur_azi - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) % 36000);
       }
     }
+    if (HAS_MEMBER(T_Point, timestamp))
+    {
+      pkt_timestamp += this->time_duration_between_blocks_ * blk_idx;
+    }
     for (int channel_idx = 0; channel_idx < RSBP_CHANNELS_PER_BLOCK; channel_idx++)
     {
       float azi_channel_ori = cur_azi + (azi_diff * RSBP_CHANNEL_TOFFSET * (channel_idx % 16) / RSBP_FIRING_TDURATION);
@@ -222,7 +238,6 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setY(point, y);
         setZ(point, z);
         setIntensity(point, intensity);
-        setRing(point, beam_ring_table_[channel_idx]);
       }
       else
       {
@@ -230,8 +245,9 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setY(point, NAN);
         setZ(point, NAN);
         setIntensity(point, 0);
-        setRing(point, -1);
       }
+      setRing(point, beam_ring_table_[channel_idx]);
+      setTimestamp(point, pkt_timestamp);
       vec.emplace_back(std::move(point));
     }
   }
@@ -260,13 +276,16 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     default:
       break;
   }
+  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
+  this->time_duration_between_blocks_ =
+      (60 / (float)this->rpm_) / ((RSBP_PKT_RATE * 60 / this->rpm_) * RSBP_BLOCKS_PER_PKT);
   if (this->echo_mode_ == ECHO_DUAL)
   {
-    this->pkts_per_frame_ = ceil(2 * RSBP_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
+    this->pkts_per_frame_ = ceil(2 * RSBP_PKT_RATE * 60 / this->rpm_);
   }
   else
   {
-    this->pkts_per_frame_ = ceil(RSBP_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
+    this->pkts_per_frame_ = ceil(RSBP_PKT_RATE * 60 / this->rpm_);
   }
 
   if (!this->difop_flag_)
