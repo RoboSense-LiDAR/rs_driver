@@ -24,17 +24,17 @@ namespace robosense
 {
 namespace lidar
 {
-#define RS16_CHANNELS_PER_BLOCK (32)
+#define RS16_MSOP_ID (0xA050A55A0A05AA55)
+#define RS16_DIFOP_ID (0x555511115A00FFA5)
+#define RS16_BLOCK_ID (0xEEFF)
 #define RS16_BLOCKS_PER_PKT (12)
+#define RS16_CHANNELS_PER_BLOCK (32)
 #define RS16_BLOCK_TDURATION_DUAL (50)
 #define RS16_BLOCK_TDURATION_SINGLE (100)
-#define RS16_POINTS_CHANNEL_PER_SECOND (18000)
-#define RS16_BLOCKS_CHANNEL_PER_PKT (12)
-#define RS16_MSOP_ID (0xA050A55A0A05AA55)
-#define RS16_BLOCK_ID (0xEEFF)
-#define RS16_DIFOP_ID (0x555511115A00FFA5)
 #define RS16_CHANNEL_TOFFSET (3)
 #define RS16_FIRING_TDURATION (50)
+
+const int RS16_PKT_RATE = 750;
 const double RS16_RX = 0.03825;
 const double RS16_RY = -0.01088;
 const double RS16_RZ = 0;
@@ -117,21 +117,27 @@ public:
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
   RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
+
+private:
+  void initTable();
+
+private:
+  std::array<int, 128> beam_ring_table_;
 };
 
 template <typename T_Point>
 DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
   this->angle_file_index_ = 16;
-  if (this->param_.max_distance > 200.0f)
+  if (this->param_.max_distance > 150.0f)
   {
-    this->param_.max_distance = 200.0f;
+    this->param_.max_distance = 150.0f;
   }
   if (this->param_.min_distance < 0.2f || this->param_.min_distance > this->param_.max_distance)
   {
     this->param_.min_distance = 0.2f;
   }
-  //    rs_print(RS_INFO, "[RS16] Constructor.");
+  initTable();
 }
 
 template <typename T_Point>
@@ -164,58 +170,55 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       this->checkTriggerAngle(first_azimuth, getTime());
     }
   }
-  for (int blk_idx = 0; blk_idx < RS16_BLOCKS_PER_PKT; blk_idx++)
+  for (size_t blk_idx = 0; blk_idx < RS16_BLOCKS_PER_PKT; blk_idx++)
   {
     if (mpkt_ptr->blocks[blk_idx].id != RS16_BLOCK_ID)
     {
       break;
     }
     int cur_azimuith = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-    float azimuth_diff = 0;
+    float azi_diff = 0;
     if (blk_idx < (RS16_BLOCKS_PER_PKT - 1))  // 12
     {
-      azimuth_diff = (float)((36000 + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth) - cur_azimuith) % 36000);
+      azi_diff = (float)((36000 + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth) - cur_azimuith) % 36000);
     }
     else
     {
-      azimuth_diff = (float)((36000 + cur_azimuith - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) % 36000);
+      azi_diff = (float)((36000 + cur_azimuith - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) % 36000);
     }
 
-    float azimuth_channel;
-    for (int channel_idx = 0; channel_idx < RS16_CHANNELS_PER_BLOCK; channel_idx++)
+    for (size_t channel_idx = 0; channel_idx < RS16_CHANNELS_PER_BLOCK; channel_idx++)
     {
+      float azi_channel_ori=0;
       if (this->echo_mode_ == ECHO_DUAL)
       {
-        azimuth_channel =
-            cur_azimuith + azimuth_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
+        azi_channel_ori =
+            cur_azimuith + azi_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
       }
       else
       {
-        azimuth_channel = cur_azimuith +
-                          azimuth_diff *
+        azi_channel_ori = cur_azimuith +
+                          azi_diff *
                               (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) /
                               RS16_BLOCK_TDURATION_SINGLE;
       }
-      int azimuth_final = (((int)azimuth_channel % 36000) + 36000) % 36000;
-
-      int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
-      float distance_cali = distance * RS_RESOLUTION;
-
-      int angle_horiz_ori = azimuth_final;
+      int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
+      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
+      int angle_horiz_ori = (int)(azi_channel_ori + 36000) % 36000;;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16]) % 36000) + 36000) % 36000;
 
       // store to point cloud buffer
       T_Point point;
-      if ((distance_cali <= this->param_.max_distance && distance_cali >= this->param_.min_distance) &&
-          ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
-           (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
+      if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
+          ((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
+           (!this->angle_flag_ && ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
-        double x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azimuth_final] +
+        double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
                    RS16_RX * this->cos_lookup_table_[angle_horiz_ori];
 
-        double y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azimuth_final] -
+        double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
                    RS16_RX * this->sin_lookup_table_[angle_horiz_ori];
-        double z = distance_cali * this->sin_lookup_table_[angle_vert] + RS16_RZ;
+        double z = distance * this->sin_lookup_table_[angle_vert] + RS16_RZ;
         double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);
@@ -257,26 +260,24 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     default:
       break;
   }
-  int pkt_rate = ceil(RS16_POINTS_CHANNEL_PER_SECOND / RS16_BLOCKS_CHANNEL_PER_PKT);
-  if (this->echo_mode_ == ECHO_LAST || this->echo_mode_ == ECHO_STRONGEST)
+  if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
   {
-    pkt_rate = ceil(pkt_rate / 2);
+    this->pkts_per_frame_ = ceil(2 * RS16_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
   }
-  this->pkts_per_frame_ = ceil(pkt_rate * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
-
+  else
+  {
+    this->pkts_per_frame_ = ceil(RS16_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
+  }
   if (!this->difop_flag_)
   {
     bool angle_flag = true;
     const uint8_t* p_ver_cali;
-
     p_ver_cali = dpkt_ptr->pitch_cali;
-
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
     {
       angle_flag = false;
     }
-
     if (angle_flag)
     {
       int lsb, mid, msb, neg = 1;
@@ -295,18 +296,35 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
         {
           neg = 1;
         }
-
         this->vert_angle_list_[i] = (lsb * 256 * 256 + mid * 256 + msb) * neg * 0.01f;  // / 180 * M_PI;
-
         /* horizon angle calibration data */
         this->hori_angle_list_[i] = 0;
       }
-
       this->difop_flag_ = true;
     }
   }
-
   return RSDecoderResult::DECODE_OK;
+}
+
+template <typename T_Point>
+void DecoderRS16<T_Point>::initTable()
+{
+  beam_ring_table_[0] = 0;
+  beam_ring_table_[1] = 1;
+  beam_ring_table_[2] = 2;
+  beam_ring_table_[3] = 3;
+  beam_ring_table_[4] = 4;
+  beam_ring_table_[5] = 5;
+  beam_ring_table_[6] = 6;
+  beam_ring_table_[7] = 7;
+  beam_ring_table_[8] = 15;
+  beam_ring_table_[9] = 14;
+  beam_ring_table_[10] = 13;
+  beam_ring_table_[11] = 12;
+  beam_ring_table_[12] = 11;
+  beam_ring_table_[13] = 10;
+  beam_ring_table_[14] = 9;
+  beam_ring_table_[15] = 8;
 }
 
 }  // namespace lidar

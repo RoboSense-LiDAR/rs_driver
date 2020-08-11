@@ -247,7 +247,7 @@ protected:
 
 protected:
   RSEchoMode echo_mode_;
-  int angle_file_index_;
+  unsigned int angle_file_index_;
   int start_angle_;
   int end_angle_;
   bool angle_flag_;
@@ -389,7 +389,7 @@ void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
   std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
   if (fd_angle.is_open())
   {
-    int row_index = 0;
+    unsigned int row_index = 0;
     while (std::getline(fd_angle, line_str))
     {
       std::stringstream ss(line_str);

@@ -24,15 +24,14 @@ namespace robosense
 {
 namespace lidar
 {
-#define RSBP_CHANNELS_PER_BLOCK 32
-#define RSBP_BLOCKS_PER_PKT 12
-#define RSBP_POINTS_CHANNEL_PER_SECOND (18000)
-#define RSBP_BLOCKS_CHANNEL_PER_PKT (12)
 #define RSBP_MSOP_ID (0xA050A55A0A05AA55)
-#define RSBP_BLOCK_ID (0xEEFF)
 #define RSBP_DIFOP_ID (0x555511115A00FFA5)
+#define RSBP_BLOCK_ID (0xEEFF)
+#define RSBP_BLOCKS_PER_PKT (12)
+#define RSBP_CHANNELS_PER_BLOCK (32)
 #define RSBP_CHANNEL_TOFFSET (3)
 #define RSBP_FIRING_TDURATION (50)
+const int RSBP_PKT_RATE = 1500;
 const double RSBP_RX = 0.01473;
 const double RSBP_RY = 0.0085;
 const double RSBP_RZ = 0.09427;
@@ -40,7 +39,6 @@ const double RSBP_RZ = 0.09427;
 #ifdef _MSC_VER
 #pragma pack(push, 1)
 #endif
-
 typedef struct
 {
   uint16_t id;
@@ -116,6 +114,12 @@ public:
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
   RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
+
+private:
+  void initTable();
+
+private:
+  std::array<int, 32> beam_ring_table_;
 };
 
 template <typename T_Point>
@@ -130,6 +134,7 @@ DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_P
   {
     this->param_.min_distance = 0.1f;
   }
+  initTable();
 }
 
 template <typename T_Point>
@@ -142,7 +147,7 @@ template <typename T_Point>
 RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
                                                     int& azimuth)
 {
-  height = 32;
+  height = RSBP_CHANNELS_PER_BLOCK;
   RSBPMsopPkt* mpkt_ptr = (RSBPMsopPkt*)pkt;
   if (mpkt_ptr->header.id != RSBP_MSOP_ID)
   {
@@ -162,8 +167,7 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       this->checkTriggerAngle(first_azimuth, getTime());
     }
   }
-
-  for (int blk_idx = 0; blk_idx < RSBP_BLOCKS_PER_PKT; blk_idx++)
+  for (size_t blk_idx = 0; blk_idx < RSBP_BLOCKS_PER_PKT; blk_idx++)
   {
     if (mpkt_ptr->blocks[blk_idx].id != RSBP_BLOCK_ID)
     {
@@ -193,36 +197,32 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         azi_diff = (float)((36000 + cur_azi - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) % 36000);
       }
     }
-
-    float azimuth_channel;
     for (int channel_idx = 0; channel_idx < RSBP_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      azimuth_channel = cur_azi + (azi_diff * RSBP_CHANNEL_TOFFSET * (channel_idx % 16) / RSBP_FIRING_TDURATION);
-      int azimuth_final = this->azimuthCalibration(azimuth_channel, channel_idx);
-
-      int distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance);
-      float distance_cali = distance * RS_RESOLUTION;
-
-      int angle_horiz_ori = (int)(azimuth_channel + 36000) % 36000;
+      float azi_channel_ori = cur_azi + (azi_diff * RSBP_CHANNEL_TOFFSET * (channel_idx % 16) / RSBP_FIRING_TDURATION);
+      int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
+      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
+      int angle_horiz = (int)(azi_channel_ori + 36000) % 36000;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % 36000) + 36000) % 36000;
 
       // store to point cloud buffer
       T_Point point;
-      if ((distance_cali <= this->param_.max_distance && distance_cali >= this->param_.min_distance) &&
-          ((this->angle_flag_ && azimuth_final >= this->start_angle_ && azimuth_final <= this->end_angle_) ||
-           (!this->angle_flag_ && ((azimuth_final >= this->start_angle_) || (azimuth_final <= this->end_angle_)))))
+      if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
+          ((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
+           (!this->angle_flag_ &&
+            ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
-        double x = distance_cali * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azimuth_final] +
-                   RSBP_RX * this->cos_lookup_table_[angle_horiz_ori];
-        double y = -distance_cali * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azimuth_final] -
-                   RSBP_RX * this->sin_lookup_table_[angle_horiz_ori];
-        double z = distance_cali * this->sin_lookup_table_[angle_vert] + RSBP_RZ;
-
+        double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
+                   RSBP_RX * this->cos_lookup_table_[angle_horiz];
+        double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
+                   RSBP_RX * this->sin_lookup_table_[angle_horiz];
+        double z = distance * this->sin_lookup_table_[angle_vert] + RSBP_RZ;
         double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);
         setZ(point, z);
         setIntensity(point, intensity);
+        setRing(point, beam_ring_table_[channel_idx]);
       }
       else
       {
@@ -230,11 +230,11 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setY(point, NAN);
         setZ(point, NAN);
         setIntensity(point, 0);
+        setRing(point, -1);
       }
       vec.emplace_back(std::move(point));
     }
   }
-
   return RSDecoderResult::DECODE_OK;
 }
 
@@ -246,7 +246,6 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-
   switch (dpkt_ptr->return_mode)
   {
     case 0x00:
@@ -261,33 +260,30 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     default:
       break;
   }
-  int pkt_rate = ceil(RSBP_POINTS_CHANNEL_PER_SECOND / RSBP_BLOCKS_CHANNEL_PER_PKT);
-
   if (this->echo_mode_ == ECHO_DUAL)
   {
-    pkt_rate = pkt_rate * 2;
+    this->pkts_per_frame_ = ceil(2 * RSBP_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
   }
-  this->pkts_per_frame_ = ceil(pkt_rate * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
+  else
+  {
+    this->pkts_per_frame_ = ceil(RSBP_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
+  }
 
   if (!this->difop_flag_)
   {
     bool angle_flag = true;
     const uint8_t* p_ver_cali;
-
     p_ver_cali = ((RSBPDifopPkt*)pkt)->pitch_cali;
-
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF))
     {
       angle_flag = false;
     }
-
     if (angle_flag)
     {
       int lsb, mid, msb, neg = 1;
-
       const uint8_t* p_hori_cali = ((RSBPDifopPkt*)pkt)->yaw_cali;
-      for (int i = 0; i < this->angle_file_index_; i++)
+      for (size_t i = 0; i < this->angle_file_index_; i++)
       {
         /* vert angle calibration data */
         lsb = p_ver_cali[i * 3];
@@ -301,7 +297,6 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
         {
           neg = -1;
         }
-
         this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // / 180 * M_PI;
 
         /* horizon angle calibration data */
@@ -321,11 +316,46 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       }
 
       this->difop_flag_ = true;
-
-      // std::cout << "[RS_decoder][difop][INFO] angle data is wrote in difop packet!" << std::endl;
     }
   }
   return RSDecoderResult::DECODE_OK;
+}
+
+template <typename T_Point>
+void DecoderRSBP<T_Point>::initTable()
+{
+  beam_ring_table_[0] = 31;
+  beam_ring_table_[1] = 28;
+  beam_ring_table_[2] = 27;
+  beam_ring_table_[3] = 25;
+  beam_ring_table_[4] = 23;
+  beam_ring_table_[5] = 21;
+  beam_ring_table_[6] = 19;
+  beam_ring_table_[7] = 17;
+  beam_ring_table_[8] = 30;
+  beam_ring_table_[9] = 29;
+  beam_ring_table_[10] = 26;
+  beam_ring_table_[11] = 24;
+  beam_ring_table_[12] = 22;
+  beam_ring_table_[13] = 20;
+  beam_ring_table_[14] = 18;
+  beam_ring_table_[15] = 16;
+  beam_ring_table_[16] = 15;
+  beam_ring_table_[17] = 13;
+  beam_ring_table_[18] = 11;
+  beam_ring_table_[19] = 9;
+  beam_ring_table_[20] = 7;
+  beam_ring_table_[21] = 5;
+  beam_ring_table_[22] = 3;
+  beam_ring_table_[23] = 1;
+  beam_ring_table_[24] = 14;
+  beam_ring_table_[25] = 12;
+  beam_ring_table_[26] = 10;
+  beam_ring_table_[27] = 8;
+  beam_ring_table_[28] = 6;
+  beam_ring_table_[29] = 4;
+  beam_ring_table_[30] = 2;
+  beam_ring_table_[31] = 0;
 }
 
 }  // namespace lidar

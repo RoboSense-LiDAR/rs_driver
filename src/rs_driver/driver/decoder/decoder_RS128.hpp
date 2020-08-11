@@ -289,7 +289,6 @@ RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-
   this->echo_mode_ = (RSEchoMode)dpkt_ptr->return_mode;
   if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
   {
@@ -299,7 +298,6 @@ RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     this->pkts_per_frame_ = ceil(RS128_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
   }
-
   if (!this->difop_flag_)
   {
     bool angle_flag = true;
@@ -314,7 +312,7 @@ RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     if (angle_flag)
     {
       int lsb, mid, msb, neg = 1;
-      for (int i = 0; i < 128; i++)
+      for (size_t i = 0; i < this->angle_file_index_; i++)
       {
         // calculation of vertical angle
         lsb = dpkt_ptr->ver_angle_cali[i].sign;

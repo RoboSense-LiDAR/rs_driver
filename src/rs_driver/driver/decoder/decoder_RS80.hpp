@@ -287,11 +287,9 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setZ(point, NAN);
         setIntensity(point, 0);
       }
-
       vec.emplace_back(std::move(point));
     }
   }
-
   return RSDecoderResult::DECODE_OK;
 }
 
@@ -303,16 +301,15 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-
-  int pkt_rate = 6000;
   this->echo_mode_ = (RSEchoMode)dpkt_ptr->return_mode;
-
   if (this->echo_mode_ == ECHO_DUAL)
   {
-    pkt_rate = pkt_rate * 2;
+    this->pkts_per_frame_ = ceil(2 * RS80_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
   }
-  this->pkts_per_frame_ = ceil(pkt_rate * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
-
+  else
+  {
+    this->pkts_per_frame_ = ceil(RS80_PKT_RATE * 60 / RS_SWAP_SHORT(dpkt_ptr->rpm));
+  }
   if (!this->difop_flag_)
   {
     bool angle_flag = true;
@@ -327,7 +324,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     if (angle_flag)
     {
       int lsb, mid, msb, neg = 1;
-      for (int i = 0; i < 128; i++)
+      for (size_t i = 0; i < this->angle_file_index_; i++)
       {
         // calculation of vertical angle
         lsb = dpkt_ptr->ver_angle_cali[i].sign;
