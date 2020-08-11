@@ -1,5 +1,16 @@
 # Changelog
 
+## unreleased v1.2.0 - beta
+
+### Added
+
+- Add interface in driver core to get lidar temperature
+- Add support for point type XYZIR (R - ring id)
+
+### Changed
+
+- Update the decoding part for ruby in echo-dual mode
+
 ## v1.1.0 - 2020-07-01
 
 ### Added
