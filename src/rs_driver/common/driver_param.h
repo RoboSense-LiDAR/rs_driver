@@ -29,7 +29,7 @@ namespace lidar
 enum LidarType  ///< The lidar type
 {
   RSAUTO = 0,  ///< If LidarType is set to RSAUTO, the driver will check the lidar type automatically.(Only support
-               ///< the LiDARs of latest version, not support Bpearl yet.)
+               ///< the LiDARs of latest version, not support Bpearl & RS80 yet.)
   RS16 = 1,
   RS32 = 2,
   RSBP = 3,
@@ -44,10 +44,10 @@ enum SplitFrameMode
   SPLIT_BY_CUSTOM_PKTS = 3
 };
 
-typedef struct RSCameraTriggerParam  ///< The serial port parameters
+typedef struct RSCameraTriggerParam  ///< The Camera trigger parameters
 {
   std::map<double, std::string> trigger_map;  ///< The map stored the trigger angle and camera frame id
-  void print() const                          ///< This function is used to print all the parameters for debug
+  void print() const                          ///< This function is used to print all the parameters for debugging
   {
     std::cout << "\033[1m\033[32m"
               << "------------------------------------------------------"
@@ -80,7 +80,7 @@ typedef struct RSDecoderParam  ///< The lidar decoder parameter
   bool use_lidar_clock = false;   ///< True: lidar message timestamp is the lidar clock.
                                   ///< False: timestamp is the computer system cloc
   RSCameraTriggerParam trigger_param;  ///< The parameter used to trigger camera
-  void print() const                   ///< This function is used to print all the parameters for debug
+  void print() const                   ///< This function is used to print all the parameters for debugging
   {
     trigger_param.print();
     std::cout << "\033[1m\033[32m"
@@ -115,7 +115,7 @@ typedef struct RSInputParam  ///< The lidar input parameter
   double pcap_rate = 1;     ///< The rate to read the pcap file
   bool pcap_repeat = true;  ///< True: The pcap bag will repeat play
   std::string pcap_directory = "null";  ///< The absolute path of pcap file
-  void print() const                    ///< This function is used to print all the parameters for debug
+  void print() const                    ///< This function is used to print all the parameters for debugging
   {
     std::cout << "\033[1m\033[32m"
               << "------------------------------------------------------"
@@ -145,7 +145,7 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
   std::string frame_id = "rslidar";        ///< The frame id of lidar message
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   bool wait_for_difop = true;              ///< True: start sending point cloud until receive difop packet
-  void print() const                       ///< This function is used to print all the parameters for debug
+  void print() const                       ///< This function is used to print all the parameters for debugging
   {
     input_param.print();
     decoder_param.print();

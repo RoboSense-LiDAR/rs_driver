@@ -188,16 +188,20 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
     {
       break;
     }
-    int cur_azimuith = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
+    int cur_azi = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
+    float azi_diff_theoretical =
+        (360 / RS16_BLOCKS_PER_PKT) * 100 / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
     float azi_diff = 0;
     if (blk_idx < (RS16_BLOCKS_PER_PKT - 1))  // 12
     {
-      azi_diff = (float)((36000 + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth) - cur_azimuith) % 36000);
+      azi_diff = (float)((36000 + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth) - cur_azi) % 36000);
     }
     else
     {
-      azi_diff = (float)((36000 + cur_azimuith - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) % 36000);
+      azi_diff = (float)((36000 + cur_azi - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) % 36000);
     }
+    azi_diff = (azi_diff > 100) ? azi_diff_theoretical : azi_diff;
+
     if (HAS_MEMBER(T_Point, timestamp))
     {
       pkt_timestamp += this->time_duration_between_blocks_ * blk_idx;
@@ -207,20 +211,18 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       float azi_channel_ori = 0;
       if (this->echo_mode_ == ECHO_DUAL)
       {
-        azi_channel_ori =
-            cur_azimuith + azi_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
+        azi_channel_ori = cur_azi + azi_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
       }
       else
       {
-        azi_channel_ori = cur_azimuith +
-                          azi_diff *
-                              (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) /
-                              RS16_BLOCK_TDURATION_SINGLE;
+        azi_channel_ori =
+            cur_azi + azi_diff *
+                          (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) /
+                          RS16_BLOCK_TDURATION_SINGLE;
       }
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz_ori = (int)(azi_channel_ori + 36000) % 36000;
-      ;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16]) % 36000) + 36000) % 36000;
 
       // store to point cloud buffer

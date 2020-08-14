@@ -231,6 +231,8 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
     {
       break;
     }
+    float azi_diff_theoretical =
+        (360 / RS128_BLOCKS_PER_PKT) * 100 / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
     float azi_diff = 0;
     if (this->echo_mode_ == ECHO_DUAL)
     {
@@ -249,6 +251,7 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
           break;
       }
     }
+    azi_diff = (azi_diff > 100) ? azi_diff_theoretical : azi_diff;
     if (HAS_MEMBER(T_Point, timestamp))
     {
       pkt_timestamp += this->time_duration_between_blocks_ * blk_idx;
