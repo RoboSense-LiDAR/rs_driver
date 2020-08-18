@@ -12,7 +12,7 @@ cmake_policy(SET CMP0048 NEW)
 set(CMAKE_BUILD_TYPE Release)
 add_definitions(-O3)
 add_definitions(-std=c++11)
-add_compile_options(-W)
+add_compile_options(-Wall)
 configure_file (
   "${PROJECT_SOURCE_DIR}/src/rs_driver/macro/version.h.in"
   "${PROJECT_SOURCE_DIR}/src/rs_driver/macro/version.h"
@@ -28,7 +28,15 @@ set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX})
 # Dependencies Setup
 #========================
 find_package(Boost COMPONENTS system REQUIRED)
-
+find_package( OpenMP QUIET)
+if(OPENMP_FOUND)
+message(=============================================================)
+message("-- OpenMP Found, OpenMP support is turned On!")
+message(=============================================================)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS"${CMAKE_EXE_LINKER_FLAGS}${OpenMP_EXE_LINKER_FLAGS}")
+endif()
 #========================
 # Build Setup
 #========================

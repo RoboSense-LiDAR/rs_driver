@@ -47,7 +47,7 @@ DEFINE_MEMBER_CHECKER(timestamp)
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
 const double RS_RESOLUTION = 0.005;
-
+const int RS_ONE_ROUND = 36000;
 /* Echo mode definition */
 enum RSEchoMode
 {
@@ -246,23 +246,24 @@ protected:
   double calculateTimeYMD(const uint8_t* pkt);
 
 protected:
+  RSDecoderParam param_;
   RSEchoMode echo_mode_;
-  unsigned int angle_file_index_;
-  unsigned int rpm_;
-  int start_angle_;
-  int end_angle_;
-  bool angle_flag_;
-  bool difop_flag_;
-  bool trigger_flag_;
-  int cut_angle_;
-  int last_azimuth_;
   unsigned int pkts_per_frame_;
   unsigned int pkt_count_;
   unsigned int trigger_index_;
   unsigned int prev_angle_diff_;
+  unsigned int angle_file_index_;
+  unsigned int rpm_;
+  int start_angle_;
+  int end_angle_;
+  int cut_angle_;
+  int last_azimuth_;
+  bool angle_flag_;
+  bool difop_flag_;
+  bool trigger_flag_;
+  float fov_time_jump_diff_;
   float time_duration_between_blocks_;
   float current_temperature_;
-  RSDecoderParam param_;
   float vert_angle_list_[128];
   float hori_angle_list_[128];
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
@@ -273,30 +274,33 @@ protected:
 template <typename T_Point>
 DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   : param_(param)
-  , pkts_per_frame_(600)
-  , rpm_(600)
-  , pkt_count_(0)
-  , last_azimuth_(-36001)
-  , current_temperature_(0)
-  , trigger_index_(0)
-  , prev_angle_diff_(36000)
-  , time_duration_between_blocks_(0)
-  , difop_flag_(false)
-  , angle_flag_(true)
-  , trigger_flag_(false)
   , echo_mode_(ECHO_STRONGEST)
+  , pkts_per_frame_(600)
+  , pkt_count_(0)
+  , trigger_index_(0)
+  , prev_angle_diff_(RS_ONE_ROUND)
+  , angle_file_index_(128)
+  , rpm_(600)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)
   , cut_angle_(param.cut_angle * 100)
+  , last_azimuth_(-36001)
+  , angle_flag_(true)
+  , difop_flag_(false)
+  , trigger_flag_(false)
+  , fov_time_jump_diff_(0)
+  , time_duration_between_blocks_(0)
+  , current_temperature_(0)
 {
-  if (cut_angle_ > 36000)
+  if (cut_angle_ > RS_ONE_ROUND)
   {
     cut_angle_ = 0;
   }
-  if (this->start_angle_ > 36000 || this->start_angle_ < 0 || this->end_angle_ > 36000 || this->end_angle_ < 0)
+  if (this->start_angle_ > RS_ONE_ROUND || this->start_angle_ < 0 || this->end_angle_ > RS_ONE_ROUND ||
+      this->end_angle_ < 0)
   {
     this->start_angle_ = 0;
-    this->end_angle_ = 36000;
+    this->end_angle_ = RS_ONE_ROUND;
   }
   if (this->start_angle_ > this->end_angle_)
   {
@@ -338,14 +342,14 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
     case SplitFrameMode::SPLIT_BY_ANGLE:
       if (azimuth < this->last_azimuth_)
       {
-        this->last_azimuth_ -= 36000;
+        this->last_azimuth_ -= RS_ONE_ROUND;
       }
       if (this->last_azimuth_ != -36001 && this->last_azimuth_ < this->cut_angle_ && azimuth >= this->cut_angle_)
       {
         this->last_azimuth_ = azimuth;
         this->pkt_count_ = 0;
         this->trigger_index_ = 0;
-        this->prev_angle_diff_ = 36000;
+        this->prev_angle_diff_ = RS_ONE_ROUND;
         return FRAME_SPLIT;
       }
       this->last_azimuth_ = azimuth;
@@ -355,7 +359,7 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
       {
         this->pkt_count_ = 0;
         this->trigger_index_ = 0;
-        this->prev_angle_diff_ = 36000;
+        this->prev_angle_diff_ = RS_ONE_ROUND;
         return FRAME_SPLIT;
       }
       break;
@@ -364,7 +368,7 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
       {
         this->pkt_count_ = 0;
         this->trigger_index_ = 0;
-        this->prev_angle_diff_ = 36000;
+        this->prev_angle_diff_ = RS_ONE_ROUND;
         return FRAME_SPLIT;
       }
       break;
@@ -442,7 +446,7 @@ void DecoderBase<T_Point>::checkTriggerAngle(const int& angle, const double& tim
     else
     {
       trigger_index_++;
-      prev_angle_diff_ = 36000;
+      prev_angle_diff_ = RS_ONE_ROUND;
       for (auto cb : camera_trigger_cb_vec_)
       {
         cb(std::make_pair(iter->second, timestamp));
@@ -494,7 +498,7 @@ float DecoderBase<T_Point>::computeTemperature(const uint8_t& temp_low, const ui
 template <typename T_Point>
 int DecoderBase<T_Point>::azimuthCalibration(const float& azimuth, const int& channel)
 {
-  return ((int)(azimuth + this->hori_angle_list_[channel]) + 36000) % 36000;
+  return ((int)(azimuth + this->hori_angle_list_[channel]) + RS_ONE_ROUND) % RS_ONE_ROUND;
 }
 
 template <typename T_Point>
@@ -607,9 +611,9 @@ inline typename std::enable_if<HAS_MEMBER(T_Point, timestamp)>::type setTimestam
 
 inline const std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func)
 {
-  std::vector<double> temp_table = std::vector<double>(36000, 0.0);
+  std::vector<double> temp_table = std::vector<double>(RS_ONE_ROUND, 0.0);
 #pragma omp parallel for
-  for (size_t i = 0; i < 36000; i++)
+  for (size_t i = 0; i < RS_ONE_ROUND; i++)
   {
     const double rad = RS_TO_RADS(static_cast<double>(i) / 100.0);
     temp_table[i] = func(rad);

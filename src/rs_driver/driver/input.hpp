@@ -236,6 +236,8 @@ private:
         case LidarType::RS80:
           usleep(RS80_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
           break;
+        default:
+          break;
       }
       if (!pcap_thread_.start.load())
       {
@@ -355,8 +357,8 @@ private:
   }
 
 private:
-  RSInputParam input_param_;
   LidarType lidar_type_;
+  RSInputParam input_param_;
   std::function<void(const Error&)> excb_;
   bool init_flag_;
   /* pcap file parse */

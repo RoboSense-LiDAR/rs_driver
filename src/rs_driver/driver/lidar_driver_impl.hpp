@@ -398,12 +398,12 @@ private:
   std::shared_ptr<Input> input_ptr_;
   std::shared_ptr<ThreadPool> thread_pool_ptr_;
   std::shared_ptr<ScanMsg> scan_ptr_;
-  uint32_t scan_seq_;
-  uint32_t point_cloud_seq_;
-  uint32_t ndifop_count_;
   bool init_flag_;
   bool start_flag_;
   bool difop_flag_;
+  uint32_t point_cloud_seq_;
+  uint32_t scan_seq_;
+  uint32_t ndifop_count_;
   RSDriverParam driver_param_;
   typename PointCloudMsg<PointT>::PointCloudPtr point_cloud_ptr_;
 };
