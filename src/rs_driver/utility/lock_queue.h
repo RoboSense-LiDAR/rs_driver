@@ -36,33 +36,33 @@ public:
 
   T front()
   {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    return m_quque_.front();
+    std::lock_guard<std::mutex> lock(mutex_);
+    return queue_.front();
   }
 
   void push(const T& value)
   {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    m_quque_.push(value);
+    std::lock_guard<std::mutex> lock(mutex_);
+    queue_.push(value);
   }
 
   void pop()
   {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    if (!m_quque_.empty())
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!queue_.empty())
     {
-      m_quque_.pop();
+      queue_.pop();
     }
   }
 
   T popFront()
   {
     T value;
-    std::lock_guard<std::mutex> lock(m_mutex);
-    if (!m_quque_.empty())
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!queue_.empty())
     {
-      value = std::move(m_quque_.front());
-      m_quque_.pop();
+      value = std::move(queue_.front());
+      queue_.pop();
     }
     return value;
   }
@@ -70,22 +70,22 @@ public:
   void clear()
   {
     std::queue<T> empty;
-    std::lock_guard<std::mutex> lock(m_mutex);
-    swap(empty, m_quque_);
+    std::lock_guard<std::mutex> lock(mutex_);
+    swap(empty, queue_);
   }
 
   size_t size()
   {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    return m_quque_.size();
+    std::lock_guard<std::mutex> lock(mutex_);
+    return queue_.size();
   }
 
 public:
-  std::queue<T> m_quque_;
+  std::queue<T> queue_;
   std::atomic<bool> is_task_finished_;
 
 private:
-  mutable std::mutex m_mutex;
+  mutable std::mutex mutex_;
 };
 }  // namespace lidar
 }  // namespace robosense

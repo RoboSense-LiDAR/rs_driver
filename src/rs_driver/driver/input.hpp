@@ -111,15 +111,15 @@ public:
     }
     if (!input_param_.read_pcap)
     {
-      msop_thread_.start.store(true);
-      difop_thread_.start.store(true);
-      msop_thread_.m_thread.reset(new std::thread([this]() { getMsopPacket(); }));
-      difop_thread_.m_thread.reset(new std::thread([this]() { getDifopPacket(); }));
+      msop_thread_.start_.store(true);
+      difop_thread_.start_.store(true);
+      msop_thread_.thread_.reset(new std::thread([this]() { getMsopPacket(); }));
+      difop_thread_.thread_.reset(new std::thread([this]() { getDifopPacket(); }));
     }
     else
     {
-      pcap_thread_.start.store(true);
-      pcap_thread_.m_thread.reset(new std::thread([this]() { getPcapPacket(); }));
+      pcap_thread_.start_.store(true);
+      pcap_thread_.thread_.reset(new std::thread([this]() { getPcapPacket(); }));
     }
     return true;
   }
@@ -128,23 +128,23 @@ public:
   {
     if (!input_param_.read_pcap)
     {
-      msop_thread_.start.store(false);
-      difop_thread_.start.store(false);
-      if (msop_thread_.m_thread->joinable())
+      msop_thread_.start_.store(false);
+      difop_thread_.start_.store(false);
+      if (msop_thread_.thread_->joinable())
       {
-        msop_thread_.m_thread->join();
+        msop_thread_.thread_->join();
       }
-      if (difop_thread_.m_thread->joinable())
+      if (difop_thread_.thread_->joinable())
       {
-        difop_thread_.m_thread->join();
+        difop_thread_.thread_->join();
       }
     }
     else
     {
-      pcap_thread_.start.store(false);
-      if (pcap_thread_.m_thread->joinable())
+      pcap_thread_.start_.store(false);
+      if (pcap_thread_.thread_->joinable())
       {
-        pcap_thread_.m_thread->join();
+        pcap_thread_.thread_->join();
       }
     }
   }
@@ -215,7 +215,7 @@ private:
   }
   inline void getPcapPacket()
   {
-    while (pcap_thread_.start.load())
+    while (pcap_thread_.start_.load())
     {
       struct pcap_pkthdr* header;
       const u_char* pkt_data;
@@ -239,7 +239,7 @@ private:
         default:
           break;
       }
-      if (!pcap_thread_.start.load())
+      if (!pcap_thread_.start_.load())
       {
         break;
       }
@@ -287,7 +287,7 @@ private:
   inline void getMsopPacket()
   {
     char* precv_buffer = (char*)malloc(RSLIDAR_PKT_LEN);
-    while (msop_thread_.start.load())
+    while (msop_thread_.start_.load())
     {
       msop_deadline_->expires_from_now(boost::posix_time::seconds(1));
       boost::system::error_code ec = boost::asio::error::would_block;
@@ -320,7 +320,7 @@ private:
   }
   inline void getDifopPacket()
   {
-    while (difop_thread_.start.load())
+    while (difop_thread_.start_.load())
     {
       char* precv_buffer = (char*)malloc(RSLIDAR_PKT_LEN);
 

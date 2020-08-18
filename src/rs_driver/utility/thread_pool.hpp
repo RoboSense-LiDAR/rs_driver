@@ -30,10 +30,10 @@ struct Thread
 {
   Thread()
   {
-    start = false;
+    start_ = false;
   }
-  std::shared_ptr<std::thread> m_thread;
-  std::atomic<bool> start;
+  std::shared_ptr<std::thread> thread_;
+  std::atomic<bool> start_;
 };
 class ThreadPool
 {
@@ -49,7 +49,7 @@ public:
         {
           std::function<void()> task;
           {
-            std::unique_lock<std::mutex> lock{ this->m_lock_ };
+            std::unique_lock<std::mutex> lock{ this->mutex_ };
             this->cv_task_.wait(lock, [this] { return this->stop_flag_.load() || !this->tasks_.empty(); });
             if (this->stop_flag_ && this->tasks_.empty())
               return;
@@ -85,7 +85,7 @@ public:
         std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
     std::future<RetType> future = task->get_future();
     {
-      std::lock_guard<std::mutex> lock{ m_lock_ };
+      std::lock_guard<std::mutex> lock{ mutex_ };
       tasks_.emplace([task]() { (*task)(); });
     }
     cv_task_.notify_one();
@@ -96,7 +96,7 @@ private:
   using Task = std::function<void()>;
   std::vector<std::thread> pool_;
   std::queue<Task> tasks_;
-  std::mutex m_lock_;
+  std::mutex mutex_;
   std::condition_variable cv_task_;
   std::atomic<bool> stop_flag_;
   std::atomic<int> idl_thr_num_;
