@@ -39,19 +39,14 @@ const double RS16_RX = 0.03825;
 const double RS16_RY = -0.01088;
 const double RS16_RZ = 0;
 
-#ifdef _MSC_VER
 #pragma pack(push, 1)
-#endif
+
 typedef struct
 {
   uint16_t id;
   uint16_t azimuth;
   RSChannel channels[RS16_CHANNELS_PER_BLOCK];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS16MsopBlock;
+} RS16MsopBlock;
 
 typedef struct
 {
@@ -59,22 +54,14 @@ typedef struct
   RS16MsopBlock blocks[RS16_BLOCKS_PER_PKT];
   unsigned int index;
   uint16_t tail;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS16MsopPkt;
+} RS16MsopPkt;
 
 typedef struct
 {
   uint8_t intensity_cali[240];
   uint8_t coef;
   uint8_t ver;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS16Intensity;
+} RS16Intensity;
 
 typedef struct
 {
@@ -99,15 +86,9 @@ typedef struct
   uint8_t pitch_cali[48];
   uint8_t reserved2[33];
   uint16_t tail;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS16DifopPkt;
+} RS16DifopPkt;
 
-#ifdef _MSC_VER
 #pragma pack(pop)
-#endif
 
 template <typename T_Point>
 class DecoderRS16 : public DecoderBase<T_Point>

@@ -28,10 +28,9 @@ namespace robosense
 namespace lidar
 {
 #ifdef _MSC_VER
-#pragma pack(push, 2)
-struct ScanMsg
+struct __declspec(align(16)) ScanMsg
 #elif __GNUC__
-struct alignas(16) ScanMsg
+struct __attribute__((aligned(16))) ScanMsg
 #endif
 {
   double timestamp = 0.0;
@@ -39,8 +38,5 @@ struct alignas(16) ScanMsg
   std::string frame_id = "";
   std::vector<PacketMsg> packets;  ///< A vector which store a scan of packets (the size of the vector is not fix)
 };
-#ifdef _MSC_VER
-#pragma pack(pop)
-#endif
 }  // namespace lidar
 }  // namespace robosense

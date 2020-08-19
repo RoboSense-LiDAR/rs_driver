@@ -36,19 +36,14 @@ const double RS32_RX = 0.03997;
 const double RS32_RY = -0.01087;
 const double RS32_RZ = 0;
 
-#ifdef _MSC_VER
 #pragma pack(push, 1)
-#endif
+
 typedef struct
 {
   uint16_t id;
   uint16_t azimuth;
   RSChannel channels[RS32_CHANNELS_PER_BLOCK];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS32MsopBlock;
+} RS32MsopBlock;
 
 typedef struct
 {
@@ -56,22 +51,14 @@ typedef struct
   RS32MsopBlock blocks[RS32_BLOCKS_PER_PKT];
   unsigned int index;
   uint16_t tail;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS32MsopPkt;
+} RS32MsopPkt;
 
 typedef struct
 {
   uint8_t reserved[240];
   uint8_t coef;
   uint8_t ver;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS32Intensity;
+} RS32Intensity;
 
 typedef struct
 {
@@ -96,15 +83,9 @@ typedef struct
   uint8_t yaw_cali[96];
   uint8_t reserved2[586];
   uint16_t tail;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS32DifopPkt;
+} RS32DifopPkt;
 
-#ifdef _MSC_VER
 #pragma pack(pop)
-#endif
 
 template <typename T_Point>
 class DecoderRS32 : public DecoderBase<T_Point>

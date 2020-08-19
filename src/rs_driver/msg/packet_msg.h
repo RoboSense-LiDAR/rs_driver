@@ -28,18 +28,14 @@ namespace robosense
 namespace lidar
 {
 #ifdef _MSC_VER
-#pragma pack(push, 2)
-typedef struct PacketMsg
+struct __declspec(align(16)) PacketMsg
 #elif __GNUC__
-struct alignas(16) PacketMsg  ///< LiDAR single packet message
+struct __attribute__((aligned(16))) PacketMsg  ///< LiDAR single packet message
 #endif
 {
   double timestamp = 0.0;
   std::string frame_id = "";
   std::array<uint8_t, 1248> packet{};
 };
-#ifdef _MSC_VER
-#pragma pack(pop)
-#endif
 }  // namespace lidar
 }  // namespace robosense

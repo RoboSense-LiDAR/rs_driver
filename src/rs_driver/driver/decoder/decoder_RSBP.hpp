@@ -36,19 +36,14 @@ const double RSBP_RX = 0.01473;
 const double RSBP_RY = 0.0085;
 const double RSBP_RZ = 0.09427;
 
-#ifdef _MSC_VER
 #pragma pack(push, 1)
-#endif
+
 typedef struct
 {
   uint16_t id;
   uint16_t azimuth;
   RSChannel channels[RSBP_CHANNELS_PER_BLOCK];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSBPMsopBlock;
+} RSBPMsopBlock;
 
 typedef struct
 {
@@ -56,22 +51,14 @@ typedef struct
   RSBPMsopBlock blocks[RSBP_BLOCKS_PER_PKT];
   unsigned int index;
   uint16_t tail;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSBPMsopPkt;
+} RSBPMsopPkt;
 
 typedef struct
 {
   uint8_t reserved[240];
   uint8_t coef;
   uint8_t ver;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSBPIntensity;
+} RSBPIntensity;
 
 typedef struct
 {
@@ -96,15 +83,9 @@ typedef struct
   uint8_t yaw_cali[96];
   uint8_t reserved2[586];
   uint16_t tail;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSBPDifopPkt;
+} RSBPDifopPkt;
 
-#ifdef _MSC_VER
 #pragma pack(pop)
-#endif
 
 template <typename T_Point>
 class DecoderRSBP : public DecoderBase<T_Point>

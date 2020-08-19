@@ -65,9 +65,7 @@ enum RSDecoderResult
   PKT_NULL = -2
 };
 
-#ifdef _MSC_VER
 #pragma pack(push, 1)
-#endif
 typedef struct
 {
   uint8_t year;
@@ -78,21 +76,13 @@ typedef struct
   uint8_t second;
   uint16_t ms;
   uint16_t us;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSTimestamp;
+} RSTimestamp;
 
 typedef struct
 {
   uint8_t sec[6];
   unsigned int ns;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSTimestampUTC;
+} RSTimestampUTC;
 
 typedef struct
 {
@@ -103,11 +93,7 @@ typedef struct
   uint8_t reserved2[7];
   uint16_t temp_raw;
   uint8_t reserved3[2];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSMsopHeader;
+} RSMsopHeader;
 
 typedef struct
 {
@@ -118,60 +104,36 @@ typedef struct
   uint16_t dest_port;
   uint16_t port3;
   uint16_t port4;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSEthNet;
+} RSEthNet;
 
 typedef struct
 {
   uint16_t start_angle;
   uint16_t end_angle;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSFOV;
+} RSFOV;
 
 typedef struct
 {
   uint8_t sign;
   uint8_t value[2];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSCorAngle;
+} RSCorAngle;
 
 typedef struct
 {
   uint16_t distance;
   uint8_t intensity;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSChannel;
+} RSChannel;
 
 typedef struct
 {
   uint8_t top_ver[5];
   uint8_t bottom_ver[5];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSVersion;
+} RSVersion;
 
 typedef struct
 {
   uint8_t num[6];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSSn;
+} RSSn;
 
 typedef struct
 {
@@ -186,11 +148,7 @@ typedef struct
   uint16_t vol_ejc_5v;
   uint16_t vol_recv_5v;
   uint16_t vol_apd;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSStatus;
+} RSStatus;
 
 typedef struct
 {
@@ -207,15 +165,10 @@ typedef struct
   uint8_t reserved2[5];
   uint16_t cur_rpm;
   uint8_t reserved3[7];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RSDiagno;
+} RSDiagno;
 
-#ifdef _MSC_VER
 #pragma pack(pop)
-#endif
+
 
 //----------------- Decoder ---------------------
 template <typename T_Point>

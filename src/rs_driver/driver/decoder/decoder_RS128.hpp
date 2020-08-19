@@ -36,20 +36,15 @@ const double RS128_RX = 0.03615;
 const double RS128_RY = -0.017;
 const double RS128_RZ = 0;
 
-#ifdef _MSC_VER
 #pragma pack(push, 1)
-#endif
+
 typedef struct
 {
   uint8_t id;
   uint8_t ret_id;
   uint16_t azimuth;
   RSChannel channels[RS128_CHANNELS_PER_BLOCK];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS128MsopBlock;
+} RS128MsopBlock;
 
 typedef struct
 {
@@ -62,33 +57,21 @@ typedef struct
   uint8_t reserved2[10];
   uint8_t lidar_type;
   uint8_t reserved3[49];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS128MsopHeader;
+} RS128MsopHeader;
 
 typedef struct
 {
   RS128MsopHeader header;
   RS128MsopBlock blocks[RS128_BLOCKS_PER_PKT];
   unsigned int index;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS128MsopPkt;
+} RS128MsopPkt;
 
 typedef struct
 {
   uint8_t sync_mode;
   uint8_t sync_sts;
   RSTimestamp timestamp;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS128TimeInfo;
+} RS128TimeInfo;
 
 typedef struct
 {
@@ -99,11 +82,7 @@ typedef struct
   uint16_t reserve_1;
   uint16_t difop_port;
   uint16_t reserve_2;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS128EthNet;
+} RS128EthNet;
 
 typedef struct
 {
@@ -112,11 +91,7 @@ typedef struct
   uint8_t bot_soft_ver[5];
   uint8_t motor_firmware_ver[5];
   uint8_t hw_ver[3];
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS128Version;
+} RS128Version;
 
 typedef struct
 {
@@ -140,15 +115,9 @@ typedef struct
   RSCorAngle hori_angle_cali[128];
   uint8_t reserved_3[10];
   uint16_t tail;
-}
-#ifdef __GNUC__
-__attribute__((packed))
-#endif
-RS128DifopPkt;
+} RS128DifopPkt;
 
-#ifdef _MSC_VER
 #pragma pack(pop)
-#endif
 
 template <typename T_Point>
 class DecoderRS128 : public DecoderBase<T_Point>
