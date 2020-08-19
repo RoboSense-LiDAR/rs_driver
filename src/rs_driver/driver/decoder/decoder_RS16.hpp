@@ -218,7 +218,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
                           (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) /
                           RS16_BLOCK_TDURATION_SINGLE;
       }
-      int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
+      int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx%16);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz_ori = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16]) % RS_ONE_ROUND) + RS_ONE_ROUND) % RS_ONE_ROUND;
