@@ -19,7 +19,7 @@ LidarDriver()
  * @brief The initialization function, used to set the related parameters and instance objects, 
  *        used when get packets from online lidar or pcap 
  * @param param The custom struct RSDriverParam 
- * @return If successful, return ture; else return false
+ * @return If successful, return true; else return false
  */
 inline bool init(const RSDriverParam &param);
 ```
@@ -37,7 +37,7 @@ inline void initDecoderOnly(const RSDriverParam &param);
 ```c++
 /**
  * @brief Start the threads to receive decode packets
- * @return If successful, return ture; else return false
+ * @return If successful, return true; else return false
  */
 inline bool start();
 ```

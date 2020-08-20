@@ -53,7 +53,7 @@ public:
    * @brief The initialization function, used to set up parameters and instance objects,
    *        used when get packets from online lidar or pcap
    * @param param The custom struct RSDriverParam
-   * @return If successful, return ture; else return false
+   * @return If successful, return true; else return false
    */
   inline bool init(const RSDriverParam& param)
   {
@@ -72,7 +72,7 @@ public:
 
   /**
    * @brief Start the thread to receive and decode packets
-   * @return If successful, return ture; else return false
+   * @return If successful, return true; else return false
    */
   inline bool start()
   {
