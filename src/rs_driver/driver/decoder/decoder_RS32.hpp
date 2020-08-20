@@ -55,13 +55,6 @@ typedef struct
 
 typedef struct
 {
-  uint8_t reserved[240];
-  uint8_t coef;
-  uint8_t ver;
-} RS32Intensity;
-
-typedef struct
-{
   uint64_t id;
   uint16_t rpm;
   RSEthNet eth;
@@ -69,7 +62,7 @@ typedef struct
   uint16_t reserved0;
   uint16_t phase_lock_angle;
   RSVersion version;
-  RS32Intensity intensity;
+  RSIntensity intensity;
   RSSn sn;
   uint16_t zero_cali;
   uint8_t return_mode;
@@ -106,7 +99,9 @@ private:
 template <typename T_Point>
 DecoderRS32<T_Point>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->angle_file_index_ = 32;
+  this->angle_file_row_num_ = 32;
+  this->vert_angle_list_.resize(this->angle_file_row_num_);
+  this->hori_angle_list_.resize(this->angle_file_row_num_);
   if (this->param_.max_distance > 200.0f)
   {
     this->param_.max_distance = 200.0f;
@@ -167,8 +162,6 @@ RSDecoderResult DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       break;
     }
     int cur_azi = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-    float azi_diff_theoretical =
-        (360 / RS32_BLOCKS_PER_PKT) * 100 / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
     if (this->echo_mode_ == ECHO_DUAL)
     {
       if (blk_idx % 2 == 0)
@@ -202,7 +195,7 @@ RSDecoderResult DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
                                              (block_timestamp + this->time_duration_between_blocks_);
       }
     }
-    azi_diff = (azi_diff > 100) ? azi_diff_theoretical : azi_diff;
+    azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
     for (int channel_idx = 0; channel_idx < RS32_CHANNELS_PER_BLOCK; channel_idx++)
     {
       float azi_channel_ori = cur_azi + (azi_diff * RS32_CHANNEL_TOFFSET * (channel_idx % 16) / RS32_FIRING_TDURATION);
@@ -283,7 +276,8 @@ RSDecoderResult DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     this->pkts_per_frame_ = ceil(RS32_PKT_RATE * 60 / this->rpm_);
   }
-
+this->azi_diff_between_block_theoretical_ =
+      (RS_ONE_ROUND / RS32_BLOCKS_PER_PKT) / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
     bool angle_flag = true;
@@ -298,7 +292,7 @@ RSDecoderResult DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     {
       int lsb, mid, msb, neg = 1;
       const uint8_t* p_hori_cali = ((RS32DifopPkt*)pkt)->yaw_cali;
-      for (size_t i = 0; i < this->angle_file_index_; i++)
+      for (size_t i = 0; i < this->angle_file_row_num_; i++)
       {
         /* vert angle calibration data */
         lsb = p_ver_cali[i * 3];

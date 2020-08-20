@@ -5,7 +5,9 @@
 ### Added
 
 - Add interface in driver core to get lidar temperature
-- Add support for point type XYZIR (R - ring id)
+- Add support for point type XYZIRT (R - ring id)(T - timestamp)
+- Add RS80 support
+- Add interface in driver core to get camera trigger info
 
 ### Changed
 

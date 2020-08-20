@@ -111,8 +111,8 @@ typedef struct
   uint8_t reserved_2[5];
   RSDiagno diagno;
   uint8_t gprmc[86];
-  RSCorAngle ver_angle_cali[128];
-  RSCorAngle hori_angle_cali[128];
+  RSCalibrationAngle ver_angle_cali[128];
+  RSCalibrationAngle hori_angle_cali[128];
   uint8_t reserved_3[10];
   uint16_t tail;
 } RS128DifopPkt;
@@ -138,7 +138,9 @@ private:
 template <typename T_Point>
 DecoderRS128<T_Point>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->angle_file_index_ = 128;
+  this->angle_file_row_num_ = 128;
+  this->vert_angle_list_.resize(this->angle_file_row_num_);
+  this->hori_angle_list_.resize(this->angle_file_row_num_);
   if (this->param_.max_distance > 250.0f)
   {
     this->param_.max_distance = 250.0f;
@@ -199,8 +201,6 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
       break;
     }
     int cur_azi = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-    float azi_diff_theoretical =
-        (360 / RS128_BLOCKS_PER_PKT) * 100 / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
     if (this->echo_mode_ == ECHO_DUAL)
     {
       azi_diff = (float)((RS_ONE_ROUND + RS_SWAP_SHORT(mpkt_ptr->blocks[2].azimuth) -
@@ -238,7 +238,7 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
                                              (block_timestamp + this->time_duration_between_blocks_);
       }
     }
-    azi_diff = (azi_diff > 100) ? azi_diff_theoretical : azi_diff;
+    azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
     for (size_t channel_idx = 0; channel_idx < RS128_CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
@@ -309,6 +309,8 @@ RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     this->pkts_per_frame_ = ceil(RS128_PKT_RATE * 60 / this->rpm_);
   }
+  this->azi_diff_between_block_theoretical_ =
+      (RS_ONE_ROUND / RS128_BLOCKS_PER_PKT) / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
     bool angle_flag = true;
@@ -323,7 +325,7 @@ RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     if (angle_flag)
     {
       int lsb, mid, msb, neg = 1;
-      for (size_t i = 0; i < this->angle_file_index_; i++)
+      for (size_t i = 0; i < this->angle_file_row_num_; i++)
       {
         // calculation of vertical angle
         lsb = dpkt_ptr->ver_angle_cali[i].sign;

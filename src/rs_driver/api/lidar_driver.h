@@ -138,11 +138,12 @@ public:
 
   /**
    * @brief Get the current lidar temperature
-   * @return The temperature of lidar
+   * @param input_temperature The variable to store lidar temperature 
+   * @return if get temperature successfully, return true; else return false
    */
-  inline double getLidarTemperature()
+  inline bool getLidarTemperature(double & input_temperature)
   {
-    return driver_ptr_->getLidarTemperature();
+    return driver_ptr_->getLidarTemperature(input_temperature);
   }
 
   /**

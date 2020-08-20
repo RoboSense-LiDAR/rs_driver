@@ -58,13 +58,6 @@ typedef struct
 
 typedef struct
 {
-  uint8_t intensity_cali[240];
-  uint8_t coef;
-  uint8_t ver;
-} RS16Intensity;
-
-typedef struct
-{
   uint64_t id;
   uint16_t rpm;
   RSEthNet eth;
@@ -72,7 +65,7 @@ typedef struct
   uint16_t static_base;
   uint16_t phase_lock_angle;
   RSVersion version;
-  RS16Intensity intensity;
+  RSIntensity intensity;
   RSSn sn;
   uint16_t zero_cali;
   uint8_t return_mode;
@@ -103,13 +96,15 @@ private:
   void initTable();
 
 private:
-  std::array<int, 128> beam_ring_table_;
+  std::array<int, 16> beam_ring_table_;
 };
 
 template <typename T_Point>
 DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->angle_file_index_ = 16;
+  this->angle_file_row_num_ = 16;
+  this->vert_angle_list_.resize(this->angle_file_row_num_);
+  this->hori_angle_list_.resize(this->angle_file_row_num_);
   if (this->param_.max_distance > 150.0f)
   {
     this->param_.max_distance = 150.0f;
@@ -170,8 +165,6 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       break;
     }
     int cur_azi = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-    float azi_diff_theoretical = (RS_ONE_ROUND / RS16_BLOCKS_PER_PKT) /
-                                 (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
     if (blk_idx == 0)
     {
       azi_diff =
@@ -184,7 +177,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_time_jump_diff_) :
                                            (block_timestamp + this->time_duration_between_blocks_);
     }
-    azi_diff = (azi_diff > 100) ? azi_diff_theoretical : azi_diff;
+    azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
     for (size_t channel_idx = 0; channel_idx < RS16_CHANNELS_PER_BLOCK; channel_idx++)
     {
       float azi_channel_ori = 0;
@@ -199,7 +192,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
                           (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) /
                           RS16_BLOCK_TDURATION_SINGLE;
       }
-      int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx%16);
+      int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx % 16);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz_ori = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
       int angle_vert = (((int)(this->vert_angle_list_[channel_idx % 16]) % RS_ONE_ROUND) + RS_ONE_ROUND) % RS_ONE_ROUND;
@@ -276,6 +269,8 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     this->pkts_per_frame_ = ceil(RS16_PKT_RATE * 60 / this->rpm_);
   }
+  this->azi_diff_between_block_theoretical_ =
+      (RS_ONE_ROUND / RS16_BLOCKS_PER_PKT) / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
     bool angle_flag = true;

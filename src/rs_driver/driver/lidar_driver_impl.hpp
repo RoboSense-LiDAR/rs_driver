@@ -129,22 +129,22 @@ public:
     excb_.emplace_back(callback);
   }
 
-  inline double getLidarTemperature()
+  inline bool getLidarTemperature(double& input_temperature)
   {
     if (lidar_decoder_ptr_ != nullptr)
     {
-      return lidar_decoder_ptr_->getLidarTemperature();
+      input_temperature = lidar_decoder_ptr_->getLidarTemperature();
+      return true;
     }
-    return -1;
+    return false;
   }
 
   inline bool decodeMsopScan(const ScanMsg& scan_msg, PointCloudMsg<PointT>& point_cloud_msg)
   {
     if (lidar_decoder_ptr_ == nullptr)
     {
-      lidar_decoder_ptr_ = DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param,
-                                                                 scan_msg.packets[0]);
-      lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
+      lidar_decoder_ptr_ =
+          DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_, scan_msg.packets[0]);
       lidar_decoder_ptr_->regRecvCallback(
           std::bind(&LidarDriverImpl::localCameraTriggerCallback, this, std::placeholders::_1));
     }
@@ -164,19 +164,19 @@ public:
       return false;
     }
 
-    std::vector<std::vector<PointT>> point_vvec;
+    std::vector<std::vector<PointT>> pointcloud_one_frame;
     int height = 1;
-    point_vvec.resize(scan_msg.packets.size());
+    pointcloud_one_frame.resize(scan_msg.packets.size());
 #pragma omp parallel for
     for (uint32_t i = 0; i < scan_msg.packets.size(); i++)
     {
-      std::vector<PointT> point_vec;
-      RSDecoderResult ret = lidar_decoder_ptr_->processMsopPkt(scan_msg.packets[i].packet.data(), point_vec, height);
+      std::vector<PointT> pointcloud_one_packet;
+      RSDecoderResult ret = lidar_decoder_ptr_->processMsopPkt(scan_msg.packets[i].packet.data(), pointcloud_one_packet, height);
       switch (ret)
       {
         case RSDecoderResult::DECODE_OK:
         case RSDecoderResult::FRAME_SPLIT:
-          point_vvec[i] = std::move(point_vec);
+          pointcloud_one_frame[i] = std::move(pointcloud_one_packet);
           break;
         case RSDecoderResult::WRONG_PKT_HEADER:
           reportError(ErrCode_WrongPktHeader);
@@ -189,7 +189,7 @@ public:
       }
     }
 
-    for (auto iter : point_vvec)
+    for (auto iter : pointcloud_one_frame)
     {
       output_point_cloud_ptr->insert(output_point_cloud_ptr->end(), iter.begin(), iter.end());
     }
@@ -197,7 +197,7 @@ public:
     point_cloud_msg.point_cloud_ptr = output_point_cloud_ptr;
     point_cloud_msg.height = height;
     point_cloud_msg.width = point_cloud_msg.point_cloud_ptr->size() / point_cloud_msg.height;
-    preparePointsMsg(point_cloud_msg);
+    setPointCloudMsgHeader(point_cloud_msg);
     point_cloud_msg.timestamp = scan_msg.timestamp;
     if (point_cloud_msg.point_cloud_ptr->size() == 0)
     {
@@ -261,8 +261,7 @@ private:
     if (lidar_decoder_ptr_ == nullptr)
     {
       lidar_decoder_ptr_ =
-          DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_.decoder_param, msg, input_ptr_);
-      lidar_decoder_ptr_->loadCalibrationFile(driver_param_.angle_path);
+          DecoderFactory<PointT>::createDecoder(driver_param_.lidar_type, driver_param_, msg, input_ptr_);
       lidar_decoder_ptr_->regRecvCallback(
           std::bind(&LidarDriverImpl::localCameraTriggerCallback, this, std::placeholders::_1));
     }
@@ -307,22 +306,26 @@ private:
     while (msop_pkt_queue_.size() > 0)
     {
       PacketMsg pkt = msop_pkt_queue_.popFront();
-      std::vector<PointT> point_vec;
+      std::vector<PointT> pointcloud_one_packet;
       int height = 1;
-      int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), point_vec, height);
+      int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), pointcloud_one_packet, height);
       scan_ptr_->packets.emplace_back(std::move(pkt));
       if (ret == DECODE_OK || ret == FRAME_SPLIT)
       {
-        point_cloud_ptr_->insert(point_cloud_ptr_->end(), point_vec.begin(), point_vec.end());
+        point_cloud_ptr_->insert(point_cloud_ptr_->end(), pointcloud_one_packet.begin(), pointcloud_one_packet.end());
         if (ret == FRAME_SPLIT)
         {
           PointCloudMsg<PointT> msg(point_cloud_ptr_);
           msg.height = height;
           msg.width = point_cloud_ptr_->size() / msg.height;
-          preparePointsMsg(msg);
+          setPointCloudMsgHeader(msg);
           if (driver_param_.decoder_param.use_lidar_clock == true)
           {
             msg.timestamp = lidar_decoder_ptr_->getLidarTime(pkt.packet.data());
+          }
+          else
+          {
+            msg.timestamp = getTime();
           }
           if (msg.point_cloud_ptr->size() == 0)
           {
@@ -332,7 +335,7 @@ private:
           {
             runCallBack(msg);
           }
-          prepareScanMsg(*scan_ptr_);
+          setScanMsgHeader(*scan_ptr_);
           runCallBack(*scan_ptr_);
           point_cloud_ptr_.reset(new typename PointCloudMsg<PointT>::PointCloud);
           scan_ptr_.reset(new ScanMsg);
@@ -366,7 +369,7 @@ private:
     difop_pkt_queue_.is_task_finished_.store(true);
   }
 
-  inline void prepareScanMsg(ScanMsg& msg)
+  inline void setScanMsgHeader(ScanMsg& msg)
   {
     msg.timestamp = getTime();
     if (driver_param_.decoder_param.use_lidar_clock == true)
@@ -377,9 +380,8 @@ private:
     msg.frame_id = driver_param_.frame_id;
   }
 
-  inline void preparePointsMsg(PointCloudMsg<PointT>& msg)
+  inline void setPointCloudMsgHeader(PointCloudMsg<PointT>& msg)
   {
-    msg.timestamp = getTime();
     msg.seq = point_cloud_seq_++;
     msg.frame_id = driver_param_.frame_id;
     msg.is_dense = false;

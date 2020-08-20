@@ -28,6 +28,7 @@
 
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
+#include <rs_driver/driver/driver_param.h>
 #include <rs_driver/msg/packet_msg.h>
 using boost::asio::deadline_timer;
 using boost::asio::ip::udp;
@@ -71,9 +72,9 @@ public:
         msop_filter << "src host " << input_param_.device_ip << " && ";
         difop_filter << "src host " << input_param_.device_ip << " && ";
         msop_filter << "udp dst port " << input_param_.msop_port;
-        pcap_compile(pcap_, &this->pcap_msop_filter_, msop_filter.str().c_str(), 1, 0xFFFFFFFF);
+        pcap_compile(pcap_, &pcap_msop_filter_, msop_filter.str().c_str(), 1, 0xFFFFFFFF);
         difop_filter << "udp dst port " << input_param_.difop_port;
-        pcap_compile(pcap_, &this->pcap_difop_filter_, difop_filter.str().c_str(), 1, 0xFFFFFFFF);
+        pcap_compile(pcap_, &pcap_difop_filter_, difop_filter.str().c_str(), 1, 0xFFFFFFFF);
       }
     }
     else
@@ -89,9 +90,9 @@ public:
   ~Input()
   {
     stop();
-    if (input_param_.read_pcap)
+    if (pcap_ != NULL)
     {
-      pcap_close(this->pcap_);
+      pcap_close(pcap_);
     }
   }
   inline void regRecvMsopCallback(const std::function<void(const PacketMsg&)> callback)
@@ -130,11 +131,11 @@ public:
     {
       msop_thread_.start_.store(false);
       difop_thread_.start_.store(false);
-      if (msop_thread_.thread_->joinable())
+      if (msop_thread_.thread_ != nullptr && msop_thread_.thread_->joinable())
       {
         msop_thread_.thread_->join();
       }
-      if (difop_thread_.thread_->joinable())
+      if (difop_thread_.thread_ != nullptr && difop_thread_.thread_->joinable())
       {
         difop_thread_.thread_->join();
       }
@@ -142,7 +143,7 @@ public:
     else
     {
       pcap_thread_.start_.store(false);
-      if (pcap_thread_.thread_->joinable())
+      if (pcap_thread_.thread_ != nullptr && pcap_thread_.thread_->joinable())
       {
         pcap_thread_.thread_->join();
       }

@@ -47,7 +47,6 @@
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <rs_driver/macro/version.h>
-#include <rs_driver/common/driver_param.h>
 /*Linux*/
 #ifdef __GNUC__
 #include <arpa/inet.h>
@@ -65,21 +64,26 @@ typedef std::pair<std::string, double> CameraTrigger;
 
 /*Output style*/
 #define RESET "\033[0m"
-#define BOLDBLACK "\033[1m\033[30m"   /* Bold Black */
-#define BOLDRED "\033[1m\033[31m"     /* Bold Red */
-#define BOLDGREEN "\033[1m\033[32m"   /* Bold Green */
-#define BOLDYELLOW "\033[1m\033[33m"  /* Bold Yellow */
-#define BOLDBLUE "\033[1m\033[34m"    /* Bold Blue */
-#define BOLDMAGENTA "\033[1m\033[35m" /* Bold Magenta */
-#define BOLDCYAN "\033[1m\033[36m"    /* Bold Cyan */
-#define BOLDWHITE "\033[1m\033[37m"   /* Bold White */
+#define GREEN "\033[32m"               ///< Green
+#define YELLOW "\033[33m"              ///< Yellow
+#define BLUE "\033[34m"                ///< Blue
+#define MAGENTA "\033[35m"             ///< Magenta
+#define CYAN "\033[36m"                ///< Cyan
+#define BOLDBLACK "\033[1m\033[30m"    ///< Bold Black
+#define BOLDRED "\033[1m\033[31m"      ///< Bold Red
+#define BOLDGREEN "\033[1m\033[32m"    ///< Bold Green
+#define BOLDYELLOW "\033[1m\033[33m"   ///< Bold Yellow
+#define BOLDBLUE "\033[1m\033[34m"     ///< Bold Blue
+#define BOLDMAGENTA "\033[1m\033[35m"  ///< Bold Magenta
+#define BOLDCYAN "\033[1m\033[36m"     ///< Bold Cyan
+#define BOLDWHITE "\033[1m\033[37m"    ///< Bold White
 
+#define INFOL (std::cout << GREEN)
 #define INFO (std::cout << BOLDGREEN)
 #define WARNING (std::cout << BOLDYELLOW)
 #define ERROR (std::cout << BOLDRED)
 #define DEBUG (std::cout << BOLDCYAN)
 #define TITLE (std::cout << BOLDMAGENTA)
-#define MSG (std::cout << BOLDWHITE) /* Bold White */
-
+#define MSG (std::cout << BOLDWHITE)
 #define END (std::endl)
 #define REND "\033[0m" << std::endl

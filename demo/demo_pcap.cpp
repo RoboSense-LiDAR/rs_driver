@@ -40,7 +40,7 @@ void pointCloudCallback(const PointCloudMsg<PointXYZI>& msg)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the message and process it in another thread is recommended*/
-  std::cout << "msg: " << msg.seq << " point cloud size: " << msg.point_cloud_ptr->size() << std::endl;
+  MSG << "msg: " << msg.seq << " point cloud size: " << msg.point_cloud_ptr->size() << REND;
 }
 
 /**
@@ -51,18 +51,15 @@ void exceptionCallback(const Error& code)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the error message and process it in another thread is recommended*/
-  std::cout << "Error code : " << code.toString() << std::endl;
+  WARNING << "Error code : " << code.toString() << REND;
 }
 
 int main(int argc, char* argv[])
 {
-  std::cout << "\033[1m\033[35m"
-            << "------------------------------------------------------" << std::endl;
-  std::cout << "            RS_Driver Core Version: V " << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
-            << RSLIDAR_VERSION_PATCH << std::endl;
-  std::cout << "\033[1m\033[35m"
-            << "------------------------------------------------------"
-            << "\033[0m" << std::endl;
+  TITLE << "------------------------------------------------------" << REND;
+  TITLE << "            RS_Driver Core Version: V " << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
+        << RSLIDAR_VERSION_PATCH << REND;
+  TITLE << "------------------------------------------------------" << REND;
 
   LidarDriver<PointXYZI> driver;  ///< Declare the driver object
 
@@ -79,11 +76,11 @@ int main(int argc, char* argv[])
   driver.regRecvCallback(pointCloudCallback);      ///< Register the point cloud callback function into the driver
   if (!driver.init(param))                         ///< Call the init function and pass the parameter
   {
-    std::cout << "Driver Initialize Error..." << std::endl;
+    ERROR << "Driver Initialize Error..." << REND;
     return -1;
   }
   driver.start();  ///< The driver thread will start
-  std::cout << "RoboSense Lidar-Driver Linux pcap demo start......" << std::endl;
+  DEBUG << "RoboSense Lidar-Driver Linux pcap demo start......" << REND;
 
   while (true)
   {

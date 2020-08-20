@@ -21,6 +21,7 @@
  *****************************************************************************/
 #pragma once
 #include <rs_driver/common/common_header.h>
+#include <rs_driver/driver/driver_param.h>
 namespace robosense
 {
 namespace lidar
@@ -116,7 +117,7 @@ typedef struct
 {
   uint8_t sign;
   uint8_t value[2];
-} RSCorAngle;
+} RSCalibrationAngle;
 
 typedef struct
 {
@@ -134,6 +135,13 @@ typedef struct
 {
   uint8_t num[6];
 } RSSn;
+
+typedef struct
+{
+  uint8_t reserved[240];
+  uint8_t coef;
+  uint8_t ver;
+} RSIntensity;
 
 typedef struct
 {
@@ -168,7 +176,6 @@ typedef struct
 } RSDiagno;
 
 #pragma pack(pop)
-
 
 //----------------- Decoder ---------------------
 template <typename T_Point>
@@ -205,7 +212,7 @@ protected:
   unsigned int pkt_count_;
   unsigned int trigger_index_;
   unsigned int prev_angle_diff_;
-  unsigned int angle_file_index_;
+  unsigned int angle_file_row_num_;
   unsigned int rpm_;
   int start_angle_;
   int end_angle_;
@@ -217,8 +224,9 @@ protected:
   float fov_time_jump_diff_;
   float time_duration_between_blocks_;
   float current_temperature_;
-  float vert_angle_list_[128];
-  float hori_angle_list_[128];
+  float azi_diff_between_block_theoretical_;
+  std::vector<float> vert_angle_list_;
+  std::vector<float> hori_angle_list_;
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   static std::vector<double> cos_lookup_table_;
   static std::vector<double> sin_lookup_table_;
@@ -232,7 +240,7 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   , pkt_count_(0)
   , trigger_index_(0)
   , prev_angle_diff_(RS_ONE_ROUND)
-  , angle_file_index_(128)
+  , angle_file_row_num_(128)
   , rpm_(600)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)
@@ -244,6 +252,7 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   , fov_time_jump_diff_(0)
   , time_duration_between_blocks_(0)
   , current_temperature_(0)
+  , azi_diff_between_block_theoretical_(20)
 {
   if (cut_angle_ > RS_ONE_ROUND)
   {
@@ -371,7 +380,7 @@ void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
         break;
       }
       row_index++;
-      if (row_index >= angle_file_index_)
+      if (row_index >= this->angle_file_row_num_)
       {
         break;
       }
