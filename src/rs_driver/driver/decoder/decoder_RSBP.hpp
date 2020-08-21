@@ -277,60 +277,40 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       (RS_ONE_ROUND / RSBP_BLOCKS_PER_PKT) / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
-    bool angle_flag = true;
-    const uint8_t* p_ver_cali;
-    p_ver_cali = ((RSBPDifopPkt*)pkt)->pitch_cali;
+    const uint8_t* p_ver_cali = ((RSBPDifopPkt*)pkt)->pitch_cali;
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF))
     {
-      angle_flag = false;
+      return RSDecoderResult::DECODE_OK;
     }
-    if (angle_flag)
+    int lsb, mid, msb, neg = 1;
+    const uint8_t* p_hori_cali = ((RSBPDifopPkt*)pkt)->yaw_cali;
+    std::map<float, int> vertical_angle_beam_map;
+
+    for (size_t i = 0; i < this->angle_file_row_num_; i++)
     {
-      int lsb, mid, msb, neg = 1;
-      const uint8_t* p_hori_cali = ((RSBPDifopPkt*)pkt)->yaw_cali;
-      std::map<float, int> vertical_angle_beam_map;
+      /* vert angle calibration data */
+      lsb = p_ver_cali[i * 3];
+      mid = p_ver_cali[i * 3 + 1];
+      msb = p_ver_cali[i * 3 + 2];
+      neg = lsb == 0 ? 1 : -1;
+      this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // / 180 * M_PI;
+      vertical_angle_beam_map.emplace(std::make_pair(this->vert_angle_list_[i], i));
 
-      for (size_t i = 0; i < this->angle_file_row_num_; i++)
-      {
-        /* vert angle calibration data */
-        lsb = p_ver_cali[i * 3];
-        mid = p_ver_cali[i * 3 + 1];
-        msb = p_ver_cali[i * 3 + 2];
-        if (lsb == 0)
-        {
-          neg = 1;
-        }
-        else if (lsb == 1)
-        {
-          neg = -1;
-        }
-        this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // / 180 * M_PI;
-        vertical_angle_beam_map.emplace(std::make_pair(this->vert_angle_list_[i], i));
-
-        /* horizon angle calibration data */
-        lsb = p_hori_cali[i * 3];
-        mid = p_hori_cali[i * 3 + 1];
-        msb = p_hori_cali[i * 3 + 2];
-        if (lsb == 0)
-        {
-          neg = 1;
-        }
-        else if (lsb == 1)
-        {
-          neg = -1;
-        }
-
-        this->hori_angle_list_[i] = (mid * 256 + msb) * neg;
-      }
-      size_t i = 0;
-      for (auto iter : vertical_angle_beam_map)
-      {
-        beam_ring_table_[iter.second] = i;
-        i++;
-      }
-      this->difop_flag_ = true;
+      /* horizon angle calibration data */
+      lsb = p_hori_cali[i * 3];
+      mid = p_hori_cali[i * 3 + 1];
+      msb = p_hori_cali[i * 3 + 2];
+      neg = lsb == 0 ? 1 : -1;
+      this->hori_angle_list_[i] = (mid * 256 + msb) * neg;
     }
+    size_t i = 0;
+    for (auto iter : vertical_angle_beam_map)
+    {
+      beam_ring_table_[iter.second] = i;
+      i++;
+    }
+    this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;
 }
