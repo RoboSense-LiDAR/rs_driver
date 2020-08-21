@@ -96,9 +96,8 @@ private:
 template <typename T_Point>
 DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->angle_file_row_num_ = 32;
-  this->vert_angle_list_.resize(this->angle_file_row_num_);
-  this->hori_angle_list_.resize(this->angle_file_row_num_);
+  this->vert_angle_list_.resize(RSBP_CHANNELS_PER_BLOCK);
+  this->hori_angle_list_.resize(RSBP_CHANNELS_PER_BLOCK);
   if (this->param_.max_distance > 100.0f)
   {
     this->param_.max_distance = 100.0f;
@@ -287,7 +286,7 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     const uint8_t* p_hori_cali = ((RSBPDifopPkt*)pkt)->yaw_cali;
     std::map<float, int> vertical_angle_beam_map;
 
-    for (size_t i = 0; i < this->angle_file_row_num_; i++)
+    for (size_t i = 0; i < RSBP_CHANNELS_PER_BLOCK; i++)
     {
       /* vert angle calibration data */
       lsb = p_ver_cali[i * 3];

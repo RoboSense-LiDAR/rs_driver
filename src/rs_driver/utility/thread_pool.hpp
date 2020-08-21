@@ -28,9 +28,8 @@ namespace lidar
 const int MAX_THREAD_NUM = 4;
 struct Thread
 {
-  Thread()
+  Thread() : start_(false)
   {
-    start_ = false;
   }
   std::shared_ptr<std::thread> thread_;
   std::atomic<bool> start_;
@@ -39,9 +38,8 @@ class ThreadPool
 {
 public:
   typedef std::shared_ptr<ThreadPool> Ptr;
-  ThreadPool() : stop_flag_{ false }
+  ThreadPool() : stop_flag_(false), idl_thr_num_(MAX_THREAD_NUM)
   {
-    idl_thr_num_ = MAX_THREAD_NUM;
     for (int i = 0; i < idl_thr_num_; ++i)
     {
       pool_.emplace_back([this] {

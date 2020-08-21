@@ -135,9 +135,8 @@ private:
 template <typename T_Point>
 DecoderRS128<T_Point>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->angle_file_row_num_ = 128;
-  this->vert_angle_list_.resize(this->angle_file_row_num_);
-  this->hori_angle_list_.resize(this->angle_file_row_num_);
+  this->vert_angle_list_.resize(RS128_CHANNELS_PER_BLOCK);
+  this->hori_angle_list_.resize(RS128_CHANNELS_PER_BLOCK);
   if (this->param_.max_distance > 250.0f)
   {
     this->param_.max_distance = 250.0f;
@@ -319,7 +318,7 @@ RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 
     int lsb, mid, msb, neg = 1;
     std::map<float, int> vertical_angle_beam_map;
-    for (size_t i = 0; i < this->angle_file_row_num_; i++)
+    for (size_t i = 0; i < RS128_CHANNELS_PER_BLOCK; i++)
     {
       // calculation of vertical angle
       lsb = dpkt_ptr->ver_angle_cali[i].sign;

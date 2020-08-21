@@ -134,16 +134,14 @@ private:
   void initTable();
 
 private:
-  std::array<int, 80> beam_mapping_table_;
   std::array<int, 80> beam_ring_table_;
 };
 
 template <typename T_Point>
 DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->angle_file_row_num_ = 128;
-  this->vert_angle_list_.resize(this->angle_file_row_num_);
-  this->hori_angle_list_.resize(this->angle_file_row_num_);
+  this->vert_angle_list_.resize(RS80_CHANNELS_PER_BLOCK);
+  this->hori_angle_list_.resize(RS80_CHANNELS_PER_BLOCK);
   if (this->param_.max_distance > 230.0f)
   {
     this->param_.max_distance = 230.0f;
@@ -152,8 +150,6 @@ DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_P
   {
     this->param_.min_distance = 1.0f;
   }
-
-  initTable();
 }
 
 template <typename T_Point>
@@ -165,7 +161,7 @@ double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
 template <typename T_Point>
 int DecoderRS80<T_Point>::azimuthCalibration(const float& azimuth, const int& channel)
 {
-  return ((int)(azimuth + this->hori_angle_list_[beam_mapping_table_[channel]]) + RS_ONE_ROUND) % RS_ONE_ROUND;
+  return ((int)(azimuth + this->hori_angle_list_[channel]) + RS_ONE_ROUND) % RS_ONE_ROUND;
 }
 
 template <typename T_Point>
@@ -253,9 +249,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
-      int angle_vert =
-          (((int)(this->vert_angle_list_[beam_mapping_table_[channel_idx]]) % RS_ONE_ROUND) + RS_ONE_ROUND) %
-          RS_ONE_ROUND;
+      int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % RS_ONE_ROUND) + RS_ONE_ROUND) % RS_ONE_ROUND;
 
       T_Point point;
       if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
@@ -327,7 +321,8 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       return RSDecoderResult::DECODE_OK;
     }
     int lsb, mid, msb, neg = 1;
-    for (size_t i = 0; i < this->angle_file_row_num_; i++)
+    std::map<float, int> vertical_angle_beam_map;
+    for (size_t i = 0; i < RS80_CHANNELS_PER_BLOCK; i++)
     {
       // calculation of vertical angle
       lsb = dpkt_ptr->ver_angle_cali[i].sign;
@@ -335,6 +330,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       msb = dpkt_ptr->ver_angle_cali[i].value[1];
       neg = lsb == 0 ? 1 : -1;
       this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
+      vertical_angle_beam_map.emplace(std::make_pair(this->vert_angle_list_[i], i));
 
       // horizontal offset angle
       lsb = dpkt_ptr->hori_angle_cali[i].sign;
@@ -343,174 +339,15 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       neg = lsb == 0 ? 1 : -1;
       this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
     }
+    size_t i = 0;
+    for (auto iter : vertical_angle_beam_map)
+    {
+      beam_ring_table_[iter.second] = i;
+      i++;
+    }
     this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;
-}
-
-template <typename T_Point>
-void DecoderRS80<T_Point>::initTable()
-{
-  beam_mapping_table_[0] = 0;
-  beam_mapping_table_[1] = 1;
-  beam_mapping_table_[2] = 2;
-  beam_mapping_table_[3] = 5;
-  beam_mapping_table_[4] = 6;
-  beam_mapping_table_[5] = 8;
-  beam_mapping_table_[6] = 9;
-  beam_mapping_table_[7] = 10;
-  beam_mapping_table_[8] = 11;
-  beam_mapping_table_[9] = 12;
-  beam_mapping_table_[10] = 14;
-  beam_mapping_table_[11] = 15;
-  beam_mapping_table_[12] = 16;
-  beam_mapping_table_[13] = 18;
-  beam_mapping_table_[14] = 19;
-  beam_mapping_table_[15] = 20;
-  beam_mapping_table_[16] = 22;
-  beam_mapping_table_[17] = 23;
-  beam_mapping_table_[18] = 24;
-  beam_mapping_table_[19] = 26;
-  beam_mapping_table_[20] = 27;
-  beam_mapping_table_[21] = 28;
-  beam_mapping_table_[22] = 30;
-  beam_mapping_table_[23] = 32;
-  beam_mapping_table_[24] = 35;
-  beam_mapping_table_[25] = 36;
-  beam_mapping_table_[26] = 39;
-  beam_mapping_table_[27] = 40;
-  beam_mapping_table_[28] = 41;
-  beam_mapping_table_[29] = 44;
-  beam_mapping_table_[30] = 45;
-  beam_mapping_table_[31] = 49;
-  beam_mapping_table_[32] = 50;
-  beam_mapping_table_[33] = 53;
-  beam_mapping_table_[34] = 54;
-  beam_mapping_table_[35] = 58;
-  beam_mapping_table_[36] = 59;
-  beam_mapping_table_[37] = 60;
-  beam_mapping_table_[38] = 62;
-  beam_mapping_table_[39] = 63;
-  beam_mapping_table_[40] = 64;
-  beam_mapping_table_[41] = 65;
-  beam_mapping_table_[42] = 66;
-  beam_mapping_table_[43] = 68;
-  beam_mapping_table_[44] = 69;
-  beam_mapping_table_[45] = 70;
-  beam_mapping_table_[46] = 72;
-  beam_mapping_table_[47] = 73;
-  beam_mapping_table_[48] = 74;
-  beam_mapping_table_[49] = 76;
-  beam_mapping_table_[50] = 78;
-  beam_mapping_table_[51] = 80;
-  beam_mapping_table_[52] = 81;
-  beam_mapping_table_[53] = 82;
-  beam_mapping_table_[54] = 83;
-  beam_mapping_table_[55] = 84;
-  beam_mapping_table_[56] = 87;
-  beam_mapping_table_[57] = 88;
-  beam_mapping_table_[58] = 90;
-  beam_mapping_table_[59] = 91;
-  beam_mapping_table_[60] = 92;
-  beam_mapping_table_[61] = 93;
-  beam_mapping_table_[62] = 94;
-  beam_mapping_table_[63] = 96;
-  beam_mapping_table_[64] = 99;
-  beam_mapping_table_[65] = 100;
-  beam_mapping_table_[66] = 103;
-  beam_mapping_table_[67] = 104;
-  beam_mapping_table_[68] = 105;
-  beam_mapping_table_[69] = 108;
-  beam_mapping_table_[70] = 109;
-  beam_mapping_table_[71] = 110;
-  beam_mapping_table_[72] = 113;
-  beam_mapping_table_[73] = 114;
-  beam_mapping_table_[74] = 118;
-  beam_mapping_table_[75] = 122;
-  beam_mapping_table_[76] = 123;
-  beam_mapping_table_[77] = 124;
-  beam_mapping_table_[78] = 126;
-  beam_mapping_table_[79] = 127;
-  beam_ring_table_[0] = 3;
-  beam_ring_table_[1] = 47;
-  beam_ring_table_[2] = 21;
-  beam_ring_table_[3] = 55;
-  beam_ring_table_[4] = 25;
-  beam_ring_table_[5] = 14;
-  beam_ring_table_[6] = 63;
-  beam_ring_table_[7] = 30;
-  beam_ring_table_[8] = 74;
-  beam_ring_table_[9] = 18;
-  beam_ring_table_[10] = 38;
-  beam_ring_table_[11] = 75;
-  beam_ring_table_[12] = 22;
-  beam_ring_table_[13] = 1;
-  beam_ring_table_[14] = 45;
-  beam_ring_table_[15] = 26;
-  beam_ring_table_[16] = 9;
-  beam_ring_table_[17] = 53;
-  beam_ring_table_[18] = 32;
-  beam_ring_table_[19] = 13;
-  beam_ring_table_[20] = 61;
-  beam_ring_table_[21] = 40;
-  beam_ring_table_[22] = 17;
-  beam_ring_table_[23] = 48;
-  beam_ring_table_[24] = 0;
-  beam_ring_table_[25] = 56;
-  beam_ring_table_[26] = 8;
-  beam_ring_table_[27] = 64;
-  beam_ring_table_[28] = 31;
-  beam_ring_table_[29] = 70;
-  beam_ring_table_[30] = 39;
-  beam_ring_table_[31] = 2;
-  beam_ring_table_[32] = 46;
-  beam_ring_table_[33] = 10;
-  beam_ring_table_[34] = 54;
-  beam_ring_table_[35] = 62;
-  beam_ring_table_[36] = 29;
-  beam_ring_table_[37] = 76;
-  beam_ring_table_[38] = 69;
-  beam_ring_table_[39] = 37;
-  beam_ring_table_[40] = 7;
-  beam_ring_table_[41] = 51;
-  beam_ring_table_[42] = 23;
-  beam_ring_table_[43] = 12;
-  beam_ring_table_[44] = 59;
-  beam_ring_table_[45] = 27;
-  beam_ring_table_[46] = 16;
-  beam_ring_table_[47] = 67;
-  beam_ring_table_[48] = 34;
-  beam_ring_table_[49] = 20;
-  beam_ring_table_[50] = 42;
-  beam_ring_table_[51] = 24;
-  beam_ring_table_[52] = 73;
-  beam_ring_table_[53] = 5;
-  beam_ring_table_[54] = 49;
-  beam_ring_table_[55] = 28;
-  beam_ring_table_[56] = 57;
-  beam_ring_table_[57] = 36;
-  beam_ring_table_[58] = 15;
-  beam_ring_table_[59] = 65;
-  beam_ring_table_[60] = 44;
-  beam_ring_table_[61] = 78;
-  beam_ring_table_[62] = 19;
-  beam_ring_table_[63] = 52;
-  beam_ring_table_[64] = 4;
-  beam_ring_table_[65] = 60;
-  beam_ring_table_[66] = 11;
-  beam_ring_table_[67] = 68;
-  beam_ring_table_[68] = 35;
-  beam_ring_table_[69] = 72;
-  beam_ring_table_[70] = 43;
-  beam_ring_table_[71] = 77;
-  beam_ring_table_[72] = 6;
-  beam_ring_table_[73] = 50;
-  beam_ring_table_[74] = 58;
-  beam_ring_table_[75] = 66;
-  beam_ring_table_[76] = 33;
-  beam_ring_table_[77] = 79;
-  beam_ring_table_[78] = 71;
-  beam_ring_table_[79] = 41;
 }
 
 }  // namespace lidar

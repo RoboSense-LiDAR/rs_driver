@@ -52,7 +52,7 @@ class Input
 {
 public:
   Input(const RSInputParam& input_param, const std::function<void(const Error&)> excb)
-    : lidar_type_(LidarType::RS128), input_param_(input_param), excb_(excb), init_flag_(false)
+    : lidar_type_(LidarType::RS128), input_param_(input_param), excb_(excb), init_flag_(false),pcap_(nullptr)
   {
   }
   inline bool init()

@@ -99,9 +99,8 @@ private:
 template <typename T_Point>
 DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->angle_file_row_num_ = 16;
-  this->vert_angle_list_.resize(this->angle_file_row_num_);
-  this->hori_angle_list_.resize(this->angle_file_row_num_);
+  this->vert_angle_list_.resize(RS16_CHANNELS_PER_BLOCK/2);
+  this->hori_angle_list_.resize(RS16_CHANNELS_PER_BLOCK/2);
   if (this->param_.max_distance > 150.0f)
   {
     this->param_.max_distance = 150.0f;
@@ -277,7 +276,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     }
     int lsb, mid, msb, neg = 1;
     std::map<float, int> vertical_angle_beam_map;
-    for (size_t i = 0; i < this->angle_file_row_num_; i++)
+    for (size_t i = 0; i < RS16_CHANNELS_PER_BLOCK/2; i++)
     {
       /* vert angle calibration data */
       lsb = p_ver_cali[i * 3];
