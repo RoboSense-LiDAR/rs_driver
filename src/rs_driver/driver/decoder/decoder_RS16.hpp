@@ -284,11 +284,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       this->vert_angle_list_[i] = (lsb * 256 * 256 + mid * 256 + msb) * neg * 0.01f;  // / 180 * M_PI;
       this->hori_angle_list_[i] = 0;
     }
-    this->beam_ring_table_ = sortIndexes<int>(this->vert_angle_list_);
-    for(auto iter: this->beam_ring_table_)
-    {
-      DEBUG<<" b : "<<iter<<REND;
-    }
+    this-> sortBeamTable();
     this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;

@@ -177,15 +177,6 @@ typedef struct
 
 #pragma pack(pop)
 
-template <typename T>
-std::vector<std::size_t> sortIndexes(const std::vector<T>& v)
-{
-  std::vector<std::size_t> idx(v.size());
-  std::iota(idx.begin(), idx.end(), 0);
-  std::sort(idx.begin(), idx.end(), [&v] (std::size_t i1, std::size_t i2) ->bool {return v[i1] < v[i2];});
-  return std::move(idx);
-}
-
 //----------------- Decoder ---------------------
 template <typename T_Point>
 class DecoderBase
@@ -213,6 +204,7 @@ protected:
   double calculateTimeUTC(const uint8_t* pkt);
   template <typename T_Msop>
   double calculateTimeYMD(const uint8_t* pkt);
+  void sortBeamTable();
 
 protected:
   RSDecoderParam param_;
@@ -392,7 +384,7 @@ void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
       row_index++;
       if (row_index >= this->lasers_num_)
       {
-        this->beam_ring_table_ = sortIndexes<int>(this->vert_angle_list_);
+        this->sortBeamTable();
         break;
       }
     }
@@ -510,6 +502,22 @@ double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
   stm.tm_sec = mpkt_ptr->header.timestamp.second;
   return std::mktime(&stm) + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms) / 1000.0 +
          (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
+}
+
+template <typename T_Point>
+void DecoderBase<T_Point>::sortBeamTable()
+{
+  std::map<int, int> tmp_map;
+  for (size_t i = 0; i < vert_angle_list_.size(); i++)
+  {
+    tmp_map.emplace(std::make_pair(vert_angle_list_[i], i));
+  }
+  size_t j = 0;
+  for (auto iter : tmp_map)
+  {
+    this->beam_ring_table_[iter.second] = j;
+    j++;
+  }
 }
 
 template <typename T_Point>
