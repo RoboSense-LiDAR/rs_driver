@@ -124,7 +124,7 @@ template <typename T_Point>
 class DecoderRS80 : public DecoderBase<T_Point>
 {
 public:
-  DecoderRS80(const RSDecoderParam& param);
+  explicit DecoderRS80(const RSDecoderParam& param);
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
   RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);

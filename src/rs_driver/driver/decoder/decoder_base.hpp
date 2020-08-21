@@ -182,14 +182,14 @@ template <typename T_Point>
 class DecoderBase
 {
 public:
-  DecoderBase(const RSDecoderParam& param);
+  explicit DecoderBase(const RSDecoderParam& param);
   DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase() = default;
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec, int& height);
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt);
   virtual void loadCalibrationFile(const std::string& angle_path);
-  virtual void regRecvCallback(const std::function<void(const CameraTrigger&)> callback);  ///< Camera trigger
+  virtual void regRecvCallback(const std::function<void(const CameraTrigger&)>& callback);  ///< Camera trigger
   virtual double getLidarTemperature();
   virtual double getLidarTime(const uint8_t* pkt) = 0;
 
@@ -343,7 +343,7 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
 }
 
 template <typename T_Point>
-void DecoderBase<T_Point>::regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
+void DecoderBase<T_Point>::regRecvCallback(const std::function<void(const CameraTrigger&)>& callback)
 {
   camera_trigger_cb_vec_.emplace_back(callback);
 }

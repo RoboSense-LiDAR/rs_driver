@@ -156,7 +156,7 @@ public:
       ndifop_count_++;
       if (ndifop_count_ > 20)
       {
-        reportError(ErrCode_NoDifopRecv);
+        reportError(Error(ErrCode_NoDifopRecv));
         ndifop_count_ = 0;
       }
       point_cloud_msg.point_cloud_ptr = output_point_cloud_ptr;
@@ -180,10 +180,10 @@ public:
           pointcloud_one_frame[i] = std::move(pointcloud_one_packet);
           break;
         case RSDecoderResult::WRONG_PKT_HEADER:
-          reportError(ErrCode_WrongPktHeader);
+          reportError(Error(ErrCode_WrongPktHeader));
           break;
         case RSDecoderResult::PKT_NULL:
-          reportError(ErrCode_PktNull);
+          reportError(Error(ErrCode_PktNull));
           break;
         default:
           break;
@@ -202,7 +202,7 @@ public:
     point_cloud_msg.timestamp = scan_msg.timestamp;
     if (point_cloud_msg.point_cloud_ptr->size() == 0)
     {
-      reportError(ErrCode_ZeroPoints);
+      reportError(Error(ErrCode_ZeroPoints));
       return false;
     }
     return true;
@@ -295,7 +295,7 @@ private:
       ndifop_count_++;
       if (ndifop_count_ > 120)
       {
-        reportError(ErrCode_NoDifopRecv);
+        reportError(Error(ErrCode_NoDifopRecv));
         ndifop_count_ = 0;
       }
       usleep(10000);
@@ -330,7 +330,7 @@ private:
           }
           if (msg.point_cloud_ptr->size() == 0)
           {
-            reportError(ErrCode_ZeroPoints);
+            reportError(Error(ErrCode_ZeroPoints));
           }
           else
           {
@@ -344,7 +344,7 @@ private:
       }
       else
       {
-        reportError(ErrCode_WrongPktHeader);
+        reportError(Error(ErrCode_WrongPktHeader));
         usleep(100000);
       }
     }

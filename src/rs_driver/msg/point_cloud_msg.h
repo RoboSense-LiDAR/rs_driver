@@ -44,7 +44,7 @@ struct __attribute__((aligned(16))) PointCloudMsg
   bool is_dense = false;          ///< if is_dense=true, the point cloud does not contain NAN points
   PointCloudPtr point_cloud_ptr;  ///< the point cloud pointer
   PointCloudMsg() = default;
-  PointCloudMsg(const PointCloudPtr& ptr) : point_cloud_ptr(ptr)
+  explicit PointCloudMsg(const PointCloudPtr& ptr) : point_cloud_ptr(ptr)
   {
   }
   typedef std::shared_ptr<PointCloudMsg> Ptr;

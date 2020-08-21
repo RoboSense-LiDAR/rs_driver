@@ -87,7 +87,7 @@ template <typename T_Point>
 class DecoderRS16 : public DecoderBase<T_Point>
 {
 public:
-  DecoderRS16(const RSDecoderParam& param);
+  explicit DecoderRS16(const RSDecoderParam& param);
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
   RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
@@ -273,13 +273,14 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     {
       return RSDecoderResult::DECODE_OK;
     }
+    int lsb, mid, msb, neg = 1;
     for (size_t i = 0; i < RS16_CHANNELS_PER_BLOCK / 2; i++)
     {
       /* vert angle calibration data */
-      int lsb = p_ver_cali[i * 3];
-      int mid = p_ver_cali[i * 3 + 1];
-      int msb = p_ver_cali[i * 3 + 2];
-      int neg = i < 8 ? -1 : 1;
+      lsb = p_ver_cali[i * 3];
+      mid = p_ver_cali[i * 3 + 1];
+      msb = p_ver_cali[i * 3 + 2];
+      neg = i < 8 ? -1 : 1;
       this->vert_angle_list_[i] = (lsb * 256 * 256 + mid * 256 + msb) * neg * 0.01f;  // / 180 * M_PI;
       this->hori_angle_list_[i] = 0;
     }

@@ -29,9 +29,8 @@ template <typename T>
 class Queue
 {
 public:
-  Queue()
+  Queue():is_task_finished_(true)
   {
-    is_task_finished_ = true;
   }
 
   T front()
