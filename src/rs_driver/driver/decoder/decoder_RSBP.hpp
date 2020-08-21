@@ -96,9 +96,9 @@ private:
 template <typename T_Point>
 DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->angle_file_row_num_ = 32;
-  this->vert_angle_list_.resize(this->angle_file_row_num_);
-  this->hori_angle_list_.resize(this->angle_file_row_num_);
+  this->lasers_num_ = 32;
+  this->vert_angle_list_.resize(this->lasers_num_);
+  this->hori_angle_list_.resize(this->lasers_num_);
   if (this->param_.max_distance > 100.0f)
   {
     this->param_.max_distance = 100.0f;
@@ -289,7 +289,7 @@ this->azi_diff_between_block_theoretical_ =
     {
       int lsb, mid, msb, neg = 1;
       const uint8_t* p_hori_cali = ((RSBPDifopPkt*)pkt)->yaw_cali;
-      for (size_t i = 0; i < this->angle_file_row_num_; i++)
+      for (size_t i = 0; i < this->lasers_num_; i++)
       {
         /* vert angle calibration data */
         lsb = p_ver_cali[i * 3];

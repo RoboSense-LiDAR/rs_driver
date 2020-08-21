@@ -140,9 +140,9 @@ private:
 template <typename T_Point>
 DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->angle_file_row_num_ = 128;
-  this->vert_angle_list_.resize(this->angle_file_row_num_);
-  this->hori_angle_list_.resize(this->angle_file_row_num_);
+  this->lasers_num_ = 128;
+  this->vert_angle_list_.resize(this->lasers_num_);
+  this->hori_angle_list_.resize(this->lasers_num_);
   if (this->param_.max_distance > 230.0f)
   {
     this->param_.max_distance = 230.0f;
@@ -329,7 +329,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     if (angle_flag)
     {
       int lsb, mid, msb, neg = 1;
-      for (size_t i = 0; i < this->angle_file_row_num_; i++)
+      for (size_t i = 0; i < this->lasers_num_; i++)
       {
         // calculation of vertical angle
         lsb = dpkt_ptr->ver_angle_cali[i].sign;

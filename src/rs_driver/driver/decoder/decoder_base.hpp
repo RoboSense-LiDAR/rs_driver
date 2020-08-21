@@ -221,7 +221,7 @@ protected:
   unsigned int pkt_count_;
   unsigned int trigger_index_;
   unsigned int prev_angle_diff_;
-  unsigned int angle_file_row_num_;
+  unsigned int lasers_num_;
   unsigned int rpm_;
   int start_angle_;
   int end_angle_;
@@ -250,7 +250,7 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   , pkt_count_(0)
   , trigger_index_(0)
   , prev_angle_diff_(RS_ONE_ROUND)
-  , angle_file_row_num_(128)
+  , lasers_num_(128)
   , rpm_(600)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)
@@ -390,7 +390,7 @@ void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
         break;
       }
       row_index++;
-      if (row_index >= this->angle_file_row_num_)
+      if (row_index >= this->lasers_num_)
       {
         this->beam_ring_table_ = sortIndexes<int>(this->vert_angle_list_);
         break;

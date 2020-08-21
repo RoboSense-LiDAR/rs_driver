@@ -98,9 +98,9 @@ private:
 template <typename T_Point>
 DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->angle_file_row_num_ = 16;
-  this->vert_angle_list_.resize(this->angle_file_row_num_);
-  this->hori_angle_list_.resize(this->angle_file_row_num_);
+  this->lasers_num_ = 16;
+  this->vert_angle_list_.resize(this->lasers_num_);
+  this->hori_angle_list_.resize(this->lasers_num_);
   if (this->param_.max_distance > 150.0f)
   {
     this->param_.max_distance = 150.0f;
