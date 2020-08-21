@@ -196,7 +196,7 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
-      int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % RS_ONE_ROUND) + RS_ONE_ROUND) % RS_ONE_ROUND;
+      int angle_vert = (((this->vert_angle_list_[channel_idx]) % RS_ONE_ROUND) + RS_ONE_ROUND) % RS_ONE_ROUND;
 
       // store to point cloud buffer
       T_Point point;
@@ -293,7 +293,6 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       msb = p_ver_cali[i * 3 + 2];
       neg = lsb == 0 ? 1 : -1;
       this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // / 180 * M_PI;
-      vertical_angle_beam_map.emplace(std::make_pair(this->vert_angle_list_[i], i));
 
       /* horizon angle calibration data */
       lsb = p_hori_cali[i * 3];

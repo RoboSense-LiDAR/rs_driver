@@ -177,6 +177,15 @@ typedef struct
 
 #pragma pack(pop)
 
+template <typename T>
+std::vector<std::size_t> sortIndexes(const std::vector<T>& v)
+{
+  std::vector<std::size_t> idx(v.size());
+  std::iota(idx.begin(), idx.end(), 0);
+  std::sort(idx.begin(), idx.end(), [&v] (std::size_t i1, std::size_t i2) ->bool {return v[i1] < v[i2];});
+  return std::move(idx);
+}
+
 //----------------- Decoder ---------------------
 template <typename T_Point>
 class DecoderBase
@@ -225,9 +234,9 @@ protected:
   float time_duration_between_blocks_;
   float current_temperature_;
   float azi_diff_between_block_theoretical_;
-  std::vector<float> vert_angle_list_;
-  std::vector<float> hori_angle_list_;
-  std::vector<int> beam_ring_table_;
+  std::vector<int> vert_angle_list_;
+  std::vector<int> hori_angle_list_;
+  std::vector<std::size_t> beam_ring_table_;
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   static std::vector<double> cos_lookup_table_;
   static std::vector<double> sin_lookup_table_;
@@ -383,6 +392,7 @@ void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
       row_index++;
       if (row_index >= this->lasers_num_)
       {
+        this->beam_ring_table_ = sortIndexes<int>(this->vert_angle_list_);
         break;
       }
     }
@@ -461,7 +471,7 @@ float DecoderBase<T_Point>::computeTemperature(const uint8_t& temp_low, const ui
 template <typename T_Point>
 int DecoderBase<T_Point>::azimuthCalibration(const float& azimuth, const int& channel)
 {
-  return ((int)(azimuth + this->hori_angle_list_[channel]) + RS_ONE_ROUND) % RS_ONE_ROUND;
+  return ((int)(azimuth) + this->hori_angle_list_[channel] + RS_ONE_ROUND) % RS_ONE_ROUND;
 }
 
 template <typename T_Point>

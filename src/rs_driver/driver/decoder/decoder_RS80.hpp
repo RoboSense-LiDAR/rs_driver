@@ -319,7 +319,6 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       msb = dpkt_ptr->ver_angle_cali[i].value[1];
       neg = lsb == 0 ? 1 : -1;
       this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
-      vertical_angle_beam_map.emplace(std::make_pair(this->vert_angle_list_[i], i));
 
       // horizontal offset angle
       lsb = dpkt_ptr->hori_angle_cali[i].sign;
