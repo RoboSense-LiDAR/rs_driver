@@ -238,7 +238,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
-      int angle_vert = (((int)(this->vert_angle_list_[channel_idx]) % RS_ONE_ROUND) + RS_ONE_ROUND) % RS_ONE_ROUND;
+      int angle_vert = (((this->vert_angle_list_[channel_idx]) % RS_ONE_ROUND) + RS_ONE_ROUND) % RS_ONE_ROUND;
 
       T_Point point;
       if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
@@ -310,7 +310,6 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       return RSDecoderResult::DECODE_OK;
     }
     int lsb, mid, msb, neg = 1;
-    std::map<float, int> vertical_angle_beam_map;
     for (size_t i = 0; i < RS80_CHANNELS_PER_BLOCK; i++)
     {
       // calculation of vertical angle
@@ -327,11 +326,10 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       neg = lsb == 0 ? 1 : -1;
       this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
     }
-    size_t i = 0;
-    for (auto iter : vertical_angle_beam_map)
+    this->beam_ring_table_ = sortIndexes<int>(this->vert_angle_list_);
+    for(auto iter: this->beam_ring_table_)
     {
-      this->beam_ring_table_[iter.second] = i;
-      i++;
+      DEBUG<<" b : "<<iter<<REND;
     }
     this->difop_flag_ = true;
   }

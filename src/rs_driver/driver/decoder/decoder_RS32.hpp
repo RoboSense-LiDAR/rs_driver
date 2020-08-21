@@ -282,7 +282,6 @@ RSDecoderResult DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     }
     int lsb, mid, msb, neg = 1;
     const uint8_t* p_hori_cali = ((RS32DifopPkt*)pkt)->yaw_cali;
-    std::map<float, int> vertical_angle_beam_map;
     for (size_t i = 0; i < RS32_CHANNELS_PER_BLOCK; i++)
     {
       /* vert angle calibration data */
@@ -299,11 +298,10 @@ RSDecoderResult DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       neg = lsb == 0 ? 1 : -1;
       this->hori_angle_list_[i] = (mid * 256 + msb) * neg * 0.1f;
     }
-    size_t i = 0;
-    for (auto iter : vertical_angle_beam_map)
+    this->beam_ring_table_ = sortIndexes<int>(this->vert_angle_list_);
+    for(auto iter: this->beam_ring_table_)
     {
-      this->beam_ring_table_[iter.second] = i;
-      i++;
+      DEBUG<<" b : "<<iter<<REND;
     }
     this->difop_flag_ = true;
   }

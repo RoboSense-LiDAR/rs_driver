@@ -274,7 +274,6 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       return RSDecoderResult::DECODE_OK;
     }
     int lsb, mid, msb, neg = 1;
-    std::map<float, int> vertical_angle_beam_map;
     for (size_t i = 0; i < RS16_CHANNELS_PER_BLOCK / 2; i++)
     {
       /* vert angle calibration data */
@@ -283,14 +282,12 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       msb = p_ver_cali[i * 3 + 2];
       neg = i < 8 ? -1 : 1;
       this->vert_angle_list_[i] = (lsb * 256 * 256 + mid * 256 + msb) * neg * 0.01f;  // / 180 * M_PI;
-      vertical_angle_beam_map.emplace(std::make_pair(this->vert_angle_list_[i], i));
       this->hori_angle_list_[i] = 0;
     }
-    size_t i = 0;
-    for (auto iter : vertical_angle_beam_map)
+    this->beam_ring_table_ = sortIndexes<int>(this->vert_angle_list_);
+    for(auto iter: this->beam_ring_table_)
     {
-      this->beam_ring_table_[iter.second] = i;
-      i++;
+      DEBUG<<" b : "<<iter<<REND;
     }
     this->difop_flag_ = true;
   }
