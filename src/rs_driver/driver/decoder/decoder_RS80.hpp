@@ -320,50 +320,30 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       (RS_ONE_ROUND / RS80_BLOCKS_PER_PKT) / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
-    bool angle_flag = true;
-    const uint8_t* p_ver_cali;
-    p_ver_cali = (uint8_t*)(dpkt_ptr->ver_angle_cali);
+    const uint8_t* p_ver_cali = (uint8_t*)(dpkt_ptr->ver_angle_cali);
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
     {
-      angle_flag = false;
+      return RSDecoderResult::DECODE_OK;
     }
-
-    if (angle_flag)
+    int lsb, mid, msb, neg = 1;
+    for (size_t i = 0; i < this->angle_file_row_num_; i++)
     {
-      int lsb, mid, msb, neg = 1;
-      for (size_t i = 0; i < this->angle_file_row_num_; i++)
-      {
-        // calculation of vertical angle
-        lsb = dpkt_ptr->ver_angle_cali[i].sign;
-        mid = dpkt_ptr->ver_angle_cali[i].value[0];
-        msb = dpkt_ptr->ver_angle_cali[i].value[1];
-        if (lsb == 0)
-        {
-          neg = 1;
-        }
-        else
-        {
-          neg = -1;
-        }
-        this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
+      // calculation of vertical angle
+      lsb = dpkt_ptr->ver_angle_cali[i].sign;
+      mid = dpkt_ptr->ver_angle_cali[i].value[0];
+      msb = dpkt_ptr->ver_angle_cali[i].value[1];
+      neg = lsb == 0 ? 1 : -1;
+      this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
 
-        // horizontal offset angle
-        lsb = dpkt_ptr->hori_angle_cali[i].sign;
-        mid = dpkt_ptr->hori_angle_cali[i].value[0];
-        msb = dpkt_ptr->hori_angle_cali[i].value[1];
-        if (lsb == 0)
-        {
-          neg = 1;
-        }
-        else
-        {
-          neg = -1;
-        }
-        this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
-      }
-      this->difop_flag_ = true;
+      // horizontal offset angle
+      lsb = dpkt_ptr->hori_angle_cali[i].sign;
+      mid = dpkt_ptr->hori_angle_cali[i].value[0];
+      msb = dpkt_ptr->hori_angle_cali[i].value[1];
+      neg = lsb == 0 ? 1 : -1;
+      this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
     }
+    this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;
 }

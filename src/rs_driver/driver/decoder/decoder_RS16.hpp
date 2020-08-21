@@ -93,9 +93,6 @@ public:
   double getLidarTime(const uint8_t* pkt);
 
 private:
-  void initTable();
-
-private:
   std::array<int, 16> beam_ring_table_;
 };
 
@@ -113,7 +110,6 @@ DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_P
   {
     this->param_.min_distance = 0.2f;
   }
-  initTable();
 }
 
 template <typename T_Point>
@@ -273,61 +269,34 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       (RS_ONE_ROUND / RS16_BLOCKS_PER_PKT) / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
-    bool angle_flag = true;
-    const uint8_t* p_ver_cali;
-    p_ver_cali = dpkt_ptr->pitch_cali;
+    const uint8_t* p_ver_cali = dpkt_ptr->pitch_cali;
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
     {
-      angle_flag = false;
+      return RSDecoderResult::DECODE_OK;
     }
-    if (angle_flag)
+    int lsb, mid, msb, neg = 1;
+    std::map<float, int> vertical_angle_beam_map;
+    for (size_t i = 0; i < this->angle_file_row_num_; i++)
     {
-      int lsb, mid, msb, neg = 1;
-
-      for (int i = 0; i < 16; i++)
-      {
-        /* vert angle calibration data */
-        lsb = p_ver_cali[i * 3];
-        mid = p_ver_cali[i * 3 + 1];
-        msb = p_ver_cali[i * 3 + 2];
-        if (i < 8)
-        {
-          neg = -1;
-        }
-        else
-        {
-          neg = 1;
-        }
-        this->vert_angle_list_[i] = (lsb * 256 * 256 + mid * 256 + msb) * neg * 0.01f;  // / 180 * M_PI;
-        /* horizon angle calibration data */
-        this->hori_angle_list_[i] = 0;
-      }
-      this->difop_flag_ = true;
+      /* vert angle calibration data */
+      lsb = p_ver_cali[i * 3];
+      mid = p_ver_cali[i * 3 + 1];
+      msb = p_ver_cali[i * 3 + 2];
+      neg = i < 8 ? -1 : 1;
+      this->vert_angle_list_[i] = (lsb * 256 * 256 + mid * 256 + msb) * neg * 0.01f;  // / 180 * M_PI;
+      vertical_angle_beam_map.emplace(std::make_pair(this->vert_angle_list_[i], i));
+      this->hori_angle_list_[i] = 0;
     }
+    size_t i = 0;
+    for (auto iter : vertical_angle_beam_map)
+    {
+      beam_ring_table_[iter.second] = i;
+      i++;
+    }
+    this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;
-}
-
-template <typename T_Point>
-void DecoderRS16<T_Point>::initTable()
-{
-  beam_ring_table_[0] = 0;
-  beam_ring_table_[1] = 1;
-  beam_ring_table_[2] = 2;
-  beam_ring_table_[3] = 3;
-  beam_ring_table_[4] = 4;
-  beam_ring_table_[5] = 5;
-  beam_ring_table_[6] = 6;
-  beam_ring_table_[7] = 7;
-  beam_ring_table_[8] = 15;
-  beam_ring_table_[9] = 14;
-  beam_ring_table_[10] = 13;
-  beam_ring_table_[11] = 12;
-  beam_ring_table_[12] = 11;
-  beam_ring_table_[13] = 10;
-  beam_ring_table_[14] = 9;
-  beam_ring_table_[15] = 8;
 }
 
 }  // namespace lidar

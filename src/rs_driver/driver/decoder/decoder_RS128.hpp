@@ -129,9 +129,6 @@ public:
   double getLidarTime(const uint8_t* pkt);
 
 private:
-  void initTable();
-
-private:
   std::array<int, 128> beam_ring_table_;
 };
 
@@ -149,7 +146,6 @@ DecoderRS128<T_Point>::DecoderRS128(const RSDecoderParam& param) : DecoderBase<T
   {
     this->param_.min_distance = 1.0f;
   }
-  initTable();
 }
 
 template <typename T_Point>
@@ -310,188 +306,46 @@ RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     this->pkts_per_frame_ = ceil(RS128_PKT_RATE * 60 / this->rpm_);
   }
   this->azi_diff_between_block_theoretical_ =
-      (RS_ONE_ROUND / RS128_BLOCKS_PER_PKT) / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
+      (RS_ONE_ROUND / RS128_BLOCKS_PER_PKT) /
+      (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
-    bool angle_flag = true;
-    const uint8_t* p_ver_cali;
-    p_ver_cali = (uint8_t*)(dpkt_ptr->ver_angle_cali);
+    const uint8_t* p_ver_cali = (uint8_t*)(dpkt_ptr->ver_angle_cali);
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
     {
-      angle_flag = false;
+      return RSDecoderResult::DECODE_OK;
     }
 
-    if (angle_flag)
+    int lsb, mid, msb, neg = 1;
+    std::map<float, int> vertical_angle_beam_map;
+    for (size_t i = 0; i < this->angle_file_row_num_; i++)
     {
-      int lsb, mid, msb, neg = 1;
-      for (size_t i = 0; i < this->angle_file_row_num_; i++)
-      {
-        // calculation of vertical angle
-        lsb = dpkt_ptr->ver_angle_cali[i].sign;
-        mid = dpkt_ptr->ver_angle_cali[i].value[0];
-        msb = dpkt_ptr->ver_angle_cali[i].value[1];
-        if (lsb == 0)
-        {
-          neg = 1;
-        }
-        else
-        {
-          neg = -1;
-        }
-        this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
+      // calculation of vertical angle
+      lsb = dpkt_ptr->ver_angle_cali[i].sign;
+      mid = dpkt_ptr->ver_angle_cali[i].value[0];
+      msb = dpkt_ptr->ver_angle_cali[i].value[1];
+      neg = lsb == 0 ? 1 : -1;
 
-        // horizontal offset angle
-        lsb = dpkt_ptr->hori_angle_cali[i].sign;
-        mid = dpkt_ptr->hori_angle_cali[i].value[0];
-        msb = dpkt_ptr->hori_angle_cali[i].value[1];
-        if (lsb == 0)
-        {
-          neg = 1;
-        }
-        else
-        {
-          neg = -1;
-        }
-        this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
-      }
-      this->difop_flag_ = true;
+      this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
+      vertical_angle_beam_map.emplace(std::make_pair(this->vert_angle_list_[i], i));
+
+      // horizontal offset angle
+      lsb = dpkt_ptr->hori_angle_cali[i].sign;
+      mid = dpkt_ptr->hori_angle_cali[i].value[0];
+      msb = dpkt_ptr->hori_angle_cali[i].value[1];
+      neg = lsb == 0 ? 1 : -1;
+      this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
     }
+    size_t i = 0;
+    for (auto iter : vertical_angle_beam_map)
+    {
+      beam_ring_table_[iter.second] = i;
+      i++;
+    }
+    this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;
-}
-
-template <typename T_Point>
-void DecoderRS128<T_Point>::initTable()
-{
-  beam_ring_table_[0] = 3;
-  beam_ring_table_[1] = 66;
-  beam_ring_table_[2] = 33;
-  beam_ring_table_[3] = 96;
-  beam_ring_table_[4] = 11;
-  beam_ring_table_[5] = 74;
-  beam_ring_table_[6] = 41;
-  beam_ring_table_[7] = 104;
-  beam_ring_table_[8] = 19;
-  beam_ring_table_[9] = 82;
-  beam_ring_table_[10] = 49;
-  beam_ring_table_[11] = 112;
-  beam_ring_table_[12] = 27;
-  beam_ring_table_[13] = 90;
-  beam_ring_table_[14] = 57;
-  beam_ring_table_[15] = 120;
-  beam_ring_table_[16] = 35;
-  beam_ring_table_[17] = 98;
-  beam_ring_table_[18] = 1;
-  beam_ring_table_[19] = 64;
-  beam_ring_table_[20] = 43;
-  beam_ring_table_[21] = 106;
-  beam_ring_table_[22] = 9;
-  beam_ring_table_[23] = 72;
-  beam_ring_table_[24] = 51;
-  beam_ring_table_[25] = 114;
-  beam_ring_table_[26] = 17;
-  beam_ring_table_[27] = 80;
-  beam_ring_table_[28] = 59;
-  beam_ring_table_[29] = 122;
-  beam_ring_table_[30] = 25;
-  beam_ring_table_[31] = 88;
-  beam_ring_table_[32] = 67;
-  beam_ring_table_[33] = 34;
-  beam_ring_table_[34] = 97;
-  beam_ring_table_[35] = 0;
-  beam_ring_table_[36] = 75;
-  beam_ring_table_[37] = 42;
-  beam_ring_table_[38] = 105;
-  beam_ring_table_[39] = 8;
-  beam_ring_table_[40] = 83;
-  beam_ring_table_[41] = 50;
-  beam_ring_table_[42] = 113;
-  beam_ring_table_[43] = 16;
-  beam_ring_table_[44] = 91;
-  beam_ring_table_[45] = 58;
-  beam_ring_table_[46] = 121;
-  beam_ring_table_[47] = 24;
-  beam_ring_table_[48] = 99;
-  beam_ring_table_[49] = 2;
-  beam_ring_table_[50] = 65;
-  beam_ring_table_[51] = 32;
-  beam_ring_table_[52] = 107;
-  beam_ring_table_[53] = 10;
-  beam_ring_table_[54] = 73;
-  beam_ring_table_[55] = 40;
-  beam_ring_table_[56] = 115;
-  beam_ring_table_[57] = 18;
-  beam_ring_table_[58] = 81;
-  beam_ring_table_[59] = 48;
-  beam_ring_table_[60] = 123;
-  beam_ring_table_[61] = 26;
-  beam_ring_table_[62] = 89;
-  beam_ring_table_[63] = 56;
-  beam_ring_table_[64] = 7;
-  beam_ring_table_[65] = 70;
-  beam_ring_table_[66] = 37;
-  beam_ring_table_[67] = 100;
-  beam_ring_table_[68] = 15;
-  beam_ring_table_[69] = 78;
-  beam_ring_table_[70] = 45;
-  beam_ring_table_[71] = 108;
-  beam_ring_table_[72] = 23;
-  beam_ring_table_[73] = 86;
-  beam_ring_table_[74] = 53;
-  beam_ring_table_[75] = 116;
-  beam_ring_table_[76] = 31;
-  beam_ring_table_[77] = 94;
-  beam_ring_table_[78] = 61;
-  beam_ring_table_[79] = 124;
-  beam_ring_table_[80] = 39;
-  beam_ring_table_[81] = 102;
-  beam_ring_table_[82] = 5;
-  beam_ring_table_[83] = 68;
-  beam_ring_table_[84] = 47;
-  beam_ring_table_[85] = 110;
-  beam_ring_table_[86] = 13;
-  beam_ring_table_[87] = 76;
-  beam_ring_table_[88] = 55;
-  beam_ring_table_[89] = 118;
-  beam_ring_table_[90] = 21;
-  beam_ring_table_[91] = 84;
-  beam_ring_table_[92] = 63;
-  beam_ring_table_[93] = 126;
-  beam_ring_table_[94] = 29;
-  beam_ring_table_[95] = 92;
-  beam_ring_table_[96] = 71;
-  beam_ring_table_[97] = 38;
-  beam_ring_table_[98] = 101;
-  beam_ring_table_[99] = 4;
-  beam_ring_table_[100] = 79;
-  beam_ring_table_[101] = 46;
-  beam_ring_table_[102] = 109;
-  beam_ring_table_[103] = 12;
-  beam_ring_table_[104] = 87;
-  beam_ring_table_[105] = 54;
-  beam_ring_table_[106] = 117;
-  beam_ring_table_[107] = 20;
-  beam_ring_table_[108] = 95;
-  beam_ring_table_[109] = 62;
-  beam_ring_table_[110] = 125;
-  beam_ring_table_[111] = 28;
-  beam_ring_table_[112] = 103;
-  beam_ring_table_[113] = 6;
-  beam_ring_table_[114] = 69;
-  beam_ring_table_[115] = 36;
-  beam_ring_table_[116] = 111;
-  beam_ring_table_[117] = 14;
-  beam_ring_table_[118] = 77;
-  beam_ring_table_[119] = 44;
-  beam_ring_table_[120] = 119;
-  beam_ring_table_[121] = 22;
-  beam_ring_table_[122] = 85;
-  beam_ring_table_[123] = 52;
-  beam_ring_table_[124] = 127;
-  beam_ring_table_[125] = 30;
-  beam_ring_table_[126] = 93;
-  beam_ring_table_[127] = 60;
 }
 
 }  // namespace lidar

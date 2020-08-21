@@ -70,10 +70,10 @@ public:
         std::stringstream msop_filter;
         std::stringstream difop_filter;
         msop_filter << "src host " << input_param_.device_ip << " && ";
-        difop_filter << "src host " << input_param_.device_ip << " && ";
         msop_filter << "udp dst port " << input_param_.msop_port;
-        pcap_compile(pcap_, &pcap_msop_filter_, msop_filter.str().c_str(), 1, 0xFFFFFFFF);
+        difop_filter << "src host " << input_param_.device_ip << " && ";
         difop_filter << "udp dst port " << input_param_.difop_port;
+        pcap_compile(pcap_, &pcap_msop_filter_, msop_filter.str().c_str(), 1, 0xFFFFFFFF);
         pcap_compile(pcap_, &pcap_difop_filter_, difop_filter.str().c_str(), 1, 0xFFFFFFFF);
       }
     }

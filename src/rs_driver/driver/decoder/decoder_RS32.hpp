@@ -90,9 +90,6 @@ public:
   double getLidarTime(const uint8_t* pkt);
 
 private:
-  void initTable();
-
-private:
   std::array<int, 32> beam_ring_table_;
 };
 
@@ -110,7 +107,6 @@ DecoderRS32<T_Point>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<T_P
   {
     this->param_.min_distance = 0.4f;
   }
-  initTable();
 }
 
 template <typename T_Point>
@@ -276,94 +272,45 @@ RSDecoderResult DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     this->pkts_per_frame_ = ceil(RS32_PKT_RATE * 60 / this->rpm_);
   }
-this->azi_diff_between_block_theoretical_ =
+  this->azi_diff_between_block_theoretical_ =
       (RS_ONE_ROUND / RS32_BLOCKS_PER_PKT) / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
-    bool angle_flag = true;
-    const uint8_t* p_ver_cali;
-    p_ver_cali = ((RS32DifopPkt*)pkt)->pitch_cali;
+    const uint8_t* p_ver_cali = ((RS32DifopPkt*)pkt)->pitch_cali;
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF))
     {
-      angle_flag = false;
+      return RSDecoderResult::DECODE_OK;
     }
-    if (angle_flag)
+    int lsb, mid, msb, neg = 1;
+    const uint8_t* p_hori_cali = ((RS32DifopPkt*)pkt)->yaw_cali;
+    std::map<float, int> vertical_angle_beam_map;
+    for (size_t i = 0; i < this->angle_file_row_num_; i++)
     {
-      int lsb, mid, msb, neg = 1;
-      const uint8_t* p_hori_cali = ((RS32DifopPkt*)pkt)->yaw_cali;
-      for (size_t i = 0; i < this->angle_file_row_num_; i++)
-      {
-        /* vert angle calibration data */
-        lsb = p_ver_cali[i * 3];
-        mid = p_ver_cali[i * 3 + 1];
-        msb = p_ver_cali[i * 3 + 2];
-        if (lsb == 0)
-        {
-          neg = 1;
-        }
-        else if (lsb == 1)
-        {
-          neg = -1;
-        }
-        this->vert_angle_list_[i] = (mid * 256 + msb) * neg * 0.1f;  // / 180 * M_PI;
+      /* vert angle calibration data */
+      lsb = p_ver_cali[i * 3];
+      mid = p_ver_cali[i * 3 + 1];
+      msb = p_ver_cali[i * 3 + 2];
+      neg = lsb == 0 ? 1 : -1;
+      this->vert_angle_list_[i] = (mid * 256 + msb) * neg * 0.1f;  // / 180 * M_PI;
+      vertical_angle_beam_map.emplace(std::make_pair(this->vert_angle_list_[i], i));
 
-        /* horizon angle calibration data */
-        lsb = p_hori_cali[i * 3];
-        mid = p_hori_cali[i * 3 + 1];
-        msb = p_hori_cali[i * 3 + 2];
-        if (lsb == 0)
-        {
-          neg = 1;
-        }
-        else if (lsb == 1)
-        {
-          neg = -1;
-        }
-
-        this->hori_angle_list_[i] = (mid * 256 + msb) * neg * 0.1f;
-      }
-      this->difop_flag_ = true;
+      /* horizon angle calibration data */
+      lsb = p_hori_cali[i * 3];
+      mid = p_hori_cali[i * 3 + 1];
+      msb = p_hori_cali[i * 3 + 2];
+      neg = lsb == 0 ? 1 : -1;
+      this->hori_angle_list_[i] = (mid * 256 + msb) * neg * 0.1f;
     }
+    size_t i = 0;
+    for (auto iter : vertical_angle_beam_map)
+    {
+      beam_ring_table_[iter.second] = i;
+      i++;
+    }
+    this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;
-}
-
-template <typename T_Point>
-void DecoderRS32<T_Point>::initTable()
-{
-  beam_ring_table_[0] = 2;
-  beam_ring_table_[1] = 21;
-  beam_ring_table_[2] = 4;
-  beam_ring_table_[3] = 20;
-  beam_ring_table_[4] = 26;
-  beam_ring_table_[5] = 19;
-  beam_ring_table_[6] = 27;
-  beam_ring_table_[7] = 18;
-  beam_ring_table_[8] = 28;
-  beam_ring_table_[9] = 25;
-  beam_ring_table_[10] = 29;
-  beam_ring_table_[11] = 24;
-  beam_ring_table_[12] = 30;
-  beam_ring_table_[13] = 23;
-  beam_ring_table_[14] = 31;
-  beam_ring_table_[15] = 22;
-  beam_ring_table_[16] = 0;
-  beam_ring_table_[17] = 13;
-  beam_ring_table_[18] = 1;
-  beam_ring_table_[19] = 12;
-  beam_ring_table_[20] = 3;
-  beam_ring_table_[21] = 11;
-  beam_ring_table_[22] = 5;
-  beam_ring_table_[23] = 10;
-  beam_ring_table_[24] = 9;
-  beam_ring_table_[25] = 17;
-  beam_ring_table_[26] = 8;
-  beam_ring_table_[27] = 16;
-  beam_ring_table_[28] = 7;
-  beam_ring_table_[29] = 15;
-  beam_ring_table_[30] = 6;
-  beam_ring_table_[31] = 14;
 }
 
 }  // namespace lidar

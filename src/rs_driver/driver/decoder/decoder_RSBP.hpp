@@ -90,9 +90,6 @@ public:
   double getLidarTime(const uint8_t* pkt);
 
 private:
-  void initTable();
-
-private:
   std::array<int, 32> beam_ring_table_;
 };
 
@@ -110,7 +107,6 @@ DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_P
   {
     this->param_.min_distance = 0.1f;
   }
-  initTable();
 }
 
 template <typename T_Point>
@@ -277,7 +273,7 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     this->pkts_per_frame_ = ceil(RSBP_PKT_RATE * 60 / this->rpm_);
   }
-this->azi_diff_between_block_theoretical_ =
+  this->azi_diff_between_block_theoretical_ =
       (RS_ONE_ROUND / RSBP_BLOCKS_PER_PKT) / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
@@ -293,6 +289,8 @@ this->azi_diff_between_block_theoretical_ =
     {
       int lsb, mid, msb, neg = 1;
       const uint8_t* p_hori_cali = ((RSBPDifopPkt*)pkt)->yaw_cali;
+      std::map<float, int> vertical_angle_beam_map;
+
       for (size_t i = 0; i < this->angle_file_row_num_; i++)
       {
         /* vert angle calibration data */
@@ -308,6 +306,7 @@ this->azi_diff_between_block_theoretical_ =
           neg = -1;
         }
         this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // / 180 * M_PI;
+        vertical_angle_beam_map.emplace(std::make_pair(this->vert_angle_list_[i], i));
 
         /* horizon angle calibration data */
         lsb = p_hori_cali[i * 3];
@@ -324,48 +323,16 @@ this->azi_diff_between_block_theoretical_ =
 
         this->hori_angle_list_[i] = (mid * 256 + msb) * neg;
       }
-
+      size_t i = 0;
+      for (auto iter : vertical_angle_beam_map)
+      {
+        beam_ring_table_[iter.second] = i;
+        i++;
+      }
       this->difop_flag_ = true;
     }
   }
   return RSDecoderResult::DECODE_OK;
-}
-
-template <typename T_Point>
-void DecoderRSBP<T_Point>::initTable()
-{
-  beam_ring_table_[0] = 31;
-  beam_ring_table_[1] = 28;
-  beam_ring_table_[2] = 27;
-  beam_ring_table_[3] = 25;
-  beam_ring_table_[4] = 23;
-  beam_ring_table_[5] = 21;
-  beam_ring_table_[6] = 19;
-  beam_ring_table_[7] = 17;
-  beam_ring_table_[8] = 30;
-  beam_ring_table_[9] = 29;
-  beam_ring_table_[10] = 26;
-  beam_ring_table_[11] = 24;
-  beam_ring_table_[12] = 22;
-  beam_ring_table_[13] = 20;
-  beam_ring_table_[14] = 18;
-  beam_ring_table_[15] = 16;
-  beam_ring_table_[16] = 15;
-  beam_ring_table_[17] = 13;
-  beam_ring_table_[18] = 11;
-  beam_ring_table_[19] = 9;
-  beam_ring_table_[20] = 7;
-  beam_ring_table_[21] = 5;
-  beam_ring_table_[22] = 3;
-  beam_ring_table_[23] = 1;
-  beam_ring_table_[24] = 14;
-  beam_ring_table_[25] = 12;
-  beam_ring_table_[26] = 10;
-  beam_ring_table_[27] = 8;
-  beam_ring_table_[28] = 6;
-  beam_ring_table_[29] = 4;
-  beam_ring_table_[30] = 2;
-  beam_ring_table_[31] = 0;
 }
 
 }  // namespace lidar
