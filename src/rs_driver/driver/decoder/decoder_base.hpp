@@ -212,7 +212,7 @@ protected:
   unsigned int pkt_count_;
   unsigned int trigger_index_;
   unsigned int prev_angle_diff_;
-  unsigned int angle_file_row_num_;
+  unsigned int lasers_num_;
   unsigned int rpm_;
   int start_angle_;
   int end_angle_;
@@ -227,6 +227,7 @@ protected:
   float azi_diff_between_block_theoretical_;
   std::vector<float> vert_angle_list_;
   std::vector<float> hori_angle_list_;
+  std::vector<int> beam_ring_table_;
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   static std::vector<double> cos_lookup_table_;
   static std::vector<double> sin_lookup_table_;
@@ -240,7 +241,7 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   , pkt_count_(0)
   , trigger_index_(0)
   , prev_angle_diff_(RS_ONE_ROUND)
-  , angle_file_row_num_(128)
+  , lasers_num_(128)
   , rpm_(600)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)
@@ -380,7 +381,7 @@ void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
         break;
       }
       row_index++;
-      if (row_index >= this->angle_file_row_num_)
+      if (row_index >= this->lasers_num_)
       {
         break;
       }

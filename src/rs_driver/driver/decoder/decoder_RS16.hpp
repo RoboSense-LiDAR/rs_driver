@@ -91,16 +91,15 @@ public:
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
   RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
-
-private:
-  std::array<int, 16> beam_ring_table_;
 };
 
 template <typename T_Point>
 DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->vert_angle_list_.resize(RS16_CHANNELS_PER_BLOCK/2);
-  this->hori_angle_list_.resize(RS16_CHANNELS_PER_BLOCK/2);
+  this->lasers_num_ = 16;
+  this->vert_angle_list_.resize(this->lasers_num_);
+  this->hori_angle_list_.resize(this->lasers_num_);
+  this->beam_ring_table_.resize(this->lasers_num_);
   if (this->param_.max_distance > 150.0f)
   {
     this->param_.max_distance = 150.0f;
@@ -121,7 +120,7 @@ template <typename T_Point>
 RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
                                                     int& azimuth)
 {
-  height = 16;
+  height = this->lasers_num_;
   RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
   if (mpkt_ptr->header.id != RS16_MSOP_ID)
   {
@@ -216,7 +215,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setZ(point, NAN);
         setIntensity(point, 0);
       }
-      setRing(point, beam_ring_table_[channel_idx]);
+      setRing(point, this->beam_ring_table_[channel_idx]);
       setTimestamp(point, block_timestamp);
       vec.emplace_back(std::move(point));
     }
@@ -276,7 +275,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     }
     int lsb, mid, msb, neg = 1;
     std::map<float, int> vertical_angle_beam_map;
-    for (size_t i = 0; i < RS16_CHANNELS_PER_BLOCK/2; i++)
+    for (size_t i = 0; i < RS16_CHANNELS_PER_BLOCK / 2; i++)
     {
       /* vert angle calibration data */
       lsb = p_ver_cali[i * 3];
@@ -290,7 +289,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     size_t i = 0;
     for (auto iter : vertical_angle_beam_map)
     {
-      beam_ring_table_[iter.second] = i;
+      this->beam_ring_table_[iter.second] = i;
       i++;
     }
     this->difop_flag_ = true;

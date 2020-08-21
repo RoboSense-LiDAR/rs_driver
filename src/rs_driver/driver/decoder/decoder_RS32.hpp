@@ -88,16 +88,15 @@ public:
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
   RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
-
-private:
-  std::array<int, 32> beam_ring_table_;
 };
 
 template <typename T_Point>
 DecoderRS32<T_Point>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
 {
-  this->vert_angle_list_.resize(RS32_CHANNELS_PER_BLOCK);
-  this->hori_angle_list_.resize(RS32_CHANNELS_PER_BLOCK);
+  this->lasers_num_ = 32;
+  this->vert_angle_list_.resize(this->lasers_num_);
+  this->hori_angle_list_.resize(this->lasers_num_);
+  this->beam_ring_table_.resize(this->lasers_num_);
   if (this->param_.max_distance > 200.0f)
   {
     this->param_.max_distance = 200.0f;
@@ -223,7 +222,7 @@ RSDecoderResult DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setZ(point, NAN);
         setIntensity(point, 0);
       }
-      setRing(point, beam_ring_table_[channel_idx]);
+      setRing(point, this->beam_ring_table_[channel_idx]);
       setTimestamp(point, block_timestamp);
       vec.emplace_back(std::move(point));
     }
@@ -304,7 +303,7 @@ RSDecoderResult DecoderRS32<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     size_t i = 0;
     for (auto iter : vertical_angle_beam_map)
     {
-      beam_ring_table_[iter.second] = i;
+      this->beam_ring_table_[iter.second] = i;
       i++;
     }
     this->difop_flag_ = true;
