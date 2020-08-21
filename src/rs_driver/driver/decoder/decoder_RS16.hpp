@@ -93,10 +93,6 @@ public:
   double getLidarTime(const uint8_t* pkt);
 
 private:
-  void initTable();
-
-private:
-  std::array<int, 16> beam_ring_table_;
 };
 
 template <typename T_Point>
@@ -113,7 +109,6 @@ DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_P
   {
     this->param_.min_distance = 0.2f;
   }
-  initTable();
 }
 
 template <typename T_Point>
@@ -303,31 +298,11 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
         /* horizon angle calibration data */
         this->hori_angle_list_[i] = 0;
       }
+      this->beam_ring_table_ = sortIndexes<int>(this->vert_angle_list_);
       this->difop_flag_ = true;
     }
   }
   return RSDecoderResult::DECODE_OK;
-}
-
-template <typename T_Point>
-void DecoderRS16<T_Point>::initTable()
-{
-  beam_ring_table_[0] = 0;
-  beam_ring_table_[1] = 1;
-  beam_ring_table_[2] = 2;
-  beam_ring_table_[3] = 3;
-  beam_ring_table_[4] = 4;
-  beam_ring_table_[5] = 5;
-  beam_ring_table_[6] = 6;
-  beam_ring_table_[7] = 7;
-  beam_ring_table_[8] = 15;
-  beam_ring_table_[9] = 14;
-  beam_ring_table_[10] = 13;
-  beam_ring_table_[11] = 12;
-  beam_ring_table_[12] = 11;
-  beam_ring_table_[13] = 10;
-  beam_ring_table_[14] = 9;
-  beam_ring_table_[15] = 8;
 }
 
 }  // namespace lidar
