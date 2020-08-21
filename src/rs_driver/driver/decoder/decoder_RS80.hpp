@@ -134,7 +134,6 @@ private:
 
 private:
   std::array<int, 80> beam_mapping_table_;
-  std::array<int, 80> beam_ring_table_;
 };
 
 template <typename T_Point>
@@ -162,7 +161,7 @@ double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
 template <typename T_Point>
 int DecoderRS80<T_Point>::azimuthCalibration(const float& azimuth, const int& channel)
 {
-  return ((int)(azimuth + this->hori_angle_list_[beam_mapping_table_[channel]]) + RS_ONE_ROUND) % RS_ONE_ROUND;
+  return ((int)(azimuth) + this->hori_angle_list_[beam_mapping_table_[channel]] + RS_ONE_ROUND) % RS_ONE_ROUND;
 }
 
 template <typename T_Point>
@@ -251,7 +250,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
       int angle_vert =
-          (((int)(this->vert_angle_list_[beam_mapping_table_[channel_idx]]) % RS_ONE_ROUND) + RS_ONE_ROUND) %
+          (((this->vert_angle_list_[beam_mapping_table_[channel_idx]]) % RS_ONE_ROUND) + RS_ONE_ROUND) %
           RS_ONE_ROUND;
 
       T_Point point;
@@ -278,7 +277,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setZ(point, NAN);
         setIntensity(point, 0);
       }
-      setRing(point, beam_ring_table_[channel_idx]);
+      setRing(point, this->beam_ring_table_[channel_idx]);
       setTimestamp(point, block_timestamp);
       vec.emplace_back(std::move(point));
     }
