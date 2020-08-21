@@ -104,27 +104,27 @@ public:
     difop_pkt_queue_.clear();
   }
 
-  inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>&)> callback)
+  inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>&)>& callback)
   {
     point_cloud_cb_vec_.emplace_back(callback);
   }
 
-  inline void regRecvCallback(const std::function<void(const ScanMsg&)> callback)
+  inline void regRecvCallback(const std::function<void(const ScanMsg&)>& callback)
   {
     msop_pkt_cb_vec_.emplace_back(callback);
   }
 
-  inline void regRecvCallback(const std::function<void(const PacketMsg&)> callback)
+  inline void regRecvCallback(const std::function<void(const PacketMsg&)>& callback)
   {
     difop_pkt_cb_vec_.emplace_back(callback);
   }
 
-  inline void regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
+  inline void regRecvCallback(const std::function<void(const CameraTrigger&)>& callback)
   {
     camera_trigger_cb_vec_.emplace_back(callback);
   }
 
-  inline void regExceptionCallback(const std::function<void(const Error&)> callback)
+  inline void regExceptionCallback(const std::function<void(const Error&)>& callback)
   {
     excb_.emplace_back(callback);
   }
@@ -171,7 +171,8 @@ public:
     for (uint32_t i = 0; i < scan_msg.packets.size(); i++)
     {
       std::vector<PointT> pointcloud_one_packet;
-      RSDecoderResult ret = lidar_decoder_ptr_->processMsopPkt(scan_msg.packets[i].packet.data(), pointcloud_one_packet, height);
+      RSDecoderResult ret =
+          lidar_decoder_ptr_->processMsopPkt(scan_msg.packets[i].packet.data(), pointcloud_one_packet, height);
       switch (ret)
       {
         case RSDecoderResult::DECODE_OK:

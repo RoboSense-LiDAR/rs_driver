@@ -54,7 +54,7 @@ inline void stop();
  * @brief Register the lidar point cloud callback function to driver. When point cloud is ready, this function will be called
  * @param callback The callback function  
  */
-inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT> &)> callback);
+inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT> &)>& callback);
 ```
 
 ```c++
@@ -62,7 +62,7 @@ inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>
  * @brief Register the lidar scan message callback function to driver.When lidar scan message is ready, this function will be called
  * @param callback The callback function  
  */
-inline void regRecvCallback(const std::function<void(const ScanMsg &)> callback);
+inline void regRecvCallback(const std::function<void(const ScanMsg &)>& callback);
 ```
 
 ```c++
@@ -70,7 +70,7 @@ inline void regRecvCallback(const std::function<void(const ScanMsg &)> callback)
  * @brief Register the lidar difop packet message callback function to driver. When lidar difop packet message is ready, this function will be called
  * @param callback The callback function  
  */
-inline void regRecvCallback(const std::function<void(const PacketMsg &)> callback);
+inline void regRecvCallback(const std::function<void(const PacketMsg &)>& callback);
 ```
 
 ```c++
@@ -79,7 +79,7 @@ inline void regRecvCallback(const std::function<void(const PacketMsg &)> callbac
    * will be called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
+  inline void regRecvCallback(const std::function<void(const CameraTrigger&)>& callback)
   {
     driver_ptr_->regRecvCallback(callback);
   }
@@ -90,7 +90,7 @@ inline void regRecvCallback(const std::function<void(const PacketMsg &)> callbac
  * @brief Register the exception message callback function to driver. When error occurs, this function will be called
  * @param callback The callback function  
  */
-inline void regExceptionCallback(const std::function<void(const Error &)> callback);
+inline void regExceptionCallback(const std::function<void(const Error &)>& callback);
 ```
 
 ```c++

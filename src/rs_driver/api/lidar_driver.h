@@ -92,7 +92,7 @@ public:
    * called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>&)> callback)
+  inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>&)>& callback)
   {
     driver_ptr_->regRecvCallback(callback);
   }
@@ -102,7 +102,7 @@ public:
    * will be called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<void(const ScanMsg&)> callback)
+  inline void regRecvCallback(const std::function<void(const ScanMsg&)>& callback)
   {
     driver_ptr_->regRecvCallback(callback);
   }
@@ -112,17 +112,17 @@ public:
    * ready, this function will be called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<void(const PacketMsg&)> callback)
+  inline void regRecvCallback(const std::function<void(const PacketMsg&)>& callback)
   {
     driver_ptr_->regRecvCallback(callback);
   }
 
   /**
-   * @brief Register the camera trigger message callback function to driver. When trigger message is ready, this function
-   * will be called
+   * @brief Register the camera trigger message callback function to driver. When trigger message is ready, this
+   * function will be called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<void(const CameraTrigger&)> callback)
+  inline void regRecvCallback(const std::function<void(const CameraTrigger&)>& callback)
   {
     driver_ptr_->regRecvCallback(callback);
   }
@@ -131,17 +131,17 @@ public:
    * @brief Register the exception message callback function to driver. When error occurs, this function will be called
    * @param callback The callback function
    */
-  inline void regExceptionCallback(const std::function<void(const Error&)> callback)
+  inline void regExceptionCallback(const std::function<void(const Error&)>& callback)
   {
     driver_ptr_->regExceptionCallback(callback);
   }
 
   /**
    * @brief Get the current lidar temperature
-   * @param input_temperature The variable to store lidar temperature 
+   * @param input_temperature The variable to store lidar temperature
    * @return if get temperature successfully, return true; else return false
    */
-  inline bool getLidarTemperature(double & input_temperature)
+  inline bool getLidarTemperature(double& input_temperature)
   {
     return driver_ptr_->getLidarTemperature(input_temperature);
   }

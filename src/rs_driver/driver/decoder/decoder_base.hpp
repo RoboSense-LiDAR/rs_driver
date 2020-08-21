@@ -507,16 +507,14 @@ double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
 template <typename T_Point>
 void DecoderBase<T_Point>::sortBeamTable()
 {
-  std::map<int, int> tmp_map;
-  for (size_t i = 0; i < vert_angle_list_.size(); i++)
+  std::vector<size_t> sorted_idx(this->lasers_num_);
+  std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
+  std::sort(sorted_idx.begin(), sorted_idx.end(), [this](std::size_t i1, std::size_t i2) -> bool {
+    return this->vert_angle_list_[i1] < this->vert_angle_list_[i2];
+  });
+  for (size_t i = 0; i < this->lasers_num_; i++)
   {
-    tmp_map.emplace(std::make_pair(vert_angle_list_[i], i));
-  }
-  size_t j = 0;
-  for (auto iter : tmp_map)
-  {
-    this->beam_ring_table_[iter.second] = j;
-    j++;
+    this->beam_ring_table_[sorted_idx[i]] = i;
   }
 }
 
