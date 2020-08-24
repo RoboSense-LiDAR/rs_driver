@@ -11,7 +11,7 @@ add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
 cmake_policy(SET CMP0048 NEW)
 set(CMAKE_BUILD_TYPE Release)
 add_definitions(-O3)
-add_definitions(-std=c++11)
+add_definitions(-std=c++14)
 add_compile_options(-Wall)
 configure_file (
   "${PROJECT_SOURCE_DIR}/src/rs_driver/macro/version.h.in"

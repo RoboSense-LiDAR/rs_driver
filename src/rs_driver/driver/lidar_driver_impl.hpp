@@ -85,7 +85,7 @@ public:
 
   inline bool start()
   {
-    if (start_flag_)
+    if (start_flag_||input_ptr_==nullptr)
     {
       return false;
     }

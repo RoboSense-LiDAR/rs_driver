@@ -12,6 +12,7 @@
 ### Changed
 
 - Update the decoding part for ruby in echo-dual mode
+- Update the compiler version from C++11 to C++14
 
 ## v1.1.0 - 2020-07-01
 
