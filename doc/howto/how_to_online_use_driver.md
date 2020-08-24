@@ -16,21 +16,68 @@ Please follow the steps below to do advanced development.
 
 #### 2.1 Define a point type
 
-Define a point type. Now the driver only support **x, y, z, intensity**, so users must make sure their self-defined point type contains variable **x, y, z, intensity**. Otherwise compile error may occur. (or user can use **pcl::PointXYZI** directly).
+Now the driver will automatically detect and assign value to the following six variables.
 
-```c++
-struct PointXYZI ///< user defined point type
-{
-  double x;
-  double y;
-  double z;
-  double intensity;
-};
-```
+- x ------ The x coordinate of point.
+- y ------ The y coordinate of point.
+- z ------ The z coordinate of point.
+- intensity ------ The intensity of point.
+- timestamp ------ The timestamp of point (If use_lidar_clock is set to true, this timestamp will be lidar time, otherwise will be system time).
+- ring ------ The ring ID of the point, which represents the row number. e.g. For RS80, the range of ring ID is 0~79 (from bottom to top).
+
+
+
+Here are some examples: 
+
+- The point type contains **x, y, z** 
+
+  ```c++
+  struct PointXYZ ///< user defined point type
+  {
+    float x;
+    float y;
+    float z;
+    ...
+  };
+  ```
+
+- The point type contains **x, y, z, intensity**
+
+  ```c++
+  struct PointXYZI ///< user defined point type
+  {
+    float x;
+    float y;
+    float z;
+    float intensity;
+    ...
+  };
+  ```
+
+  Or you can use **pcl::PointXYZI** directly
+
+- The point type contains **x, y, z, intensity, timestamp, ring**
+
+  ```c++
+  struct PointXYZIRT ///< user defined point type
+  {
+    float x;
+    float y;
+    float z;
+    float intensity;
+    float timestamp;
+    uint16_t ring;
+    ...
+  };
+  ```
+
+The only thing user need to pay attention to is that the variable name must obey the rules -- **x, y, z, intensity, timestamp, ring**, otherwise the variable can not be assigned as expected.
+
+
 
 #### 2.2 Define a point cloud callback function
 
-Define the point cloud callback function. The template argument PointXYZI is the point type we defined in 2.1. When point cloud message is ready, this function will be called by driver. **Note! Please don't add any time-consuming operations in this function!** User can make a copy of the message and process it in another thread.  Or user can add some quick operations such like ros publish in the callback function.
+The template argument PointXYZI is the point type we defined in 2.1. When point cloud message is ready, this function will be called by driver. **Note! Please don't add any time-consuming operations in this function!** User can make a copy of the message and process it in another thread.  Or user can add some quick operations such like ros publish in the callback function.
 
 ```c++
 void pointCloudCallback(const PointCloudMsg<PointXYZI> &msg)
@@ -58,9 +105,9 @@ Instanciate the driver object.
 LidarDriver<PointXYZI> driver;          ///< Declare the driver object
 ```
 
-#### 2.5 Define the parameter, configure the parameter
+#### 2.5 Define the parameter and configure the parameter
 
-Define a parameter object and config it. The msop port and difop port number of lidar can be got from **wireshark(a network socket capture software)**. The default value is 6699 and 7788. User also need to make sure the **lidar type** is set correctly.
+ The msop port and difop port number of lidar can be got from **wireshark(a network socket capture software)**. The default value is 6699 and 7788. User also need to make sure the **lidar type** is set correctly.
 
 ```c++
 RSDriverParam param;                      		  ///< Create a parameter object
@@ -102,7 +149,13 @@ driver.start();                                  ///< Call the start function. T
 
 ## 3 Hint for compile
 
-Since the driver core only has header files, user need to link the related libraries when compile. Here is an example for CMakelists.txt. You need to link to boost, pcap & pthread. 
+If you  choose to embed rs_driver into your project instead of installing it as mentioned in README, you need to setup the include_directories in CMakeLists
+
+```cmake
+include_directories(your_project_directory/rs_driver/src)
+```
+
+Since the driver core only has header files, user need to link the related libraries when compile. You need to link to boost, pcap & pthread. 
 
 ```cmake
 find_package(Boost COMPONENTS system REQUIRED)

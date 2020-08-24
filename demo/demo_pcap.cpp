@@ -25,10 +25,10 @@ using namespace robosense::lidar;
 
 struct PointXYZI  ///< user defined point type
 {
-  double x;
-  double y;
-  double z;
-  double intensity;
+  float x;
+  float y;
+  float z;
+  float intensity;
 };
 
 /**
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 
   RSDriverParam param;                                             ///< Create a parameter object
   param.input_param.read_pcap = true;                              ///< Set read_pcap to true
-  param.input_param.pcap_directory = "/home/robosense/rs16.pcap";  ///< Set the pcap file directory
+  param.input_param.pcap_path = "/home/robosense/rs16.pcap";  ///< Set the pcap file directory
   param.input_param.device_ip = "192.168.1.200";  ///< Set the lidar ip address, the default is 192.168.1.200
   param.input_param.msop_port = 6699;             ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;            ///< Set the lidar difop port number, the default is 7788

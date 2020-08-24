@@ -32,7 +32,21 @@ sudo make install
 
 
 
-### 4 其他资料
+### 4 快速上手
+
+[在线连接雷达](doc/howto/how_to_online_use_driver.md)
+
+[离线解析pcap包](doc/howto/how_to_offline_decode_pcap.md)
+
+
+
+### 5 使用进阶
+
+
+
+
+
+### 6 其他资料
 
 [参数简介](doc/intro/parameter_intro.md)
 
@@ -43,12 +57,6 @@ sudo make install
 [接口简介](doc/intro/api_intro.md)
 
 
-
-### 5 快速上手
-
-[在线连接雷达](doc/howto/how_to_online_use_driver.md)
-
-[离线解析pcap包](doc/howto/how_to_offline_decode_pcap.md)
 
 
 
@@ -89,7 +97,21 @@ sudo make install
 
 
 
-### 4 Others
+### 4 Quick Start
+
+[Online connect LiDAR](doc/howto/how_to_online_use_driver.md)
+
+[Offline decode pcap bag](doc/howto/how_to_offline_decode_pcap.md)
+
+
+
+### 5 Advanced
+
+
+
+
+
+### 6 Others
 
 [Intro to parameters](doc/intro/parameter_intro.md)
 
@@ -100,12 +122,6 @@ sudo make install
 [Intro to api](doc/intro/api_intro.md)
 
 
-
-### 5 Quick Start
-
-[Online connect LiDAR](doc/howto/how_to_online_use_driver.md)
-
-[Offline decode pcap bag](doc/howto/how_to_offline_decode_pcap.md)
 
 
 

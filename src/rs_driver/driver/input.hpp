@@ -102,7 +102,7 @@ inline bool Input::init()
   if (input_param_.read_pcap)
   {
     char errbuf[PCAP_ERRBUF_SIZE];
-    if ((pcap_ = pcap_open_offline(input_param_.pcap_directory.c_str(), errbuf)) == NULL)
+    if ((pcap_ = pcap_open_offline(input_param_.pcap_path.c_str(), errbuf)) == NULL)
     {
       excb_(Error(ErrCode_PcapWrongDirectory));
       return false;
@@ -361,7 +361,7 @@ inline void Input::getPcapPacket()
       {
         excb_(Error(ErrCode_PcapRepeat));
         char errbuf[PCAP_ERRBUF_SIZE];
-        pcap_ = pcap_open_offline(input_param_.pcap_directory.c_str(), errbuf);
+        pcap_ = pcap_open_offline(input_param_.pcap_path.c_str(), errbuf);
       }
       else
       {

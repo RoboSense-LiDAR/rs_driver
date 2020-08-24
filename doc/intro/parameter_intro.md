@@ -26,10 +26,10 @@ typedef struct RSInputParam ///< The lidar input parameter
   std::string device_ip = "192.168.1.200"; ///< The ip of lidar
   uint16_t msop_port = 6699;               ///< The msop packet port number
   uint16_t difop_port = 7788;              ///< The difop packet port number
-  bool read_pcap = false;                  ///< true: The driver will process the pcap through pcap_directory. false: The driver will get data from online lidar
+  bool read_pcap = false;                  ///< true: The driver will process the pcap through pcap_path. false: The driver will get data from online lidar
   double pcap_rate = 1;                    ///< The rate to read the pcap file
   bool pcap_repeat = true;                 ///< true: The pcap bag will repeat play
-  std::string pcap_directory = "null";     ///< The absolute path of pcap file
+  std::string pcap_path = "null";     ///< The absolute path of pcap file
 } RSInputParam;
 ```
 

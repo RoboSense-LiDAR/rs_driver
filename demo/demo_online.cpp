@@ -25,10 +25,10 @@ using namespace robosense::lidar;
 
 struct PointXYZI  ///< user defined point type
 {
-  double x;
-  double y;
-  double z;
-  double intensity;
+  float x;
+  float y;
+  float z;
+  float intensity;
 };
 
 /**
