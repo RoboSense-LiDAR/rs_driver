@@ -27,14 +27,14 @@ namespace lidar
 #define RSBP_MSOP_ID (0xA050A55A0A05AA55)
 #define RSBP_DIFOP_ID (0x555511115A00FFA5)
 #define RSBP_BLOCK_ID (0xEEFF)
-#define RSBP_BLOCKS_PER_PKT (12)
-#define RSBP_CHANNELS_PER_BLOCK (32)
-#define RSBP_CHANNEL_TOFFSET (3)
-#define RSBP_FIRING_TDURATION (50)
-const int RSBP_PKT_RATE = 1500;
-const double RSBP_RX = 0.01473;
-const double RSBP_RY = 0.0085;
-const double RSBP_RZ = 0.09427;
+const uint16_t RSBP_BLOCKS_PER_PKT = 12;
+const uint16_t RSBP_CHANNELS_PER_BLOCK = 32;
+const uint16_t RSBP_PKT_RATE = 1500;
+const float RSBP_DSR_TOFFSET = 3;
+const float RSBP_BLOCK_TDURATION = 50;
+const float RSBP_RX = 0.01473;
+const float RSBP_RY = 0.0085;
+const float RSBP_RZ = 0.09427;
 
 #pragma pack(push, 1)
 
@@ -171,11 +171,11 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
     azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
     for (int channel_idx = 0; channel_idx < RSBP_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      float azi_channel_ori = cur_azi + (azi_diff * RSBP_CHANNEL_TOFFSET * (channel_idx % 16) / RSBP_FIRING_TDURATION);
+      float azi_channel_ori = cur_azi + (azi_diff * RSBP_DSR_TOFFSET * (channel_idx % 16) / RSBP_BLOCK_TDURATION);
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
-      int angle_vert = (((this->vert_angle_list_[channel_idx]) % RS_ONE_ROUND) + RS_ONE_ROUND) % RS_ONE_ROUND;
+      int angle_vert = ((this->vert_angle_list_[channel_idx]) + RS_ONE_ROUND) % RS_ONE_ROUND;
 
       // store to point cloud buffer
       T_Point point;
@@ -278,7 +278,7 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       neg = lsb == 0 ? 1 : -1;
       this->hori_angle_list_[i] = (mid * 256 + msb) * neg;
     }
-    this-> sortBeamTable();
+    this->sortBeamTable();
     this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;

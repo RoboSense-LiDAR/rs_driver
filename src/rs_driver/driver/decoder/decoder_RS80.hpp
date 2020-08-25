@@ -27,14 +27,14 @@ namespace lidar
 #define RS80_MSOP_ID (0x5A05AA55)
 #define RS80_DIFOP_ID (0x555511115A00FFA5)
 #define RS80_BLOCK_ID (0xFE)
-#define RS80_BLOCKS_PER_PKT (4)
-#define RS80_CHANNELS_PER_BLOCK (80)
-#define RS80_DSR_TOFFSET (3.23)
-#define RS80_BLOCK_TDURATION (55.55)
-const int RS80_PKT_RATE = 4500;
-const double RS80_RX = 0.03615;
-const double RS80_RY = -0.017;
-const double RS80_RZ = 0;
+const uint16_t RS80_BLOCKS_PER_PKT = 4;
+const uint16_t RS80_CHANNELS_PER_BLOCK = 80;
+const uint16_t RS80_PKT_RATE = 4500;
+const float RS80_DSR_TOFFSET = 3.23;
+const float RS80_BLOCK_TDURATION = 55.55;
+const float RS80_RX = 0.03615;
+const float RS80_RY = -0.017;
+const float RS80_RZ = 0;
 
 #pragma pack(push, 1)
 
@@ -217,7 +217,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
-      int angle_vert = (((this->vert_angle_list_[channel_idx]) % RS_ONE_ROUND) + RS_ONE_ROUND) % RS_ONE_ROUND;
+      int angle_vert = ((this->vert_angle_list_[channel_idx]) + RS_ONE_ROUND) % RS_ONE_ROUND;
 
       T_Point point;
       if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
@@ -305,7 +305,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       neg = lsb == 0 ? 1 : -1;
       this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
     }
-    this-> sortBeamTable();
+    this->sortBeamTable();
     this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;

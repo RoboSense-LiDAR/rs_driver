@@ -27,17 +27,16 @@ namespace lidar
 #define RS16_MSOP_ID (0xA050A55A0A05AA55)
 #define RS16_DIFOP_ID (0x555511115A00FFA5)
 #define RS16_BLOCK_ID (0xEEFF)
-#define RS16_BLOCKS_PER_PKT (12)
-#define RS16_CHANNELS_PER_BLOCK (32)
-#define RS16_BLOCK_TDURATION_DUAL (50)
-#define RS16_BLOCK_TDURATION_SINGLE (100)
-#define RS16_CHANNEL_TOFFSET (3)
-#define RS16_FIRING_TDURATION (50)
-
-const int RS16_PKT_RATE = 750;
-const double RS16_RX = 0.03825;
-const double RS16_RY = -0.01088;
-const double RS16_RZ = 0;
+const uint16_t RS16_BLOCKS_PER_PKT = 12;
+const uint16_t RS16_CHANNELS_PER_BLOCK = 32;
+const uint16_t RS16_PKT_RATE = 750;
+const float RS16_DSR_TOFFSET = 3;
+const float RS16_BLOCK_TDURATION_DUAL = 50;
+const float RS16_BLOCK_TDURATION_SINGLE = 100;
+const float RS16_FIRING_TDURATION = 50;
+const float RS16_RX = 0.03825;
+const float RS16_RY = -0.01088;
+const float RS16_RZ = 0;
 
 #pragma pack(push, 1)
 
@@ -156,19 +155,18 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       float azi_channel_ori = 0;
       if (this->echo_mode_ == ECHO_DUAL)
       {
-        azi_channel_ori = cur_azi + azi_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
+        azi_channel_ori = cur_azi + azi_diff * RS16_DSR_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
       }
       else
       {
         azi_channel_ori =
-            cur_azi + azi_diff *
-                          (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) /
+            cur_azi + azi_diff * (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_DSR_TOFFSET * (channel_idx % 16)) /
                           RS16_BLOCK_TDURATION_SINGLE;
       }
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx % 16);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz_ori = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
-      int angle_vert = (((this->vert_angle_list_[channel_idx % 16]) % RS_ONE_ROUND) + RS_ONE_ROUND) % RS_ONE_ROUND;
+      int angle_vert = ((this->vert_angle_list_[channel_idx % 16]) + RS_ONE_ROUND) % RS_ONE_ROUND;
       T_Point point;
       if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
           ((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
