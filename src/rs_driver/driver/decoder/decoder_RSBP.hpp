@@ -32,9 +32,6 @@ namespace lidar
 #define RSBP_CHANNEL_TOFFSET (3)
 #define RSBP_FIRING_TDURATION (50)
 const int RSBP_PKT_RATE = 1500;
-const double RSBP_RX = 0.01473;
-const double RSBP_RY = 0.0085;
-const double RSBP_RZ = 0.09427;
 
 #pragma pack(push, 1)
 
@@ -91,7 +88,7 @@ public:
 };
 
 template <typename T_Point>
-DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
+DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_Point>(param, 0.01473, 0.0085, 0.09427)
 {
   this->lasers_num_ = 32;
   this->vert_angle_list_.resize(this->lasers_num_);
@@ -206,10 +203,10 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
         double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
-                   RSBP_RX * this->cos_lookup_table_[angle_horiz];
+                   this->RX_ * this->cos_lookup_table_[angle_horiz];
         double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
-                   RSBP_RX * this->sin_lookup_table_[angle_horiz];
-        double z = distance * this->sin_lookup_table_[angle_vert] + RSBP_RZ;
+                   this->RX_ * this->sin_lookup_table_[angle_horiz];
+        double z = distance * this->sin_lookup_table_[angle_vert] + this->RZ_;
         double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);

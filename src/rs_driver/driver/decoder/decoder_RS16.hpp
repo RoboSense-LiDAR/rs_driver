@@ -35,9 +35,6 @@ namespace lidar
 #define RS16_FIRING_TDURATION (50)
 
 const int RS16_PKT_RATE = 750;
-const double RS16_RX = 0.03825;
-const double RS16_RY = -0.01088;
-const double RS16_RZ = 0;
 
 #pragma pack(push, 1)
 
@@ -94,7 +91,7 @@ public:
 };
 
 template <typename T_Point>
-DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
+DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param, 0.03825, -0.01088, 0.0)
 {
   this->lasers_num_ = 16;
   this->vert_angle_list_.resize(this->lasers_num_);
@@ -186,11 +183,11 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
         double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
-                   RS16_RX * this->cos_lookup_table_[angle_horiz_ori];
+                   this->RX_ * this->cos_lookup_table_[angle_horiz_ori];
 
         double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
-                   RS16_RX * this->sin_lookup_table_[angle_horiz_ori];
-        double z = distance * this->sin_lookup_table_[angle_vert] + RS16_RZ;
+                   this->RX_ * this->sin_lookup_table_[angle_horiz_ori];
+        double z = distance * this->sin_lookup_table_[angle_vert] + this->RZ_;
         double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);
