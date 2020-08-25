@@ -29,8 +29,8 @@ namespace lidar
 #define RS80_BLOCK_ID (0xFE)
 #define RS80_BLOCKS_PER_PKT (4)
 #define RS80_CHANNELS_PER_BLOCK (80)
-#define RS80_DSR_TOFFSET (3.23)
-#define RS80_BLOCK_TDURATION (55.55)
+#define RS80_DSR_TOFFSET (3.23f)
+#define RS80_BLOCK_TDURATION (0.0180f) // (1 / 55.55)
 const int RS80_PKT_RATE = 4500;
 
 #pragma pack(push, 1)
