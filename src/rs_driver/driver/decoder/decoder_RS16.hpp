@@ -195,13 +195,13 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setIntensity(point, 0);
       }
       setRing(point, this->beam_ring_table_[channel_idx % 16]);
-      if (channel_idx < 16)
+      if (this->echo_mode_ != ECHO_DUAL && channel_idx > 15)
       {
-        setTimestamp(point, block_timestamp);
+        setTimestamp(point, block_timestamp + this->time_duration_between_blocks_ / 2);
       }
       else
       {
-        setTimestamp(point, block_timestamp + this->time_duration_between_blocks_ / 2);
+        setTimestamp(point, block_timestamp);
       }
       vec.emplace_back(std::move(point));
     }
