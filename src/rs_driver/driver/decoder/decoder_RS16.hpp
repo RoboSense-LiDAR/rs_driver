@@ -126,18 +126,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  double block_timestamp = 0;
-  if (HAS_MEMBER(T_Point, timestamp))
-  {
-    if (this->param_.use_lidar_clock)
-    {
-      block_timestamp = getLidarTime(pkt);
-    }
-    else
-    {
-      block_timestamp = getTime();
-    }
-  }
+  double block_timestamp = this->get_time_func_(pkt);
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   if (this->trigger_flag_)
@@ -215,8 +204,15 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setZ(point, NAN);
         setIntensity(point, 0);
       }
-      setRing(point, this->beam_ring_table_[channel_idx%16]);
-      setTimestamp(point, block_timestamp);
+      setRing(point, this->beam_ring_table_[channel_idx % 16]);
+      if (channel_idx < 16)
+      {
+        setTimestamp(point, block_timestamp);
+      }
+      else
+      {
+        setTimestamp(point, block_timestamp + this->time_duration_between_blocks_ / 2);
+      }
       vec.emplace_back(std::move(point));
     }
   }
@@ -284,7 +280,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       this->vert_angle_list_[i] = (lsb * 256 * 256 + mid * 256 + msb) * neg * 0.01f;  // / 180 * M_PI;
       this->hori_angle_list_[i] = 0;
     }
-    this-> sortBeamTable();
+    this->sortBeamTable();
     this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;

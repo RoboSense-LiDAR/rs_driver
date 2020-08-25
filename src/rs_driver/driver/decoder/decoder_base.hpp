@@ -232,6 +232,7 @@ protected:
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   static std::vector<double> cos_lookup_table_;
   static std::vector<double> sin_lookup_table_;
+  std::function<double(const uint8_t*)> get_time_func_;
 };
 
 template <typename T_Point>
@@ -273,6 +274,22 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   if (param.trigger_param.trigger_map.size() != 0)
   {
     trigger_flag_ = true;
+  }
+
+  if (HAS_MEMBER(T_Point, timestamp))
+  {
+    if (this->param_.use_lidar_clock)
+    {
+      get_time_func_ = [this](const uint8_t* pkt) { return getLidarTime(pkt); };
+    }
+    else
+    {
+      get_time_func_ = [this](const uint8_t* pkt) { return getTime(); };
+    }
+  }
+  else
+  {
+    get_time_func_ = [this](const uint8_t* pkt) { return 0; };
   }
 }
 
