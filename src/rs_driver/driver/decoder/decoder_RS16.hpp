@@ -215,7 +215,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         setZ(point, NAN);
         setIntensity(point, 0);
       }
-      setRing(point, this->beam_ring_table_[channel_idx]);
+      setRing(point, this->beam_ring_table_[channel_idx%16]);
       setTimestamp(point, block_timestamp);
       vec.emplace_back(std::move(point));
     }
