@@ -147,7 +147,13 @@ driver.start();                                  ///< Call the start function. T
 
 
 
-## 3 Hint for compile
+## 3 Point cloud storage order
+
+In rs_driver, the point cloud is stored in **column major order**, which means if there is  a point *msg.point_cloud_ptr->at(i)* , the next point on the same ring should be *msg.point_cloud_ptr->at(i+msg.height)*. 
+
+
+
+## 4 Hint for compile
 
 If you  choose to embed rs_driver into your project instead of installing it as mentioned in README, you need to setup the include_directories in CMakeLists
 

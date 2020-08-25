@@ -40,13 +40,7 @@ sudo make install
 
 
 
-### 5 使用进阶
-
-
-
-
-
-### 6 其他资料
+### 5 其他资料
 
 [参数简介](doc/intro/parameter_intro.md)
 
@@ -105,13 +99,7 @@ sudo make install
 
 
 
-### 5 Advanced
-
-
-
-
-
-### 6 Others
+### 5 Others
 
 [Intro to parameters](doc/intro/parameter_intro.md)
 
