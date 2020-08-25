@@ -30,9 +30,9 @@ namespace lidar
 #define RS16_BLOCKS_PER_PKT (12)
 #define RS16_CHANNELS_PER_BLOCK (32)
 #define RS16_BLOCK_TDURATION_DUAL (50)
-#define RS16_BLOCK_TDURATION_SINGLE (100)
-#define RS16_CHANNEL_TOFFSET (3)
-#define RS16_FIRING_TDURATION (50)
+#define RS16_CHANNEL_TOFFSET (2.8f)
+#define RS16_FIRING_TDURATION (0.0180f) // (1 / 55.55)
+#define RS16_BLOCK_TDURATION_SINGLE (0.0090f) // (1 / (55.55 * 2))
 
 const int RS16_PKT_RATE = 750;
 
@@ -167,10 +167,10 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       }
       else
       {
-        azi_channel_ori =
-            cur_azi + azi_diff *
-                          (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_CHANNEL_TOFFSET * (channel_idx % 16)) /
-                          RS16_BLOCK_TDURATION_SINGLE;
+        azi_channel_ori = cur_azi + 
+                          azi_diff * RS16_BLOCK_TDURATION_SINGLE *
+                          (RS16_FIRING_TDURATION * float(channel_idx / 16) +
+                           RS16_CHANNEL_TOFFSET * float(channel_idx % 16));
       }
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx % 16);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
