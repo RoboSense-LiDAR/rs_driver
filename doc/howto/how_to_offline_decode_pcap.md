@@ -22,7 +22,7 @@ Now the driver will automatically detect and assign value to the following six v
 - y ------ The y coordinate of point.
 - z ------ The z coordinate of point.
 - intensity ------ The intensity of point.
-- timestamp ------ The timestamp of point (If use_lidar_clock is set to true, this timestamp will be lidar time, otherwise will be system time).
+- timestamp ------ The timestamp of point, **variable type should be double**. If use_lidar_clock is set to true, this timestamp will be lidar time, otherwise will be system time.
 - ring ------ The ring ID of the point, which represents the row number. e.g. For RS80, the range of ring ID is 0~79 (from bottom to top).
 
 
@@ -65,7 +65,7 @@ Here are some examples:
     float y;
     float z;
     float intensity;
-    float timestamp;
+    double timestamp;
     uint16_t ring;
     ...
   };
