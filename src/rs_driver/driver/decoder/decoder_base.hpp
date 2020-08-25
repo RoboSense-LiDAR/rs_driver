@@ -221,7 +221,6 @@ protected:
   int last_azimuth_;
   bool angle_flag_;
   bool difop_flag_;
-  bool trigger_flag_;
   float fov_time_jump_diff_;
   float time_duration_between_blocks_;
   float current_temperature_;
@@ -232,7 +231,8 @@ protected:
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   static std::vector<double> cos_lookup_table_;
   static std::vector<double> sin_lookup_table_;
-  std::function<double(const uint8_t*)> get_time_func_;
+  std::function<double(const uint8_t*)> get_point_time_func_;
+  std::function<void(const int&, const uint8_t*)> check_camera_trigger_func_;
 };
 
 template <typename T_Point>
@@ -251,7 +251,6 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   , last_azimuth_(-36001)
   , angle_flag_(true)
   , difop_flag_(false)
-  , trigger_flag_(false)
   , fov_time_jump_diff_(0)
   , time_duration_between_blocks_(0)
   , current_temperature_(0)
@@ -271,25 +270,42 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   {
     this->angle_flag_ = false;
   }
-  if (param.trigger_param.trigger_map.size() != 0)
-  {
-    trigger_flag_ = true;
-  }
 
+  /* Point time function*/
   if (HAS_MEMBER(T_Point, timestamp))
   {
     if (this->param_.use_lidar_clock)
     {
-      get_time_func_ = [this](const uint8_t* pkt) { return getLidarTime(pkt); };
+      get_point_time_func_ = [this](const uint8_t* pkt) { return getLidarTime(pkt); };
     }
     else
     {
-      get_time_func_ = [this](const uint8_t* pkt) { return getTime(); };
+      get_point_time_func_ = [this](const uint8_t* pkt) { return getTime(); };
     }
   }
   else
   {
-    get_time_func_ = [this](const uint8_t* pkt) { return 0; };
+    get_point_time_func_ = [this](const uint8_t* pkt) { return 0; };
+  }
+  /*Camera trigger function*/
+  if (param.trigger_param.trigger_map.size() != 0)
+  {
+    if (this->param_.use_lidar_clock)
+    {
+      check_camera_trigger_func_ = [this](const int& azimuth, const uint8_t* pkt) {
+        checkTriggerAngle(azimuth, getLidarTime(pkt));
+      };
+    }
+    else
+    {
+      check_camera_trigger_func_ = [this](const int& azimuth, const uint8_t* pkt) {
+        checkTriggerAngle(azimuth, getTime());
+      };
+    }
+  }
+  else
+  {
+    check_camera_trigger_func_ = [this](const int& azimuth, const uint8_t* pkt) { return; };
   }
 }
 

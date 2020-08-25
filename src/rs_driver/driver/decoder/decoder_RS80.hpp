@@ -163,31 +163,10 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  double block_timestamp = 0;
-  if (HAS_MEMBER(T_Point, timestamp))
-  {
-    if (this->param_.use_lidar_clock)
-    {
-      block_timestamp = getLidarTime(pkt);
-    }
-    else
-    {
-      block_timestamp = getTime();
-    }
-  }
-  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
   azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
-  if (this->trigger_flag_)
-  {
-    if (this->param_.use_lidar_clock)
-    {
-      this->checkTriggerAngle(azimuth, getLidarTime(pkt));
-    }
-    else
-    {
-      this->checkTriggerAngle(azimuth, getTime());
-    }
-  }
+  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
+  double block_timestamp = this->get_point_time_func_(pkt);
+  this->check_camera_trigger_func_(azimuth, pkt);
   float azi_diff = 0;
   for (size_t blk_idx = 0; blk_idx < RS80_BLOCKS_PER_PKT; blk_idx++)
   {
