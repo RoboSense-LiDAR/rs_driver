@@ -29,8 +29,8 @@ namespace lidar
 #define RS128_BLOCK_ID (0xFE)
 #define RS128_BLOCKS_PER_PKT (3)
 #define RS128_CHANNELS_PER_BLOCK (128)
-#define RS128_DSR_TOFFSET (3.23f)
-#define RS128_BLOCK_TDURATION (0.0180f) // (1 / 55.55)
+#define RS128_CHANNEL_TOFFSET (3.23f)    // 3.23us
+#define RS128_FIRING_FREQUENCY (0.0180f) // (1 / 55.55us)
 const int RS128_PKT_RATE = 6000;
 
 #pragma pack(push, 1)
@@ -213,7 +213,7 @@ RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::ve
     {
       int dsr_temp = (channel_idx / 4) % 16;
       float azi_channel_ori = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) +
-                              (azi_diff * (dsr_temp * RS128_DSR_TOFFSET) * RS128_BLOCK_TDURATION);
+                              (azi_diff * float(dsr_temp) * RS128_CHANNEL_TOFFSET * RS128_FIRING_FREQUENCY);
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;

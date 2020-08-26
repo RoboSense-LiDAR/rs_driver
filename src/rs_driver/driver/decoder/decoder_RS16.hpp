@@ -29,9 +29,9 @@ namespace lidar
 #define RS16_BLOCK_ID (0xEEFF)
 #define RS16_BLOCKS_PER_PKT (12)
 #define RS16_CHANNELS_PER_BLOCK (32)
-#define RS16_CHANNEL_TOFFSET (2.8f)
-#define RS16_BLOCK_TDURATION_SINGLE (0.0090f) // (1 / (55.55 * 2))
-#define RS16_BLOCK_TDURATION_DUAL (0.0180f) // (1 / 55.55)
+#define RS16_CHANNEL_TOFFSET (2.8f)           // 2.8us
+#define RS16_BLOCK_FIRING_FREQUENCY (0.0090f) // (1 / (55.55us * 2))
+#define RS16_FIRING_FREQUENCY (0.0180f)       // (1 / 55.55us)
 const int RS16_PKT_RATE = 750;
 
 #pragma pack(push, 1)
@@ -151,14 +151,13 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       float azi_channel_ori = 0;
       if (this->echo_mode_ == ECHO_DUAL)
       {
-        azi_channel_ori = cur_azi + azi_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) *RS16_BLOCK_TDURATION_DUAL;
+        azi_channel_ori = cur_azi + azi_diff * RS16_CHANNEL_TOFFSET * RS16_FIRING_FREQUENCY * float(channel_idx % 16);
       }
       else
       {
         azi_channel_ori = cur_azi + 
-                          azi_diff * RS16_BLOCK_TDURATION_SINGLE *
-                          (RS16_BLOCK_TDURATION_DUAL * float(channel_idx / 16) +
-                           RS16_CHANNEL_TOFFSET * float(channel_idx % 16));
+                          azi_diff * ((RS16_CHANNEL_TOFFSET * RS16_BLOCK_FIRING_FREQUENCY * float(channel_idx % 16)) +
+                                      float(channel_idx / 16) * 0.5f);
       }
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx % 16);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
