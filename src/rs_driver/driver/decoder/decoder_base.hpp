@@ -256,7 +256,7 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const LidarConsta
   : lidar_const_param_(lidar_const_param)
   , param_(param)
   , echo_mode_(ECHO_STRONGEST)
-  , pkts_per_frame_(lidar_const_param.PKT_RATE/10)
+  , pkts_per_frame_(lidar_const_param.PKT_RATE / 10)
   , pkt_count_(0)
   , trigger_index_(0)
   , prev_angle_diff_(RS_ONE_ROUND)
@@ -288,7 +288,7 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const LidarConsta
   }
 
   /* Point time function*/
-  if (HAS_MEMBER(T_Point, timestamp))
+  if (HAS_MEMBER(T_Point, timestamp))    ///< return the timestamp of the first block in one packet
   {
     if (this->param_.use_lidar_clock)
     {
@@ -296,7 +296,11 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const LidarConsta
     }
     else
     {
-      get_point_time_func_ = [this](const uint8_t* pkt) { return getTime(); };
+      get_point_time_func_ = [this](const uint8_t* pkt) {
+        double ret_time =
+            getTime() - (this->lidar_const_param_.BLOCKS_PER_PKT - 1) * this->time_duration_between_blocks_;
+        return ret_time;
+      };
     }
   }
   else
