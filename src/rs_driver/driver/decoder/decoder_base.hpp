@@ -69,6 +69,22 @@ enum RSDecoderResult
 #pragma pack(push, 1)
 typedef struct
 {
+  uint64_t MSOP_ID;
+  uint64_t DIFOP_ID;
+  uint64_t BLOCK_ID;
+  uint32_t PKT_RATE;
+  uint16_t BLOCKS_PER_PKT;
+  uint16_t CHANNELS_PER_BLOCK;
+  uint16_t LASER_NUM;
+  float DSR_TOFFSET;
+  float FIRING_FREQUENCY;
+  float RX;
+  float RY;
+  float RZ;
+} LidarConstantParameter;
+
+typedef struct
+{
   uint8_t year;
   uint8_t month;
   uint8_t day;
@@ -182,7 +198,7 @@ template <typename T_Point>
 class DecoderBase
 {
 public:
-  explicit DecoderBase(const RSDecoderParam& param, const double& rx, const double& ry, const double& rz);
+  explicit DecoderBase(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
   DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase() = default;
@@ -207,13 +223,13 @@ protected:
   void sortBeamTable();
 
 protected:
+  const LidarConstantParameter lidar_const_param_;
   RSDecoderParam param_;
   RSEchoMode echo_mode_;
   unsigned int pkts_per_frame_;
   unsigned int pkt_count_;
   unsigned int trigger_index_;
   unsigned int prev_angle_diff_;
-  unsigned int lasers_num_;
   unsigned int rpm_;
   int start_angle_;
   int end_angle_;
@@ -233,20 +249,17 @@ protected:
   static std::vector<double> sin_lookup_table_;
   std::function<double(const uint8_t*)> get_point_time_func_;
   std::function<void(const int&, const uint8_t*)> check_camera_trigger_func_;
-  const double RX_;
-  const double RY_;
-  const double RZ_;
 };
 
 template <typename T_Point>
-DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const double& rx, const double& ry, const double& rz)
-  : param_(param)
+DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
+  : lidar_const_param_(lidar_const_param)
+  , param_(param)
   , echo_mode_(ECHO_STRONGEST)
-  , pkts_per_frame_(600)
+  , pkts_per_frame_(lidar_const_param.PKT_RATE/10)
   , pkt_count_(0)
   , trigger_index_(0)
   , prev_angle_diff_(RS_ONE_ROUND)
-  , lasers_num_(128)
   , rpm_(600)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)
@@ -258,9 +271,6 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const double& rx,
   , time_duration_between_blocks_(0)
   , current_temperature_(0)
   , azi_diff_between_block_theoretical_(20)
-  , RX_(rx)
-  , RY_(ry)
-  , RZ_(rz)
 {
   if (cut_angle_ > RS_ONE_ROUND)
   {
@@ -421,7 +431,7 @@ void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
         break;
       }
       row_index++;
-      if (row_index >= this->lasers_num_)
+      if (row_index >= this->lidar_const_param_.LASER_NUM)
       {
         this->sortBeamTable();
         break;
@@ -546,12 +556,12 @@ double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
 template <typename T_Point>
 void DecoderBase<T_Point>::sortBeamTable()
 {
-  std::vector<size_t> sorted_idx(this->lasers_num_);
+  std::vector<size_t> sorted_idx(this->lidar_const_param_.LASER_NUM);
   std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
   std::sort(sorted_idx.begin(), sorted_idx.end(), [this](std::size_t i1, std::size_t i2) -> bool {
     return this->vert_angle_list_[i1] < this->vert_angle_list_[i2];
   });
-  for (size_t i = 0; i < this->lasers_num_; i++)
+  for (size_t i = 0; i < this->lidar_const_param_.LASER_NUM; i++)
   {
     this->beam_ring_table_[sorted_idx[i]] = i;
   }
