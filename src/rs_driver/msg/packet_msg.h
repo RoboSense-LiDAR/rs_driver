@@ -33,8 +33,6 @@ struct __declspec(align(16)) PacketMsg
 struct __attribute__((aligned(16))) PacketMsg  ///< LiDAR single packet message
 #endif
 {
-  double timestamp = 0.0;
-  std::string frame_id = "";
   std::array<uint8_t, 1248> packet{};
 };
 }  // namespace lidar
