@@ -30,7 +30,7 @@ namespace lidar
 #define RS80_BLOCKS_PER_PKT (4)
 #define RS80_CHANNELS_PER_BLOCK (80)
 #define RS80_DSR_TOFFSET (3.23f)
-#define RS80_BLOCK_TDURATION (0.0180f) // (1 / 55.55)
+#define RS80_BLOCK_TDURATION (0.0180f)  // (1 / 55.55)
 const int RS80_PKT_RATE = 4500;
 
 #pragma pack(push, 1)
@@ -185,9 +185,9 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
         {
           azi_diff =
               (float)((RS_ONE_ROUND + cur_azi - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 2].azimuth)) % RS_ONE_ROUND);
+          block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_time_jump_diff_) :
+                                               (block_timestamp + this->time_duration_between_blocks_);
         }
-        block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_time_jump_diff_) :
-                                             (block_timestamp + this->time_duration_between_blocks_);
       }
     }
     else
