@@ -27,14 +27,11 @@ namespace lidar
 #define RS32_MSOP_ID (0xA050A55A0A05AA55)
 #define RS32_DIFOP_ID (0x555511115A00FFA5)
 #define RS32_BLOCK_ID (0xEEFF)
-const uint16_t RS32_BLOCKS_PER_PKT = 12;
-const uint16_t RS32_CHANNELS_PER_BLOCK = 32;
-const uint16_t RS32_PKT_RATE = 1500;
-const float RS32_DSR_TOFFSET = 3;
-const float RS32_BLOCK_TDURATION = 50;
-const float RS32_RX = 0.03997;
-const float RS32_RY = -0.01087;
-const float RS32_RZ = 0;
+#define RS32_BLOCKS_PER_PKT (12)
+#define RS32_CHANNELS_PER_BLOCK (32)
+#define RS32_CHANNEL_TOFFSET (1.44f)
+#define RS32_FIRING_TDURATION (0.0180f) // (1 / 55.52)
+const int RS32_PKT_RATE = 1500;
 
 #pragma pack(push, 1)
 
@@ -91,7 +88,7 @@ public:
 };
 
 template <typename T_Point>
-DecoderRS32<T_Point>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
+DecoderRS32<T_Point>::DecoderRS32(const RSDecoderParam& param) : DecoderBase<T_Point>(param, 0.03997, -0.01087, 0.0)
 {
   this->lasers_num_ = 32;
   this->vert_angle_list_.resize(this->lasers_num_);
@@ -171,7 +168,9 @@ RSDecoderResult DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
     azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
     for (int channel_idx = 0; channel_idx < RS32_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      float azi_channel_ori = cur_azi + (azi_diff * RS32_DSR_TOFFSET * (channel_idx % 16) / RS32_BLOCK_TDURATION);
+      float azi_channel_ori = cur_azi +
+                              azi_diff * RS32_FIRING_TDURATION * RS32_CHANNEL_TOFFSET *
+                              float(2 * (channel_idx % 16) + (channel_idx / 16));
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
@@ -184,10 +183,10 @@ RSDecoderResult DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
         double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
-                   RS32_RX * this->cos_lookup_table_[angle_horiz];
+                   this->RX_ * this->cos_lookup_table_[angle_horiz];
         double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
-                   RS32_RX * this->sin_lookup_table_[angle_horiz];
-        double z = distance * this->sin_lookup_table_[angle_vert] + RS32_RZ;
+                   this->RX_ * this->sin_lookup_table_[angle_horiz];
+        double z = distance * this->sin_lookup_table_[angle_vert] + this->RZ_;
         double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);

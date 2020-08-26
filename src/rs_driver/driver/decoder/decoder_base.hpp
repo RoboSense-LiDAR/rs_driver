@@ -182,7 +182,7 @@ template <typename T_Point>
 class DecoderBase
 {
 public:
-  explicit DecoderBase(const RSDecoderParam& param);
+  explicit DecoderBase(const RSDecoderParam& param, const double& rx, const double& ry, const double& rz);
   DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase() = default;
@@ -233,10 +233,13 @@ protected:
   static std::vector<double> sin_lookup_table_;
   std::function<double(const uint8_t*)> get_point_time_func_;
   std::function<void(const int&, const uint8_t*)> check_camera_trigger_func_;
+  const double RX_;
+  const double RY_;
+  const double RZ_;
 };
 
 template <typename T_Point>
-DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
+DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const double& rx, const double& ry, const double& rz)
   : param_(param)
   , echo_mode_(ECHO_STRONGEST)
   , pkts_per_frame_(600)
@@ -255,6 +258,9 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param)
   , time_duration_between_blocks_(0)
   , current_temperature_(0)
   , azi_diff_between_block_theoretical_(20)
+  , RX_(rx)
+  , RY_(ry)
+  , RZ_(rz)
 {
   if (cut_angle_ > RS_ONE_ROUND)
   {

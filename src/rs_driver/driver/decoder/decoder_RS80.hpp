@@ -27,14 +27,11 @@ namespace lidar
 #define RS80_MSOP_ID (0x5A05AA55)
 #define RS80_DIFOP_ID (0x555511115A00FFA5)
 #define RS80_BLOCK_ID (0xFE)
-const uint16_t RS80_BLOCKS_PER_PKT = 4;
-const uint16_t RS80_CHANNELS_PER_BLOCK = 80;
-const uint16_t RS80_PKT_RATE = 4500;
-const float RS80_DSR_TOFFSET = 3.23;
-const float RS80_BLOCK_TDURATION = 55.55;
-const float RS80_RX = 0.03615;
-const float RS80_RY = -0.017;
-const float RS80_RZ = 0;
+#define RS80_BLOCKS_PER_PKT (4)
+#define RS80_CHANNELS_PER_BLOCK (80)
+#define RS80_DSR_TOFFSET (3.23f)
+#define RS80_BLOCK_TDURATION (0.0180f) // (1 / 55.55)
+const int RS80_PKT_RATE = 4500;
 
 #pragma pack(push, 1)
 
@@ -131,7 +128,7 @@ public:
 };
 
 template <typename T_Point>
-DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
+DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param) : DecoderBase<T_Point>(param, 0.03615, -0.017, 0.0)
 {
   this->lasers_num_ = 80;
   this->vert_angle_list_.resize(this->lasers_num_);
@@ -226,10 +223,10 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
         double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
-                   RS80_RX * this->cos_lookup_table_[angle_horiz];
+                   this->RX_ * this->cos_lookup_table_[angle_horiz];
         double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
-                   RS80_RX * this->sin_lookup_table_[angle_horiz];
-        double z = distance * this->sin_lookup_table_[angle_vert] + RS80_RZ;
+                   this->RX_ * this->sin_lookup_table_[angle_horiz];
+        double z = distance * this->sin_lookup_table_[angle_vert] + this->RZ_;
         double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);

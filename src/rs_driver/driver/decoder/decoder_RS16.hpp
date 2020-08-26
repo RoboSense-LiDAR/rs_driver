@@ -27,16 +27,12 @@ namespace lidar
 #define RS16_MSOP_ID (0xA050A55A0A05AA55)
 #define RS16_DIFOP_ID (0x555511115A00FFA5)
 #define RS16_BLOCK_ID (0xEEFF)
-const uint16_t RS16_BLOCKS_PER_PKT = 12;
-const uint16_t RS16_CHANNELS_PER_BLOCK = 32;
-const uint16_t RS16_PKT_RATE = 750;
-const float RS16_DSR_TOFFSET = 3;
-const float RS16_BLOCK_TDURATION_DUAL = 50;
-const float RS16_BLOCK_TDURATION_SINGLE = 100;
-const float RS16_FIRING_TDURATION = 50;
-const float RS16_RX = 0.03825;
-const float RS16_RY = -0.01088;
-const float RS16_RZ = 0;
+#define RS16_BLOCKS_PER_PKT (12)
+#define RS16_CHANNELS_PER_BLOCK (32)
+#define RS16_CHANNEL_TOFFSET (2.8f)
+#define RS16_BLOCK_TDURATION_SINGLE (0.0090f) // (1 / (55.55 * 2))
+#define RS16_BLOCK_TDURATION_DUAL (0.0180f) // (1 / 55.55)
+const int RS16_PKT_RATE = 750;
 
 #pragma pack(push, 1)
 
@@ -93,7 +89,7 @@ public:
 };
 
 template <typename T_Point>
-DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
+DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param) : DecoderBase<T_Point>(param, 0.03825, -0.01088, 0.0)
 {
   this->lasers_num_ = 16;
   this->vert_angle_list_.resize(this->lasers_num_);
@@ -155,13 +151,14 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       float azi_channel_ori = 0;
       if (this->echo_mode_ == ECHO_DUAL)
       {
-        azi_channel_ori = cur_azi + azi_diff * RS16_DSR_TOFFSET * (channel_idx % 16) / RS16_BLOCK_TDURATION_DUAL;
+        azi_channel_ori = cur_azi + azi_diff * RS16_CHANNEL_TOFFSET * (channel_idx % 16) *RS16_BLOCK_TDURATION_DUAL;
       }
       else
       {
-        azi_channel_ori =
-            cur_azi + azi_diff * (RS16_FIRING_TDURATION * (channel_idx / 16) + RS16_DSR_TOFFSET * (channel_idx % 16)) /
-                          RS16_BLOCK_TDURATION_SINGLE;
+        azi_channel_ori = cur_azi + 
+                          azi_diff * RS16_BLOCK_TDURATION_SINGLE *
+                          (RS16_BLOCK_TDURATION_DUAL * float(channel_idx / 16) +
+                           RS16_CHANNEL_TOFFSET * float(channel_idx % 16));
       }
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx % 16);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
@@ -174,11 +171,11 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
         double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
-                   RS16_RX * this->cos_lookup_table_[angle_horiz_ori];
+                   this->RX_ * this->cos_lookup_table_[angle_horiz_ori];
 
         double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
-                   RS16_RX * this->sin_lookup_table_[angle_horiz_ori];
-        double z = distance * this->sin_lookup_table_[angle_vert] + RS16_RZ;
+                   this->RX_ * this->sin_lookup_table_[angle_horiz_ori];
+        double z = distance * this->sin_lookup_table_[angle_vert] + this->RZ_;
         double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);

@@ -27,14 +27,11 @@ namespace lidar
 #define RSBP_MSOP_ID (0xA050A55A0A05AA55)
 #define RSBP_DIFOP_ID (0x555511115A00FFA5)
 #define RSBP_BLOCK_ID (0xEEFF)
-const uint16_t RSBP_BLOCKS_PER_PKT = 12;
-const uint16_t RSBP_CHANNELS_PER_BLOCK = 32;
-const uint16_t RSBP_PKT_RATE = 1500;
-const float RSBP_DSR_TOFFSET = 3;
-const float RSBP_BLOCK_TDURATION = 50;
-const float RSBP_RX = 0.01473;
-const float RSBP_RY = 0.0085;
-const float RSBP_RZ = 0.09427;
+#define RSBP_BLOCKS_PER_PKT (12)
+#define RSBP_CHANNELS_PER_BLOCK (32)
+#define RSBP_CHANNEL_TOFFSET (1.28f)
+#define RSBP_FIRING_TDURATION (0.0180f) // (1 / 55.52)
+const int RSBP_PKT_RATE = 1500;
 
 #pragma pack(push, 1)
 
@@ -91,7 +88,7 @@ public:
 };
 
 template <typename T_Point>
-DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_Point>(param)
+DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param) : DecoderBase<T_Point>(param, 0.01473, 0.0085, 0.09427)
 {
   this->lasers_num_ = 32;
   this->vert_angle_list_.resize(this->lasers_num_);
@@ -171,7 +168,9 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
     azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
     for (int channel_idx = 0; channel_idx < RSBP_CHANNELS_PER_BLOCK; channel_idx++)
     {
-      float azi_channel_ori = cur_azi + (azi_diff * RSBP_DSR_TOFFSET * (channel_idx % 16) / RSBP_BLOCK_TDURATION);
+      float azi_channel_ori = cur_azi +
+                              azi_diff * RSBP_CHANNEL_TOFFSET * RSBP_FIRING_TDURATION *
+                              (float(2 * (channel_idx % 16) + (channel_idx / 16)) + float(channel_idx / 8 % 2) * 5.2f);
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
@@ -185,10 +184,10 @@ RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
         double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
-                   RSBP_RX * this->cos_lookup_table_[angle_horiz];
+                   this->RX_ * this->cos_lookup_table_[angle_horiz];
         double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
-                   RSBP_RX * this->sin_lookup_table_[angle_horiz];
-        double z = distance * this->sin_lookup_table_[angle_vert] + RSBP_RZ;
+                   this->RX_ * this->sin_lookup_table_[angle_horiz];
+        double z = distance * this->sin_lookup_table_[angle_vert] + this->RZ_;
         double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);
