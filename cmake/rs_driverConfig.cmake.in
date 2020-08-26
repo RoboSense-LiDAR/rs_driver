@@ -1,0 +1,25 @@
+# - Config file for the @PROJECT_NAME_LOWER@ package
+# It defines the following variables
+#  @PROJECT_NAME_LOWER@_INCLUDE_DIRS - include directories for @PROJECT_NAME_LOWER@
+#  @PROJECT_NAME_LOWER@_LIBRARIES    - libraries to link against
+#  @PROJECT_NAME_LOWER@_FOUND        - found flag
+
+# Compute paths
+set(@PROJECT_NAME_LOWER@_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+set(@PROJECT_NAME_UPPER@_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+set(@PROJECT_NAME_LOWER@_LIBRARIES "@PACKAGE_LIBS@;@EXTERNAL_LIBS@")
+set(@PROJECT_NAME_UPPER@_LIBRARIES "@PACKAGE_LIBS@;@EXTERNAL_LIBS@")
+
+set(@PROJECT_NAME_LOWER@_FOUND true)
+set(@PROJECT_NAME_UPPER@_FOUND true)
+
+find_package( OpenMP QUIET)
+    if(OPENMP_FOUND)
+    message(=============================================================)
+    message("-- OpenMP Found, OpenMP support is turned On!")
+    message(=============================================================)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS"${CMAKE_EXE_LINKER_FLAGS}${OpenMP_EXE_LINKER_FLAGS}")
+endif()
