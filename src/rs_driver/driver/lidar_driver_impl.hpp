@@ -85,7 +85,7 @@ public:
 
   inline bool start()
   {
-    if (start_flag_||input_ptr_==nullptr)
+    if (start_flag_ || input_ptr_ == nullptr)
     {
       return false;
     }
@@ -268,6 +268,7 @@ private:
     }
     if (msop_pkt_queue_.size() > MAX_PACKETS_BUFFER_SIZE)
     {
+      reportError(Error(ErrCode_PktBufOverFlow));
       msop_pkt_queue_.clear();
     }
     msop_pkt_queue_.push(msg);

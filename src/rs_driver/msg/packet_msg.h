@@ -33,7 +33,7 @@ struct __declspec(align(16)) PacketMsg
 struct __attribute__((aligned(16))) PacketMsg  ///< LiDAR single packet message
 #endif
 {
-  std::array<uint8_t, 1248> packet{};
+  std::array<uint8_t, RSLIDAR_PKT_LEN> packet{};
 };
 }  // namespace lidar
 }  // namespace robosense

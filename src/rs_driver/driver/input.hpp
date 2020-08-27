@@ -36,8 +36,6 @@ namespace robosense
 {
 namespace lidar
 {
-const int RSLIDAR_PKT_LEN = 1248;
-
 class Input
 {
 public:

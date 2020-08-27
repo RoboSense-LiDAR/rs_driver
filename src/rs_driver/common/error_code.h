@@ -54,7 +54,8 @@ enum ErrCode
   ErrCode_MsopPortBuzy = 0x49,        ///< The input msop port is already used
   ErrCode_DifopPortBuzy = 0x50,       ///< The input difop port is already used
   ErrCode_WrongPktHeader = 0x51,      ///< The packet header is wrong
-  ErrCode_PktNull = 0x52              ///< The input packet is null
+  ErrCode_PktNull = 0x52,             ///< The input packet is null
+  ErrCode_PktBufOverFlow = 0x53       ///< The packet buffer is over flow
 };
 
 struct Error
@@ -108,6 +109,8 @@ struct Error
         return "ErrCode_WrongPktHeader";
       case ErrCode_PktNull:
         return "ErrCode_PktNull";
+      case ErrCode_PktBufOverFlow:
+        return "ErrCode_PktBufOverFlow";
       default:
         return "ErrCode_Success";
     }

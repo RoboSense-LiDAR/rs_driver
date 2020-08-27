@@ -63,6 +63,11 @@
 /*Camera*/
 typedef std::pair<std::string, double> CameraTrigger;
 
+/*Packet Length*/
+#define RSLIDAR_PKT_LEN 1248
+
+
+
 /*Output style*/
 #define RESET "\033[0m"
 #define GREEN "\033[32m"               ///< Green
@@ -88,3 +93,5 @@ typedef std::pair<std::string, double> CameraTrigger;
 #define MSG (std::cout << BOLDWHITE)
 #define END (std::endl)
 #define REND "\033[0m" << std::endl
+
+
