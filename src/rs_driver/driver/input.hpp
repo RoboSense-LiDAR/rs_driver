@@ -81,12 +81,12 @@ private:
   std::vector<std::function<void(const PacketMsg&)>> msop_cb_;
 };
 
-Input::Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
+inline Input::Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
   : lidar_type_(LidarType::RS128), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr)
 {
 }
 
-Input::~Input()
+inline Input::~Input()
 {
   stop();
   if (pcap_ != NULL)
