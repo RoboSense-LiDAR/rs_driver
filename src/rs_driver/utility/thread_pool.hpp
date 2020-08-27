@@ -38,7 +38,7 @@ class ThreadPool
 {
 public:
   typedef std::shared_ptr<ThreadPool> Ptr;
-  ThreadPool() : stop_flag_(false), idl_thr_num_(MAX_THREAD_NUM)
+  inline ThreadPool() : stop_flag_(false), idl_thr_num_(MAX_THREAD_NUM)
   {
     for (int i = 0; i < idl_thr_num_; ++i)
     {
@@ -62,7 +62,7 @@ public:
     }
   }
 
-  ~ThreadPool()
+  inline ~ThreadPool()
   {
     stop_flag_.store(true);
     cv_task_.notify_all();

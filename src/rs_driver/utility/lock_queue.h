@@ -29,23 +29,23 @@ template <typename T>
 class Queue
 {
 public:
-  Queue():is_task_finished_(true)
+  inline Queue():is_task_finished_(true)
   {
   }
 
-  T front()
+  inline T front()
   {
     std::lock_guard<std::mutex> lock(mutex_);
     return queue_.front();
   }
 
-  void push(const T& value)
+  inline void push(const T& value)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     queue_.push(value);
   }
 
-  void pop()
+  inline void pop()
   {
     std::lock_guard<std::mutex> lock(mutex_);
     if (!queue_.empty())
@@ -54,7 +54,7 @@ public:
     }
   }
 
-  T popFront()
+  inline T popFront()
   {
     T value;
     std::lock_guard<std::mutex> lock(mutex_);
@@ -66,14 +66,14 @@ public:
     return value;
   }
 
-  void clear()
+  inline void clear()
   {
     std::queue<T> empty;
     std::lock_guard<std::mutex> lock(mutex_);
     swap(empty, queue_);
   }
 
-  size_t size()
+  inline size_t size()
   {
     std::lock_guard<std::mutex> lock(mutex_);
     return queue_.size();
