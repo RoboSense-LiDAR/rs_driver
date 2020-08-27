@@ -118,7 +118,7 @@ public:
 };
 
 template <typename T_Point>
-DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
+inline DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
   : DecoderBase<T_Point>(param, lidar_const_param)
 {
   this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
@@ -135,14 +135,14 @@ DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param, const LidarConsta
 }
 
 template <typename T_Point>
-double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
+inline double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
 {
   return this->template calculateTimeUTC<RS80MsopPkt>(pkt);
 }
 
 template <typename T_Point>
-RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
-                                                    int& azimuth)
+inline RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
+                                                           int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
   RS80MsopPkt* mpkt_ptr = (RS80MsopPkt*)pkt;
@@ -200,7 +200,8 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
     {
       int dsr_temp = (channel_idx / 4) % 16;
       float azi_channel_ori = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) +
-                              (azi_diff * float(dsr_temp) * this->lidar_const_param_.DSR_TOFFSET * this->lidar_const_param_.FIRING_FREQUENCY);
+                              (azi_diff * float(dsr_temp) * this->lidar_const_param_.DSR_TOFFSET *
+                               this->lidar_const_param_.FIRING_FREQUENCY);
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
@@ -239,7 +240,7 @@ RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
 }
 
 template <typename T_Point>
-RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
+inline RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
   RS80DifopPkt* dpkt_ptr = (RS80DifopPkt*)pkt;
   if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)
@@ -249,12 +250,14 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   this->echo_mode_ = (RSEchoMode)dpkt_ptr->return_mode;
   this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
   this->time_duration_between_blocks_ =
-      (60 / (float)this->rpm_) / ((this->lidar_const_param_.PKT_RATE * 60 / this->rpm_) * this->lidar_const_param_.BLOCKS_PER_PKT);
+      (60 / (float)this->rpm_) /
+      ((this->lidar_const_param_.PKT_RATE * 60 / this->rpm_) * this->lidar_const_param_.BLOCKS_PER_PKT);
   int fov_start_angle = RS_SWAP_SHORT(dpkt_ptr->fov.start_angle);
   int fov_end_angle = RS_SWAP_SHORT(dpkt_ptr->fov.end_angle);
   int fov_range = (fov_start_angle < fov_end_angle) ? (fov_end_angle - fov_start_angle) :
                                                       (RS_ONE_ROUND - fov_start_angle + fov_end_angle);
-  int blocks_per_round = (this->lidar_const_param_.PKT_RATE / (this->rpm_ / 60)) * this->lidar_const_param_.BLOCKS_PER_PKT;
+  int blocks_per_round =
+      (this->lidar_const_param_.PKT_RATE / (this->rpm_ / 60)) * this->lidar_const_param_.BLOCKS_PER_PKT;
   this->fov_time_jump_diff_ =
       this->time_duration_between_blocks_ * (fov_range / (RS_ONE_ROUND / (float)blocks_per_round));
   if (this->echo_mode_ == ECHO_DUAL)
@@ -266,7 +269,8 @@ RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     this->pkts_per_frame_ = ceil(this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
   }
   this->azi_diff_between_block_theoretical_ =
-      (RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_PKT) / (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
+      (RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_PKT) /
+      (float)this->pkts_per_frame_;  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
     const uint8_t* p_ver_cali = (uint8_t*)(dpkt_ptr->ver_angle_cali);

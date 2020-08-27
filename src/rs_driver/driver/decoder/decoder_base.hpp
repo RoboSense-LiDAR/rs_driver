@@ -252,7 +252,7 @@ protected:
 };
 
 template <typename T_Point>
-DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
+inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
   : lidar_const_param_(lidar_const_param)
   , param_(param)
   , echo_mode_(ECHO_STRONGEST)
@@ -330,7 +330,7 @@ DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const LidarConsta
 }
 
 template <typename T_Point>
-RSDecoderResult DecoderBase<T_Point>::processDifopPkt(const uint8_t* pkt)
+inline RSDecoderResult DecoderBase<T_Point>::processDifopPkt(const uint8_t* pkt)
 {
   if (pkt == NULL)
   {
@@ -340,7 +340,7 @@ RSDecoderResult DecoderBase<T_Point>::processDifopPkt(const uint8_t* pkt)
 }
 
 template <typename T_Point>
-RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec,
+inline RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec,
                                                      int& height)
 {
   if (pkt == NULL)
@@ -396,19 +396,19 @@ RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
 }
 
 template <typename T_Point>
-void DecoderBase<T_Point>::regRecvCallback(const std::function<void(const CameraTrigger&)>& callback)
+inline void DecoderBase<T_Point>::regRecvCallback(const std::function<void(const CameraTrigger&)>& callback)
 {
   camera_trigger_cb_vec_.emplace_back(callback);
 }
 
 template <typename T_Point>
-double DecoderBase<T_Point>::getLidarTemperature()
+inline double DecoderBase<T_Point>::getLidarTemperature()
 {
   return current_temperature_;
 }
 
 template <typename T_Point>
-void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
+inline void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
 {
   std::string line_str;
   std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
@@ -446,7 +446,7 @@ void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
 }
 
 template <typename T_Point>
-void DecoderBase<T_Point>::checkTriggerAngle(const int& angle, const double& timestamp)
+inline void DecoderBase<T_Point>::checkTriggerAngle(const int& angle, const double& timestamp)
 {
   std::map<double, std::string>::iterator iter = param_.trigger_param.trigger_map.begin();
   for (size_t i = 0; i < trigger_index_; i++)
@@ -475,7 +475,7 @@ void DecoderBase<T_Point>::checkTriggerAngle(const int& angle, const double& tim
 
 /* 16, 32, & BP */
 template <typename T_Point>
-float DecoderBase<T_Point>::computeTemperature(const uint16_t& temp_raw)
+inline float DecoderBase<T_Point>::computeTemperature(const uint16_t& temp_raw)
 {
   uint8_t neg_flag = (temp_raw >> 8) & 0x80;
   float msb = (temp_raw >> 8) & 0x7F;
@@ -495,7 +495,7 @@ float DecoderBase<T_Point>::computeTemperature(const uint16_t& temp_raw)
 
 /* 128 & 80 */
 template <typename T_Point>
-float DecoderBase<T_Point>::computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high)
+inline float DecoderBase<T_Point>::computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high)
 {
   uint8_t neg_flag = temp_low & 0x80;
   float msb = temp_low & 0x7F;
@@ -514,14 +514,14 @@ float DecoderBase<T_Point>::computeTemperature(const uint8_t& temp_low, const ui
 }
 
 template <typename T_Point>
-int DecoderBase<T_Point>::azimuthCalibration(const float& azimuth, const int& channel)
+inline int DecoderBase<T_Point>::azimuthCalibration(const float& azimuth, const int& channel)
 {
   return ((int)(azimuth) + this->hori_angle_list_[channel] + RS_ONE_ROUND) % RS_ONE_ROUND;
 }
 
 template <typename T_Point>
 template <typename T_Msop>
-double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
+inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
 {
   T_Msop* mpkt_ptr = (T_Msop*)pkt;
   union u_ts
@@ -542,7 +542,7 @@ double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
 
 template <typename T_Point>
 template <typename T_Msop>
-double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
+inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
 {
   T_Msop* mpkt_ptr = (T_Msop*)pkt;
   std::tm stm;
@@ -558,7 +558,7 @@ double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
 }
 
 template <typename T_Point>
-void DecoderBase<T_Point>::sortBeamTable()
+inline void DecoderBase<T_Point>::sortBeamTable()
 {
   std::vector<size_t> sorted_idx(this->lidar_const_param_.LASER_NUM);
   std::iota(sorted_idx.begin(), sorted_idx.end(), 0);

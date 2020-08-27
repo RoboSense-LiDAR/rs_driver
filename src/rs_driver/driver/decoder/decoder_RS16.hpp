@@ -78,7 +78,7 @@ public:
 };
 
 template <typename T_Point>
-DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
+inline DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
   : DecoderBase<T_Point>(param, lidar_const_param)
 {
   this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
@@ -95,14 +95,14 @@ DecoderRS16<T_Point>::DecoderRS16(const RSDecoderParam& param, const LidarConsta
 }
 
 template <typename T_Point>
-double DecoderRS16<T_Point>::getLidarTime(const uint8_t* pkt)
+inline double DecoderRS16<T_Point>::getLidarTime(const uint8_t* pkt)
 {
   return this->template calculateTimeYMD<RS16MsopPkt>(pkt);
 }
 
 template <typename T_Point>
-RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
-                                                    int& azimuth)
+inline RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
+                                                           int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
   RS16MsopPkt* mpkt_ptr = (RS16MsopPkt*)pkt;
@@ -194,7 +194,7 @@ RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
 }
 
 template <typename T_Point>
-RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
+inline RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
   RS16DifopPkt* dpkt_ptr = (RS16DifopPkt*)pkt;
   if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)
