@@ -21,13 +21,36 @@ sudo apt-get install -y  libpcap-dev
 
 
 
-### 3 驱动安装
+### 3 使用方式
+
+#### 3.1 安装使用
+
+首先安装驱动
 
 ```sh
 cd rs_driver
 mkdir build && cd build
 cmake .. && make -j4
 sudo make install
+```
+
+使用时，需要在CMakeLists文件中链接雷达驱动
+
+```cmake
+find_package(rs_driver REQUIRED)
+include_directories(${rs_driver_INCLUDE_DIRS})
+target_link_libraries(project ${rs_driver_LIBRARIES})
+```
+
+#### 3.2 嵌入使用
+
+直接将rs_driver放入用户工程内，在CMakeLists中链接即可
+
+```cmake
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/rs_driver/cmake)
+include(rs_driver)
+include_directories(${rs_driver_INCLUDE_DIRS})
+target_link_libraries(project ${rs_driver_LIBRARIES})
 ```
 
 
@@ -80,13 +103,38 @@ Pcap need to be installed as follow:
 sudo apt-get install -y  libpcap-dev
 ```
 
-### 3 Driver Install
+
+
+### 3 Usage
+
+#### 3.1 Install driver to use
+
+Install the driver.
 
 ```sh
 cd rs_driver
 mkdir build && cd build
 cmake .. && make -j4
 sudo make install
+```
+
+Then find the driver package and link it in the project CMakeLists.
+
+```cmake
+find_package(rs_driver REQUIRED)
+include_directories(${rs_driver_INCLUDE_DIRS})
+target_link_libraries(project ${rs_driver_LIBRARIES})
+```
+
+#### 3.2 Embed driver in project
+
+Put the rs_driver in the project and link it in the CMakeLists.
+
+```cmake
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/rs_driver/cmake)
+include(rs_driver)
+include_directories(${rs_driver_INCLUDE_DIRS})
+target_link_libraries(project ${rs_driver_LIBRARIES})
 ```
 
 

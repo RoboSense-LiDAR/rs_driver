@@ -153,28 +153,4 @@ In rs_driver, the point cloud is stored in **column major order**, which means i
 
 
 
-## 4 Hint for compile
-
-If you  choose to embed rs_driver into your project instead of installing it as mentioned in README, you need to setup the include_directories in CMakeLists
-
-```cmake
-include_directories(your_project_directory/rs_driver/src)
-```
-
-Since the driver core only has header files, user need to link the related libraries when compile. You need to link to boost, pcap & pthread. 
-
-```cmake
-find_package(Boost COMPONENTS system REQUIRED)
-add_executable(demo
-              demo/demo.cpp
-              )
-target_link_libraries(demo
-                    ${Boost_LIBRARIES}       
-                      pcap
-                      pthread
-)
-```
-
-
-
 ### *Congratulations! You have finished the first simple demo tutorial of RoboSense lidar driver! You can find the complete demo code in the demo folder under the project directory. Feel free to connect us if you have any question about the driver.*
