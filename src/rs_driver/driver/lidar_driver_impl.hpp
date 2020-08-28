@@ -157,8 +157,6 @@ inline void LidarDriverImpl<T_Point>::stop()
     input_ptr_->stop();
   }
   start_flag_ = false;
-  msop_pkt_queue_.clear();
-  difop_pkt_queue_.clear();
 }
 
 template <typename T_Point>
