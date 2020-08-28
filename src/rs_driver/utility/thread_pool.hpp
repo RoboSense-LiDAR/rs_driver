@@ -68,7 +68,7 @@ public:
     cv_task_.notify_all();
     for (std::thread& thread : pool_)
     {
-      thread.detach();
+      thread.join();
     }
   }
 
