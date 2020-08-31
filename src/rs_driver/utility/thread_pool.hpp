@@ -74,20 +74,18 @@ public:
 
 public:
   template <class F, class... Args>
-  inline auto commit(F&& f, Args&&... args) -> std::future<decltype(f(args...))>
+  inline void commit(F&& f, Args&&... args)
   {
     if (stop_flag_.load())
       throw std::runtime_error("Commit on LiDAR threadpool is stopped.");
     using RetType = decltype(f(args...));
     auto task =
         std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-    std::future<RetType> future = task->get_future();
     {
       std::lock_guard<std::mutex> lock{ mutex_ };
       tasks_.emplace([task]() { (*task)(); });
     }
     cv_task_.notify_one();
-    return future;
   }
 
 private:

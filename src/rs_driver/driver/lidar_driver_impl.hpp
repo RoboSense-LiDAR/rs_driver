@@ -77,7 +77,6 @@ private:
   std::shared_ptr<std::thread> lidar_thread_ptr_;
   std::shared_ptr<DecoderBase<T_Point>> lidar_decoder_ptr_;
   std::shared_ptr<Input> input_ptr_;
-  std::shared_ptr<ThreadPool> thread_pool_ptr_;
   std::shared_ptr<ScanMsg> scan_ptr_;
   bool init_flag_;
   bool start_flag_;
@@ -87,6 +86,7 @@ private:
   uint32_t ndifop_count_;
   RSDriverParam driver_param_;
   typename PointCloudMsg<T_Point>::PointCloudPtr point_cloud_ptr_;
+  std::shared_ptr<ThreadPool> thread_pool_ptr_;
 };
 
 template <typename T_Point>
@@ -99,6 +99,7 @@ template <typename T_Point>
 inline LidarDriverImpl<T_Point>::~LidarDriverImpl()
 {
   stop();
+  thread_pool_ptr_.reset();
 }
 
 template <typename T_Point>
@@ -157,6 +158,10 @@ inline void LidarDriverImpl<T_Point>::stop()
     input_ptr_->stop();
   }
   start_flag_ = false;
+  if (!msop_pkt_cb_vec_.empty() || !difop_pkt_cb_vec_.empty())
+  {
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
+  }
 }
 
 template <typename T_Point>
@@ -374,7 +379,6 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     msop_pkt_queue_.is_task_finished_.store(true);
     return;
   }
-
   while (msop_pkt_queue_.size() > 0)
   {
     PacketMsg pkt = msop_pkt_queue_.popFront();
@@ -382,7 +386,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     int height = 1;
     int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), pointcloud_one_packet, height);
     scan_ptr_->packets.emplace_back(std::move(pkt));
-    if (ret == DECODE_OK || ret == FRAME_SPLIT)
+    if ((ret == DECODE_OK || ret == FRAME_SPLIT))
     {
       point_cloud_ptr_->insert(point_cloud_ptr_->end(), pointcloud_one_packet.begin(), pointcloud_one_packet.end());
       if (ret == FRAME_SPLIT)
