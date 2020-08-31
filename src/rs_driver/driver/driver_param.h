@@ -118,7 +118,7 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
   RSInputParam input_param;                ///< The input parameter
   RSDecoderParam decoder_param;            ///< The decoder parameter
   std::string angle_path = "null";         ///< The path of angle calibration files(angle.csv)
-                                           ///< For latest version lidar, this file is not needed
+                                           ///< For the latest version lidar, this file is not needed
   std::string frame_id = "rslidar";        ///< The frame id of lidar message
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   bool wait_for_difop = true;              ///< true: start sending point cloud until receive difop packet
