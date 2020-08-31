@@ -44,7 +44,7 @@ public:
 
 private:
   static std::shared_ptr<DecoderBase<T_Point>> switchLidar(const LidarType& lidar_type, const RSDriverParam& param);
-  static const LidarType getLidarType(const LidarType& param_lidar_type, const PacketMsg& msop_pkt_msg);
+  static LidarType getLidarType(const LidarType& param_lidar_type, const PacketMsg& msop_pkt_msg);
   static const LidarConstantParameter getRS16ConstantParam();
   static const LidarConstantParameter getRS32ConstantParam();
   static const LidarConstantParameter getRSBPConstantParam();
@@ -72,7 +72,7 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDeco
 }
 
 template <typename T_Point>
-inline const LidarType DecoderFactory<T_Point>::getLidarType(const LidarType& param_lidar_type,
+inline LidarType DecoderFactory<T_Point>::getLidarType(const LidarType& param_lidar_type,
                                                              const PacketMsg& msop_pkt_msg)
 {
   if (param_lidar_type == LidarType::RSAUTO)
