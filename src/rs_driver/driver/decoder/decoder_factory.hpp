@@ -109,7 +109,7 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::switchLida
       ret_ptr = std::make_shared<DecoderRS80<T_Point>>(param.decoder_param, getRS80ConstantParam());
       break;
     default:
-      ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << REND;
+      RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
       exit(-1);
   }
   ret_ptr->loadCalibrationFile(param.angle_path);

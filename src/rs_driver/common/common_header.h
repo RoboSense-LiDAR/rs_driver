@@ -64,34 +64,32 @@
 typedef std::pair<std::string, double> CameraTrigger;
 
 /*Packet Length*/
+#ifndef RSLIDAR_PKT_LEN
 #define RSLIDAR_PKT_LEN 1248
-
-
-
+#endif
 /*Output style*/
-#define RESET "\033[0m"
-#define GREEN "\033[32m"               ///< Green
-#define YELLOW "\033[33m"              ///< Yellow
-#define BLUE "\033[34m"                ///< Blue
-#define MAGENTA "\033[35m"             ///< Magenta
-#define CYAN "\033[36m"                ///< Cyan
-#define BOLDBLACK "\033[1m\033[30m"    ///< Bold Black
-#define BOLDRED "\033[1m\033[31m"      ///< Bold Red
-#define BOLDGREEN "\033[1m\033[32m"    ///< Bold Green
-#define BOLDYELLOW "\033[1m\033[33m"   ///< Bold Yellow
-#define BOLDBLUE "\033[1m\033[34m"     ///< Bold Blue
-#define BOLDMAGENTA "\033[1m\033[35m"  ///< Bold Magenta
-#define BOLDCYAN "\033[1m\033[36m"     ///< Bold Cyan
-#define BOLDWHITE "\033[1m\033[37m"    ///< Bold White
-
-#define INFOL (std::cout << GREEN)
-#define INFO (std::cout << BOLDGREEN)
-#define WARNING (std::cout << BOLDYELLOW)
-#define ERROR (std::cout << BOLDRED)
-#define DEBUG (std::cout << BOLDCYAN)
-#define TITLE (std::cout << BOLDMAGENTA)
-#define MSG (std::cout << BOLDWHITE)
-#define END (std::endl)
-#define REND "\033[0m" << std::endl
-
+#ifndef RS_INFOL
+#define RS_INFOL (std::cout << "\033[32m")
+#endif
+#ifndef RS_INFO
+#define RS_INFO (std::cout << "\033[1m\033[32m")
+#endif
+#ifndef RS_WARNING
+#define RS_WARNING (std::cout << "\033[1m\033[33m")
+#endif
+#ifndef RS_ERROR
+#define RS_ERROR (std::cout << "\033[1m\033[31m")
+#endif
+#ifndef RS_DEBUG
+#define RS_DEBUG (std::cout << "\033[1m\033[36m")
+#endif
+#ifndef RS_TITLE
+#define RS_TITLE (std::cout << "\033[1m\033[35m")
+#endif
+#ifndef RS_MSG
+#define RS_MSG (std::cout << "\033[1m\033[37m")
+#endif
+#ifndef RS_REND
+#define RS_REND "\033[0m" << std::endl
+#endif
 

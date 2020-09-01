@@ -49,12 +49,12 @@ typedef struct RSCameraTriggerParam  ///< The Camera trigger parameters
   std::map<double, std::string> trigger_map;  ///< The map stored the trigger angle and camera frame id
   void print() const                          ///< This function is used to print all the parameters for debugging
   {
-    INFO << "             RoboSense Camera Trigger Parameters " << REND;
+    RS_INFO << "             RoboSense Camera Trigger Parameters " << RS_REND;
     for (auto iter : trigger_map)
     {
-      INFOL << "camera_frame_id: " << iter.second << " trigger_angle : " << iter.first << REND;
+      RS_INFOL << "camera_frame_id: " << iter.second << " trigger_angle : " << iter.first << RS_REND;
     }
-    INFO << "------------------------------------------------------" << REND;
+    RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 } RSCameraTriggerParam;
 
@@ -75,17 +75,17 @@ typedef struct RSDecoderParam  ///< The lidar decoder parameter
   void print() const                   ///< This function is used to print all the parameters for debugging
   {
     trigger_param.print();
-    INFO << "------------------------------------------------------" << REND;
-    INFO << "             RoboSense Decoder Parameters " << REND;
-    INFOL << "max_distance: " << max_distance << REND;
-    INFOL << "min_distance: " << min_distance << REND;
-    INFOL << "start_angle: " << start_angle << REND;
-    INFOL << "end_angle: " << end_angle << REND;
-    INFOL << "use_lidar_clock: " << use_lidar_clock << REND;
-    INFOL << "split_frame_mode: " << split_frame_mode << REND;
-    INFOL << "num_pkts_split: " << num_pkts_split << REND;
-    INFOL << "cut_angle: " << cut_angle << REND;
-    INFO << "------------------------------------------------------" << REND;
+    RS_INFO << "------------------------------------------------------" << RS_REND;
+    RS_INFO << "             RoboSense Decoder Parameters " << RS_REND;
+    RS_INFOL << "max_distance: " << max_distance << RS_REND;
+    RS_INFOL << "min_distance: " << min_distance << RS_REND;
+    RS_INFOL << "start_angle: " << start_angle << RS_REND;
+    RS_INFOL << "end_angle: " << end_angle << RS_REND;
+    RS_INFOL << "use_lidar_clock: " << use_lidar_clock << RS_REND;
+    RS_INFOL << "split_frame_mode: " << split_frame_mode << RS_REND;
+    RS_INFOL << "num_pkts_split: " << num_pkts_split << RS_REND;
+    RS_INFOL << "cut_angle: " << cut_angle << RS_REND;
+    RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 } RSDecoderParam;
 
@@ -101,15 +101,15 @@ typedef struct RSInputParam  ///< The lidar input parameter
   std::string pcap_path = "null";  ///< The absolute path of pcap file
   void print() const                    ///< This function is used to print all the parameters for debugging
   {
-    INFO << "------------------------------------------------------" << REND;
-    INFO << "             RoboSense Input Parameters " << REND;
-    INFOL << "device_ip: " << device_ip << REND;
-    INFOL << "msop_port: " << msop_port << REND;
-    INFOL << "difop_port: " << difop_port << REND;
-    INFOL << "read_pcap: " << read_pcap << REND;
-    INFOL << "pcap_repeat: " << pcap_repeat << REND;
-    INFOL << "pcap_path: " << pcap_path << REND;
-    INFO << "------------------------------------------------------" << REND;
+    RS_INFO << "------------------------------------------------------" << RS_REND;
+    RS_INFO << "             RoboSense Input Parameters " << RS_REND;
+    RS_INFOL << "device_ip: " << device_ip << RS_REND;
+    RS_INFOL << "msop_port: " << msop_port << RS_REND;
+    RS_INFOL << "difop_port: " << difop_port << RS_REND;
+    RS_INFOL << "read_pcap: " << read_pcap << RS_REND;
+    RS_INFOL << "pcap_repeat: " << pcap_repeat << RS_REND;
+    RS_INFOL << "pcap_path: " << pcap_path << RS_REND;
+    RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 } RSInputParam;
 
@@ -126,43 +126,43 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
   {
     input_param.print();
     decoder_param.print();
-    INFO << "------------------------------------------------------" << REND;
-    INFOL << "             RoboSense Driver Parameters " << REND;
-    INFOL << "angle_path: " << angle_path << REND;
-    INFOL << "frame_id: " << frame_id << REND;
+    RS_INFO << "------------------------------------------------------" << RS_REND;
+    RS_INFOL << "             RoboSense Driver Parameters " << RS_REND;
+    RS_INFOL << "angle_path: " << angle_path << RS_REND;
+    RS_INFOL << "frame_id: " << frame_id << RS_REND;
 
     switch (lidar_type)
     {
       case LidarType::RS16:
-        INFOL << "lidar_type: ";
-        INFO << "RS16" << REND;
+        RS_INFOL << "lidar_type: ";
+        RS_INFO << "RS16" << RS_REND;
         break;
       case LidarType::RS32:
-        INFOL << "lidar_type: ";
-        INFO << "RS32" << REND;
+        RS_INFOL << "lidar_type: ";
+        RS_INFO << "RS32" << RS_REND;
         break;
       case LidarType::RSBP:
-        INFOL << "lidar_type: ";
-        INFO << "RSBP" << REND;
+        RS_INFOL << "lidar_type: ";
+        RS_INFO << "RSBP" << RS_REND;
         break;
       case LidarType::RS128:
-        INFOL << "lidar_type: ";
-        INFO << "RS128" << REND;
+        RS_INFOL << "lidar_type: ";
+        RS_INFO << "RS128" << RS_REND;
         break;
       case LidarType::RS80:
-        INFOL << "lidar_type: ";
-        INFO << "RS80" << REND;
+        RS_INFOL << "lidar_type: ";
+        RS_INFO << "RS80" << RS_REND;
         break;
       case LidarType::RSAUTO:
-        INFOL << "lidar_type: ";
-        INFO << "RSAUTO" << REND;
+        RS_INFOL << "lidar_type: ";
+        RS_INFO << "RSAUTO" << RS_REND;
         break;
       default:
-        INFOL << "lidar_type: ";
-        ERROR << "ERROR" << REND;
+        RS_INFOL << "lidar_type: ";
+        RS_ERROR << "RS_ERROR" << RS_REND;
     }
 
-    INFOL << "------------------------------------------------------" << REND;
+    RS_INFOL << "------------------------------------------------------" << RS_REND;
   }
   LidarType strToLidarType(const std::string& type)
   {
@@ -192,8 +192,8 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     }
     else
     {
-      ERROR << "Wrong lidar type: " << type << REND;
-      ERROR << "Please setup the correct type: RS16, RS32, RSBP, RS128, RS80, RSAUTO" << REND;
+      RS_ERROR << "Wrong lidar type: " << type << RS_REND;
+      RS_ERROR << "Please setup the correct type: RS16, RS32, RSBP, RS128, RS80, RSAUTO" << RS_REND;
       exit(-1);
     }
   }

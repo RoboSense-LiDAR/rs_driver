@@ -82,7 +82,7 @@ Define the point cloud callback function. The template argument PointXYZI is the
 ```c++
 void pointCloudCallback(const PointCloudMsg<PointXYZI> &msg)
 {
-  MSG << "msg: " << msg.seq << " point cloud size: " << msg.point_cloud_ptr->size() << REND;
+  RS_MSG << "msg: " << msg.seq << " point cloud size: " << msg.point_cloud_ptr->size() << RS_REND;
 }
 ```
 
@@ -93,7 +93,7 @@ Define the exception callback function. When driver want to send out infos or er
 ```c++
 void exceptionCallback(const Error &code)
 {
-  WARNING << "Error code : " << code.toString() << REND;
+  RS_WARNING << "Error code : " << code.toString() << RS_REND;
 }
 ```
 
@@ -135,7 +135,7 @@ Call the initialization function and pass the parameter into the driver. Since w
 ```c++
 if (!driver.init(param))                         ///< Call the init function and pass the parameter
 {
-  ERROR << "Driver Initialize Error..." << REND;
+  RS_ERROR << "Driver Initialize Error..." << RS_REND;
   return -1;
 }
 ```

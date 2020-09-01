@@ -431,7 +431,7 @@ inline void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_p
       }
       catch (...)
       {
-        WARNING << "Wrong calibration file format! Please check your angle.csv file!" << REND;
+        RS_WARNING << "Wrong calibration file format! Please check your angle.csv file!" << RS_REND;
         break;
       }
       row_index++;

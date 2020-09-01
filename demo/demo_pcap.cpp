@@ -40,7 +40,7 @@ void pointCloudCallback(const PointCloudMsg<PointXYZI>& msg)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the message and process it in another thread is recommended*/
-  MSG << "msg: " << msg.seq << " point cloud size: " << msg.point_cloud_ptr->size() << REND;
+  RS_MSG << "msg: " << msg.seq << " point cloud size: " << msg.point_cloud_ptr->size() << RS_REND;
 }
 
 /**
@@ -51,15 +51,15 @@ void exceptionCallback(const Error& code)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the error message and process it in another thread is recommended*/
-  WARNING << "Error code : " << code.toString() << REND;
+  RS_WARNING << "Error code : " << code.toString() << RS_REND;
 }
 
 int main(int argc, char* argv[])
 {
-  TITLE << "------------------------------------------------------" << REND;
-  TITLE << "            RS_Driver Core Version: V " << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
-        << RSLIDAR_VERSION_PATCH << REND;
-  TITLE << "------------------------------------------------------" << REND;
+  RS_TITLE << "------------------------------------------------------" << RS_REND;
+  RS_TITLE << "            RS_Driver Core Version: V " << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
+        << RSLIDAR_VERSION_PATCH << RS_REND;
+  RS_TITLE << "------------------------------------------------------" << RS_REND;
 
   LidarDriver<PointXYZI> driver;  ///< Declare the driver object
 
@@ -76,11 +76,11 @@ int main(int argc, char* argv[])
   driver.regRecvCallback(pointCloudCallback);      ///< Register the point cloud callback function into the driver
   if (!driver.init(param))                         ///< Call the init function and pass the parameter
   {
-    ERROR << "Driver Initialize Error..." << REND;
+    RS_ERROR << "Driver Initialize Error..." << RS_REND;
     return -1;
   }
   driver.start();  ///< The driver thread will start
-  DEBUG << "RoboSense Lidar-Driver Linux pcap demo start......" << REND;
+  RS_DEBUG << "RoboSense Lidar-Driver Linux pcap demo start......" << RS_REND;
 
   while (true)
   {
