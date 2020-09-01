@@ -55,7 +55,27 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 
 
-### 4 快速上手
+### 4 示例程序
+
+rs_driver提供了两个示例程序，存放于*rs_driver/demo*中：
+
+- demo_online.cpp
+- demo_pcap.cpp
+
+若希望编译这两个示例程序，需要将CMakeLists文件内的COMPILE_DEMOS设置为TRUE(默认为FALSE)。
+
+```cmake
+#=============================
+#  Compile Demos (TRUE/FALSE)
+#=============================
+set(COMPILE_DEMOS TRUE)
+```
+
+用户可参考示例程序，编写自己的代码调用雷达驱动。
+
+
+
+### 5 快速上手
 
 [在线连接雷达](doc/howto/how_to_online_use_driver.md)
 
@@ -63,7 +83,7 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 
 
-### 5 其他资料
+### 6 其他资料
 
 [参数简介](doc/intro/parameter_intro.md)
 
@@ -139,7 +159,27 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 
 
-### 4 Quick Start
+### 4 Demo Code
+
+rs_driver supply two demo programs which are stored in*rs_driver/demo*：
+
+- demo_online.cpp
+- demo_pcap.cpp
+
+User need to set the COMPILE_DEMOS in CMakeLists to TRUE to compile these two programs( the default value is FALSE).
+
+```cmake
+#=============================
+#  Compile Demos (TRUE/FALSE)
+#=============================
+set(COMPILE_DEMOS TRUE)
+```
+
+User can refer to the demo code to use rs_driver api.
+
+
+
+### 5 Quick Start
 
 [Online connect LiDAR](doc/howto/how_to_online_use_driver.md)
 
@@ -147,7 +187,7 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 
 
-### 5 Others
+### 6 Others
 
 [Intro to parameters](doc/intro/parameter_intro.md)
 
