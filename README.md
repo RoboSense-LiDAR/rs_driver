@@ -1,7 +1,7 @@
 # **rs_driver** 
 
 ### 1 工程简介
-  **rs_driver**为速腾聚创雷达驱动内核。支持**RS-LiDAR-16**、**RS-LiDAR-32**、**RS-Bpearl**和**RS-128**的点云数据解析，方便用户二次开发使用。
+  **rs_driver**为速腾聚创雷达驱动内核。支持**RS-LiDAR-16**, **RS-LiDAR-32**, **RS-Bpearl**, **RS-128**和**RS-80**的点云数据解析，方便用户二次开发使用。
 
 
 
@@ -105,7 +105,7 @@ set(COMPILE_DEMOS TRUE)
 
 ### 1 Introduction
 
-  **rs_driver** is the driver code for RoboSense LiDAR,  include **RS-LiDAR-16**、**RS-LiDAR-32**、**RS-Bpearl** and **RS-128** . It can be used to extract packets from lidar to point cloud, and it is convenient for users to do advanced development.
+  **rs_driver** is the driver code for RoboSense LiDAR,  include **RS-LiDAR-16**, **RS-LiDAR-32**, **RS-Bpearl** ,  **RS-128** and **RS-80** . It can be used to extract packets from lidar to point cloud, and it is convenient for users to do advanced development.
 
 
 
