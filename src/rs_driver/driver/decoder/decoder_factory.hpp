@@ -72,8 +72,7 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDeco
 }
 
 template <typename T_Point>
-inline LidarType DecoderFactory<T_Point>::getLidarType(const LidarType& param_lidar_type,
-                                                             const PacketMsg& msop_pkt_msg)
+inline LidarType DecoderFactory<T_Point>::getLidarType(const LidarType& param_lidar_type, const PacketMsg& msop_pkt_msg)
 {
   if (param_lidar_type == LidarType::RSAUTO)
   {
@@ -184,7 +183,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS80ConstantPara
   ret_param.BLOCKS_PER_PKT = 4;
   ret_param.CHANNELS_PER_BLOCK = 80;
   ret_param.LASER_NUM = 80;
-  ret_param.DSR_TOFFSET = 3.23;
+  ret_param.DSR_TOFFSET = 3.236;
   ret_param.FIRING_FREQUENCY = 0.018;
   ret_param.RX = 0.03615;
   ret_param.RY = -0.017;
