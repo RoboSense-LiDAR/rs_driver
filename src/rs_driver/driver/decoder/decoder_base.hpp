@@ -288,7 +288,7 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
   }
 
   /* Point time function*/
-  if (HAS_MEMBER(T_Point, timestamp))    ///< return the timestamp of the first block in one packet
+  if (HAS_MEMBER(T_Point, timestamp))  ///< return the timestamp of the first block in one packet
   {
     if (this->param_.use_lidar_clock)
     {
@@ -341,7 +341,7 @@ inline RSDecoderResult DecoderBase<T_Point>::processDifopPkt(const uint8_t* pkt)
 
 template <typename T_Point>
 inline RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec,
-                                                     int& height)
+                                                            int& height)
 {
   if (pkt == NULL)
   {
@@ -554,7 +554,7 @@ inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
   stm.tm_min = mpkt_ptr->header.timestamp.minute;
   stm.tm_sec = mpkt_ptr->header.timestamp.second;
   return std::mktime(&stm) + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms) / 1000.0 +
-         (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0;
+         (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0 - __timezone;
 }
 
 template <typename T_Point>
