@@ -1,5 +1,12 @@
 # Changelog
 
+
+## v1.2.1 - 2020-09-04
+
+### Fixed
+
+- Fix the timestamp calculation for RS16,RS32 & RSBP. Now the output lidar timestamp will be UTC time and will not be affected by system time zone.
+
 ## v1.2.0 - 2020-09-01
 
 ### Added
