@@ -203,7 +203,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS128ConstantPar
   ret_param.BLOCKS_PER_PKT = 3;
   ret_param.CHANNELS_PER_BLOCK = 128;
   ret_param.LASER_NUM = 128;
-  ret_param.DSR_TOFFSET = 3.23;
+  ret_param.DSR_TOFFSET = 3.236;
   ret_param.FIRING_FREQUENCY = 0.018;
   ret_param.RX = 0.03615;
   ret_param.RY = -0.017;
