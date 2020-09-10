@@ -262,10 +262,9 @@ inline void Input::getMsopPacket()
 
 inline void Input::getDifopPacket()
 {
+  char* precv_buffer = (char*)malloc(RSLIDAR_PKT_LEN);
   while (difop_thread_.start_.load())
   {
-    char* precv_buffer = (char*)malloc(RSLIDAR_PKT_LEN);
-
     difop_deadline_->expires_from_now(boost::posix_time::seconds(2));
     boost::system::error_code ec = boost::asio::error::would_block;
     std::size_t ret = 0;
@@ -278,13 +277,11 @@ inline void Input::getDifopPacket()
     } while (ec == boost::asio::error::would_block);
     if (ec)
     {
-      free(precv_buffer);
       excb_(Error(ErrCode_DifopPktTimeout));
       continue;
     }
     if (ret < RSLIDAR_PKT_LEN)
     {
-      free(precv_buffer);
       excb_(Error(ErrCode_DifopPktIncomplete));
       continue;
     }
@@ -294,8 +291,8 @@ inline void Input::getDifopPacket()
     {
       iter(msg);
     }
-    free(precv_buffer);
   }
+  free(precv_buffer);
 }
 
 inline void Input::getPcapPacket()
