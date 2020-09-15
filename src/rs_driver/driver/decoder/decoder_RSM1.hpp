@@ -417,7 +417,7 @@ RSDecoderResult DecoderRSM1<vpoint>::decodeDifopPkt(const uint8_t* pkt)
   {
     bool cali_param_flag = false;
     // check difop reigon has been flashed the right data
-    for (int i = 9; i < 20; ++i)
+    for (int i = 8; i < 20; ++i)
     {
       if ((difop_ptr->cali_param[i].data[0] != 0x00 || difop_ptr->cali_param[i].data[1] != 0x00))
       {
