@@ -35,7 +35,7 @@ enum LidarType  ///< The lidar type
   RSBP = 3,
   RS128 = 4,
   RS80 = 5,
-  RSM1 = 6
+  RSM1 = 11
 };
 
 enum SplitFrameMode

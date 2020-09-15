@@ -419,16 +419,14 @@ inline void LidarDriverImpl<T_Point>::processMsop()
   while (msop_pkt_queue_.size() > 0)
   {
     PacketMsg pkt = msop_pkt_queue_.popFront();
-    std::vector<T_Point> pointcloud_one_packet;
     int height = 1;
-    int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), pointcloud_one_packet, height);
+    int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), *point_cloud_ptr_, height);
     scan_ptr_->packets.emplace_back(std::move(pkt));
     if ((ret == DECODE_OK || ret == FRAME_SPLIT))
     {
-      point_cloud_ptr_->insert(point_cloud_ptr_->end(), pointcloud_one_packet.begin(), pointcloud_one_packet.end());
       if (ret == FRAME_SPLIT)
       {
-        PointCloudMsg<T_Point> msg(point_cloud_ptr_);
+        PointCloudMsg<T_Point> msg(point_cloud_transform_func_(point_cloud_ptr_, height));
         msg.height = height;
         msg.width = point_cloud_ptr_->size() / msg.height;
         setPointCloudMsgHeader(msg);
