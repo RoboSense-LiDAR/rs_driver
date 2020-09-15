@@ -123,6 +123,7 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
   std::string frame_id = "rslidar";        ///< The frame id of lidar message
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   bool wait_for_difop = true;              ///< true: start sending point cloud until receive difop packet
+  bool saved_by_rows=false;                ///< true: the output point cloud will be saved by rows (default is saved by columns)
   void print() const                       ///< This function is used to print all the parameters for debugging
   {
     input_param.print();

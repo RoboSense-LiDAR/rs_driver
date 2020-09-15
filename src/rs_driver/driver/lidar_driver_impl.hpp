@@ -61,8 +61,9 @@ private:
   void msopCallback(const PacketMsg& msg);
   void difopCallback(const PacketMsg& msg);
   void processMsop();
-  void localCameraTriggerCallback(const CameraTrigger& msg);
   void processDifop();
+  void localCameraTriggerCallback(const CameraTrigger& msg);
+  void initPointCloudTransFunc();
   void setScanMsgHeader(ScanMsg& msg);
   void setPointCloudMsgHeader(PointCloudMsg<T_Point>& msg);
 
@@ -78,6 +79,7 @@ private:
   std::shared_ptr<DecoderBase<T_Point>> lidar_decoder_ptr_;
   std::shared_ptr<Input> input_ptr_;
   std::shared_ptr<ScanMsg> scan_ptr_;
+  std::shared_ptr<ThreadPool> thread_pool_ptr_;
   bool init_flag_;
   bool start_flag_;
   bool difop_flag_;
@@ -85,14 +87,19 @@ private:
   uint32_t scan_seq_;
   uint32_t ndifop_count_;
   RSDriverParam driver_param_;
+  std::function<typename PointCloudMsg<T_Point>::PointCloudPtr(const typename PointCloudMsg<T_Point>::PointCloudPtr,
+                                                               const size_t& height)>
+      point_cloud_transform_func_;
   typename PointCloudMsg<T_Point>::PointCloudPtr point_cloud_ptr_;
-  std::shared_ptr<ThreadPool> thread_pool_ptr_;
 };
 
 template <typename T_Point>
 inline LidarDriverImpl<T_Point>::LidarDriverImpl()
   : init_flag_(false), start_flag_(false), difop_flag_(false), point_cloud_seq_(0), scan_seq_(0), ndifop_count_(0)
 {
+  thread_pool_ptr_ = std::make_shared<ThreadPool>();
+  point_cloud_ptr_ = std::make_shared<typename PointCloudMsg<T_Point>::PointCloud>();
+  scan_ptr_ = std::make_shared<ScanMsg>();
 }
 
 template <typename T_Point>
@@ -118,10 +125,8 @@ inline bool LidarDriverImpl<T_Point>::init(const RSDriverParam& param)
   {
     return false;
   }
-  thread_pool_ptr_ = std::make_shared<ThreadPool>();
-  point_cloud_ptr_ = typename PointCloudMsg<T_Point>::PointCloudPtr(new typename PointCloudMsg<T_Point>::PointCloud);
-  scan_ptr_ = std::make_shared<ScanMsg>();
   init_flag_ = true;
+  initPointCloudTransFunc();
   return true;
 }
 
@@ -133,10 +138,42 @@ inline void LidarDriverImpl<T_Point>::initDecoderOnly(const RSDriverParam& param
     return;
   }
   driver_param_ = param;
-  thread_pool_ptr_ = std::make_shared<ThreadPool>();
-  point_cloud_ptr_ = typename PointCloudMsg<T_Point>::PointCloudPtr(new typename PointCloudMsg<T_Point>::PointCloud);
-  scan_ptr_ = std::make_shared<ScanMsg>();
   init_flag_ = true;
+  initPointCloudTransFunc();
+}
+
+template <typename T_Point>
+inline void LidarDriverImpl<T_Point>::initPointCloudTransFunc()
+{
+  if (driver_param_.saved_by_rows)
+  {
+    point_cloud_transform_func_ = [](const typename PointCloudMsg<T_Point>::PointCloudPtr input_ptr,
+                                     const size_t& height) -> typename PointCloudMsg<T_Point>::PointCloudPtr
+    {
+      typename PointCloudMsg<T_Point>::PointCloudPtr row_major_ptr =
+          std::make_shared<typename PointCloudMsg<T_Point>::PointCloud>();
+      row_major_ptr->resize(input_ptr->size());
+      size_t width = input_ptr->size() / height;
+#pragma omp parallel for
+      for (size_t i = 0; i < height; i++)
+      {
+        for (size_t j = 0; j < width; j++)
+        {
+          row_major_ptr->at(i * width + j) = input_ptr->at(j * height + i);
+        }
+      }
+
+      return row_major_ptr;
+    };
+  }
+  else
+  {
+    point_cloud_transform_func_ = [](const typename PointCloudMsg<T_Point>::PointCloudPtr input_ptr,
+                                     const size_t& height) -> typename PointCloudMsg<T_Point>::PointCloudPtr
+    {
+      return input_ptr;
+    };
+  }
 }
 
 template <typename T_Point>
@@ -218,7 +255,7 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
   }
 
   typename PointCloudMsg<T_Point>::PointCloudPtr output_point_cloud_ptr =
-      typename PointCloudMsg<T_Point>::PointCloudPtr(new typename PointCloudMsg<T_Point>::PointCloud);
+      std::make_shared<typename PointCloudMsg<T_Point>::PointCloud>();
   if (!difop_flag_ && driver_param_.wait_for_difop)
   {
     ndifop_count_++;
@@ -263,7 +300,7 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
     output_point_cloud_ptr->insert(output_point_cloud_ptr->end(), iter.begin(), iter.end());
   }
 
-  point_cloud_msg.point_cloud_ptr = output_point_cloud_ptr;
+  point_cloud_msg.point_cloud_ptr = point_cloud_transform_func_(output_point_cloud_ptr, height);
   point_cloud_msg.height = height;
   point_cloud_msg.width = point_cloud_msg.point_cloud_ptr->size() / point_cloud_msg.height;
   setPointCloudMsgHeader(point_cloud_msg);
