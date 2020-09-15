@@ -25,6 +25,7 @@
 #define RSBP_PCAP_SLEEP_DURATION 500
 #define RS128_PCAP_SLEEP_DURATION 100
 #define RS80_PCAP_SLEEP_DURATION 120
+#define RSM1_PCAP_SLEEP_DURATION 100  // TODO zbx
 
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
@@ -318,6 +319,10 @@ inline void Input::getPcapPacket()
       case LidarType::RS80:
         usleep(RS80_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
         break;
+      case LidarType::RSM1:
+        usleep(RSM1_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
+        break;
+
       default:
         break;
     }

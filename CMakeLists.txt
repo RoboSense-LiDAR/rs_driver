@@ -4,7 +4,7 @@ project(rs_driver)
 #=============================
 #  Compile Demos (TRUE/FALSE)
 #=============================
-set(COMPILE_DEMOS FASLE)
+set(COMPILE_DEMOS TRUE)
 
 #========================
 #  Setup Version Number

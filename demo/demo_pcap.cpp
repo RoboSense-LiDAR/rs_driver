@@ -58,18 +58,18 @@ int main(int argc, char* argv[])
 {
   RS_TITLE << "------------------------------------------------------" << RS_REND;
   RS_TITLE << "            RS_Driver Core Version: V " << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
-        << RSLIDAR_VERSION_PATCH << RS_REND;
+           << RSLIDAR_VERSION_PATCH << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
   LidarDriver<PointXYZI> driver;  ///< Declare the driver object
 
-  RSDriverParam param;                                             ///< Create a parameter object
-  param.input_param.read_pcap = true;                              ///< Set read_pcap to true
-  param.input_param.pcap_path = "/home/robosense/rs16.pcap";  ///< Set the pcap file directory
+  RSDriverParam param;                                         ///< Create a parameter object
+  param.input_param.read_pcap = true;                          ///< Set read_pcap to true
+  param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap file directory
   param.input_param.device_ip = "192.168.1.200";  ///< Set the lidar ip address, the default is 192.168.1.200
   param.input_param.msop_port = 6699;             ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;            ///< Set the lidar difop port number, the default is 7788
-  param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct
+  param.lidar_type = LidarType::RSM1;             ///< Set the lidar type. Make sure this type is correct
   param.print();
 
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
