@@ -539,7 +539,6 @@ inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
   timestamp.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
   return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
 }
-
 template <typename T_Point>
 template <typename T_Msop>
 inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
@@ -553,8 +552,9 @@ inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
   stm.tm_hour = mpkt_ptr->header.timestamp.hour;
   stm.tm_min = mpkt_ptr->header.timestamp.minute;
   stm.tm_sec = mpkt_ptr->header.timestamp.second;
+
   return std::mktime(&stm) + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms) / 1000.0 +
-         (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0 - __timezone;
+         (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0 - timezone;
 }
 
 template <typename T_Point>
