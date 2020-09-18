@@ -37,7 +37,7 @@ namespace lidar
     : std::true_type                                                                                                   \
   {                                                                                                                    \
   };
-#define HAS_MEMBER(C, member) has_##member<C>::value
+#define RS_HAS_MEMBER(C, member) has_##member<C>::value
 DEFINE_MEMBER_CHECKER(x)
 DEFINE_MEMBER_CHECKER(y)
 DEFINE_MEMBER_CHECKER(z)
@@ -288,7 +288,7 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
   }
 
   /* Point time function*/
-  if (HAS_MEMBER(T_Point, timestamp))  ///< return the timestamp of the first block in one packet
+  if (RS_HAS_MEMBER(T_Point, timestamp))  ///< return the timestamp of the first block in one packet
   {
     if (this->param_.use_lidar_clock)
     {
@@ -572,45 +572,45 @@ inline void DecoderBase<T_Point>::sortBeamTable()
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!HAS_MEMBER(T_Point, x)>::type setX(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, x)>::type setX(T_Point& point, const double& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<HAS_MEMBER(T_Point, x)>::type setX(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, x)>::type setX(T_Point& point, const double& value)
 {
   point.x = value;
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!HAS_MEMBER(T_Point, y)>::type setY(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, y)>::type setY(T_Point& point, const double& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<HAS_MEMBER(T_Point, y)>::type setY(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, y)>::type setY(T_Point& point, const double& value)
 {
   point.y = value;
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!HAS_MEMBER(T_Point, z)>::type setZ(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, z)>::type setZ(T_Point& point, const double& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<HAS_MEMBER(T_Point, z)>::type setZ(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, z)>::type setZ(T_Point& point, const double& value)
 {
   point.z = value;
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point, const double& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point, const double& value)
 {
   point.intensity = value;
   if (std::isnan(point.intensity))
@@ -620,23 +620,23 @@ inline typename std::enable_if<HAS_MEMBER(T_Point, intensity)>::type setIntensit
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const int& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const int& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const int& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const int& value)
 {
   point.ring = value;
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point, const double& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point, const double& value)
 {
   point.timestamp = value;
 }
