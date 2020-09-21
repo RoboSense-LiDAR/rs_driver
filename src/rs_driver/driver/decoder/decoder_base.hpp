@@ -98,7 +98,7 @@ typedef struct
 typedef struct
 {
   uint8_t sec[6];
-  unsigned int ns;
+  uint32_t ns;
 } RSTimestampUTC;
 
 typedef struct
