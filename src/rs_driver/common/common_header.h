@@ -81,10 +81,10 @@ typedef std::pair<std::string, double> CameraTrigger;
 /*Output style*/
 #ifndef RS_INFOL
 #if defined(_WIN32) || defined(_WIN64)
-inline std::ostream& _RS_INFOL(std::ostream& stream)
+inline std::ostream& _RS_INFOL()
 {
   setConsoleColor(FOREGROUND_GREEN);
-  return stream;
+  return std::cout;
 }
 #define RS_INFOL _RS_INFOL()
 #else
@@ -94,10 +94,10 @@ inline std::ostream& _RS_INFOL(std::ostream& stream)
 
 #ifndef RS_INFO
 #if defined(_WIN32) || defined(_WIN64)
-inline std::ostream& _RS_INFO(std::ostream& stream)
+inline std::ostream& _RS_INFO()
 {
   setConsoleColor(FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-  return stream;
+  return std::cout;
 }
 #define RS_INFO _RS_INFO()
 #else
@@ -107,11 +107,12 @@ inline std::ostream& _RS_INFO(std::ostream& stream)
 
 #ifndef RS_WARNING
 #if defined(_WIN32) || defined(_WIN64)
-inline std::ostream& RS_WARNING(std::ostream& stream)
+inline std::ostream& _RS_WARNING()
 {
   setConsoleColor(FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY);
-  return stream;
+  return std::cout;
 }
+#define RS_WARNING _RS_WARNING()
 #else
 #define RS_WARNING (std::cout << "\033[1m\033[33m")
 #endif
@@ -119,11 +120,12 @@ inline std::ostream& RS_WARNING(std::ostream& stream)
 
 #ifndef RS_ERROR
 #if defined(_WIN32) || defined(_WIN64)
-inline std::ostream& RS_ERROR(std::ostream& stream)
+inline std::ostream& _RS_ERROR()
 {
   setConsoleColor(FOREGROUND_RED | FOREGROUND_INTENSITY);
-  return stream;
+  return std::cout;
 }
+#define RS_ERROR _RS_ERROR()
 #else
 #define RS_ERROR (std::cout << "\033[1m\033[31m")
 #endif
@@ -131,11 +133,12 @@ inline std::ostream& RS_ERROR(std::ostream& stream)
 
 #ifndef RS_DEBUG
 #if defined(_WIN32) || defined(_WIN64)
-inline std::ostream& RS_DEBUG(std::ostream& stream)
+inline std::ostream& _RS_DEBUG()
 {
   setConsoleColor(FOREGROUND_GREEN);
-  return stream;
+  return std::cout;
 }
+#define RS_DEBUG _RS_DEBUG()
 #else
 #define RS_DEBUG (std::cout << "\033[1m\033[36m")
 #endif
@@ -156,11 +159,12 @@ inline std::ostream& _RS_TITLE()
 
 #ifndef RS_MSG
 #if defined(_WIN32) || defined(_WIN64)
-inline std::ostream& RS_MSG(std::ostream& stream)
+inline std::ostream& _RS_MSG()
 {
   setConsoleColor(FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-  return stream;
+  return std::cout;
 }
+#define RS_MSG _RS_MSG()
 #else
 #define RS_MSG (std::cout << "\033[1m\033[37m")
 #endif
