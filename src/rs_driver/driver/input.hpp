@@ -66,6 +66,9 @@ private:
   RSInputParam input_param_;
   std::function<void(const Error&)> excb_;
   bool init_flag_;
+  uint32_t msop_pkt_length_;
+  uint32_t difop_pkt_length_;
+
   /* pcap file parse */
   pcap_t* pcap_;
   bpf_program pcap_msop_filter_;
@@ -85,8 +88,19 @@ private:
 };
 
 inline Input::Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
-  : lidar_type_(LidarType::RS128), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr)
+  : lidar_type_(LidarType::RS128)
+  , input_param_(input_param)
+  , excb_(excb)
+  , init_flag_(false)
+  , msop_pkt_length_(1248)
+  , difop_pkt_length_(1248)
+  , pcap_(nullptr)
 {
+  if (lidar_type_ == LidarType::RSM1)
+  {
+    msop_pkt_length_ = 1210;
+    difop_pkt_length_ = 256;
+  }
 }
 
 inline Input::~Input()
@@ -242,14 +256,14 @@ inline bool Input::setSocket(const std::string& pkt_type)
 
 inline void Input::getMsopPacket()
 {
-  char* precv_buffer = (char*)malloc(RSLIDAR_PKT_LEN);
+  char* precv_buffer = (char*)malloc(msop_pkt_length_);
   while (msop_thread_.start_.load())
   {
     msop_deadline_->expires_from_now(boost::posix_time::seconds(1));
     boost::system::error_code ec = boost::asio::error::would_block;
     std::size_t ret = 0;
 
-    msop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, RSLIDAR_PKT_LEN),
+    msop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, msop_pkt_length_),
                                   boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
     do
     {
@@ -260,13 +274,13 @@ inline void Input::getMsopPacket()
       excb_(Error(ErrCode_MsopPktTimeout));
       continue;
     }
-    if (ret < RSLIDAR_PKT_LEN)
+    if (ret < msop_pkt_length_)
     {
       excb_(Error(ErrCode_MsopPktIncomplete));
       continue;
     }
     PacketMsg msg;
-    memcpy(msg.packet.data(), precv_buffer, RSLIDAR_PKT_LEN);
+    memcpy(msg.packet.data(), precv_buffer, msop_pkt_length_);
     for (auto& iter : msop_cb_)
     {
       iter(msg);
@@ -277,14 +291,14 @@ inline void Input::getMsopPacket()
 
 inline void Input::getDifopPacket()
 {
-  char* precv_buffer = (char*)malloc(RSLIDAR_PKT_LEN);
+  char* precv_buffer = (char*)malloc(difop_pkt_length_);
   while (difop_thread_.start_.load())
   {
     difop_deadline_->expires_from_now(boost::posix_time::seconds(2));
     boost::system::error_code ec = boost::asio::error::would_block;
     std::size_t ret = 0;
 
-    difop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, RSLIDAR_PKT_LEN),
+    difop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, difop_pkt_length_),
                                    boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
     do
     {
@@ -295,13 +309,13 @@ inline void Input::getDifopPacket()
       excb_(Error(ErrCode_DifopPktTimeout));
       continue;
     }
-    if (ret < RSLIDAR_PKT_LEN)
+    if (ret < difop_pkt_length_)
     {
       excb_(Error(ErrCode_DifopPktIncomplete));
       continue;
     }
     PacketMsg msg;
-    memcpy(msg.packet.data(), precv_buffer, RSLIDAR_PKT_LEN);
+    memcpy(msg.packet.data(), precv_buffer, difop_pkt_length_);
     for (auto& iter : difop_cb_)
     {
       iter(msg);
@@ -336,7 +350,6 @@ inline void Input::getPcapPacket()
       case LidarType::RSM1:
         usleep(RSM1_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
         break;
-
       default:
         break;
     }
@@ -349,7 +362,7 @@ inline void Input::getPcapPacket()
       if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
       {
         PacketMsg msg;
-        memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
+        memcpy(msg.packet.data(), pkt_data + 42, msop_pkt_length_);
         for (auto& iter : msop_cb_)
         {
           iter(msg);
@@ -358,7 +371,7 @@ inline void Input::getPcapPacket()
       else if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_difop_filter_, header, pkt_data)))
       {
         PacketMsg msg;
-        memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
+        memcpy(msg.packet.data(), pkt_data + 42, difop_pkt_length_);
         for (auto& iter : difop_cb_)
         {
           iter(msg);

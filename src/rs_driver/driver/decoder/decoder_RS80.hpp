@@ -35,7 +35,7 @@ typedef struct
 
 typedef struct
 {
-  unsigned int id;
+  uint32_t id;
   uint8_t reserved1[3];
   uint8_t wave_mode;
   uint8_t temp_low;
