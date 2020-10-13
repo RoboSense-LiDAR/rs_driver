@@ -92,9 +92,10 @@ typedef struct RSDecoderParam  ///< The lidar decoder parameter
 
 typedef struct RSInputParam  ///< The lidar input parameter
 {
-  std::string device_ip = "192.168.1.200";  ///< The ip of lidar
-  uint16_t msop_port = 6699;                ///< The msop packet port number
-  uint16_t difop_port = 7788;               ///< The difop packet port number
+  std::string device_ip = "192.168.1.200";     ///< The ip of lidar
+  std::string multi_cast_address = "0.0.0.0";  ///< The address of multicast
+  uint16_t msop_port = 6699;                   ///< The msop packet port number
+  uint16_t difop_port = 7788;                  ///< The difop packet port number
   bool read_pcap = false;          ///< true: The driver will process the pcap through pcap_path. false: The driver will
                                    ///< get data from online lidar
   double pcap_rate = 1;            ///< The rate to read the pcap file
@@ -105,6 +106,7 @@ typedef struct RSInputParam  ///< The lidar input parameter
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFO << "             RoboSense Input Parameters " << RS_REND;
     RS_INFOL << "device_ip: " << device_ip << RS_REND;
+    RS_INFOL << "multi_cast_address: " << multi_cast_address << RS_REND;
     RS_INFOL << "msop_port: " << msop_port << RS_REND;
     RS_INFOL << "difop_port: " << difop_port << RS_REND;
     RS_INFOL << "read_pcap: " << read_pcap << RS_REND;
@@ -123,8 +125,8 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
   std::string frame_id = "rslidar";        ///< The frame id of lidar message
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   bool wait_for_difop = true;              ///< true: start sending point cloud until receive difop packet
-  bool saved_by_rows=false;                ///< true: the output point cloud will be saved by rows (default is saved by columns)
-  void print() const                       ///< This function is used to print all the parameters for debugging
+  bool saved_by_rows = false;  ///< true: the output point cloud will be saved by rows (default is saved by columns)
+  void print() const           ///< This function is used to print all the parameters for debugging
   {
     input_param.print();
     decoder_param.print();
