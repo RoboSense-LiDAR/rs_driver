@@ -192,7 +192,7 @@ double DecoderRSM1<T_Point>::getLidarTime(const uint8_t* pkt)
 
 template <typename T_Point>
 RSDecoderResult DecoderRSM1<T_Point>::processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& pointcloud_vec,
-                                                    int& height)
+                                                     int& height)
 {
   int azimuth = 0;
   RSDecoderResult ret = decodeMsopPkt(pkt, pointcloud_vec, height, azimuth);
@@ -201,7 +201,7 @@ RSDecoderResult DecoderRSM1<T_Point>::processMsopPkt(const uint8_t* pkt, std::ve
 
 template <typename T_Point>
 RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
-                                                   int& azimuth)
+                                                    int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
   RSM1MsopPkt* mpkt_ptr = (RSM1MsopPkt*)pkt;
@@ -210,7 +210,7 @@ RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
   unsigned int pkt_cnt = RS_SWAP_SHORT(mpkt_ptr->header.pkt_cnt);
-  RS_DEBUG<<"pkt count : "<<pkt_cnt<<RS_REND;
+  RS_DEBUG << "pkt count : " << pkt_cnt << RS_REND;
   for (size_t blk_idx = 0; blk_idx < this->lidar_const_param_.BLOCKS_PER_PKT; blk_idx++)
   {
     RSM1Block blk = mpkt_ptr->blocks[blk_idx];
@@ -218,9 +218,9 @@ RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
     for (size_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
       T_Point point;
-      double x = RS_SWAP_SHORT(blk.channel[channel_idx].x);
-      double y = RS_SWAP_SHORT(blk.channel[channel_idx].y);
-      double z = RS_SWAP_SHORT(blk.channel[channel_idx].z);
+      double x = RS_SWAP_SHORT(blk.channel[channel_idx].x) * RS_RESOLUTION;
+      double y = RS_SWAP_SHORT(blk.channel[channel_idx].y) * RS_RESOLUTION;
+      double z = RS_SWAP_SHORT(blk.channel[channel_idx].z) * RS_RESOLUTION;
       double intensity = blk.channel[channel_idx].intensity;
       setX(point, x);
       setY(point, y);
