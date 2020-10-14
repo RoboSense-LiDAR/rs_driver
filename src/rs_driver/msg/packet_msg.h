@@ -37,6 +37,10 @@ struct __attribute__((aligned(16))) PacketMsg  ///< LiDAR single packet message
   PacketMsg()
   {
   }
+  PacketMsg(const PacketMsg&msg)
+  {
+    this->packet.assign(msg.packet.begin(), msg.packet.end());
+  }
   PacketMsg(const size_t& pkt_length)
   {
     packet.resize(pkt_length);
