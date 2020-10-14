@@ -265,7 +265,7 @@ inline void Input::getMsopPacket()
       excb_(Error(ErrCode_MsopPktIncomplete));
       continue;
     }
-    PacketMsg msg;
+    PacketMsg msg(RSLIDAR_PKT_LEN);
     memcpy(msg.packet.data(), precv_buffer, RSLIDAR_PKT_LEN);
     for (auto& iter : msop_cb_)
     {
@@ -300,7 +300,7 @@ inline void Input::getDifopPacket()
       excb_(Error(ErrCode_DifopPktIncomplete));
       continue;
     }
-    PacketMsg msg;
+    PacketMsg msg(RSLIDAR_PKT_LEN);
     memcpy(msg.packet.data(), precv_buffer, RSLIDAR_PKT_LEN);
     for (auto& iter : difop_cb_)
     {
@@ -348,7 +348,7 @@ inline void Input::getPcapPacket()
     {
       if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
       {
-        PacketMsg msg;
+        PacketMsg msg(RSLIDAR_PKT_LEN);
         memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
         for (auto& iter : msop_cb_)
         {
@@ -357,7 +357,7 @@ inline void Input::getPcapPacket()
       }
       else if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_difop_filter_, header, pkt_data)))
       {
-        PacketMsg msg;
+        PacketMsg msg(RSLIDAR_PKT_LEN);
         memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
         for (auto& iter : difop_cb_)
         {
