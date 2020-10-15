@@ -516,14 +516,14 @@ inline float DecoderBase<T_Point>::computeTemperature(const uint8_t& temp_low, c
 template <typename T_Point>
 inline int DecoderBase<T_Point>::azimuthCalibration(const float& azimuth, const int& channel)
 {
-  return ((int)(azimuth) + this->hori_angle_list_[channel] + RS_ONE_ROUND) % RS_ONE_ROUND;
+  return (static_cast<int>(azimuth) + this->hori_angle_list_[channel] + RS_ONE_ROUND) % RS_ONE_ROUND;
 }
 
 template <typename T_Point>
 template <typename T_Msop>
 inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
 {
-  T_Msop* mpkt_ptr = (T_Msop*)pkt;
+  T_Msop* mpkt_ptr = const_cast<T_Msop*>(reinterpret_cast<const T_Msop*>(pkt));
   union u_ts
   {
     uint8_t data[8];
@@ -537,13 +537,14 @@ inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
   timestamp.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
   timestamp.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
   timestamp.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
-  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
+  return static_cast<double>(timestamp.ts) +
+         (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
 }
 template <typename T_Point>
 template <typename T_Msop>
 inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
 {
-  T_Msop* mpkt_ptr = (T_Msop*)pkt;
+  T_Msop* mpkt_ptr = const_cast<T_Msop*>(reinterpret_cast<const T_Msop*>(pkt));
   std::tm stm;
   memset(&stm, 0, sizeof(stm));
   stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
@@ -553,8 +554,8 @@ inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
   stm.tm_min = mpkt_ptr->header.timestamp.minute;
   stm.tm_sec = mpkt_ptr->header.timestamp.second;
 
-  return std::mktime(&stm) + (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms) / 1000.0 +
-         (double)RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us) / 1000000.0 - timezone;
+  return std::mktime(&stm) + static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms)) / 1000.0 +
+         static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us)) / 1000000.0 - timezone;
 }
 
 template <typename T_Point>
@@ -605,12 +606,14 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, z)>::type setZ(T_Point& po
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point,
+                                                                                      const double& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point,
+                                                                                     const double& value)
 {
   point.intensity = value;
   if (std::isnan(point.intensity))
@@ -631,12 +634,14 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, ring)>::type setRing(T_Poi
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point,
+                                                                                      const double& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point,
+                                                                                     const double& value)
 {
   point.timestamp = value;
 }

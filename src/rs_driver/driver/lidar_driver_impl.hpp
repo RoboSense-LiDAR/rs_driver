@@ -305,6 +305,10 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
   point_cloud_msg.width = point_cloud_msg.point_cloud_ptr->size() / point_cloud_msg.height;
   setPointCloudMsgHeader(point_cloud_msg);
   point_cloud_msg.timestamp = scan_msg.timestamp;
+  if(driver_param_.lidar_type==LidarType::RS32)
+  {
+    point_cloud_msg.timestamp+=10000;
+  }
   if (point_cloud_msg.point_cloud_ptr->size() == 0)
   {
     reportError(Error(ErrCode_ZeroPoints));
