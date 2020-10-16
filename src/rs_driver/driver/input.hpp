@@ -20,14 +20,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#define RS16_PCAP_SLEEP_DURATION 1150.0
-#define RS32_PCAP_SLEEP_DURATION 500.0
-#define RSBP_PCAP_SLEEP_DURATION 500.0
-#define RS128_PCAP_SLEEP_DURATION 100.0
-#define RS80_PCAP_SLEEP_DURATION 120.0
-#define RSM1_PCAP_SLEEP_DURATION 100.0  // TODO zbx
-
-#include <winuser.h>
+///< 1.0 second / 10 Hz / (360 degree / horiz angle resolution / column per msop packet) * (s to us)
+constexpr double RS16_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (360.0 / 0.2 / (2.0 * 12.0 )) * 1e6; ///< us
+constexpr double RS32_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;          ///< us
+constexpr double RSBP_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;          ///< us
+constexpr double RS128_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 3.0) * 1e6;           ///< us
+constexpr double RS80_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (360.0 / 0.2 / 3.0) * 1e6;           ///< us
+constexpr double RSM1_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (15750.0 / 25) * 1e6;                ///< us  // TODO zbx
 
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
@@ -72,6 +71,7 @@ private:
   pcap_t* pcap_;
   bpf_program pcap_msop_filter_;
   bpf_program pcap_difop_filter_;
+  std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration> last_packet_time_;
   /* live socket */
   std::unique_ptr<udp::socket> msop_sock_ptr_;
   std::unique_ptr<udp::socket> difop_sock_ptr_;
@@ -89,6 +89,7 @@ private:
 inline Input::Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
   : lidar_type_(LidarType::RS128), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr)
 {
+  last_packet_time_ = std::chrono::system_clock::now();
 }
 
 inline Input::~Input()
@@ -318,7 +319,7 @@ inline void Input::getPcapPacket()
   {
     struct pcap_pkthdr* header;
     const u_char* pkt_data;
-    auto time2go = std::chrono::system_clock::now();
+    auto time2go = last_packet_time_;
 
     switch (lidar_type_)
     {
@@ -346,9 +347,15 @@ inline void Input::getPcapPacket()
     }
     while (time2go > std::chrono::system_clock::now())
     {
-      __nop();
-      __nop();
+      #ifdef _MSC_VER
+        __nop();
+        __nop();
+      #else
+        asm("nop");
+        asm("nop");
+      #endif
     }
+    last_packet_time_ = std::chrono::system_clock::now();
 
     if (!pcap_thread_.start_.load())
     {

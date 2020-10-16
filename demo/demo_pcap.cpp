@@ -25,8 +25,8 @@
 #include <pcl/visualization/pcl_visualizer.h>
 using namespace robosense::lidar;
 
-std::shared_ptr<pcl::visualization::PCLVisualizer> pcl_viewer(new pcl::visualization::PCLVisualizer("RSPointCloudViewe"
-                                                                                                    "r"));
+using namespace pcl::visualization;
+std::shared_ptr<PCLVisualizer> pcl_viewer(new PCLVisualizer("RSPointCloudViewer"));
 std::mutex mex_viewer;
 
 /**
@@ -44,7 +44,7 @@ void pointCloudCallback(const PointCloudMsg<pcl::PointXYZI>& msg)
   pcl_pointcloud->height = msg.height;
   pcl_pointcloud->width = msg.width;
   pcl_pointcloud->is_dense = false;
-  pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZI> point_color_handle(pcl_pointcloud, "intensity");
+  PointCloudColorHandlerGenericField<pcl::PointXYZI> point_color_handle(pcl_pointcloud, "intensity");
   {
     const std::lock_guard<std::mutex> lock(mex_viewer);
     pcl_viewer->updatePointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
@@ -65,7 +65,7 @@ void exceptionCallback(const Error& code)
 int main(int argc, char* argv[])
 {
   RS_TITLE << "------------------------------------------------------" << RS_REND;
-  RS_TITLE << "            RS_Driver Core Version: V " << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
+  RS_TITLE << "            RS_Driver Core Version: v" << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
            << RSLIDAR_VERSION_PATCH << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
@@ -73,18 +73,16 @@ int main(int argc, char* argv[])
   pcl_viewer->addCoordinateSystem(1.0);
   pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
   pcl_viewer->addPointCloud<pcl::PointXYZI>(pcl_pointcloud, "rslidar");
-  pcl_viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "rslidar");
+  pcl_viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 2, "rslidar");
 
   LidarDriver<pcl::PointXYZI> driver;  ///< Declare the driver object
 
   RSDriverParam param;                 ///< Create a parameter object
   param.input_param.read_pcap = true;  ///< Set read_pcap to true
-  param.input_param.pcap_path =
-      "C:\\Users\\HaoQ_\\Desktop\\data\\LM5963\\LM5963-2019-09-24-12-42-06.pcap";  ///< Set the pcap file
+  param.input_param.pcap_path ="/home/xzd/项目/驱动/测试数据/16.pcap";  ///< Set the pcap file
                                                                                    ///< directory
-  param.angle_path = "C:\\Users\\HaoQ_\\Desktop\\data\\LM5963\\angle.csv";
   param.input_param.device_ip = "192.168.1.200";  ///< Set the lidar ip address, the default is 192.168.1.200
-  param.input_param.msop_port = 5963;             ///< Set the lidar msop port number, the default is 6699
+  param.input_param.msop_port = 6699;             ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;            ///< Set the lidar difop port number, the default is 7788
   param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct
   param.input_param.pcap_rate = 1;

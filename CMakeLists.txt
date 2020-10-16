@@ -72,22 +72,27 @@ set(INSTALL_PKGCONFIG_DIR ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
 #========================
 #  Dependencies Setup
 #========================
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
 if(COMPILE_DEMOS)
-  set(OPENNI_LIBRARY "C:\\Program Files\\OpenNI2\\Lib\\")
-  set(OPENNI_INCLUDE_DIRS "C:\\Program Files\\OpenNI2\\Include\\")
+  if (WIN32)
+    set(OPENNI_LIBRARY "C:\\Program Files\\OpenNI2\\Lib\\")
+    set(OPENNI_INCLUDE_DIRS "C:\\Program Files\\OpenNI2\\Include\\")
+  endif()
+  set(Boost_USE_STATIC_LIBS ON)
+  set(Boost_USE_MULTITHREADED ON)
+  set(Boost_USE_STATIC_RUNTIME OFF)
   find_package(PCL COMPONENTS common visualization io REQUIRED)
   if(PCL_FOUND)
     include_directories(${PCL_INCLUDE_DIRS})
     add_definitions(${PCL_DEFINITIONS})
     link_directories(${PCL_LIBRARY_DIRS})
   endif()
+else()
+# otherwise use pcl's boost
+# set (BOOST_ROOT "c:\\boost_1_55_0")
+  find_package(Boost COMPONENTS system date_time regex REQUIRED)
+  include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
-#set (BOOST_ROOT "c:\\boost_1_55_0")
-#find_package(Boost COMPONENTS system date_time regex REQUIRED)
 find_package( OpenMP QUIET)
 if(OPENMP_FOUND)
   message(=============================================================)
@@ -97,7 +102,6 @@ if(OPENMP_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS"${CMAKE_EXE_LINKER_FLAGS}${OpenMP_EXE_LINKER_FLAGS}")
 endif()
-include_directories(${Boost_INCLUDE_DIRS})
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   set(LIBPCAP_ROOT C:\\local\\libpcap-master\\install\\x64-Release)
@@ -123,7 +127,7 @@ endif()
 #  Build Demos
 #========================
 if(${COMPILE_DEMOS})
-add_subdirectory(${PROJECT_SOURCE_DIR}/demo)
+  add_subdirectory(${PROJECT_SOURCE_DIR}/demo)
 endif(${COMPILE_DEMOS})
 
 #========================
