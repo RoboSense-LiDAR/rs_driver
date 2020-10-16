@@ -28,7 +28,7 @@
 #include <fstream>
 #include <sstream>
 #include <ctime>
-#define _USE_MATH_DEFINES  // ensure no other head file include math.h but not set this marco
+#define _USE_MATH_DEFINES 
 #include <cmath>
 #include <memory>
 #include <array>
@@ -50,8 +50,8 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <rs_driver/macro/version.h>
 /*Linux*/
-#ifdef __GNUC__
-#include <arpa/inet.h>
+#ifdef __linux__
+#include <arpa/inet.h>  
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
