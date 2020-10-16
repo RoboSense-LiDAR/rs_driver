@@ -61,7 +61,10 @@ set(INSTALL_PKGCONFIG_DIR ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
 #========================
 #  Dependencies Setup
 #========================
-find_package(Boost COMPONENTS system REQUIRED)
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+find_package(Boost COMPONENTS system date_time regex REQUIRED)
 find_package( OpenMP QUIET)
 if(OPENMP_FOUND)
   message(=============================================================)
@@ -85,9 +88,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
 elseif((CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
- 
 endif()
-list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES} pcap pthread)
+list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES} pcap)
 
 #========================
 #  Build Demos

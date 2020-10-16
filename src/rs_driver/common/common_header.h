@@ -58,6 +58,16 @@
 #include <unistd.h>
 #endif
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <io.h>
+#include <windows.h>
+inline void setConsoleColor(WORD c)
+{
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+  SetConsoleTextAttribute(hConsole, c);
+}
+#endif
+
 /*Pcap*/
 #include <pcap.h>
 
@@ -70,27 +80,102 @@ typedef std::pair<std::string, double> CameraTrigger;
 #endif
 /*Output style*/
 #ifndef RS_INFOL
+#if defined(_WIN32) || defined(_WIN64)
+inline std::ostream& _RS_INFOL(std::ostream& stream)
+{
+  setConsoleColor(FOREGROUND_GREEN);
+  return stream;
+}
+#define RS_INFOL _RS_INFOL()
+#else
 #define RS_INFOL (std::cout << "\033[32m")
 #endif
+#endif
+
 #ifndef RS_INFO
+#if defined(_WIN32) || defined(_WIN64)
+inline std::ostream& _RS_INFO(std::ostream& stream)
+{
+  setConsoleColor(FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+  return stream;
+}
+#define RS_INFO _RS_INFO()
+#else
 #define RS_INFO (std::cout << "\033[1m\033[32m")
 #endif
+#endif
+
 #ifndef RS_WARNING
+#if defined(_WIN32) || defined(_WIN64)
+inline std::ostream& RS_WARNING(std::ostream& stream)
+{
+  setConsoleColor(FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY);
+  return stream;
+}
+#else
 #define RS_WARNING (std::cout << "\033[1m\033[33m")
 #endif
+#endif
+
 #ifndef RS_ERROR
+#if defined(_WIN32) || defined(_WIN64)
+inline std::ostream& RS_ERROR(std::ostream& stream)
+{
+  setConsoleColor(FOREGROUND_RED | FOREGROUND_INTENSITY);
+  return stream;
+}
+#else
 #define RS_ERROR (std::cout << "\033[1m\033[31m")
 #endif
+#endif
+
 #ifndef RS_DEBUG
+#if defined(_WIN32) || defined(_WIN64)
+inline std::ostream& RS_DEBUG(std::ostream& stream)
+{
+  setConsoleColor(FOREGROUND_GREEN);
+  return stream;
+}
+#else
 #define RS_DEBUG (std::cout << "\033[1m\033[36m")
 #endif
+#endif
+
 #ifndef RS_TITLE
+#if defined(_WIN32) || defined(_WIN64)
+inline std::ostream& _RS_TITLE()
+{
+  setConsoleColor(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY);
+  return std::cout;
+}
+#define RS_TITLE _RS_TITLE()
+#else
 #define RS_TITLE (std::cout << "\033[1m\033[35m")
 #endif
+#endif
+
 #ifndef RS_MSG
+#if defined(_WIN32) || defined(_WIN64)
+inline std::ostream& RS_MSG(std::ostream& stream)
+{
+  setConsoleColor(FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+  return stream;
+}
+#else
 #define RS_MSG (std::cout << "\033[1m\033[37m")
 #endif
+#endif
+
 #ifndef RS_REND
+#if defined(_WIN32) || defined(_WIN64)
+inline std::ostream& RS_REND(std::ostream& stream)
+{
+  stream << std::endl;
+  setConsoleColor(-1);
+  return stream;
+}
+#else
 #define RS_REND "\033[0m" << std::endl
 #endif
 
+#endif
