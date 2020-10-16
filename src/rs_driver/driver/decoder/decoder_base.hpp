@@ -553,9 +553,8 @@ inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
   stm.tm_hour = mpkt_ptr->header.timestamp.hour;
   stm.tm_min = mpkt_ptr->header.timestamp.minute;
   stm.tm_sec = mpkt_ptr->header.timestamp.second;
-
   return std::mktime(&stm) + static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms)) / 1000.0 +
-         static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us)) / 1000000.0 - timezone;
+         static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us)) / 1000000.0 -  static_cast<double>(timezone);
 }
 
 template <typename T_Point>

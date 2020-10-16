@@ -20,12 +20,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
-#define RS16_PCAP_SLEEP_DURATION 1150
-#define RS32_PCAP_SLEEP_DURATION 500
-#define RSBP_PCAP_SLEEP_DURATION 500
-#define RS128_PCAP_SLEEP_DURATION 100
-#define RS80_PCAP_SLEEP_DURATION 120
-#define RSM1_PCAP_SLEEP_DURATION 100  // TODO zbx
+#define RS16_PCAP_SLEEP_DURATION 1150.0
+#define RS32_PCAP_SLEEP_DURATION 500.0
+#define RSBP_PCAP_SLEEP_DURATION 500.0
+#define RS128_PCAP_SLEEP_DURATION 100.0
+#define RS80_PCAP_SLEEP_DURATION 120.0
+#define RSM1_PCAP_SLEEP_DURATION 100.0  // TODO zbx
 
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
@@ -319,22 +319,22 @@ inline void Input::getPcapPacket()
     switch (lidar_type_)
     {
       case LidarType::RS16:
-        usleep(RS16_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
+        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RS16_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
         break;
       case LidarType::RS32:
-        usleep(RS32_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
+        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RS32_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
         break;
       case LidarType::RSBP:
-        usleep(RSBP_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
+        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RSBP_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
         break;
       case LidarType::RS128:
-        usleep(RS128_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
+        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RS128_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
         break;
       case LidarType::RS80:
-        usleep(RS80_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
+        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RS80_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
         break;
       case LidarType::RSM1:
-        usleep(RSM1_PCAP_SLEEP_DURATION / input_param_.pcap_rate);
+        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RSM1_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
         break;
 
       default:

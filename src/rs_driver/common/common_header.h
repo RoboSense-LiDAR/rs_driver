@@ -28,7 +28,8 @@
 #include <fstream>
 #include <sstream>
 #include <ctime>
-#include <math.h>
+#define _USE_MATH_DEFINES  // ensure no other head file include math.h but not set this marco
+#include <cmath>
 #include <memory>
 #include <array>
 #include <algorithm>

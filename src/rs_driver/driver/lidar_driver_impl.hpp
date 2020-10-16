@@ -265,7 +265,7 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
       ndifop_count_ = 0;
     }
     point_cloud_msg.point_cloud_ptr = output_point_cloud_ptr;
-    usleep(10000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     return false;
   }
 
@@ -411,7 +411,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
       reportError(Error(ErrCode_NoDifopRecv));
       ndifop_count_ = 0;
     }
-    usleep(10000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     msop_pkt_queue_.clear();
     msop_pkt_queue_.is_task_finished_.store(true);
     return;
@@ -455,7 +455,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     else
     {
       reportError(Error(ErrCode_WrongPktHeader));
-      usleep(100000);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   }
   msop_pkt_queue_.is_task_finished_.store(true);
