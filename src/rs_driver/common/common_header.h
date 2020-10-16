@@ -58,7 +58,7 @@
 #include <unistd.h>
 #endif
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 #include <io.h>
 #include <windows.h>
 inline void setConsoleColor(WORD c)
@@ -80,7 +80,7 @@ typedef std::pair<std::string, double> CameraTrigger;
 #endif
 /*Output style*/
 #ifndef RS_INFOL
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 inline std::ostream& _RS_INFOL()
 {
   setConsoleColor(FOREGROUND_GREEN);
@@ -93,7 +93,7 @@ inline std::ostream& _RS_INFOL()
 #endif
 
 #ifndef RS_INFO
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 inline std::ostream& _RS_INFO()
 {
   setConsoleColor(FOREGROUND_GREEN | FOREGROUND_INTENSITY);
@@ -106,7 +106,7 @@ inline std::ostream& _RS_INFO()
 #endif
 
 #ifndef RS_WARNING
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 inline std::ostream& _RS_WARNING()
 {
   setConsoleColor(FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY);
@@ -119,7 +119,7 @@ inline std::ostream& _RS_WARNING()
 #endif
 
 #ifndef RS_ERROR
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 inline std::ostream& _RS_ERROR()
 {
   setConsoleColor(FOREGROUND_RED | FOREGROUND_INTENSITY);
@@ -132,7 +132,7 @@ inline std::ostream& _RS_ERROR()
 #endif
 
 #ifndef RS_DEBUG
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 inline std::ostream& _RS_DEBUG()
 {
   setConsoleColor(FOREGROUND_GREEN);
@@ -145,7 +145,7 @@ inline std::ostream& _RS_DEBUG()
 #endif
 
 #ifndef RS_TITLE
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 inline std::ostream& _RS_TITLE()
 {
   setConsoleColor(FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY);
@@ -158,7 +158,7 @@ inline std::ostream& _RS_TITLE()
 #endif
 
 #ifndef RS_MSG
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 inline std::ostream& _RS_MSG()
 {
   setConsoleColor(FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
@@ -171,7 +171,7 @@ inline std::ostream& _RS_MSG()
 #endif
 
 #ifndef RS_REND
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 inline std::ostream& RS_REND(std::ostream& stream)
 {
   stream << std::endl;
