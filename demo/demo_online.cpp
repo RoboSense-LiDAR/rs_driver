@@ -21,34 +21,26 @@
  *****************************************************************************/
 
 #include "rs_driver/api/lidar_driver.h"
-#include <pcl/point_types.h>
-#include <pcl/visualization/pcl_visualizer.h>
 using namespace robosense::lidar;
 
-using namespace pcl::visualization;
-std::shared_ptr<PCLVisualizer> pcl_viewer(new PCLVisualizer("RSPointCloudViewer"));
-std::mutex mex_viewer;
+struct PointXYZI  ///< user defined point type
+{
+  float x;
+  float y;
+  float z;
+  float intensity;
+};
 
 /**
  * @brief The point cloud callback function. This function will be registered to lidar driver.
  *              When the point cloud message is ready, driver can send out messages through this function.
  * @param msg  The lidar point cloud message.
  */
-void pointCloudCallback(const PointCloudMsg<pcl::PointXYZI>& msg)
+void pointCloudCallback(const PointCloudMsg<PointXYZI>& msg)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the message and process it in another thread is recommended*/
   RS_MSG << "msg: " << msg.seq << " point cloud size: " << msg.point_cloud_ptr->size() << RS_REND;
-  pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl_pointcloud->points.assign(msg.point_cloud_ptr->begin(), msg.point_cloud_ptr->end());
-  pcl_pointcloud->height = msg.height;
-  pcl_pointcloud->width = msg.width;
-  pcl_pointcloud->is_dense = false;
-  PointCloudColorHandlerGenericField<pcl::PointXYZI> point_color_handle(pcl_pointcloud, "intensity");
-  {
-    const std::lock_guard<std::mutex> lock(mex_viewer);
-    pcl_viewer->updatePointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
-  }
 }
 
 /**
@@ -66,16 +58,10 @@ int main(int argc, char* argv[])
 {
   RS_TITLE << "------------------------------------------------------" << RS_REND;
   RS_TITLE << "            RS_Driver Core Version: v" << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
-        << RSLIDAR_VERSION_PATCH << RS_REND;
+           << RSLIDAR_VERSION_PATCH << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
-  pcl_viewer->setBackgroundColor(0.0, 0.0, 0.0);
-  pcl_viewer->addCoordinateSystem(1.0);
-  pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl_viewer->addPointCloud<pcl::PointXYZI>(pcl_pointcloud, "rslidar");
-  pcl_viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 2, "rslidar");
-
-  LidarDriver<pcl::PointXYZI> driver;  ///< Declare the driver object
+  LidarDriver<PointXYZI> driver;  ///< Declare the driver object
 
   RSDriverParam param;                  ///< Create a parameter object
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
@@ -93,13 +79,9 @@ int main(int argc, char* argv[])
   driver.start();  ///< The driver thread will start
   RS_DEBUG << "RoboSense Lidar-Driver Linux online demo start......" << RS_REND;
 
-  while (!pcl_viewer->wasStopped())
+  while (true)
   {
-    {
-      const std::lock_guard<std::mutex> lock(mex_viewer);
-      pcl_viewer->spinOnce();
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<long long>(100)));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 
   return 0;
