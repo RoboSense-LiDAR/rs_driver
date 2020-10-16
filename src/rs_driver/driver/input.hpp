@@ -27,6 +27,8 @@
 #define RS80_PCAP_SLEEP_DURATION 120.0
 #define RSM1_PCAP_SLEEP_DURATION 100.0  // TODO zbx
 
+#include <winuser.h>
+
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
 #include <rs_driver/driver/driver_param.h>
@@ -316,30 +318,38 @@ inline void Input::getPcapPacket()
   {
     struct pcap_pkthdr* header;
     const u_char* pkt_data;
+    auto time2go = std::chrono::system_clock::now();
+
     switch (lidar_type_)
     {
       case LidarType::RS16:
-        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RS16_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
+        time2go += std::chrono::microseconds(static_cast<long long>(RS16_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
       case LidarType::RS32:
-        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RS32_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
+        time2go += std::chrono::microseconds(static_cast<long long>(RS32_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
       case LidarType::RSBP:
-        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RSBP_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
+        time2go += std::chrono::microseconds(static_cast<long long>(RSBP_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
       case LidarType::RS128:
-        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RS128_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
+        time2go += std::chrono::microseconds(static_cast<long long>(RS128_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
       case LidarType::RS80:
-        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RS80_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
+        time2go += std::chrono::microseconds(static_cast<long long>(RS80_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
       case LidarType::RSM1:
-        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<long long>(RSM1_PCAP_SLEEP_DURATION / input_param_.pcap_rate)));
+        time2go += std::chrono::microseconds(static_cast<long long>(RSM1_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
 
       default:
         break;
     }
+    while (time2go > std::chrono::system_clock::now())
+    {
+      __nop();
+      __nop();
+    }
+
     if (!pcap_thread_.start_.load())
     {
       break;
@@ -384,7 +394,7 @@ inline void Input::getPcapPacket()
       }
     }
   }
-}
+}  // namespace lidar
 
 inline void Input::checkDifopDeadline()
 {
@@ -413,5 +423,5 @@ inline void Input::handleReceive(const boost::system::error_code& ec, std::size_
   *out_length = length;
 }
 
-}  // namespace lidar
+}  // namespace robosense
 }  // namespace robosense

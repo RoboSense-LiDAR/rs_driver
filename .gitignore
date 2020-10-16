@@ -2,4 +2,5 @@ build
 .vscode
 version.h
 .vs
+CMakeSettings.json
 

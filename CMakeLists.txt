@@ -21,18 +21,29 @@ string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
 cmake_policy(SET CMP0048 NEW)
-
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+if (POLICY CMP0074) 
+  cmake_policy(SET CMP0074 NEW)
 endif()
+set(CMAKE_BUILD_TYPE Release)
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   message(=============================================================)
   message("-- Cmake run for msvc")
   message(=============================================================)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi /MTd")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /MT")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2")
+  set(CompilerFlags
+    CMAKE_CXX_FLAGS                       CMAKE_C_FLAGS
+    CMAKE_CXX_FLAGS_DEBUG                 CMAKE_C_FLAGS_DEBUG
+    CMAKE_CXX_FLAGS_RELEASE               CMAKE_C_FLAGS_RELEASE
+	CMAKE_CXX_FLAGS_MINSIZEREL            CMAKE_C_FLAGS_MINSIZEREL
+	CMAKE_CXX_FLAGS_RELWITHDEBINFO        CMAKE_C_FLAGS_RELWITHDEBINFO
+  )
+  foreach(CompilerFlag ${CompilerFlags})
+    string(REPLACE "/MT" "/MD" ${CompilerFlag} "${${CompilerFlag}}")
+  endforeach()
   add_compile_definitions(_DISABLE_EXTENDED_ALIGNED_STORAGE) # to disable a msvc error
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:100000000")
 elseif((CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
   message(=============================================================)
@@ -42,7 +53,7 @@ elseif((CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 else()
-  message(FATAL_ERROR "Unsupported compiler. ")
+  message(FATAL_ERROR "Unsupported compiler.")
 endif()
 
 configure_file (
@@ -64,7 +75,19 @@ set(INSTALL_PKGCONFIG_DIR ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost COMPONENTS system date_time regex REQUIRED)
+if(COMPILE_DEMOS)
+  set(OPENNI_LIBRARY "C:\\Program Files\\OpenNI2\\Lib\\")
+  set(OPENNI_INCLUDE_DIRS "C:\\Program Files\\OpenNI2\\Include\\")
+  find_package(PCL COMPONENTS common visualization io REQUIRED)
+  if(PCL_FOUND)
+    include_directories(${PCL_INCLUDE_DIRS})
+    add_definitions(${PCL_DEFINITIONS})
+    link_directories(${PCL_LIBRARY_DIRS})
+  endif()
+endif()
+
+#set (BOOST_ROOT "c:\\boost_1_55_0")
+#find_package(Boost COMPONENTS system date_time regex REQUIRED)
 find_package( OpenMP QUIET)
 if(OPENMP_FOUND)
   message(=============================================================)
@@ -89,7 +112,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 elseif((CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
 endif()
-list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES} pcap)
+
+if(PCL_FOUND)
+  list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES} ${PCL_LIBRARIES} pcap)
+else()
+  list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES} pcap)
+endif()
 
 #========================
 #  Build Demos
