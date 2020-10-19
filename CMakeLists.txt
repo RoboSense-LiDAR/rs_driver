@@ -7,12 +7,12 @@ project(rs_driver VERSION 1.2.1)
 #=============================
 set(COMPILE_DEMOS TRUE)
 set(COMPILE_TOOLS TRUE)
-
 #========================
 #  Project setup
 #========================
 string(TOUPPER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_UPPER)
 string(TOLOWER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_LOWER)
+add_definitions(-D_USE_MATH_DEFINES)
 add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
 set(CMAKE_BUILD_TYPE Release)
 configure_file (
@@ -105,12 +105,14 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 list(APPEND EXTERNAL_LIBS pcap)
 
+
 if(WIN32)
-include_directories(Q:/Downloads/WpdPack_4_1_2/WpdPack/Include)
-link_directories(Q:/Downloads/WpdPack_4_1_2/WpdPack/Lib/x64)
+ include_directories(Q:/Downloads/WpdPack_4_1_2/WpdPack/Include)
+ link_directories(Q:/Downloads/WpdPack_4_1_2/WpdPack/Lib/x64)
+endif()
+if(WIN32)
 list(APPEND EXTERNAL_LIBS wpcap ws2_32 wsock32)
 endif()
-
 #========================
 #  Build Demos
 #========================
