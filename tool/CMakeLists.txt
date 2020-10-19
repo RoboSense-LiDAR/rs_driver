@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(rs_driver_viewer)
+message(=============================================================)
+message("-- Start to compile tools")
+message(=============================================================)
 include_directories(${PROJECT_SOURCE_DIR}/../src)
 if(WIN32)
     cmake_policy(SET CMP0074 NEW)

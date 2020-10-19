@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(rs_driver_demos)
+message(=============================================================)
+message("-- Start to compile demos")
+message(=============================================================)
 include_directories(${PROJECT_SOURCE_DIR}/../src)
 add_executable(demo_online
               demo_online.cpp

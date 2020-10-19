@@ -134,43 +134,41 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     RS_INFOL << "             RoboSense Driver Parameters " << RS_REND;
     RS_INFOL << "angle_path: " << angle_path << RS_REND;
     RS_INFOL << "frame_id: " << frame_id << RS_REND;
-
+    RS_INFOL << "lidar_type: ";
+    RS_INFO << lidarTypeToStr(lidar_type) << RS_REND;
+    RS_INFOL << "------------------------------------------------------" << RS_REND;
+  }
+  std::string lidarTypeToStr(const LidarType& type) const
+  {
+    std::string str = "";
     switch (lidar_type)
     {
       case LidarType::RS16:
-        RS_INFOL << "lidar_type: ";
-        RS_INFO << "RS16" << RS_REND;
+        str = "RS16";
         break;
       case LidarType::RS32:
-        RS_INFOL << "lidar_type: ";
-        RS_INFO << "RS32" << RS_REND;
+        str = "RS32";
         break;
       case LidarType::RSBP:
-        RS_INFOL << "lidar_type: ";
-        RS_INFO << "RSBP" << RS_REND;
+        str = "RSBP";
         break;
       case LidarType::RS128:
-        RS_INFOL << "lidar_type: ";
-        RS_INFO << "RS128" << RS_REND;
+        str = "RS128";
         break;
       case LidarType::RS80:
-        RS_INFOL << "lidar_type: ";
-        RS_INFO << "RS80" << RS_REND;
+        str = "RS80";
         break;
       case LidarType::RSM1:
-        RS_INFOL << "lidar_type: ";
-        RS_INFO << "RSM1" << RS_REND;
+        str = "RSM1";
         break;
       case LidarType::RSAUTO:
-        RS_INFOL << "lidar_type: ";
-        RS_INFO << "RSAUTO" << RS_REND;
+        str = "RSAUTO";
         break;
       default:
-        RS_INFOL << "lidar_type: ";
+        str = "ERROR";
         RS_ERROR << "RS_ERROR" << RS_REND;
     }
-
-    RS_INFOL << "------------------------------------------------------" << RS_REND;
+    return str;
   }
   LidarType strToLidarType(const std::string& type)
   {
