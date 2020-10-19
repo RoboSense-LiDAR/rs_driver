@@ -246,7 +246,7 @@ double DecoderRSM1<vpoint>::getLidarTime(const uint8_t* pkt)
   timestamp.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
   timestamp.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
   timestamp.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
-  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
+  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0;
 }
 template <typename vpoint>
 RSDecoderResult DecoderRSM1<vpoint>::processMsopPkt(const uint8_t* pkt, std::vector<vpoint>& pointcloud_vec,

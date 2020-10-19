@@ -60,6 +60,7 @@ bool parseArgument(int argc, const char* const* argv, const char* str, std::stri
 
 void parseParam(int argc, char* argv[], RSDriverParam& param)
 {
+  param.wait_for_difop=false;
   std::string lidar_type;
   std::string msop_port;
   std::string difop_port;
