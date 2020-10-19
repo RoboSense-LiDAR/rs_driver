@@ -14,13 +14,17 @@ add_definitions(${PCL_DEFINITIONS})
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 if(PCL_FOUND)
-add_executable(viewer
+add_executable(rs_driver_viewer
                rs_driver_viewer.cpp
               )
-target_link_libraries(viewer
+target_link_libraries(rs_driver_viewer
                     ${EXTERNAL_LIBS}    
                     ${PCL_LIBRARIES}   
 )
 else()
-message("PCL Not found! Can not compile rs_driver viewer!")
+message("PCL Not found! Can not compile rs_driver_viewer!")
 endif()
+
+install(TARGETS rs_driver_viewer
+        RUNTIME DESTINATION /usr/bin
+)     

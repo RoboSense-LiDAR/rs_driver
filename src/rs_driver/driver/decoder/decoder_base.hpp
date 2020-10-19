@@ -648,7 +648,6 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimes
 inline const std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func)
 {
   std::vector<double> temp_table = std::vector<double>(RS_ONE_ROUND, 0.0);
-#pragma omp parallel for
   for (size_t i = 0; i < RS_ONE_ROUND; i++)
   {
     const double rad = RS_TO_RADS(static_cast<double>(i) / 100.0);

@@ -155,9 +155,9 @@ inline void LidarDriverImpl<T_Point>::initPointCloudTransFunc()
       row_major_ptr->resize(input_ptr->size());
       size_t width = input_ptr->size() / height;
 #pragma omp parallel for
-      for (size_t i = 0; i < height; i++)
+      for (int i = 0; i < static_cast<int>(height); i++)
       {
-        for (size_t j = 0; j < width; j++)
+        for (int j = 0; j < static_cast<int>(width); j++)
         {
           row_major_ptr->at(i * width + j) = input_ptr->at(j * height + i);
         }
@@ -273,7 +273,7 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
   int height = 1;
   pointcloud_one_frame.resize(scan_msg.packets.size());
 #pragma omp parallel for
-  for (uint32_t i = 0; i < scan_msg.packets.size(); i++)
+  for (int i = 0; i < static_cast<int>(scan_msg.packets.size()); i++)
   {
     std::vector<T_Point> pointcloud_one_packet;
     RSDecoderResult ret =

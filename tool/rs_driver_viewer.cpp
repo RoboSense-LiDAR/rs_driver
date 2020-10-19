@@ -25,8 +25,20 @@
 #include <pcl/visualization/pcl_visualizer.h>
 using namespace robosense::lidar;
 using namespace pcl::visualization;
-std::shared_ptr<PCLVisualizer> pcl_viewer(new PCLVisualizer("RSPointCloudViewer"));
+std::shared_ptr<PCLVisualizer> pcl_viewer;
 std::mutex mex_viewer;
+
+bool checkKeywordExist(int argc, const char* const* argv, const char* str)
+{
+  for (int i = 1; i < argc; i++)
+  {
+    if (strcmp(argv[i], str) == 0)
+    {
+      return true;
+    }
+  }
+  return false;
+}
 
 bool parseArgument(int argc, const char* const* argv, const char* str, std::string& val)
 {
@@ -64,10 +76,23 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
   {
     param.input_param.difop_port = std::stoi(difop_port);
   }
-  if (parseArgument(argc, argv, "-p", param.input_param.pcap_path))
+  if (parseArgument(argc, argv, "-pcap", param.input_param.pcap_path))
   {
     param.input_param.read_pcap = true;
   }
+}
+
+void printHelpMenu()
+{
+  RS_MSG << "Options are: " << RS_REND;
+  RS_MSG << "        -ip               = LiDAR ip address,the default value is 192.168.1.200" << RS_REND;
+  RS_MSG << "        -msop             = LiDAR msop port number,the default value is 6699" << RS_REND;
+  RS_MSG << "        -difop            = LiDAR difop port number,the default value is 7788" << RS_REND;
+  RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80 ), the default value is RS16"
+         << RS_REND;
+  RS_MSG << "        -pcap             = The path of the pcap file, if this argument is set, the driver "
+            "will work in offline mode and read the pcap file. Otherwise the driver work in online mode."
+         << RS_REND;
 }
 
 void printParam(const RSDriverParam& param)
@@ -75,23 +100,23 @@ void printParam(const RSDriverParam& param)
   if (param.input_param.read_pcap)
   {
     RS_INFOL << "Working mode: ";
-    RS_MSG << "Offline Pcap " << RS_REND;
+    RS_INFO << "Offline Pcap " << RS_REND;
     RS_INFOL << "Pcap Path: ";
-    RS_MSG << param.input_param.pcap_path << RS_REND;
+    RS_INFO << param.input_param.pcap_path << RS_REND;
   }
   else
   {
     RS_INFOL << "Working mode: ";
-    RS_MSG << "Online LiDAR " << RS_REND;
+    RS_INFO << "Online LiDAR " << RS_REND;
   }
   RS_INFOL << "Device IP Address: ";
-  RS_MSG << param.input_param.device_ip << RS_REND;
+  RS_INFO << param.input_param.device_ip << RS_REND;
   RS_INFOL << "MSOP Port: ";
-  RS_MSG << param.input_param.msop_port << RS_REND;
+  RS_INFO << param.input_param.msop_port << RS_REND;
   RS_INFOL << "DIFOP Port: ";
-  RS_MSG << param.input_param.difop_port << RS_REND;
+  RS_INFO << param.input_param.difop_port << RS_REND;
   RS_INFOL << "LiDAR Type: ";
-  RS_MSG << param.lidarTypeToStr(param.lidar_type) << RS_REND;
+  RS_INFO << param.lidarTypeToStr(param.lidar_type) << RS_REND;
 }
 /**
  * @brief The point cloud callback function. This function will be registered to lidar driver.
@@ -132,6 +157,17 @@ int main(int argc, char* argv[])
            << RSLIDAR_VERSION_PATCH << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
+  if (argc < 2)
+  {
+    RS_INFOL << "Use 'rs_driver_viewer -h/--help' to check the option menu..." << RS_REND;
+  }
+  if (checkKeywordExist(argc, argv, "-h") || checkKeywordExist(argc, argv, "--help"))
+  {
+    printHelpMenu();
+    return 0;
+  }
+  pcl_viewer = std::make_shared<PCLVisualizer>("RSPointCloudViewer");
+
   pcl_viewer->setBackgroundColor(0.0, 0.0, 0.0);
   pcl_viewer->addCoordinateSystem(1.0);
   pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
@@ -139,8 +175,7 @@ int main(int argc, char* argv[])
   pcl_viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 2, "rslidar");
 
   LidarDriver<pcl::PointXYZI> driver;  ///< Declare the driver object
-
-  RSDriverParam param;  ///< Create a parameter object
+  RSDriverParam param;                 ///< Create a parameter object
   parseParam(argc, argv, param);
   printParam(param);
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
@@ -151,7 +186,7 @@ int main(int argc, char* argv[])
     return -1;
   }
   driver.start();  ///< The driver thread will start
-  RS_DEBUG << "RoboSense Lidar-Driver Viewer start......" << RS_REND;
+  RS_INFO << "RoboSense Lidar-Driver Viewer start......" << RS_REND;
 
   while (!pcl_viewer->wasStopped())
   {

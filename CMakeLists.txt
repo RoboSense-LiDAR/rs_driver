@@ -119,8 +119,6 @@ endif(${COMPILE_TOOLS})
 #========================
 #  Installation
 #========================        
-set(CONF_INCLUDE_DIRS ${INSTALL_DRIVER_DIR})
-
 configure_file(
   ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}Config.cmake.in
   ${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${CMAKE_PROJECT_NAME}Config.cmake @ONLY
