@@ -65,7 +65,7 @@ set(INSTALL_PKGCONFIG_DIR ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
 #========================
 #  OpenMP
 #========================
-find_package(OpenMP QUIET)
+find_package( OpenMP QUIET)
 if(OPENMP_FOUND)
   message(=============================================================)
   message("-- OpenMP Found, OpenMP support is turned On!")
@@ -104,6 +104,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 list(APPEND EXTERNAL_LIBS pcap)
+
+if(WIN32)
+include_directories(Q:/Downloads/WpdPack_4_1_2/WpdPack/Include)
+link_directories(Q:/Downloads/WpdPack_4_1_2/WpdPack/Lib/x64)
+list(APPEND EXTERNAL_LIBS wpcap ws2_32 wsock32)
+endif()
 
 #========================
 #  Build Demos
