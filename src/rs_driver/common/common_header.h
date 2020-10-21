@@ -20,6 +20,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 #pragma once
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES 
+#endif
 /*Common*/
 #include <cstdint>
 #include <string>
@@ -28,7 +31,6 @@
 #include <fstream>
 #include <sstream>
 #include <ctime>
-#define _USE_MATH_DEFINES 
 #include <cmath>
 #include <memory>
 #include <array>

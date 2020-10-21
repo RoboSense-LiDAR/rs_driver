@@ -107,6 +107,7 @@ inline LidarDriverImpl<T_Point>::~LidarDriverImpl()
 {
   stop();
   thread_pool_ptr_.reset();
+  input_ptr_.reset();
 }
 
 template <typename T_Point>

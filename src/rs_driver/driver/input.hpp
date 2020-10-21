@@ -99,6 +99,10 @@ inline Input::~Input()
   {
     pcap_close(pcap_);
   }
+  msop_sock_ptr_.reset();
+  difop_sock_ptr_.reset();
+  msop_deadline_.reset();
+  difop_deadline_.reset();
 }
 
 inline bool Input::init()

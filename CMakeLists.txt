@@ -12,8 +12,10 @@ set(COMPILE_TOOLS TRUE)
 #========================
 string(TOUPPER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_UPPER)
 string(TOLOWER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_LOWER)
-add_definitions(-D_USE_MATH_DEFINES)
 add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
+if(WIN32)
+    cmake_policy(SET CMP0074 NEW)
+endif()
 set(CMAKE_BUILD_TYPE Release)
 configure_file (
   "${PROJECT_SOURCE_DIR}/src/rs_driver/macro/version.h.in"
@@ -81,10 +83,6 @@ endif()
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-set(Boost_ARCHITECTURE "-x64")
-if(WIN32)
-  set (BOOST_ROOT "c:\\boost_1_55_0")
-endif()
 find_package(Boost COMPONENTS system date_time regex REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
@@ -92,27 +90,11 @@ list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
 #========================
 #  PCAP
 #========================
-if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  set(LIBPCAP_ROOT C:\\local\\libpcap-master\\install\\x64-Release)
-  include_directories(${LIBPCAP_ROOT}\\include)
-  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message("-- link x64 version of libpcap")
-    link_directories(${LIBPCAP_ROOT}\\lib\\x64)
-  else(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message("-- link x86 version of libpcap")
-	link_directories(${LIBPCAP_ROOT}\\lib)
-  endif(CMAKE_SIZEOF_VOID_P EQUAL 8)
-endif()
-list(APPEND EXTERNAL_LIBS pcap)
+SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+find_package(PCAP REQUIRED)
+include_directories(${PCAP_INCLUDE_DIR})
+list(APPEND EXTERNAL_LIBS ${PCAP_LIBRARY})
 
-
-if(WIN32)
- include_directories(Q:/Downloads/WpdPack_4_1_2/WpdPack/Include)
- link_directories(Q:/Downloads/WpdPack_4_1_2/WpdPack/Lib/x64)
-endif()
-if(WIN32)
-list(APPEND EXTERNAL_LIBS wpcap ws2_32 wsock32)
-endif()
 #========================
 #  Build Demos
 #========================
