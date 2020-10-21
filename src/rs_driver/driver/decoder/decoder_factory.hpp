@@ -219,7 +219,7 @@ template <typename T_Point>
 inline const LidarConstantParameter DecoderFactory<T_Point>::getRSM1ConstantParam()
 {
   LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0x55AA5AA5;
+  ret_param.MSOP_ID = 0xA55AAA55;
   ret_param.DIFOP_ID = 0xA5ff005A11115555;
   ret_param.BLOCKS_PER_PKT = 25;
   ret_param.CHANNELS_PER_BLOCK = 5;

@@ -25,6 +25,8 @@ namespace robosense
 {
 namespace lidar
 {
+const uint32_t SINGLE_PKT_NUM=630;
+const uint32_t DUAL_PKT_NUM=1260;
 #pragma pack(push, 1)
 
 typedef struct
@@ -209,8 +211,7 @@ RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  unsigned int pkt_cnt = RS_SWAP_SHORT(mpkt_ptr->header.pkt_cnt);
-  RS_DEBUG << "pkt count : " << pkt_cnt << RS_REND;
+
   for (size_t blk_idx = 0; blk_idx < this->lidar_const_param_.BLOCKS_PER_PKT; blk_idx++)
   {
     RSM1Block blk = mpkt_ptr->blocks[blk_idx];
@@ -229,7 +230,11 @@ RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
       vec.emplace_back(std::move(point));
     }
   }
-
+  unsigned int pkt_cnt = RS_SWAP_SHORT(mpkt_ptr->header.pkt_cnt);
+  if (pkt_cnt == SINGLE_PKT_NUM)
+  {
+    return RSDecoderResult::FRAME_SPLIT;
+  }
   return RSDecoderResult::DECODE_OK;
 }
 
