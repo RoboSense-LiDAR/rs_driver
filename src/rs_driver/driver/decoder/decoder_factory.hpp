@@ -25,6 +25,7 @@
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
+#include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
 #include <rs_driver/driver/input.hpp>
 #include <rs_driver/msg/packet_msg.h>
 namespace robosense
@@ -52,6 +53,7 @@ private:
   static const LidarConstantParameter getRS80ConstantParam();
   static const LidarConstantParameter getRS128ConstantParam();
   static const LidarConstantParameter getRSM1ConstantParam();
+  static const LidarConstantParameter getRSHELIOSConstantParam();
 };
 
 template <typename T_Point>
@@ -111,6 +113,9 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::switchLida
       break;
     case LidarType::RSM1:
       ret_ptr = std::make_shared<DecoderRSM1<T_Point>>(param.decoder_param, getRSM1ConstantParam());
+      break;
+    case LidarType::RSHELIOS:
+      ret_ptr = std::make_shared<DecoderRSHELIOS<T_Point>>(param.decoder_param, getRSHELIOSConstantParam());
       break;
     default:
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
@@ -231,6 +236,25 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSM1ConstantPara
   // ret_param.RX = 0.03615;
   // ret_param.RY = -0.017;
   // ret_param.RZ = 0;
+  return ret_param;
+}
+
+template <typename T_Point>
+inline const LidarConstantParameter DecoderFactory<T_Point>::getRSHELIOSConstantParam()
+{
+  LidarConstantParameter ret_param;
+  ret_param.MSOP_ID = 0xA050A55A0A05AA55;
+  ret_param.DIFOP_ID = 0x555511115A00FFA5;
+  ret_param.BLOCK_ID = 0xEEFF;
+  ret_param.PKT_RATE = 1500;
+  ret_param.BLOCKS_PER_PKT = 12;
+  ret_param.CHANNELS_PER_BLOCK = 32;
+  ret_param.LASER_NUM = 32;
+  ret_param.DSR_TOFFSET = 1.0;
+  ret_param.FIRING_FREQUENCY = 0.018;
+  ret_param.RX = 0.03498;
+  ret_param.RY = -0.015;
+  ret_param.RZ = 0.0;
   return ret_param;
 }
 

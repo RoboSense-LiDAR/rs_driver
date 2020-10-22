@@ -473,7 +473,7 @@ inline void DecoderBase<T_Point>::checkTriggerAngle(const int& angle, const doub
   }
 }
 
-/* 16, 32, & BP */
+/* 16, 32, BP & RSHELIOS */
 template <typename T_Point>
 inline float DecoderBase<T_Point>::computeTemperature(const uint16_t& temp_raw)
 {

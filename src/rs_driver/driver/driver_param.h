@@ -35,7 +35,8 @@ enum LidarType  ///< The lidar type
   RSBP = 3,
   RS128 = 4,
   RS80 = 5,
-  RSM1 = 11
+  RSHELIOS = 6,
+  RSM1 = 11,
 };
 
 enum SplitFrameMode
@@ -161,6 +162,10 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
       case LidarType::RSM1:
         str = "RSM1";
         break;
+      case LidarType::RSHELIOS:
+        RS_INFOL << "lidar_type: ";
+        RS_INFO << "RSHELIOS" << RS_REND;
+        break;
       case LidarType::RSAUTO:
         str = "RSAUTO";
         break;
@@ -196,6 +201,10 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     {
       return lidar::LidarType::RSM1;
     }
+    else if (type == "RSHELIOS")
+    {
+      return lidar::LidarType::RSHELIOS;
+    }
     else if (type == "RSAUTO")
     {
       return lidar::LidarType::RSAUTO;
@@ -203,7 +212,7 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     else
     {
       RS_ERROR << "Wrong lidar type: " << type << RS_REND;
-      RS_ERROR << "Please setup the correct type: RS16, RS32, RSBP, RS128, RS80, RSM1, RSAUTO" << RS_REND;
+      RS_ERROR << "Please setup the correct type: RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS, RSAUTO" << RS_REND;
       exit(-1);
     }
   }
