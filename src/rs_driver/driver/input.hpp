@@ -30,6 +30,7 @@ constexpr double RSM1_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (15750.0 / 25) * 1e6; 
 
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
+#include <rs_driver/utility/thread_pool.hpp>
 #include <rs_driver/driver/driver_param.h>
 #include <rs_driver/msg/packet_msg.h>
 using boost::asio::deadline_timer;

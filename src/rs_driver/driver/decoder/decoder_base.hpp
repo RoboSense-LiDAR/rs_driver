@@ -21,6 +21,7 @@
  *****************************************************************************/
 #pragma once
 #include <rs_driver/common/common_header.h>
+#include <rs_driver/utility/time.h>
 #include <rs_driver/driver/driver_param.h>
 namespace robosense
 {
