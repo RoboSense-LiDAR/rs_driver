@@ -252,6 +252,11 @@ inline RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   }
   this->echo_mode_ = (RSEchoMode)dpkt_ptr->return_mode;
   this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
+  if (this->rpm_ == 0)
+  {
+    RS_WARNING << "LiDAR RPM is 0" << RS_REND;
+    this->rpm_ = 600;
+  }
   this->time_duration_between_blocks_ =
       (60 / static_cast<float>(this->rpm_)) /
       ((this->lidar_const_param_.PKT_RATE * 60 / this->rpm_) * this->lidar_const_param_.BLOCKS_PER_PKT);
