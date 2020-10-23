@@ -47,7 +47,8 @@ DEFINE_MEMBER_CHECKER(timestamp)
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
-const double RS_RESOLUTION = 0.005;
+const double RS_DIS_RESOLUTION = 0.005;
+const double RS_ANGLE_RESOLUTION = 0.01;
 const int RS_ONE_ROUND = 36000;
 /* Echo mode definition */
 enum RSEchoMode
@@ -221,6 +222,11 @@ protected:
   template <typename T_Msop>
   double calculateTimeYMD(const uint8_t* pkt);
   void sortBeamTable();
+  double checkCosTable(const int& angle);
+  double checkSinTable(const int& angle);
+
+private:
+  std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func);
 
 protected:
   const LidarConstantParameter lidar_const_param_;
@@ -245,10 +251,12 @@ protected:
   std::vector<int> hori_angle_list_;
   std::vector<std::size_t> beam_ring_table_;
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
-  static std::vector<double> cos_lookup_table_;
-  static std::vector<double> sin_lookup_table_;
   std::function<double(const uint8_t*)> get_point_time_func_;
   std::function<void(const int&, const uint8_t*)> check_camera_trigger_func_;
+
+private:
+  std::vector<double> cos_lookup_table_;
+  std::vector<double> sin_lookup_table_;
 };
 
 template <typename T_Point>
@@ -327,6 +335,10 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
   {
     check_camera_trigger_func_ = [this](const int& azimuth, const uint8_t* pkt) { return; };
   }
+
+  /* Cos & Sin look-up table*/
+  cos_lookup_table_ = initTrigonometricLookupTable([](const double rad) -> double { return std::cos(rad); });
+  sin_lookup_table_ = initTrigonometricLookupTable([](const double rad) -> double { return std::sin(rad); });
 }
 
 template <typename T_Point>
@@ -605,12 +617,14 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, z)>::type setZ(T_Point& po
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point,
+                                                                                      const double& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point,
+                                                                                     const double& value)
 {
   point.intensity = value;
   if (std::isnan(point.intensity))
@@ -631,34 +645,42 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, ring)>::type setRing(T_Poi
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point,
+                                                                                      const double& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimestamp(T_Point& point,
+                                                                                     const double& value)
 {
   point.timestamp = value;
 }
 
-inline const std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func)
+template <typename T_Point>
+inline double DecoderBase<T_Point>::checkCosTable(const int& angle)
 {
-  std::vector<double> temp_table = std::vector<double>(RS_ONE_ROUND, 0.0);
+  return cos_lookup_table_[angle + RS_ONE_ROUND];
+}
+template <typename T_Point>
+inline double DecoderBase<T_Point>::checkSinTable(const int& angle)
+{
+  return sin_lookup_table_[angle + RS_ONE_ROUND];
+}
+
+template <typename T_Point>
+inline std::vector<double>
+DecoderBase<T_Point>::initTrigonometricLookupTable(const std::function<double(const double)>& func)
+{
+  std::vector<double> temp_table = std::vector<double>(2 * RS_ONE_ROUND, 0.0);
 #pragma omp parallel for
-  for (size_t i = 0; i < RS_ONE_ROUND; i++)
+  for (int i = 0; i < 2 * RS_ONE_ROUND; i++)
   {
-    const double rad = RS_TO_RADS(static_cast<double>(i) / 100.0);
+    const double rad = RS_TO_RADS(static_cast<double>(i - RS_ONE_ROUND) * RS_ANGLE_RESOLUTION);
     temp_table[i] = func(rad);
   }
   return temp_table;
 }
-
-template <typename T_Point>
-std::vector<double> DecoderBase<T_Point>::cos_lookup_table_ =
-    initTrigonometricLookupTable([](const double rad) -> double { return std::cos(rad); });
-template <typename T_Point>
-std::vector<double> DecoderBase<T_Point>::sin_lookup_table_ =
-    initTrigonometricLookupTable([](const double rad) -> double { return std::sin(rad); });
 
 }  // namespace lidar
 }  // namespace robosense

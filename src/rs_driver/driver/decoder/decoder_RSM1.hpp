@@ -25,8 +25,9 @@ namespace robosense
 {
 namespace lidar
 {
-const uint32_t SINGLE_PKT_NUM=630;
-const uint32_t DUAL_PKT_NUM=1260;
+const uint32_t SINGLE_PKT_NUM = 630;
+const uint32_t DUAL_PKT_NUM = 1260;
+const int ANGLE_OFFSET = 32768;
 #pragma pack(push, 1)
 
 typedef struct
@@ -219,10 +220,13 @@ RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vec
     for (size_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
       T_Point point;
-      double x = RS_SWAP_SHORT(blk.channel[channel_idx].x) * RS_RESOLUTION;
-      double y = RS_SWAP_SHORT(blk.channel[channel_idx].y) * RS_RESOLUTION;
-      double z = RS_SWAP_SHORT(blk.channel[channel_idx].z) * RS_RESOLUTION;
+      double dis = RS_SWAP_SHORT(blk.channel[channel_idx].x) * RS_DIS_RESOLUTION;
+      double pitch = (RS_SWAP_SHORT(blk.channel[channel_idx].y) - ANGLE_OFFSET);
+      double yaw = (RS_SWAP_SHORT(blk.channel[channel_idx].z) - ANGLE_OFFSET);
       double intensity = blk.channel[channel_idx].intensity;
+      double x = dis * this->checkCosTable(pitch) * this->checkCosTable(yaw);
+      double y = dis * this->checkCosTable(pitch) * this->checkSinTable(yaw);
+      double z = dis * this->checkSinTable(pitch);
       setX(point, x);
       setY(point, y);
       setZ(point, z);

@@ -162,7 +162,7 @@ inline RSDecoderResult DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
                                             this->lidar_const_param_.DSR_TOFFSET *
                                             float(2 * (channel_idx % 16) + (channel_idx / 16));
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
-      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
+      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_DIS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
       int angle_vert = ((this->vert_angle_list_[channel_idx]) + RS_ONE_ROUND) % RS_ONE_ROUND;
 
@@ -172,11 +172,11 @@ inline RSDecoderResult DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
            (!this->angle_flag_ &&
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
-        double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
-                   this->lidar_const_param_.RX * this->cos_lookup_table_[angle_horiz];
-        double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
-                   this->lidar_const_param_.RX * this->sin_lookup_table_[angle_horiz];
-        double z = distance * this->sin_lookup_table_[angle_vert] + this->lidar_const_param_.RZ;
+        double x = distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) +
+                   this->lidar_const_param_.RX * this->checkCosTable(angle_horiz);
+        double y = -distance * this->checkCosTable(angle_vert) * this->checkSinTable(azi_channel_final) -
+                   this->lidar_const_param_.RX * this->checkSinTable(angle_horiz);
+        double z = distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
         double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);
