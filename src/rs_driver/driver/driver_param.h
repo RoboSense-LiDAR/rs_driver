@@ -28,14 +28,12 @@ namespace lidar
 {
 enum LidarType  ///< The lidar type
 {
-  RSAUTO = 0,  ///< If LidarType is set to RSAUTO, the driver will check the lidar type automatically.(Only support
-               ///< the LiDARs of latest version, not support Bpearl & RS80 yet.)
   RS16 = 1,
   RS32 = 2,
   RSBP = 3,
   RS128 = 4,
   RS80 = 5,
-  RSM1 = 11
+  RSM1 = 10
 };
 
 enum SplitFrameMode
@@ -161,9 +159,6 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
       case LidarType::RSM1:
         str = "RSM1";
         break;
-      case LidarType::RSAUTO:
-        str = "RSAUTO";
-        break;
       default:
         str = "ERROR";
         RS_ERROR << "RS_ERROR" << RS_REND;
@@ -196,14 +191,10 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     {
       return lidar::LidarType::RSM1;
     }
-    else if (type == "RSAUTO")
-    {
-      return lidar::LidarType::RSAUTO;
-    }
     else
     {
       RS_ERROR << "Wrong lidar type: " << type << RS_REND;
-      RS_ERROR << "Please setup the correct type: RS16, RS32, RSBP, RS128, RS80, RSM1, RSAUTO" << RS_REND;
+      RS_ERROR << "Please setup the correct type: RS16, RS32, RSBP, RS128, RS80, RSM1" << RS_REND;
       exit(-1);
     }
   }

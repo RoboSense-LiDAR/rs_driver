@@ -37,15 +37,9 @@ class DecoderFactory
 public:
   DecoderFactory() = default;
   ~DecoderFactory() = default;
-  static std::shared_ptr<DecoderBase<T_Point>> createDecoder(const LidarType& param_lidar_type,
-                                                             const RSDriverParam& param, const PacketMsg& msop_pkt_msg,
-                                                             const std::shared_ptr<Input>& input_ptr);
-  static std::shared_ptr<DecoderBase<T_Point>> createDecoder(const LidarType& param_lidar_type,
-                                                             const RSDriverParam& param, const PacketMsg& msop_pkt_msg);
+  static std::shared_ptr<DecoderBase<T_Point>> createDecoder(const RSDriverParam& param);
 
 private:
-  static std::shared_ptr<DecoderBase<T_Point>> switchLidar(const LidarType& lidar_type, const RSDriverParam& param);
-  static LidarType getLidarType(const LidarType& param_lidar_type, const PacketMsg& msop_pkt_msg);
   static const LidarConstantParameter getRS16ConstantParam();
   static const LidarConstantParameter getRS32ConstantParam();
   static const LidarConstantParameter getRSBPConstantParam();
@@ -55,44 +49,10 @@ private:
 };
 
 template <typename T_Point>
-inline std::shared_ptr<DecoderBase<T_Point>>
-DecoderFactory<T_Point>::createDecoder(const LidarType& param_lidar_type, const RSDriverParam& param,
-                                       const PacketMsg& msop_pkt_msg, const std::shared_ptr<Input>& input_ptr)
-{
-  LidarType lidar_type = getLidarType(param_lidar_type, msop_pkt_msg);
-  input_ptr->setLidarType(lidar_type);
-  return switchLidar(lidar_type, param);
-}
-
-template <typename T_Point>
-inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDecoder(const LidarType& param_lidar_type,
-                                                                                    const RSDriverParam& param,
-                                                                                    const PacketMsg& msop_pkt_msg)
-{
-  LidarType lidar_type = getLidarType(param_lidar_type, msop_pkt_msg);
-  return switchLidar(lidar_type, param);
-}
-
-template <typename T_Point>
-inline LidarType DecoderFactory<T_Point>::getLidarType(const LidarType& param_lidar_type, const PacketMsg& msop_pkt_msg)
-{
-  if (param_lidar_type == LidarType::RSAUTO)
-  {
-    RSMsopHeader* header_ptr = (RSMsopHeader*)msop_pkt_msg.packet.data();
-    return (LidarType)header_ptr->lidar_type;
-  }
-  else
-  {
-    return param_lidar_type;
-  }
-}
-
-template <typename T_Point>
-inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::switchLidar(const LidarType& lidar_type,
-                                                                                  const RSDriverParam& param)
+inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDecoder(const RSDriverParam& param)
 {
   std::shared_ptr<DecoderBase<T_Point>> ret_ptr;
-  switch (lidar_type)
+  switch (param.lidar_type)
   {
     case LidarType::RS16:
       ret_ptr = std::make_shared<DecoderRS16<T_Point>>(param.decoder_param, getRS16ConstantParam());

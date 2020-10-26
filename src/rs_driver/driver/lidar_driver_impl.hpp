@@ -118,7 +118,7 @@ inline bool LidarDriverImpl<T_Point>::init(const RSDriverParam& param)
     return false;
   }
   driver_param_ = param;
-  input_ptr_ = std::make_shared<Input>(driver_param_.input_param,
+  input_ptr_ = std::make_shared<Input>(driver_param_.lidar_type, driver_param_.input_param,
                                        std::bind(&LidarDriverImpl<T_Point>::reportError, this, std::placeholders::_1));
   input_ptr_->regRecvMsopCallback(std::bind(&LidarDriverImpl<T_Point>::msopCallback, this, std::placeholders::_1));
   input_ptr_->regRecvDifopCallback(std::bind(&LidarDriverImpl<T_Point>::difopCallback, this, std::placeholders::_1));
@@ -126,6 +126,9 @@ inline bool LidarDriverImpl<T_Point>::init(const RSDriverParam& param)
   {
     return false;
   }
+  lidar_decoder_ptr_ = DecoderFactory<T_Point>::createDecoder(driver_param_);
+  lidar_decoder_ptr_->regRecvCallback(
+      std::bind(&LidarDriverImpl<T_Point>::localCameraTriggerCallback, this, std::placeholders::_1));
   init_flag_ = true;
   initPointCloudTransFunc();
   return true;
@@ -139,6 +142,9 @@ inline void LidarDriverImpl<T_Point>::initDecoderOnly(const RSDriverParam& param
     return;
   }
   driver_param_ = param;
+  lidar_decoder_ptr_ = DecoderFactory<T_Point>::createDecoder(driver_param_);
+  lidar_decoder_ptr_->regRecvCallback(
+      std::bind(&LidarDriverImpl<T_Point>::localCameraTriggerCallback, this, std::placeholders::_1));
   init_flag_ = true;
   initPointCloudTransFunc();
 }
@@ -247,14 +253,6 @@ inline bool LidarDriverImpl<T_Point>::getLidarTemperature(double& input_temperat
 template <typename T_Point>
 inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, PointCloudMsg<T_Point>& point_cloud_msg)
 {
-  if (lidar_decoder_ptr_ == nullptr)
-  {
-    lidar_decoder_ptr_ =
-        DecoderFactory<T_Point>::createDecoder(driver_param_.lidar_type, driver_param_, scan_msg.packets[0]);
-    lidar_decoder_ptr_->regRecvCallback(
-        std::bind(&LidarDriverImpl<T_Point>::localCameraTriggerCallback, this, std::placeholders::_1));
-  }
-
   typename PointCloudMsg<T_Point>::PointCloudPtr output_point_cloud_ptr =
       std::make_shared<typename PointCloudMsg<T_Point>::PointCloud>();
   if (!difop_flag_ && driver_param_.wait_for_difop)
@@ -317,10 +315,6 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
 template <typename T_Point>
 inline void LidarDriverImpl<T_Point>::decodeDifopPkt(const PacketMsg& msg)
 {
-  if (lidar_decoder_ptr_ == nullptr)
-  {
-    return;
-  }
   lidar_decoder_ptr_->processDifopPkt(msg.packet.data());
   difop_flag_ = true;
 }
@@ -370,13 +364,6 @@ inline void LidarDriverImpl<T_Point>::reportError(const Error& error)
 template <typename T_Point>
 inline void LidarDriverImpl<T_Point>::msopCallback(const PacketMsg& msg)
 {
-  if (lidar_decoder_ptr_ == nullptr)
-  {
-    lidar_decoder_ptr_ =
-        DecoderFactory<T_Point>::createDecoder(driver_param_.lidar_type, driver_param_, msg, input_ptr_);
-    lidar_decoder_ptr_->regRecvCallback(
-        std::bind(&LidarDriverImpl<T_Point>::localCameraTriggerCallback, this, std::placeholders::_1));
-  }
   if (msop_pkt_queue_.size() > MAX_PACKETS_BUFFER_SIZE)
   {
     reportError(Error(ErrCode_PktBufOverFlow));

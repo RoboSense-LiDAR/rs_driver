@@ -21,12 +21,12 @@
  *****************************************************************************/
 #pragma once
 ///< 1.0 second / 10 Hz / (360 degree / horiz angle resolution / column per msop packet) * (s to us)
-constexpr double RS16_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (360.0 / 0.2 / (2.0 * 12.0 )) * 1e6; ///< us
-constexpr double RS32_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;          ///< us
-constexpr double RSBP_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;          ///< us
-constexpr double RS128_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 3.0) * 1e6;           ///< us
-constexpr double RS80_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (360.0 / 0.2 / 3.0) * 1e6;           ///< us
-constexpr double RSM1_PCAP_SLEEP_DURATION  = 1.0 / 10.0 / (15750.0 / 25) * 1e6;                ///< us  // TODO zbx
+constexpr double RS16_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / (2.0 * 12.0)) * 1e6;  ///< us
+constexpr double RS32_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;          ///< us
+constexpr double RSBP_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;          ///< us
+constexpr double RS128_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 3.0) * 1e6;          ///< us
+constexpr double RS80_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 3.0) * 1e6;           ///< us
+constexpr double RSM1_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (15750.0 / 25) * 1e6;                ///< us  // TODO zbx
 
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
@@ -44,14 +44,13 @@ namespace lidar
 class Input
 {
 public:
-  Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb);
+  Input(const LidarType& type, const RSInputParam& input_param, const std::function<void(const Error&)>& excb);
   ~Input();
   bool init();
   bool start();
   void stop();
   void regRecvMsopCallback(const std::function<void(const PacketMsg&)>& callback);
   void regRecvDifopCallback(const std::function<void(const PacketMsg&)>& callback);
-  void setLidarType(const LidarType& type);
 
 private:
   inline bool setSocket(const std::string& pkt_type);
@@ -87,8 +86,9 @@ private:
   std::vector<std::function<void(const PacketMsg&)>> msop_cb_;
 };
 
-inline Input::Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
-  : lidar_type_(LidarType::RS128), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr)
+inline Input::Input(const LidarType& type, const RSInputParam& input_param,
+                    const std::function<void(const Error&)>& excb)
+  : lidar_type_(type), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr)
 {
   last_packet_time_ = std::chrono::system_clock::now();
 }
@@ -194,11 +194,6 @@ inline void Input::regRecvMsopCallback(const std::function<void(const PacketMsg&
 inline void Input::regRecvDifopCallback(const std::function<void(const PacketMsg&)>& callback)
 {
   difop_cb_.emplace_back(callback);
-}
-
-inline void Input::setLidarType(const LidarType& type)
-{
-  lidar_type_ = type;
 }
 
 inline bool Input::setSocket(const std::string& pkt_type)
@@ -338,7 +333,8 @@ inline void Input::getPcapPacket()
         time2go += std::chrono::microseconds(static_cast<long long>(RSBP_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
       case LidarType::RS128:
-        time2go += std::chrono::microseconds(static_cast<long long>(RS128_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
+        time2go +=
+            std::chrono::microseconds(static_cast<long long>(RS128_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
       case LidarType::RS80:
         time2go += std::chrono::microseconds(static_cast<long long>(RS80_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
@@ -352,13 +348,13 @@ inline void Input::getPcapPacket()
     }
     while (time2go > std::chrono::system_clock::now())
     {
-      #ifdef _MSC_VER
-        __nop();
-        __nop();
-      #else
-        asm("nop");
-        asm("nop");
-      #endif
+#ifdef _MSC_VER
+      __nop();
+      __nop();
+#else
+      asm("nop");
+      asm("nop");
+#endif
     }
     last_packet_time_ = std::chrono::system_clock::now();
 
@@ -435,5 +431,5 @@ inline void Input::handleReceive(const boost::system::error_code& ec, std::size_
   *out_length = length;
 }
 
-}  // namespace robosense
+}  // namespace lidar
 }  // namespace robosense
