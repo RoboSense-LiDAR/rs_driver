@@ -96,11 +96,6 @@ inline Input::Input(const RSInputParam& input_param, const std::function<void(co
   , difop_pkt_length_(1248)
   , pcap_(nullptr)
 {
-  if (lidar_type_ == LidarType::RSM1)
-  {
-    msop_pkt_length_ = 1210;
-    difop_pkt_length_ = 256;
-  }
 }
 
 inline Input::~Input()
@@ -205,6 +200,11 @@ inline void Input::regRecvDifopCallback(const std::function<void(const PacketMsg
 inline void Input::setLidarType(const LidarType& type)
 {
   lidar_type_ = type;
+  if (lidar_type_ == LidarType::RSM1)
+  {
+    msop_pkt_length_ = 1210;
+    difop_pkt_length_ = 256;
+  }
 }
 
 inline bool Input::setSocket(const std::string& pkt_type)
