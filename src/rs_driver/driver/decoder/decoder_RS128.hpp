@@ -215,12 +215,12 @@ inline RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, 
            (!this->angle_flag_ &&
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
-        double x = distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) +
+        float x = distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) +
                    this->lidar_const_param_.RX * this->checkCosTable(angle_horiz);
-        double y = -distance * this->checkCosTable(angle_vert) * this->checkSinTable(azi_channel_final) -
+        float y = -distance * this->checkCosTable(angle_vert) * this->checkSinTable(azi_channel_final) -
                    this->lidar_const_param_.RX * this->checkSinTable(angle_horiz);
-        double z = distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
-        double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
+        float z = distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
+        uint8_t intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);
         setZ(point, z);

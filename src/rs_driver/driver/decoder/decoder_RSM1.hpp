@@ -215,15 +215,15 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
     for (size_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
       T_Point point;
-      double distance = RS_SWAP_SHORT(blk.channel[channel_idx].distance) * RS_DIS_RESOLUTION;
+      float distance = RS_SWAP_SHORT(blk.channel[channel_idx].distance) * RS_DIS_RESOLUTION;
       if (distance <= this->param_.max_distance && distance >= this->param_.min_distance)
       {
-        double pitch = (RS_SWAP_SHORT(blk.channel[channel_idx].pitch) - ANGLE_OFFSET);
-        double yaw = (RS_SWAP_SHORT(blk.channel[channel_idx].yaw) - ANGLE_OFFSET);
-        double intensity = blk.channel[channel_idx].intensity;
-        double x = distance * this->checkCosTable(pitch) * this->checkCosTable(yaw);
-        double y = distance * this->checkCosTable(pitch) * this->checkSinTable(yaw);
-        double z = distance * this->checkSinTable(pitch);
+        int pitch = RS_SWAP_SHORT(blk.channel[channel_idx].pitch) - ANGLE_OFFSET;
+        int yaw = RS_SWAP_SHORT(blk.channel[channel_idx].yaw) - ANGLE_OFFSET;
+        uint8_t intensity = blk.channel[channel_idx].intensity;
+        float x = distance * this->checkCosTable(pitch) * this->checkCosTable(yaw);
+        float y = distance * this->checkCosTable(pitch) * this->checkSinTable(yaw);
+        float z = distance * this->checkSinTable(pitch);
         setX(point, x);
         setY(point, y);
         setZ(point, z);
@@ -237,6 +237,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
         setIntensity(point, 0);
       }
       setTimestamp(point, point_time);
+      setRing(point,channel_idx+1);
       vec.emplace_back(std::move(point));
     }
   }

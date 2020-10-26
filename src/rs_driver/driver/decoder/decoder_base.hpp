@@ -223,8 +223,8 @@ protected:
   template <typename T_Msop>
   double calculateTimeYMD(const uint8_t* pkt);
   void sortBeamTable();
-  double checkCosTable(const int& angle);
-  double checkSinTable(const int& angle);
+  float checkCosTable(const int& angle);
+  float checkSinTable(const int& angle);
 
 private:
   std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func);
@@ -250,7 +250,7 @@ protected:
   float azi_diff_between_block_theoretical_;
   std::vector<int> vert_angle_list_;
   std::vector<int> hori_angle_list_;
-  std::vector<std::size_t> beam_ring_table_;
+  std::vector<uint16_t> beam_ring_table_;
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   std::function<double(const uint8_t*)> get_point_time_func_;
   std::function<void(const int&, const uint8_t*)> check_camera_trigger_func_;
@@ -590,47 +590,47 @@ inline void DecoderBase<T_Point>::sortBeamTable()
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, x)>::type setX(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, x)>::type setX(T_Point& point, const float& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<RS_HAS_MEMBER(T_Point, x)>::type setX(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, x)>::type setX(T_Point& point, const float& value)
 {
   point.x = value;
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, y)>::type setY(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, y)>::type setY(T_Point& point, const float& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<RS_HAS_MEMBER(T_Point, y)>::type setY(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, y)>::type setY(T_Point& point, const float& value)
 {
   point.y = value;
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, z)>::type setZ(T_Point& point, const double& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, z)>::type setZ(T_Point& point, const float& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<RS_HAS_MEMBER(T_Point, z)>::type setZ(T_Point& point, const double& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, z)>::type setZ(T_Point& point, const float& value)
 {
   point.z = value;
 }
 
 template <typename T_Point>
 inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point,
-                                                                                      const double& value)
+                                                                                      const uint8_t& value)
 {
 }
 
 template <typename T_Point>
 inline typename std::enable_if<RS_HAS_MEMBER(T_Point, intensity)>::type setIntensity(T_Point& point,
-                                                                                     const double& value)
+                                                                                     const uint8_t& value)
 {
   point.intensity = value;
   if (std::isnan(point.intensity))
@@ -640,12 +640,12 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, intensity)>::type setInten
 }
 
 template <typename T_Point>
-inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const int& value)
+inline typename std::enable_if<!RS_HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const uint16_t& value)
 {
 }
 
 template <typename T_Point>
-inline typename std::enable_if<RS_HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const int& value)
+inline typename std::enable_if<RS_HAS_MEMBER(T_Point, ring)>::type setRing(T_Point& point, const uint16_t& value)
 {
   point.ring = value;
 }
@@ -664,12 +664,12 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimes
 }
 
 template <typename T_Point>
-inline double DecoderBase<T_Point>::checkCosTable(const int& angle)
+inline float DecoderBase<T_Point>::checkCosTable(const int& angle)
 {
   return cos_lookup_table_[angle + RS_ONE_ROUND];
 }
 template <typename T_Point>
-inline double DecoderBase<T_Point>::checkSinTable(const int& angle)
+inline float DecoderBase<T_Point>::checkSinTable(const int& angle)
 {
   return sin_lookup_table_[angle + RS_ONE_ROUND];
 }

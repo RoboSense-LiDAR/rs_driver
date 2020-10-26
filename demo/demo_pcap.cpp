@@ -28,7 +28,7 @@ struct PointXYZI  ///< user defined point type
   float x;
   float y;
   float z;
-  float intensity;
+  uint8_t intensity;
 };
 
 /**
