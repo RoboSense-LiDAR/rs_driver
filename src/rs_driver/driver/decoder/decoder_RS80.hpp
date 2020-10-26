@@ -35,7 +35,7 @@ typedef struct
 
 typedef struct
 {
-  unsigned int id;
+  uint32_t id;
   uint8_t reserved1[3];
   uint8_t wave_mode;
   uint8_t temp_low;
@@ -213,11 +213,11 @@ inline RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
            (!this->angle_flag_ &&
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
-        double x = distance * this->cos_lookup_table_[angle_vert] * this->cos_lookup_table_[azi_channel_final] +
-                   this->lidar_const_param_.RX * this->cos_lookup_table_[angle_horiz];
-        double y = -distance * this->cos_lookup_table_[angle_vert] * this->sin_lookup_table_[azi_channel_final] -
-                   this->lidar_const_param_.RX * this->sin_lookup_table_[angle_horiz];
-        double z = distance * this->sin_lookup_table_[angle_vert] + this->lidar_const_param_.RZ;
+        double x = distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) +
+                   this->lidar_const_param_.RX * this->checkCosTable(angle_horiz);
+        double y = -distance * this->checkCosTable(angle_vert) * this->checkSinTable(azi_channel_final) -
+                   this->lidar_const_param_.RX * this->checkSinTable(angle_horiz);
+        double z = distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
         double intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
         setY(point, y);
