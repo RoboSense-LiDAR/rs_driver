@@ -6,7 +6,7 @@ struct alignas(16) PacketMsg ///< LiDAR single packet message
 {
   double timestamp = 0.0;	///< Time stamp
   std::string frame_id = ""; ///< Frame ID
-  std::array<uint8_t, RSLIDAR_PKT_LEN> packet{}; ///< Data
+  std::array<uint8_t, MECH_PKT_LEN> packet{}; ///< Data
 };
 ```
 

@@ -245,14 +245,14 @@ inline bool Input::setSocket(const std::string& pkt_type)
 
 inline void Input::getMsopPacket()
 {
-  char* precv_buffer = (char*)malloc(RSLIDAR_PKT_LEN);
+  char* precv_buffer = (char*)malloc(MECH_PKT_LEN);
   while (msop_thread_.start_.load())
   {
     msop_deadline_->expires_from_now(boost::posix_time::seconds(1));
     boost::system::error_code ec = boost::asio::error::would_block;
     std::size_t ret = 0;
 
-    msop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, RSLIDAR_PKT_LEN),
+    msop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, MECH_PKT_LEN),
                                   boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
     do
     {
@@ -263,13 +263,13 @@ inline void Input::getMsopPacket()
       excb_(Error(ErrCode_MsopPktTimeout));
       continue;
     }
-    if (ret < RSLIDAR_PKT_LEN)
+    if (ret < MECH_PKT_LEN)
     {
       excb_(Error(ErrCode_MsopPktIncomplete));
       continue;
     }
-    PacketMsg msg(RSLIDAR_PKT_LEN);
-    memcpy(msg.packet.data(), precv_buffer, RSLIDAR_PKT_LEN);
+    PacketMsg msg(MECH_PKT_LEN);
+    memcpy(msg.packet.data(), precv_buffer, MECH_PKT_LEN);
     for (auto& iter : msop_cb_)
     {
       iter(msg);
@@ -280,14 +280,14 @@ inline void Input::getMsopPacket()
 
 inline void Input::getDifopPacket()
 {
-  char* precv_buffer = (char*)malloc(RSLIDAR_PKT_LEN);
+  char* precv_buffer = (char*)malloc(MECH_PKT_LEN);
   while (difop_thread_.start_.load())
   {
     difop_deadline_->expires_from_now(boost::posix_time::seconds(2));
     boost::system::error_code ec = boost::asio::error::would_block;
     std::size_t ret = 0;
 
-    difop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, RSLIDAR_PKT_LEN),
+    difop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, MECH_PKT_LEN),
                                    boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
     do
     {
@@ -298,13 +298,13 @@ inline void Input::getDifopPacket()
       excb_(Error(ErrCode_DifopPktTimeout));
       continue;
     }
-    if (ret < RSLIDAR_PKT_LEN)
+    if (ret < MECH_PKT_LEN)
     {
       excb_(Error(ErrCode_DifopPktIncomplete));
       continue;
     }
-    PacketMsg msg(RSLIDAR_PKT_LEN);
-    memcpy(msg.packet.data(), precv_buffer, RSLIDAR_PKT_LEN);
+    PacketMsg msg(MECH_PKT_LEN);
+    memcpy(msg.packet.data(), precv_buffer, MECH_PKT_LEN);
     for (auto& iter : difop_cb_)
     {
       iter(msg);
@@ -366,8 +366,8 @@ inline void Input::getPcapPacket()
     {
       if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_msop_filter_, header, pkt_data)))
       {
-        PacketMsg msg(RSLIDAR_PKT_LEN);
-        memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
+        PacketMsg msg(MECH_PKT_LEN);
+        memcpy(msg.packet.data(), pkt_data + 42, MECH_PKT_LEN);
         for (auto& iter : msop_cb_)
         {
           iter(msg);
@@ -375,8 +375,8 @@ inline void Input::getPcapPacket()
       }
       else if (!input_param_.device_ip.empty() && (0 != pcap_offline_filter(&pcap_difop_filter_, header, pkt_data)))
       {
-        PacketMsg msg(RSLIDAR_PKT_LEN);
-        memcpy(msg.packet.data(), pkt_data + 42, RSLIDAR_PKT_LEN);
+        PacketMsg msg(MECH_PKT_LEN);
+        memcpy(msg.packet.data(), pkt_data + 42, MECH_PKT_LEN);
         for (auto& iter : difop_cb_)
         {
           iter(msg);

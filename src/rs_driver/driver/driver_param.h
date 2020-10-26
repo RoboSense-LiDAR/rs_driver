@@ -136,10 +136,10 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     RS_INFO << lidarTypeToStr(lidar_type) << RS_REND;
     RS_INFOL << "------------------------------------------------------" << RS_REND;
   }
-  std::string lidarTypeToStr(const LidarType& type) const
+  static std::string lidarTypeToStr(const LidarType& type)
   {
     std::string str = "";
-    switch (lidar_type)
+    switch (type)
     {
       case LidarType::RS16:
         str = "RS16";
@@ -165,7 +165,7 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     }
     return str;
   }
-  LidarType strToLidarType(const std::string& type)
+  static LidarType strToLidarType(const std::string& type)
   {
     if (type == "RS16")
     {
