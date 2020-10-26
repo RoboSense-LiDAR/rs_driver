@@ -524,7 +524,7 @@ template <typename T_Point>
 template <typename T_Msop>
 inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
 {
-  T_Msop* mpkt_ptr = const_cast<T_Msop*>(reinterpret_cast<const T_Msop*>(pkt));
+  const T_Msop* mpkt_ptr = reinterpret_cast<const T_Msop*>(pkt);
   union u_ts
   {
     uint8_t data[8];
@@ -549,7 +549,7 @@ inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
   long timezone = 0;
   _get_timezone(&timezone);
 #endif
-  T_Msop* mpkt_ptr = const_cast<T_Msop*>(reinterpret_cast<const T_Msop*>(pkt));
+  const T_Msop* mpkt_ptr = reinterpret_cast<const T_Msop*>(pkt);
   std::tm stm;
   memset(&stm, 0, sizeof(stm));
   stm.tm_year = mpkt_ptr->header.timestamp.year + 100;

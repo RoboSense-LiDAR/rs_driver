@@ -105,7 +105,7 @@ inline RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
                                                            int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
-  RSBPMsopPkt* mpkt_ptr = const_cast<RSBPMsopPkt*>(reinterpret_cast<const RSBPMsopPkt*>(pkt));
+  const RSBPMsopPkt* mpkt_ptr = reinterpret_cast<const RSBPMsopPkt*>(pkt);
   if (mpkt_ptr->header.id != this->lidar_const_param_.MSOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
@@ -203,7 +203,7 @@ inline RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
 template <typename T_Point>
 inline RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
-  RSBPDifopPkt* dpkt_ptr = const_cast<RSBPDifopPkt*>(reinterpret_cast<const RSBPDifopPkt*>(pkt));
+  const RSBPDifopPkt* dpkt_ptr = reinterpret_cast<const RSBPDifopPkt*>(pkt);
   if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;

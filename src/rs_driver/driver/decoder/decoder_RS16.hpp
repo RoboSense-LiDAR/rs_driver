@@ -105,7 +105,7 @@ inline RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
                                                            int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
-  RS16MsopPkt* mpkt_ptr = const_cast<RS16MsopPkt*>(reinterpret_cast<const RS16MsopPkt*>(pkt));
+  const RS16MsopPkt* mpkt_ptr = reinterpret_cast<const RS16MsopPkt*>(pkt);
   if (mpkt_ptr->header.id != this->lidar_const_param_.MSOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
@@ -198,7 +198,7 @@ inline RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
 template <typename T_Point>
 inline RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
-  RS16DifopPkt* dpkt_ptr = const_cast<RS16DifopPkt*>(reinterpret_cast<const RS16DifopPkt*>(pkt));
+  const RS16DifopPkt* dpkt_ptr = reinterpret_cast<const RS16DifopPkt*>(pkt);
   if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
@@ -218,10 +218,10 @@ inline RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       break;
   }
   this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
-  if(this->rpm_==0)
+  if (this->rpm_ == 0)
   {
-    RS_WARNING<<"LiDAR RPM is 0"<<RS_REND;
-    this->rpm_=600;
+    RS_WARNING << "LiDAR RPM is 0" << RS_REND;
+    this->rpm_ = 600;
   }
   this->time_duration_between_blocks_ =
       (60 / static_cast<float>(this->rpm_)) /

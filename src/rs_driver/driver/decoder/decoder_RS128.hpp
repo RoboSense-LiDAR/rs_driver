@@ -144,7 +144,7 @@ inline RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, 
                                                             int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
-  RS128MsopPkt* mpkt_ptr = const_cast<RS128MsopPkt*>(reinterpret_cast<const RS128MsopPkt*>(pkt));
+  const RS128MsopPkt* mpkt_ptr = reinterpret_cast<const RS128MsopPkt*>(pkt);
   if (mpkt_ptr->header.id != this->lidar_const_param_.MSOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
@@ -245,7 +245,7 @@ inline RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, 
 template <typename T_Point>
 inline RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
-  RS128DifopPkt* dpkt_ptr = const_cast<RS128DifopPkt*>(reinterpret_cast<const RS128DifopPkt*>(pkt));
+  const RS128DifopPkt* dpkt_ptr = reinterpret_cast<const RS128DifopPkt*>(pkt);
   if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
@@ -281,7 +281,7 @@ inline RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       static_cast<float>(this->pkts_per_frame_);  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
-    const uint8_t* p_ver_cali = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(dpkt_ptr->ver_angle_cali));
+    const uint8_t* p_ver_cali = reinterpret_cast<const uint8_t*>(dpkt_ptr->ver_angle_cali);
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
     {
