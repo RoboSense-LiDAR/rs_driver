@@ -104,7 +104,7 @@ template <typename T_Point>
 inline RSDecoderResult DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
                                                            int& azimuth)
 {
-  height = this->lidar_const_param_.CHANNELS_PER_BLOCK;
+  height = this->lidar_const_param_.LASER_NUM;
   const RS32MsopPkt* mpkt_ptr = reinterpret_cast<const RS32MsopPkt*>(pkt);
   if (mpkt_ptr->header.id != this->lidar_const_param_.MSOP_ID)
   {
