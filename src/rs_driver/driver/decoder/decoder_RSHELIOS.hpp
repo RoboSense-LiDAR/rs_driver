@@ -164,7 +164,7 @@ inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeMsopPkt(const uint8_t* pk
           azi_diff * this->lidar_const_param_.DSR_TOFFSET * this->lidar_const_param_.FIRING_FREQUENCY *
               ((-0.014f * static_cast<float>(channel_idx) + 1.8965f) * static_cast<float>(channel_idx) - 0.6543f);
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
-      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_RESOLUTION;
+      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_DIS_RESOLUTION;
       int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
       int angle_vert = ((this->vert_angle_list_[channel_idx]) + RS_ONE_ROUND) % RS_ONE_ROUND;
 
