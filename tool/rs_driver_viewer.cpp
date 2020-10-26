@@ -89,7 +89,7 @@ void printHelpMenu()
   RS_MSG << "        -ip               = LiDAR ip address,the default value is 192.168.1.200" << RS_REND;
   RS_MSG << "        -msop             = LiDAR msop port number,the default value is 6699" << RS_REND;
   RS_MSG << "        -difop            = LiDAR difop port number,the default value is 7788" << RS_REND;
-  RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80 ), the default value is RS16"
+  RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS ), the default value is RS16"
          << RS_REND;
   RS_MSG << "        -pcap             = The path of the pcap file, if this argument is set, the driver "
             "will work in offline mode and read the pcap file. Otherwise the driver work in online mode."

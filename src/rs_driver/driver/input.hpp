@@ -26,7 +26,8 @@ constexpr double RS32_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 
 constexpr double RSBP_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;          ///< us
 constexpr double RS128_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 3.0) * 1e6;          ///< us
 constexpr double RS80_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 3.0) * 1e6;           ///< us
-constexpr double RSM1_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (15750.0 / 25) * 1e6;                ///< us  // TODO zbx
+constexpr double RSM1_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (15750.0 / 25) * 1e6;                ///< us 
+constexpr double RSHELIOS_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;      ///< us
 
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
@@ -341,6 +342,10 @@ inline void Input::getPcapPacket()
         break;
       case LidarType::RSM1:
         time2go += std::chrono::microseconds(static_cast<long long>(RSM1_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
+        break;
+      case LidarType::RSHELIOS:
+        time2go +=
+            std::chrono::microseconds(static_cast<long long>(RSHELIOS_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
 
       default:

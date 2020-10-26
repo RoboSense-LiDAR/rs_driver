@@ -33,6 +33,7 @@ enum LidarType  ///< The lidar type
   RSBP = 3,
   RS128 = 4,
   RS80 = 5,
+  RSHELIOS = 6,
   RSM1 = 10
 };
 
@@ -159,6 +160,9 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
       case LidarType::RSM1:
         str = "RSM1";
         break;
+      case LidarType::RSHELIOS:
+        str = "RSHELIOS";
+        break;
       default:
         str = "ERROR";
         RS_ERROR << "RS_ERROR" << RS_REND;
@@ -191,10 +195,14 @@ typedef struct RSDriverParam  ///< The lidar driver parameter
     {
       return lidar::LidarType::RSM1;
     }
+    else if (type == "RSHELIOS")
+    {
+      return lidar::LidarType::RSHELIOS;
+    }
     else
     {
       RS_ERROR << "Wrong lidar type: " << type << RS_REND;
-      RS_ERROR << "Please setup the correct type: RS16, RS32, RSBP, RS128, RS80, RSM1" << RS_REND;
+      RS_ERROR << "Please setup the correct type: RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS" << RS_REND;
       exit(-1);
     }
   }
