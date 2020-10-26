@@ -57,13 +57,13 @@ else()
 endif()
 
 #========================
-#  Installation Setup
+#  Path Setup
 #========================
-SET(CMAKE_INSTALL_PREFIX /usr/local)
+set(CMAKE_INSTALL_PREFIX /usr/local)
 set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}/include)
 set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake)
-set(INSTALL_PKGCONFIG_DIR ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
-
+set(CONF_INCLUDE_DIRS ${INSTALL_DRIVER_DIR})
+set(CMAKE_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/src)
 #========================
 #  OpenMP
 #========================
@@ -107,14 +107,21 @@ if(${COMPILE_TOOLS})
 endif(${COMPILE_TOOLS})
 
 #========================
-#  Installation
-#========================        
+#  Cmake
+#========================  
+configure_file(
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}.cmake.in
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}.cmake @ONLY
+)      
 configure_file(
   ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}Config.cmake.in
-  ${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${CMAKE_PROJECT_NAME}Config.cmake @ONLY
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}Config.cmake @ONLY
 )
 
-install(FILES ${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${CMAKE_PROJECT_NAME}Config.cmake
+#========================
+#  Installation
+#========================  
+install(FILES ${PROJECT_SOURCE_DIR}/cmake/${CMAKE_PROJECT_NAME}Config.cmake
      DESTINATION ${INSTALL_CMAKE_DIR}/${CMAKE_PROJECT_NAME})
 
 install(DIRECTORY src/

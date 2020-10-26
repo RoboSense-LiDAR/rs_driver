@@ -3,4 +3,4 @@ build
 version.h
 .vs
 CMakeSettings.json
-
+.cmake
