@@ -262,14 +262,14 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     switch (dpkt_ptr->return_mode)
     {
-      case 0x02:
+      case 0x00:
         this->echo_mode_ = RSEchoMode::ECHO_DUAL;
         max_pkt_num_ = DUAL_PKT_NUM;
         break;
       case 0x01:
         this->echo_mode_ = RSEchoMode::ECHO_STRONGEST;
         break;
-      case 0x00:
+      case 0x02:
         this->echo_mode_ = RSEchoMode::ECHO_LAST;
         break;
       default:
