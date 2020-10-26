@@ -280,6 +280,7 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
   if (this->start_angle_ > RS_ONE_ROUND || this->start_angle_ < 0 || this->end_angle_ > RS_ONE_ROUND ||
       this->end_angle_ < 0)
   {
+    RS_WARNING<<"start_angle & end_angle should be in range 0~360° "<<RS_REND;
     this->start_angle_ = 0;
     this->end_angle_ = RS_ONE_ROUND;
   }
