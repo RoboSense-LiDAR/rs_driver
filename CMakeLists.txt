@@ -3,10 +3,17 @@ cmake_policy(SET CMP0048 NEW)
 project(rs_driver VERSION 1.3.0)
 
 #=============================
-#  Compile Demos&Tools (TRUE/FALSE)
+#  Compile Demos&Tools
 #=============================
-set(COMPILE_DEMOS TRUE)
-set(COMPILE_TOOLS TRUE)
+option(COMPILE_DEMOS "option for compile demos or not" OFF)
+if (COMPILE_DEMOS)
+add_definitions(-DCOMPILE_DEMOS)
+endif()
+option(COMPILE_TOOLS "option for compile tools or not" OFF)
+if (COMPILE_TOOLS)
+add_definitions(-DCOMPILE_TOOLS)
+endif()
+
 #========================
 #  Project setup
 #========================
