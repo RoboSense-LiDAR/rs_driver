@@ -105,6 +105,13 @@ typedef struct
 
 typedef struct
 {
+  uint8_t sync_mode;
+  uint8_t sync_sts;
+  RSTimestamp timestamp;
+} RSTimeInfo;
+
+typedef struct
+{
   uint64_t id;
   uint8_t reserved1[12];
   RSTimestamp timestamp;
@@ -124,6 +131,17 @@ typedef struct
   uint16_t port3;
   uint16_t port4;
 } RSEthNet;
+
+typedef struct
+{
+  uint8_t lidar_ip[4];
+  uint8_t dest_ip[4];
+  uint8_t mac_addr[6];
+  uint16_t msop_port;
+  uint16_t reserve_1;
+  uint16_t difop_port;
+  uint16_t reserve_2;
+} RSEthNetNew;
 
 typedef struct
 {
@@ -148,6 +166,15 @@ typedef struct
   uint8_t top_ver[5];
   uint8_t bottom_ver[5];
 } RSVersion;
+
+typedef struct
+{
+  uint8_t top_firmware_ver[5];
+  uint8_t bot_firmware_ver[5];
+  uint8_t bot_soft_ver[5];
+  uint8_t motor_firmware_ver[5];
+  uint8_t hw_ver[3];
+} RSVersionNew;
 
 typedef struct
 {

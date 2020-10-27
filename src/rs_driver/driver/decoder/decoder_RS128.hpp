@@ -55,45 +55,18 @@ typedef struct
 
 typedef struct
 {
-  uint8_t sync_mode;
-  uint8_t sync_sts;
-  RSTimestamp timestamp;
-} RS128TimeInfo;
-
-typedef struct
-{
-  uint8_t lidar_ip[4];
-  uint8_t dest_ip[4];
-  uint8_t mac_addr[6];
-  uint16_t msop_port;
-  uint16_t reserve_1;
-  uint16_t difop_port;
-  uint16_t reserve_2;
-} RS128EthNet;
-
-typedef struct
-{
-  uint8_t top_firmware_ver[5];
-  uint8_t bot_firmware_ver[5];
-  uint8_t bot_soft_ver[5];
-  uint8_t motor_firmware_ver[5];
-  uint8_t hw_ver[3];
-} RS128Version;
-
-typedef struct
-{
   uint64_t id;
   uint16_t rpm;
-  RS128EthNet eth;
+  RSEthNetNew eth;
   RSFOV fov;
   uint16_t reserved_0;
   uint16_t phase_lock_angle;
-  RS128Version version;
+  RSVersionNew version;
   uint8_t reserved_1[229];
   RSSn sn;
   uint16_t zero_cali;
   uint8_t return_mode;
-  RS128TimeInfo time_info;
+  RSTimeInfo time_info;
   RSStatus status;
   uint8_t reserved_2[5];
   RSDiagno diagno;
