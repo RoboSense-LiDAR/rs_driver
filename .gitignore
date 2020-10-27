@@ -1,6 +1,7 @@
 build
 .vscode
-version.h
 .vs
 CMakeSettings.json
-*.cmake
+rs_driver.cmake
+rs_driverConfig.cmake
+version.h

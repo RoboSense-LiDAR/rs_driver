@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 cmake_policy(SET CMP0048 NEW)
-project(rs_driver VERSION 1.2.1)
+project(rs_driver VERSION 1.3.0)
 
 #=============================
 #  Compile Demos&Tools (TRUE/FALSE)
@@ -10,17 +10,10 @@ set(COMPILE_TOOLS TRUE)
 #========================
 #  Project setup
 #========================
-string(TOUPPER ${CMAKE_PROJECT_NAME} PROJECT_NAME_UPPER)
-string(TOLOWER ${CMAKE_PROJECT_NAME} PROJECT_NAME_LOWER)
-add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
 if(WIN32)
     cmake_policy(SET CMP0074 NEW)
 endif()
 set(CMAKE_BUILD_TYPE Release)
-configure_file (
-  "${PROJECT_SOURCE_DIR}/src/rs_driver/macro/version.h.in"
-  "${PROJECT_SOURCE_DIR}/src/rs_driver/macro/version.h"
-)
 
 #========================
 #  Platform cross setup
@@ -62,8 +55,7 @@ endif()
 set(CMAKE_INSTALL_PREFIX /usr/local)
 set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}/include)
 set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake)
-set(CONF_INCLUDE_DIRS ${INSTALL_DRIVER_DIR})
-set(CMAKE_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/src)
+set(CMAKE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
 #========================
 #  OpenMP
 #========================
@@ -90,7 +82,7 @@ list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
 #========================
 #  PCAP
 #========================
-SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(PCAP REQUIRED)
 include_directories(${PCAP_INCLUDE_DIR})
 list(APPEND EXTERNAL_LIBS ${PCAP_LIBRARY})
@@ -99,29 +91,34 @@ list(APPEND EXTERNAL_LIBS ${PCAP_LIBRARY})
 #  Build Demos
 #========================
 if(${COMPILE_DEMOS})
-  add_subdirectory(${PROJECT_SOURCE_DIR}/demo)
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/demo)
 endif(${COMPILE_DEMOS})
 
 if(${COMPILE_TOOLS})
-  add_subdirectory(${PROJECT_SOURCE_DIR}/tool)
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tool)
 endif(${COMPILE_TOOLS})
 
 #========================
 #  Cmake
 #========================  
 configure_file(
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}.cmake.in
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}.cmake @ONLY
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/rs_driver.cmake.in
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/rs_driver.cmake
 )      
 configure_file(
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}Config.cmake.in
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}Config.cmake @ONLY
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/rs_driverConfig.cmake.in
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/rs_driverConfig.cmake
+)
+
+configure_file (
+  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.h.in
+  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.h
 )
 
 #========================
 #  Installation
 #========================  
-install(FILES ${PROJECT_SOURCE_DIR}/cmake/${CMAKE_PROJECT_NAME}Config.cmake
+install(FILES ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}Config.cmake
      DESTINATION ${INSTALL_CMAKE_DIR}/${CMAKE_PROJECT_NAME})
 
 install(DIRECTORY src/
