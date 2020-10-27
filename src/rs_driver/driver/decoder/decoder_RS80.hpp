@@ -187,9 +187,9 @@ inline RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
         float x = distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) +
-                   this->lidar_const_param_.RX * this->checkCosTable(angle_horiz);
+                  this->lidar_const_param_.RX * this->checkCosTable(angle_horiz);
         float y = -distance * this->checkCosTable(angle_vert) * this->checkSinTable(azi_channel_final) -
-                   this->lidar_const_param_.RX * this->checkSinTable(angle_horiz);
+                  this->lidar_const_param_.RX * this->checkSinTable(angle_horiz);
         float z = distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
         uint8_t intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
@@ -220,7 +220,7 @@ inline RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->echo_mode_ = (RSEchoMode)dpkt_ptr->return_mode;
+  this->echo_mode_ = this->getEchoMode(true, dpkt_ptr->return_mode);
   this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
   if (this->rpm_ == 0)
   {

@@ -54,7 +54,7 @@ const int RS_ONE_ROUND = 36000;
 /* Echo mode definition */
 enum RSEchoMode
 {
-  ECHO_LAST = 1,
+  ECHO_LAST,
   ECHO_STRONGEST,
   ECHO_DUAL
 };
@@ -252,6 +252,7 @@ protected:
   void sortBeamTable();
   float checkCosTable(const int& angle);
   float checkSinTable(const int& angle);
+  RSEchoMode getEchoMode(const bool& new_version, const uint8_t& return_mode);
 
 private:
   std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func);
@@ -315,7 +316,7 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
   if (this->start_angle_ > RS_ONE_ROUND || this->start_angle_ < 0 || this->end_angle_ > RS_ONE_ROUND ||
       this->end_angle_ < 0)
   {
-    RS_WARNING<<"start_angle & end_angle should be in range 0~360° "<<RS_REND;
+    RS_WARNING << "start_angle & end_angle should be in range 0~360° " << RS_REND;
     this->start_angle_ = 0;
     this->end_angle_ = RS_ONE_ROUND;
   }
@@ -688,6 +689,48 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimes
                                                                                      const double& value)
 {
   point.timestamp = value;
+}
+
+template <typename T_Point>
+inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const bool& new_version, const uint8_t& return_mode)
+{
+  if (new_version)
+  {
+    switch (return_mode)
+    {
+      case 0x01:
+        return RSEchoMode::ECHO_LAST;
+        break;
+      case 0x02:
+        return RSEchoMode::ECHO_STRONGEST;
+        break;
+      case 0x03:
+        return RSEchoMode::ECHO_DUAL;
+        break;
+      default:
+        return RSEchoMode::ECHO_DUAL;
+        break;
+    }
+  }
+  else
+  {
+    switch (return_mode)
+    {
+      case 0x00:
+        return RSEchoMode::ECHO_DUAL;
+        break;
+      case 0x01:
+        return RSEchoMode::ECHO_STRONGEST;
+        break;
+      case 0x02:
+        return RSEchoMode::ECHO_LAST;
+        break;
+      default:
+        return RSEchoMode::ECHO_DUAL;
+        break;
+    }
+  }
+  return RSEchoMode::ECHO_STRONGEST;
 }
 
 template <typename T_Point>

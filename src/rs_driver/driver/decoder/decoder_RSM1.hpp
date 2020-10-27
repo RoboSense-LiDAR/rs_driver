@@ -237,7 +237,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
         setIntensity(point, 0);
       }
       setTimestamp(point, point_time);
-      setRing(point,channel_idx+1);
+      setRing(point, channel_idx + 1);
       vec.emplace_back(std::move(point));
     }
   }
@@ -261,21 +261,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   }
   if (!this->difop_flag_)
   {
-    switch (dpkt_ptr->return_mode)
-    {
-      case 0x00:
-        this->echo_mode_ = RSEchoMode::ECHO_DUAL;
-        max_pkt_num_ = DUAL_PKT_NUM;
-        break;
-      case 0x01:
-        this->echo_mode_ = RSEchoMode::ECHO_STRONGEST;
-        break;
-      case 0x02:
-        this->echo_mode_ = RSEchoMode::ECHO_LAST;
-        break;
-      default:
-        break;
-    }
+    this->echo_mode_ = this->getEchoMode(false, dpkt_ptr->return_mode);
     this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;

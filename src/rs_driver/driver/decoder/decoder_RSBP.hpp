@@ -175,9 +175,9 @@ inline RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
         float x = distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) +
-                   this->lidar_const_param_.RX * this->checkCosTable(angle_horiz);
+                  this->lidar_const_param_.RX * this->checkCosTable(angle_horiz);
         float y = -distance * this->checkCosTable(angle_vert) * this->checkSinTable(azi_channel_final) -
-                   this->lidar_const_param_.RX * this->checkSinTable(angle_horiz);
+                  this->lidar_const_param_.RX * this->checkSinTable(angle_horiz);
         float z = distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
         uint8_t intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         setX(point, x);
@@ -208,20 +208,7 @@ inline RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  switch (dpkt_ptr->return_mode)
-  {
-    case 0x00:
-      this->echo_mode_ = RSEchoMode::ECHO_DUAL;
-      break;
-    case 0x01:
-      this->echo_mode_ = RSEchoMode::ECHO_STRONGEST;
-      break;
-    case 0x02:
-      this->echo_mode_ = RSEchoMode::ECHO_LAST;
-      break;
-    default:
-      break;
-  }
+  this->echo_mode_ = this->getEchoMode(false, dpkt_ptr->return_mode);
   this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
   if (this->rpm_ == 0)
   {
