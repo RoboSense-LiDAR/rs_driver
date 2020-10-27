@@ -62,7 +62,8 @@ endif()
 set(CMAKE_INSTALL_PREFIX /usr/local)
 set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}/include)
 set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake)
-set(CMAKE_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
+set(DRIVER_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
+set(DRIVER_CMAKE_ROOT ${CMAKE_CURRENT_LIST_DIR}/cmake)
 #========================
 #  OpenMP
 #========================
@@ -89,7 +90,7 @@ list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
 #========================
 #  PCAP
 #========================
-SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 find_package(PCAP REQUIRED)
 include_directories(${PCAP_INCLUDE_DIR})
 list(APPEND EXTERNAL_LIBS ${PCAP_LIBRARY})
@@ -109,23 +110,28 @@ endif(${COMPILE_TOOLS})
 #  Cmake
 #========================  
 configure_file(
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/rs_driver.cmake.in
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/rs_driver.cmake
-)      
+  ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake.in
+  ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake @ONLY
+)
+
 configure_file(
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/rs_driverConfig.cmake.in
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/rs_driverConfig.cmake
+  ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake.in
+  ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake @ONLY
 )
 
 configure_file (
   ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.h.in
-  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.h
+  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.h @ONLY
 )
 
+if(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+set(rs_driver_DIR ${DRIVER_CMAKE_ROOT} PARENT_SCOPE)
+endif()
 #========================
 #  Installation
 #========================  
-install(FILES ${CMAKE_CURRENT_LIST_DIR}/cmake/${CMAKE_PROJECT_NAME}Config.cmake
+install(FILES ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake
+              ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake
      DESTINATION ${INSTALL_CMAKE_DIR}/${CMAKE_PROJECT_NAME})
 
 install(DIRECTORY src/
