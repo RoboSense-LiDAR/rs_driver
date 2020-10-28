@@ -1,4 +1,6 @@
-# **rs_driver** 
+# **rs_driver**  
+
+[中文介绍](README_CN.md) 
 
 ## 1 Introduction
 
@@ -153,15 +155,12 @@ For more details about the tool, please refer to [Visualization tool guide](doc/
 
 ## 6 Others
 
-[Intro to parameters](doc/intro/parameter_intro.md)
+Please follow the paths list below to find related files.
 
-[Intro to message types](doc/intro/message_intro.md)
-
-[Intro to error codes](doc/intro/errcode_intro.md)
-
-[Intro to api](doc/intro/api_intro.md)
-
-
+- Parameters definition: ```rs_driver/src/rs_driver/driver/driver_param.h```
+- Point Cloud message definition: ```rs_driver/src/rs_driver/msg/point_cloud_msg.h```
+- API definition: ```rs_driver/src/rs_driver/api/lidar_driver.h```
+- Error code definition: ```rs_driver/src/rs_driver/common/error_code.h```
 
 
 

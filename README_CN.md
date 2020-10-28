@@ -151,12 +151,9 @@ cmake -DCOMPILE_TOOLS=ON ..
 
 ## 6 其他资料
 
-[参数简介](doc/intro/parameter_intro.md)
+请根据以下路径去查看相关文件。
 
-[消息简介](doc/intro/message_intro.md)
-
-[异常简介](doc/intro/errcode_intro.md)
-
-[接口简介](doc/intro/api_intro.md)
-
-
+- 参数定义: ```rs_driver/src/rs_driver/driver/driver_param.h```
+- 点云消息定义: ```rs_driver/src/rs_driver/msg/point_cloud_msg.h```
+- 接口定义: ```rs_driver/src/rs_driver/api/lidar_driver.h```
+- 错误码定义: ```rs_driver/src/rs_driver/common/error_code.h```
