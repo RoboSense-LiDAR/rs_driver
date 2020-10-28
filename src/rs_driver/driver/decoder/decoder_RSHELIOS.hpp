@@ -49,19 +49,19 @@ typedef struct
   uint16_t reserved0;
   uint16_t phase_lock_angle;
   RSVersion version;
-  RSIntensity intensity;
+  uint8_t reserved_1[242];
   RSSn sn;
   uint16_t zero_cali;
   uint8_t return_mode;
   uint16_t sw_ver;
   RSTimestamp timestamp;
   RSStatus status;
-  uint8_t reserved1[5];
+  uint8_t reserved_2[5];
   RSDiagno diagno;
   uint8_t gprmc[86];
   uint8_t pitch_cali[96];
   uint8_t yaw_cali[96];
-  uint8_t reserved2[586];
+  uint8_t reserved_3[586];
   uint16_t tail;
 } RSHELIOSDifopPkt;
 

@@ -183,13 +183,6 @@ typedef struct
 
 typedef struct
 {
-  uint8_t reserved[240];
-  uint8_t coef;
-  uint8_t ver;
-} RSIntensity;
-
-typedef struct
-{
   uint8_t device_current[3];
   uint8_t main_current[3];
   uint16_t vol_12v;
