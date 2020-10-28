@@ -708,7 +708,7 @@ inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const bool& new_version, con
         return RSEchoMode::ECHO_DUAL;
         break;
       default:
-        return RSEchoMode::ECHO_DUAL;
+        return RSEchoMode::ECHO_STRONGEST;
         break;
     }
   }
