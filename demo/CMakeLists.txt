@@ -3,7 +3,7 @@ project(rs_driver_demos)
 message(=============================================================)
 message("-- Ready to compile demos")
 message(=============================================================)
-include_directories(${CMAKE_INCLUDE_DIRS})
+include_directories(${DRIVER_INCLUDE_DIRS})
 add_executable(demo_online
               demo_online.cpp
               )

@@ -1,34 +1,26 @@
 cmake_minimum_required(VERSION 3.5)
 cmake_policy(SET CMP0048 NEW)
+if(WIN32)
+cmake_policy(SET CMP0074 NEW)
+endif(WIN32)
 project(rs_driver VERSION 1.3.0)
 
 #=============================
 #  Compile Demos&Tools
 #=============================
-option(COMPILE_DEMOS "option for compile demos or not" OFF)
-if (COMPILE_DEMOS)
-add_definitions(-DCOMPILE_DEMOS)
-endif()
-option(COMPILE_TOOLS "option for compile tools or not" OFF)
-if (COMPILE_TOOLS)
-add_definitions(-DCOMPILE_TOOLS)
-endif()
+option(COMPILE_DEMOS "Build rs_driver demos" OFF)
+option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
 
 #========================
 #  Project setup
 #========================
-if(WIN32)
-    cmake_policy(SET CMP0074 NEW)
-endif()
 set(CMAKE_BUILD_TYPE Release)
 
 #========================
 #  Platform cross setup
 #========================
-if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  message(=============================================================)
-  message("-- Cmake run for msvc")
-  message(=============================================================)
+if(MSVC)
+  set(COMPILER "MSVC Compiler")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2")
@@ -44,17 +36,23 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   endforeach()
   add_compile_definitions(_DISABLE_EXTENDED_ALIGNED_STORAGE) # to disable a msvc error
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:100000000")
-elseif((CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-  message(=============================================================)
-  message("-- Cmake run for GNU or Clang")
-  message(=============================================================)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if(MINGW)
+    set(COMPILER "MINGW Compiler")
+  elseif(UNIX)
+    set(COMPILER "UNIX GNU Compiler")
+  else()
+    message(FATAL_ERROR "Unsupported compiler.")
+  endif()
+
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-else()
-  message(FATAL_ERROR "Unsupported compiler.")
 endif()
+
+message(=============================================================)
+message("-- Cmake run for ${COMPILER}")
+message(=============================================================)
 
 #========================
 #  Path Setup
@@ -80,9 +78,17 @@ endif()
 #========================
 #  Boost
 #========================
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
+if(WIN32)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8) # 64-bit
+    set(Boost_ARCHITECTURE "-x64")
+  elseif(CMAKE_SIZEOF_VOID_P EQUAL 4) # 32-bit
+    set(Boost_ARCHITECTURE "-x32")
+  endif()
+  set(Boost_USE_STATIC_LIBS ON)
+  set(Boost_USE_MULTITHREADED ON)
+  set(Boost_USE_STATIC_RUNTIME OFF)
+endif(WIN32)
+
 find_package(Boost COMPONENTS system date_time regex REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
@@ -127,9 +133,11 @@ configure_file (
 if(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 set(rs_driver_DIR ${DRIVER_CMAKE_ROOT} PARENT_SCOPE)
 endif()
+
 #========================
 #  Installation
 #========================  
+if(UNIX)
 install(FILES ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake
               ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake
      DESTINATION ${INSTALL_CMAKE_DIR}/${CMAKE_PROJECT_NAME})
@@ -141,10 +149,11 @@ install(DIRECTORY src/
 install(DIRECTORY src/
         DESTINATION ${INSTALL_DRIVER_DIR}
         FILES_MATCHING PATTERN "*.hpp")
-
+endif(UNIX)
 #========================
 #  Uninstall
 #======================== 
+if(UNIX)
 if(NOT TARGET uninstall)
    configure_file(
   ${CMAKE_CURRENT_LIST_DIR}/cmake/cmake_uninstall.cmake.in
@@ -152,6 +161,5 @@ if(NOT TARGET uninstall)
 )
     add_custom_target(uninstall
         COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-endif()
-
-        
+endif(NOT TARGET uninstall)
+endif(UNIX)
