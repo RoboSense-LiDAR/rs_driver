@@ -29,7 +29,7 @@
 #include <rs_driver/common/error_code.h>
 #include <rs_driver/driver/input.hpp>
 #include <rs_driver/driver/decoder/decoder_factory.hpp>
-#define MAX_PACKETS_BUFFER_SIZE 100000
+constexpr size_t MAX_PACKETS_BUFFER_SIZE = 100000;
 namespace robosense
 {
 namespace lidar
@@ -169,7 +169,6 @@ inline void LidarDriverImpl<T_Point>::initPointCloudTransFunc()
           row_major_ptr->at(i * width + j) = input_ptr->at(j * height + i);
         }
       }
-
       return row_major_ptr;
     };
   }
@@ -293,12 +292,10 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
         break;
     }
   }
-
   for (auto iter : pointcloud_one_frame)
   {
     output_point_cloud_ptr->insert(output_point_cloud_ptr->end(), iter.begin(), iter.end());
   }
-
   point_cloud_msg.point_cloud_ptr = point_cloud_transform_func_(output_point_cloud_ptr, height);
   point_cloud_msg.height = height;
   point_cloud_msg.width = point_cloud_msg.point_cloud_ptr->size() / point_cloud_msg.height;

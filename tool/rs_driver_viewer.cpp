@@ -20,9 +20,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-#include "rs_driver/api/lidar_driver.h"
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
+#include "rs_driver/api/lidar_driver.h"
 using namespace robosense::lidar;
 using namespace pcl::visualization;
 std::shared_ptr<PCLVisualizer> pcl_viewer;

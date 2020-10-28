@@ -29,11 +29,11 @@ namespace lidar
 enum LidarType  ///< The lidar type
 {
   RS16 = 1,
-  RS32 = 2,
-  RSBP = 3,
-  RS128 = 4,
-  RS80 = 5,
-  RSHELIOS = 6,
+  RS32,
+  RSBP,
+  RS128,
+  RS80,
+  RSHELIOS,
   RSM1 = 10
 };
 
