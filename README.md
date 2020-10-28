@@ -1,29 +1,69 @@
 # **rs_driver** 
 
-### 1 工程简介
+[TOC]
+
+## 1 工程简介
+
   **rs_driver**为速腾聚创雷达驱动内核。支持**RS-LiDAR-16**, **RS-LiDAR-32**, **RS-Bpearl**, **RS-128**和**RS-80**的点云数据解析，方便用户二次开发使用。
 
+## 2 编译与安装
 
+rs_driver目前支持下列系统和编译器：
+- Windows
+  - MSVC 
+  - Mingw-w64
 
-### 2 依赖介绍
+- Ubuntu
+  - gcc 
 
+### 2.1 依赖库的安装
+
+rs_driver 依赖下列的第三方库，在编译之前需要先安装的它们：
 - Boost
-- pthread
 - pcap
+- PCL (非必须，如果不需要可视化工具可忽略)
 
-Boost 与 pthread 均为系统库，可直接链接使用。 
-
-Pcap则需使用以下指令安装:
-
-```sh
-sudo apt-get install -y  libpcap-dev
+#### 2.1.1 Ubuntu中的依赖库安装
+```shell
+sudo apt-get install libboost-dev libpcap-dev libpcl-dev
 ```
+
+#### 2.1.2 Windows下的依赖库安装
+
+##### Boost
+
+Windows下需要从源码编译Boost库，请参考[官方链接](https://www.boost.org/doc/libs/1_67_0/more/getting_started/windows.html)。编译安装完成之后，将Boost的路径添加到系统环境变量```BOOST_ROOT```。
+
+如果使用MSVC，也可以选择直接下载相应版本的预编译的[安装包](https://boost.teeks99.com/)。
+
+##### pcap
+
+下载[developer's pack](https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip)到任意位置，然后将```PATH_TO_WpdPack_4_1_2/WpdPack``` 添加到环境变量```PATH```
+
+##### PCL
+
+*注：如果不编译可视化工具，可不编译安装PCL库*
+
+(1) MSVC
+
+如果使用MSVC编译器，可使用PCL官方提供的[All-in-One Installer](https://github.com/PointCloudLibrary/pcl/releases)安装。
+
+安装过程中选择 “Add PCL to the system PATH for xxx”:
+
+![](./doc/img/install_pcl.PNG)
+
+(2) Mingw-w64
+
+PCL官方并没有提供mingw编译的库，所以需要按照[官方说明](https://pointclouds.org/documentation/tutorials/compiling_pcl_windows.html), 从源码编译PCL并安装。
+
 
 
 
 ### 3 使用方式
 
 #### 3.1 安装使用
+
+*注：在Windows中，**rs_driver** 暂不支持安装使用。请按照3.2的说明，将 **rs_driver**作为工程的子模块使用。*
 
 首先安装驱动
 
@@ -42,9 +82,9 @@ include_directories(${rs_driver_INCLUDE_DIRS})
 target_link_libraries(project ${rs_driver_LIBRARIES})
 ```
 
-#### 3.2 嵌入使用
+#### 3.2 作为子模块使用
 
-直接将rs_driver放入用户工程内，在CMakeLists中链接即可
+直接将**rs_driver**放入用户工程内，在CMakeLists中链接即可
 
 ```cmake
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/rs_driver/cmake)
@@ -62,14 +102,15 @@ rs_driver提供了两个示例程序，存放于*rs_driver/demo*中：
 - demo_online.cpp
 - demo_pcap.cpp
 
-若希望编译这两个示例程序，需要将CMakeLists文件内的COMPILE_DEMOS设置为TRUE(默认为FALSE)。
+若希望编译这两个示例程序，执行CMake配置时加上参数：
 
 ```cmake
-#=============================
-#  Compile Demos (TRUE/FALSE)
-#=============================
-set(COMPILE_DEMOS TRUE)
+cmake -DCOMPILE_DEMO=ON -DCOMPILE_TOOLS=ON ..
 ```
+
+或者在cmake-gui中勾选```COMPILE_DEMO```和```COMPILE_TOOLS```两个选项：
+
+![](./doc/img/compile_demo.PNG)
 
 用户可参考示例程序，编写自己的代码调用雷达驱动。
 
@@ -97,39 +138,87 @@ set(COMPILE_DEMOS TRUE)
 
 
 
-
-
 ---
 
 
 
 ### 1 Introduction
 
-  **rs_driver** is the driver code for RoboSense LiDAR,  include **RS-LiDAR-16**, **RS-LiDAR-32**, **RS-Bpearl** ,  **RS-128** and **RS-80** . It can be used to extract packets from lidar to point cloud, and it is convenient for users to do advanced development.
+**rs_driver** is a driver kernel for RoboSense LiDAR. It supports **RS-LiDAR-16**, **RS-LiDAR-32**, **RS-Bpearl** ,  **RS-128** and **RS-80** models . With the help of CMake, it can be easily incorporated into your own project to parse point cloud data from RoboSense LiDAR device.
 
+### 2 Compilation and Installation
 
+**rs_driver** is compatible with the following platforms and compilers: 
 
-### 2 Dependency 
+- Windows
+  - MSVC ( tested with VC2017 and VC2019)
+  - Mingw-w64 (tested with x86_64-8.1.0-posix-seh-rt_v6-rev0 )
+- Ubuntu (16.04, 18.04)
+  - gcc (4.8+)
 
-- Boost
-- pthread
+### 2.1 Install dependancies
+
+**rs_driver** depends on the following third-party libraries. They must be compiled/installed properly in advance:
+
+- Boost 
+
 - pcap
 
-Boost and pthread are libraries of system, that can be linked directly. 
+- PCL (optional, only needed when building visualization tool)
 
-Pcap need to be installed as follow:
+#### 2.1.1 Install dependancies in Ubuntu
 
 ```sh
-sudo apt-get install -y  libpcap-dev
+sudo apt-get install libboost-dev libpcap-dev libpcl-dev
 ```
+
+#### 2.1.2 Install dependancies in Windows
+
+##### Boost
+
+In Windows, Boost needs compiling from source, please refer to the [official guide](https://www.boost.org/doc/libs/1_67_0/more/getting_started/windows.html) for detailed instructions. 
+
+Once finishing installing Boost, add a system environment variable named  ```BOOST_ROOT```  which is set to your Boost path. 
+
+If using MSVC as your compiler, these pre-built [binary installers](https://boost.teeks99.com/) may save you some time.   
+
+
+
+##### PCAP
+
+Download pcap's [developer's pack](https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip) to your favorite location and add the path to ```WpdPack_4_1_2``` folder to the ```Path``` environment variable. 
+
+
+
+##### PCL
+
+*Note: you can skip installing PCL if you don't want to compile visualization tool.* 
+
+(1) MSVC
+
+Please use one of the provided [all-in-one installers](https://github.com/PointCloudLibrary/pcl/releases), which already contains prebuilt PCL binaries and are ready to be used without any compilation step.
+
+
+
+Select the "Add PCL to the system PATH for xxx" option during installation.
+
+![](./doc/img/install_pcl.PNG)
+
+(2) Mingw-w64
+
+Since there'are no installers for mingw-w64 compiler available, PCL needs to be compiled out from source as instructed in this [tutorial](https://pointclouds.org/documentation/tutorials/compiling_pcl_windows.html). 
 
 
 
 ### 3 Usage
 
-#### 3.1 Install driver to use
+There are two ways to use **rs_driver** in your own CMake project. 
 
-Install the driver.
+#### 3.1 Install in advance
+
+*Note: installation is not supported in Windows.* 
+
+(1) Install the driver
 
 ```sh
 cd rs_driver
@@ -138,7 +227,7 @@ cmake .. && make -j4
 sudo make install
 ```
 
-Then find the driver package and link it in the project CMakeLists.
+(2) Then find  rs_driver package and link to it in your CMakeLists.txt
 
 ```cmake
 find_package(rs_driver REQUIRED)
@@ -146,9 +235,11 @@ include_directories(${rs_driver_INCLUDE_DIRS})
 target_link_libraries(project ${rs_driver_LIBRARIES})
 ```
 
-#### 3.2 Embed driver in project
+#### 3.2 Use rs_driver as a module
 
-Put the rs_driver in the project and link it in the CMakeLists.
+Append  to the CMAKE_MODULE_PATH variable the path to rs_driver.cmake file. 
+
+and include rs_driver module in your CMake project.  
 
 ```cmake
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/rs_driver/cmake)
@@ -166,16 +257,21 @@ rs_driver supply two demo programs which are stored in*rs_driver/demo*：
 - demo_online.cpp
 - demo_pcap.cpp
 
-User need to set the COMPILE_DEMOS in CMakeLists to TRUE to compile these two programs( the default value is FALSE).
+
+
+Demo will not be compiled by default. To build demo programs, set the following options to ```ON``` when configuring using cmake:
 
 ```cmake
-#=============================
-#  Compile Demos (TRUE/FALSE)
-#=============================
-set(COMPILE_DEMOS TRUE)
+cmake -DCOMPILE_DEMO=ON -DCOMPILE_TOOS=ON ..
 ```
 
-User can refer to the demo code to use rs_driver api.
+Or check the ```COMPILE_DEMO``` and ```COMPILE_TOOLS` checkbox in cmake-gui:
+
+![](./doc/img/compile_demo.PNG)
+
+
+
+User can refer to the demo code for usage of rs_driver api. 
 
 
 

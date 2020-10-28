@@ -1,21 +1,21 @@
 cmake_minimum_required(VERSION 3.5)
 cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0074 NEW)
 project(rs_driver VERSION 1.2.1)
 
 #=============================
 #  Compile Demos&Tools (TRUE/FALSE)
 #=============================
-set(COMPILE_DEMOS TRUE)
-set(COMPILE_TOOLS TRUE)
+option(COMPILE_DEMO "Build rs_driver demos" OFF)
+option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
+
 #========================
 #  Project setup
 #========================
 string(TOUPPER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_UPPER)
 string(TOLOWER ${CMAKE_PROJECT_NAME} CMAKE_PROJECT_NAME_LOWER)
 add_definitions(-DPROJECT_PATH="${PROJECT_SOURCE_DIR}")
-if(WIN32)
-    cmake_policy(SET CMP0074 NEW)
-endif()
+
 set(CMAKE_BUILD_TYPE Release)
 configure_file (
   "${PROJECT_SOURCE_DIR}/src/rs_driver/macro/version.h.in"
@@ -25,10 +25,8 @@ configure_file (
 #========================
 #  Platform cross setup
 #========================
-if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  message(=============================================================)
-  message("-- Cmake run for msvc")
-  message(=============================================================)
+if(MSVC)
+  set(COMPILER "MSVC Compiler")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Wall")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /Zi")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2")
@@ -44,25 +42,38 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   endforeach()
   add_compile_definitions(_DISABLE_EXTENDED_ALIGNED_STORAGE) # to disable a msvc error
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:100000000")
-elseif((CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-  message(=============================================================)
-  message("-- Cmake run for GNU or Clang")
-  message(=============================================================)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if(MINGW)
+    set(COMPILER "MINGW Compiler")
+  elseif(UNIX)
+    set(COMPILER "UNIX GNU Compiler")
+  else()
+    message(FATAL_ERROR "Unsupported compiler.")
+  endif()
+
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-else()
-  message(FATAL_ERROR "Unsupported compiler.")
 endif()
+
+message(=============================================================)
+message("-- Cmake run for ${COMPILER}")
+message(=============================================================)
 
 #========================
 #  Installation Setup
 #========================
-SET(CMAKE_INSTALL_PREFIX /usr/local)
-set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}/include)
-set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake)
-set(INSTALL_PKGCONFIG_DIR ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+if(UNIX)
+  set(CMAKE_INSTALL_PREFIX /usr/local)
+  set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}/include)
+  set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake)
+  set(INSTALL_PKGCONFIG_DIR ${CMAKE_INSTALL_PREFIX}/lib/pkgconfig)
+else(WIN32) # TODO: fix install prefix in WIN32
+  set(CMAKE_INSTALL_PREFIX) 
+  set(INSTALL_DRIVER_DIR)
+  set(INSTALL_CMAKE_DIR)
+  set(INSTALL_PKGCONFIG_DIR)
+endif()
 
 #========================
 #  OpenMP
@@ -80,9 +91,18 @@ endif()
 #========================
 #  Boost
 #========================
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
+if(WIN32)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8) # 64-bit
+    set(Boost_ARCHITECTURE "-x64")
+  elseif(CMAKE_SIZEOF_VOID_P EQUAL 4) # 32-bit
+    set(Boost_ARCHITECTURE "-x32")
+  endif()
+
+  set(Boost_USE_STATIC_LIBS ON)
+  set(Boost_USE_MULTITHREADED ON)
+  set(Boost_USE_STATIC_RUNTIME OFF)
+endif(WIN32)
+
 find_package(Boost COMPONENTS system date_time regex REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
@@ -90,7 +110,7 @@ list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
 #========================
 #  PCAP
 #========================
-SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 find_package(PCAP REQUIRED)
 include_directories(${PCAP_INCLUDE_DIR})
 list(APPEND EXTERNAL_LIBS ${PCAP_LIBRARY})
@@ -106,6 +126,9 @@ if(${COMPILE_TOOLS})
   add_subdirectory(${PROJECT_SOURCE_DIR}/tool)
 endif(${COMPILE_TOOLS})
 
+
+
+if(NOT WIN32)
 #========================
 #  Installation
 #========================        
@@ -135,6 +158,6 @@ if(NOT TARGET uninstall)
 )
     add_custom_target(uninstall
         COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-endif()
+endif(NOT TARGET uninstall)
 
-        
+endif(NOT WIN32)
