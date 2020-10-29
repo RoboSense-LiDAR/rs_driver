@@ -104,7 +104,6 @@ typedef struct RSInputParam  ///< The lidar input parameter
   {
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFO << "             RoboSense Input Parameters " << RS_REND;
-    RS_INFOL << "device_ip: " << device_ip << RS_REND;
     RS_INFOL << "multi_cast_address: " << multi_cast_address << RS_REND;
     RS_INFOL << "msop_port: " << msop_port << RS_REND;
     RS_INFOL << "difop_port: " << difop_port << RS_REND;

@@ -24,10 +24,6 @@ Otherwise, the tool need to be start with the absolute path:
 
    print the argument menu 
 
-- -ip
-
-   Ip address of LiDAR, the default value is *192.168.1.200*
-
 - -msop
 
    Msop port number of LiDAR, the default value is *6699*
@@ -48,16 +44,16 @@ Otherwise, the tool need to be start with the absolute path:
 
 ## 3 Examples
 
-- Online decode a RS128 LiDAR, which msop port is *9966* and difop port is *8877*
+- Online decode a RS128 LiDAR, which msop port is ```9966``` and difop port is ```8877```
 
   ```bash
   rs_driver_viewer -msop 9966 -difop 8877 -type RS128 
   ```
 
-- Offline decode a RSHELIOS LiDAR with a pcap file, which ip address is *192.168.1.300*
+- Offline decode a RSHELIOS LiDAR with a pcap file.
 
   ```bash
-  rs_driver_viewer -pcap /home/robosense/helios.pcap -ip 192.168.1.300 -type RSHELIOS
+  rs_driver_viewer -pcap /home/robosense/helios.pcap -type RSHELIOS
   ```
 
   

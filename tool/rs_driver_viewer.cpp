@@ -64,7 +64,6 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
   std::string lidar_type;
   std::string msop_port;
   std::string difop_port;
-  parseArgument(argc, argv, "-ip", param.input_param.device_ip);
   if (parseArgument(argc, argv, "-type", lidar_type))
   {
     param.lidar_type = param.strToLidarType(lidar_type);
@@ -86,7 +85,6 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
 void printHelpMenu()
 {
   RS_MSG << "Arguments are: " << RS_REND;
-  RS_MSG << "        -ip               = LiDAR ip address,the default value is 192.168.1.200" << RS_REND;
   RS_MSG << "        -msop             = LiDAR msop port number,the default value is 6699" << RS_REND;
   RS_MSG << "        -difop            = LiDAR difop port number,the default value is 7788" << RS_REND;
   RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS ), the default value is RS16"
@@ -110,8 +108,6 @@ void printParam(const RSDriverParam& param)
     RS_INFOL << "Working mode: ";
     RS_INFO << "Online LiDAR " << RS_REND;
   }
-  RS_INFOL << "Device IP Address: ";
-  RS_INFO << param.input_param.device_ip << RS_REND;
   RS_INFOL << "MSOP Port: ";
   RS_INFO << param.input_param.msop_port << RS_REND;
   RS_INFOL << "DIFOP Port: ";
