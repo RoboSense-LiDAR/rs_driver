@@ -56,7 +56,9 @@ If using MSVC as your compiler, these pre-built [binary installers](https://boos
 
 ##### PCAP
 
-Download pcap's [developer's pack](https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip) to your favorite location and add the path to ```WpdPack_4_1_2/WpdPack``` folder to the ```Path``` environment variable. 
+Firstly, install [pcap runtime](https://www.winpcap.org/install/bin/WinPcap_4_1_3.exe).
+
+Then, download pcap's [developer's pack](https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip) to your favorite location and add the path to ```WpdPack_4_1_2/WpdPack``` folder to the ```Path``` environment variable. 
 
 ##### PCL
 
