@@ -654,10 +654,6 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, intensity)>::type setInten
                                                                                      const uint8_t& value)
 {
   point.intensity = value;
-  if (std::isnan(point.intensity))
-  {
-    point.intensity = 0;
-  }
 }
 
 template <typename T_Point>
