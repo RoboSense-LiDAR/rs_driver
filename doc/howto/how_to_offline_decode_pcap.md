@@ -97,7 +97,7 @@ LidarDriver<PointXYZI> driver;          ///< Declare the driver object
 
 ### 2.5 Define the parameter, configure the parameter
 
-Define a parameter object and config it. Since we want to decode pcap bag, please set the ```read_pcap``` to ```true``` and set up the correct pcap file directory. The ip address, msop port and difop port number of lidar can be got from wireshark(a network socket capture software). The default value is ip: 192.168.1.200, msop: 6699, difop: 7788. User also need to make sure the ```lidar_type``` is set correctly.
+Define a parameter object and config it. Since we want to decode pcap bag, please set the ```read_pcap``` to ```true``` and set up the correct pcap file directory. The msop port and difop port number of lidar can be got from wireshark(a network socket capture software). The default value is ```msop-6699```, ```difop-7788```. User also need to make sure the ```lidar_type``` is set correctly.
 
 ```c++
 RSDriverParam param;                                             ///< Create a parameter object

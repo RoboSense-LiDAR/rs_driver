@@ -16,8 +16,6 @@
 - RSM1-B3
 - RSHELIOS
 
-
-
 ## 2 Compilation and Installation
 
 **rs_driver** is compatible with the following platforms and compilers: 
