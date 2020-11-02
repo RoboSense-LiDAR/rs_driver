@@ -35,20 +35,7 @@ typedef struct
 
 typedef struct
 {
-  uint32_t id;
-  uint8_t reserved1[3];
-  uint8_t wave_mode;
-  uint8_t temp_low;
-  uint8_t temp_high;
-  RSTimestampUTC timestamp_utc;
-  uint8_t reserved2[10];
-  uint8_t lidar_type;
-  uint8_t reserved3[49];
-} RS80MsopHeader;
-
-typedef struct
-{
-  RS80MsopHeader header;
+  RSMsopHeaderNew header;
   RS80MsopBlock blocks[4];
   uint8_t reserved[188];
   unsigned int index;
@@ -110,7 +97,7 @@ inline DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param, const Lida
 template <typename T_Point>
 inline double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeUTC<RS80MsopPkt>(pkt);
+  return this->template calculateTimeUTC<RS80MsopPkt>(pkt,true);
 }
 
 template <typename T_Point>

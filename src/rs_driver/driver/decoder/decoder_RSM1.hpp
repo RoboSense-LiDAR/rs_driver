@@ -49,19 +49,13 @@ typedef struct
 
 typedef struct
 {
-  uint8_t sec[6];
-  uint32_t ms;
-} RSTimestampM1;
-
-typedef struct
-{
   uint32_t id;
   uint16_t pkt_cnt;
   uint16_t protocal_version;
   uint8_t return_mode;
   uint8_t time_mode;
-  RSTimestampM1 timestamp;
-  uint8_t reserve[10];
+  RSTimestampUTC timestamp;
+  uint8_t reserved[10];
   uint8_t lidar_type;
   uint8_t temperature;
 } RSM1MsopHeader;
@@ -70,7 +64,7 @@ typedef struct
 {
   RSM1MsopHeader header;
   RSM1Block blocks[25];
-  uint8_t reserve[3];
+  uint8_t reserved[3];
 } RSM1MsopPkt;
 
 typedef struct
@@ -98,41 +92,34 @@ typedef struct
 
 typedef struct
 {
-  uint8_t syn_methord;
-  uint8_t syn_status;
-  uint8_t current_time[10];
-} RSM1DifopTimeInfo;
-
-typedef struct
-{
-  uint8_t current1[3];
-  uint8_t current2[3];
-  uint8_t voltage1[2];
-  uint8_t voltage2[2];
-  uint8_t reserve[10];
+  uint8_t current_1[3];
+  uint8_t current_2[3];
+  uint16_t voltage_1;
+  uint16_t voltage_2;
+  uint8_t reserved[10];
 } RSM1DifopRunSts;
 
 typedef struct
 {
   uint8_t param_sign;
-  uint8_t data[2];
+  uint16_t data;
 } RSM1DifopCalibration;
 
 typedef struct
 {
   uint64_t id;
-  uint8_t reserve_1;
+  uint8_t reserved_1;
   uint8_t frame_rate;
   RSM1DifopEther ether;
   RSM1DifopFov fov_setting;
   RSM1DifopVerInfo ver_info;
-  uint8_t serial_number[6];
+  RSSn sn;
   uint8_t return_mode;
-  RSM1DifopTimeInfo time_info;
-  RSM1DifopRunSts run_status;
-  uint8_t diag_reserve[40];
+  RSTimeInfo time_info;
+  RSM1DifopRunSts status;
+  uint8_t diag_reserved[40];
   RSM1DifopCalibration cali_param[20];
-  uint8_t reserve_2[71];
+  uint8_t reserved_2[71];
 } RSM1DifopPkt;
 #pragma pack(pop)
 
@@ -147,7 +134,6 @@ public:
   RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& pointcloud_vec, int& height);
 
 private:
-  double calculateTimeM1(const uint8_t* pkt);
   uint32_t last_pkt_cnt_;
   uint32_t max_pkt_num_;
   double last_pkt_time_;
@@ -171,7 +157,7 @@ inline DecoderRSM1<T_Point>::DecoderRSM1(const RSDecoderParam& param, const Lida
 template <typename T_Point>
 inline double DecoderRSM1<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return calculateTimeM1(pkt);
+  return this->template calculateTimeUTC<RSM1MsopPkt>(pkt,false);
 }
 
 template <typename T_Point>
@@ -283,26 +269,6 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;
-}
-
-template <typename T_Point>
-inline double DecoderRSM1<T_Point>::calculateTimeM1(const uint8_t* pkt)
-{
-  RSM1MsopPkt* mpkt_ptr = (RSM1MsopPkt*)pkt;
-  union u_ts
-  {
-    uint8_t data[8];
-    uint64_t ts;
-  } timestamp;
-  timestamp.data[7] = 0;
-  timestamp.data[6] = 0;
-  timestamp.data[5] = mpkt_ptr->header.timestamp.sec[0];
-  timestamp.data[4] = mpkt_ptr->header.timestamp.sec[1];
-  timestamp.data[3] = mpkt_ptr->header.timestamp.sec[2];
-  timestamp.data[2] = mpkt_ptr->header.timestamp.sec[3];
-  timestamp.data[1] = mpkt_ptr->header.timestamp.sec[4];
-  timestamp.data[0] = mpkt_ptr->header.timestamp.sec[5];
-  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp.ms))) / 1000000.0;
 }
 
 }  // namespace lidar

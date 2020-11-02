@@ -54,7 +54,7 @@ typedef struct
   uint16_t zero_cali;
   uint8_t return_mode;
   uint16_t sw_ver;
-  RSTimestamp timestamp;
+  RSTimestampYMD timestamp;
   RSStatus status;
   uint8_t reserved_2[5];
   RSDiagno diagno;

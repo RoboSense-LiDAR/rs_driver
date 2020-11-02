@@ -34,7 +34,18 @@ typedef struct
 
 typedef struct
 {
-  RSMsopHeader header;
+  uint64_t id;
+  uint8_t reserved_1[12];
+  RSTimestampUTC timestamp;
+  uint8_t lidar_type;
+  uint8_t reserved_2[7];
+  uint16_t temp_raw;
+  uint8_t reserved_3[2];
+} RSHeliosMsopHeader;
+
+typedef struct
+{
+  RSHeliosMsopHeader header;
   RSHELIOSMsopBlock blocks[12];
   unsigned int index;
   uint16_t tail;
@@ -44,24 +55,23 @@ typedef struct
 {
   uint64_t id;
   uint16_t rpm;
-  RSEthNet eth;
+  RSEthNetNew eth;
   RSFOV fov;
-  uint16_t reserved0;
+  uint8_t reserved_1[2];
   uint16_t phase_lock_angle;
-  RSVersion version;
-  uint8_t reserved_1[242];
+  RSVersionNew version;
+  uint8_t reserved_2[229];
   RSSn sn;
   uint16_t zero_cali;
   uint8_t return_mode;
-  uint16_t sw_ver;
-  RSTimestamp timestamp;
-  RSStatus status;
-  uint8_t reserved_2[5];
-  RSDiagno diagno;
+  RSTimeInfo time_info;
+  RSStatusNew status;
+  uint8_t reserved_3[5];
+  RSDiagnoNew diagno;
   uint8_t gprmc[86];
   uint8_t pitch_cali[96];
   uint8_t yaw_cali[96];
-  uint8_t reserved_3[586];
+  uint8_t reserved_4[586];
   uint16_t tail;
 } RSHELIOSDifopPkt;
 
@@ -98,7 +108,7 @@ inline DecoderRSHELIOS<T_Point>::DecoderRSHELIOS(const RSDecoderParam& param,
 template <typename T_Point>
 inline double DecoderRSHELIOS<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeYMD<RSHELIOSMsopPkt>(pkt);
+  return this->template calculateTimeUTC<RSHELIOSMsopPkt>(pkt,false);
 }
 
 template <typename T_Point>

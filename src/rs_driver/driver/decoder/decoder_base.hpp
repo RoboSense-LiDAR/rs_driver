@@ -48,9 +48,12 @@ DEFINE_MEMBER_CHECKER(timestamp)
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
-const double RS_DIS_RESOLUTION = 0.005;
-const double RS_ANGLE_RESOLUTION = 0.01;
-const int RS_ONE_ROUND = 36000;
+constexpr double RS_DIS_RESOLUTION = 0.005;
+constexpr double RS_ANGLE_RESOLUTION = 0.01;
+constexpr double NANO = 1000000000.0;
+constexpr double MICRO = 1000000.0;
+constexpr int RS_ONE_ROUND = 36000;
+
 /* Echo mode definition */
 enum RSEchoMode
 {
@@ -95,7 +98,7 @@ typedef struct
   uint8_t second;
   uint16_t ms;
   uint16_t us;
-} RSTimestamp;
+} RSTimestampYMD;
 
 typedef struct
 {
@@ -107,19 +110,32 @@ typedef struct
 {
   uint8_t sync_mode;
   uint8_t sync_sts;
-  RSTimestamp timestamp;
+  RSTimestampUTC timestamp;
 } RSTimeInfo;
 
 typedef struct
 {
   uint64_t id;
   uint8_t reserved1[12];
-  RSTimestamp timestamp;
+  RSTimestampYMD timestamp;
   uint8_t lidar_type;
   uint8_t reserved2[7];
   uint16_t temp_raw;
   uint8_t reserved3[2];
 } RSMsopHeader;
+
+typedef struct
+{
+  uint32_t id;
+  uint8_t reserved1[3];
+  uint8_t wave_mode;
+  uint8_t temp_low;
+  uint8_t temp_high;
+  RSTimestampUTC timestamp;
+  uint8_t reserved2[10];
+  uint8_t lidar_type;
+  uint8_t reserved3[49];
+} RSMsopHeaderNew;
 
 typedef struct
 {
@@ -198,7 +214,18 @@ typedef struct
 
 typedef struct
 {
-  uint8_t reserved1[9];
+  uint16_t device_current;
+  uint16_t vol_fpga;
+  uint16_t vol_12v;
+  uint16_t vol_dig_5v4;
+  uint16_t vol_sim_5v;
+  uint16_t vol_apd;
+  uint8_t reserved[12];
+} RSStatusNew;
+
+typedef struct
+{
+  uint8_t reserved_1[9];
   uint16_t checksum;
   uint16_t manc_err1;
   uint16_t manc_err2;
@@ -208,10 +235,25 @@ typedef struct
   uint16_t temperature3;
   uint16_t temperature4;
   uint16_t temperature5;
-  uint8_t reserved2[5];
+  uint8_t reserved_2[5];
   uint16_t cur_rpm;
-  uint8_t reserved3[7];
+  uint8_t reserved_3[7];
 } RSDiagno;
+
+typedef struct
+{
+  uint16_t bot_fpga_temperature;
+  uint16_t recv_A_temperature;
+  uint16_t recv_B_temperature;
+  uint16_t main_fpga_temperature;
+  uint16_t main_fpga_core_temperature;
+  uint16_t real_rpm;
+  uint8_t lane_up;
+  uint16_t lane_up_cnt;
+  uint16_t main_status;
+  uint8_t gps_status;
+  uint8_t reserved[22];
+} RSDiagnoNew;
 
 #pragma pack(pop)
 
@@ -239,7 +281,7 @@ protected:
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth) = 0;
   virtual RSDecoderResult decodeDifopPkt(const uint8_t* pkt) = 0;
   template <typename T_Msop>
-  double calculateTimeUTC(const uint8_t* pkt);
+  double calculateTimeUTC(const uint8_t* pkt, const bool& is_nano);
   template <typename T_Msop>
   double calculateTimeYMD(const uint8_t* pkt);
   void sortBeamTable();
@@ -556,7 +598,7 @@ inline int DecoderBase<T_Point>::azimuthCalibration(const float& azimuth, const 
 
 template <typename T_Point>
 template <typename T_Msop>
-inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
+inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt, const bool& is_nano)
 {
   const T_Msop* mpkt_ptr = reinterpret_cast<const T_Msop*>(pkt);
   union u_ts
@@ -566,14 +608,22 @@ inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
   } timestamp;
   timestamp.data[7] = 0;
   timestamp.data[6] = 0;
-  timestamp.data[5] = mpkt_ptr->header.timestamp_utc.sec[0];
-  timestamp.data[4] = mpkt_ptr->header.timestamp_utc.sec[1];
-  timestamp.data[3] = mpkt_ptr->header.timestamp_utc.sec[2];
-  timestamp.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
-  timestamp.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
-  timestamp.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
-  return static_cast<double>(timestamp.ts) +
-         (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0;
+  timestamp.data[5] = mpkt_ptr->header.timestamp.sec[0];
+  timestamp.data[4] = mpkt_ptr->header.timestamp.sec[1];
+  timestamp.data[3] = mpkt_ptr->header.timestamp.sec[2];
+  timestamp.data[2] = mpkt_ptr->header.timestamp.sec[3];
+  timestamp.data[1] = mpkt_ptr->header.timestamp.sec[4];
+  timestamp.data[0] = mpkt_ptr->header.timestamp.sec[5];
+  if (is_nano)
+  {
+    return static_cast<double>(timestamp.ts) +
+           (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.ns))) / NANO;
+  }
+  else
+  {
+    return static_cast<double>(timestamp.ts) +
+           (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.ns))) / MICRO;
+  }
 }
 template <typename T_Point>
 template <typename T_Msop>
