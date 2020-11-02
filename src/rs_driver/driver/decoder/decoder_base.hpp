@@ -59,6 +59,7 @@ enum RSEchoMode
 {
   ECHO_LAST,
   ECHO_STRONGEST,
+  ECHO_NEAREST,
   ECHO_DUAL
 };
 
@@ -287,7 +288,7 @@ protected:
   void sortBeamTable();
   float checkCosTable(const int& angle);
   float checkSinTable(const int& angle);
-  RSEchoMode getEchoMode(const bool& new_version, const uint8_t& return_mode);
+  RSEchoMode getEchoMode(const LidarType& type, const uint8_t& return_mode);
 
 private:
   std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func);
@@ -731,45 +732,72 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimes
 }
 
 template <typename T_Point>
-inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const bool& new_version, const uint8_t& return_mode)
+inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const uint8_t& return_mode)
 {
-  if (new_version)
+  switch (type)
   {
-    switch (return_mode)
-    {
-      case 0x01:
-        return RSEchoMode::ECHO_LAST;
-        break;
-      case 0x02:
-        return RSEchoMode::ECHO_STRONGEST;
-        break;
-      case 0x03:
-        return RSEchoMode::ECHO_DUAL;
-        break;
-      default:
-        return RSEchoMode::ECHO_STRONGEST;
-        break;
-    }
+    case LidarType::RS128:
+    case LidarType::RS80:
+      switch (return_mode)
+      {
+        case 0x01:
+          return RSEchoMode::ECHO_LAST;
+          break;
+        case 0x02:
+          return RSEchoMode::ECHO_STRONGEST;
+          break;
+        case 0x03:
+          return RSEchoMode::ECHO_DUAL;
+          break;
+        default:
+          return RSEchoMode::ECHO_STRONGEST;
+          break;
+      }
+      break;
+    case LidarType::RS16:
+    case LidarType::RS32:
+    case LidarType::RSBP:
+    case LidarType::RSHELIOS:
+      switch (return_mode)
+      {
+        case 0x00:
+          return RSEchoMode::ECHO_DUAL;
+          break;
+        case 0x01:
+          return RSEchoMode::ECHO_STRONGEST;
+          break;
+        case 0x02:
+          return RSEchoMode::ECHO_LAST;
+          break;
+        case 0x03:
+          return RSEchoMode::ECHO_NEAREST;
+          break;
+        default:
+          return RSEchoMode::ECHO_STRONGEST;
+          break;
+      }
+      break;
+    case LidarType::RSM1:
+      switch (return_mode)
+      {
+        case 0x04:
+          return RSEchoMode::ECHO_STRONGEST;
+          break;
+        case 0x05:
+          return RSEchoMode::ECHO_LAST;
+          break;
+        case 0x06:
+          return RSEchoMode::ECHO_NEAREST;
+          break;
+        default:
+          return RSEchoMode::ECHO_DUAL;
+          break;
+      }
+      break;
+    default:
+      return RSEchoMode::ECHO_STRONGEST;
+      break;
   }
-  else
-  {
-    switch (return_mode)
-    {
-      case 0x00:
-        return RSEchoMode::ECHO_DUAL;
-        break;
-      case 0x01:
-        return RSEchoMode::ECHO_STRONGEST;
-        break;
-      case 0x02:
-        return RSEchoMode::ECHO_LAST;
-        break;
-      default:
-        return RSEchoMode::ECHO_DUAL;
-        break;
-    }
-  }
-  return RSEchoMode::ECHO_STRONGEST;
 }
 
 template <typename T_Point>

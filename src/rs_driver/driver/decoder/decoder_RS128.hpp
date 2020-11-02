@@ -209,7 +209,7 @@ inline RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->echo_mode_ = this->getEchoMode(true, dpkt_ptr->return_mode);
+  this->echo_mode_ = this->getEchoMode(LidarType::RS128, dpkt_ptr->return_mode);
   this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
   if (this->rpm_ == 0)
   {

@@ -265,7 +265,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   }
   if (!this->difop_flag_)
   {
-    this->echo_mode_ = this->getEchoMode(false, dpkt_ptr->return_mode);
+    this->echo_mode_ = this->getEchoMode(LidarType::RSM1, dpkt_ptr->return_mode);
     this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;
