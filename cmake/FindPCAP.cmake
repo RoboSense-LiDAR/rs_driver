@@ -29,17 +29,18 @@ find_path(PCAP_INCLUDE_DIR
     HINTS ${PCAP_ROOT_DIR}/include
 )
 
-set (HINT_DIR ${PCAP_ROOT_DIR}/lib)
+set (HINT_DIR ${PCAP_ROOT_DIR}/Lib)
 
 # On x64 windows, we should look also for the .lib at /lib/x64/
 # as this is the default path for the WinPcap developer's pack
 if (${CMAKE_SIZEOF_VOID_P} EQUAL 8 AND WIN32)
-    set (HINT_DIR ${PCAP_ROOT_DIR}/lib/x64/ ${HINT_DIR})
+    set (HINT_DIR ${PCAP_ROOT_DIR}/Lib/x64 ${HINT_DIR})
 endif ()
 
 find_library(PCAP_LIBRARY
     NAMES pcap wpcap
     HINTS ${HINT_DIR}
+    NO_DEFAULT_PATH
 )
 
 include(FindPackageHandleStandardArgs)

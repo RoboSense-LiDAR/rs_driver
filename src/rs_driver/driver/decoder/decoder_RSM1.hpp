@@ -171,7 +171,7 @@ inline DecoderRSM1<T_Point>::DecoderRSM1(const RSDecoderParam& param, const Lida
 template <typename T_Point>
 inline double DecoderRSM1<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeM1(pkt);
+  return calculateTimeM1(pkt);
 }
 
 template <typename T_Point>
@@ -284,7 +284,7 @@ inline double DecoderRSM1<T_Point>::calculateTimeM1(const uint8_t* pkt)
   timestamp.data[2] = mpkt_ptr->header.timestamp.sec[3];
   timestamp.data[1] = mpkt_ptr->header.timestamp.sec[4];
   timestamp.data[0] = mpkt_ptr->header.timestamp.sec[5];
-  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp.ms))) / 1000000.0d;
+  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp.ms))) / 1000000.0;
 }
 
 }  // namespace lidar

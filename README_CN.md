@@ -51,7 +51,9 @@ Windows下需要从源码编译Boost库，请参考[官方指南](https://www.bo
 
 ##### Pcap
 
-下载[开发者包](https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip)到任意位置，然后将```WpdPack_4_1_2/WpdPack``` 的路径添加到环境变量```PATH```
+首先，安装[pcap运行库](https://www.winpcap.org/install/bin/WinPcap_4_1_3.exe)。
+
+然后，下载[开发者包](https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip)到任意位置，然后将```WpdPack_4_1_2/WpdPack``` 的路径添加到环境变量```PATH```。
 
 ##### PCL
 
