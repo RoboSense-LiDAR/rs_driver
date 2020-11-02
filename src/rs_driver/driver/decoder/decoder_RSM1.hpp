@@ -180,7 +180,25 @@ inline RSDecoderResult DecoderRSM1<T_Point>::processMsopPkt(const uint8_t* pkt, 
 {
   int azimuth = 0;
   RSDecoderResult ret = decodeMsopPkt(pkt, pointcloud_vec, height, azimuth);
-  return ret;
+  this->pkt_count_++;
+  switch (this->param_.split_frame_mode)
+  {
+    case SplitFrameMode::SPLIT_BY_ANGLE:
+    case SplitFrameMode::SPLIT_BY_FIXED_PKTS:
+      return ret;
+    case SplitFrameMode::SPLIT_BY_CUSTOM_PKTS:
+      if (this->pkt_count_ >= this->param_.num_pkts_split)
+      {
+        this->pkt_count_ = 0;
+        this->trigger_index_ = 0;
+        this->prev_angle_diff_ = RS_ONE_ROUND;
+        return FRAME_SPLIT;
+      }
+      break;
+    default:
+      break;
+  }
+  return DECODE_OK;
 }
 
 template <typename T_Point>
