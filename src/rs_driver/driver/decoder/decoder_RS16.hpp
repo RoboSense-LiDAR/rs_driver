@@ -233,21 +233,27 @@ inline RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
       static_cast<float>(this->pkts_per_frame_);  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
-    const uint8_t* p_ver_cali = dpkt_ptr->pitch_cali;
-    if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
-        (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
+    if ((dpkt_ptr->pitch_cali[0] == 0x00 || dpkt_ptr->pitch_cali[0] == 0xFF) &&
+        (dpkt_ptr->pitch_cali[1] == 0x00 || dpkt_ptr->pitch_cali[1] == 0xFF) &&
+        (dpkt_ptr->pitch_cali[2] == 0x00 || dpkt_ptr->pitch_cali[2] == 0xFF) &&
+        (dpkt_ptr->pitch_cali[3] == 0x00 || dpkt_ptr->pitch_cali[3] == 0xFF))
     {
       return RSDecoderResult::DECODE_OK;
     }
-    int lsb, mid, msb, neg = 1;
-    for (size_t i = 0; i < this->lidar_const_param_.CHANNELS_PER_BLOCK / 2; i++)
+    for (size_t i = 0; i < this->lidar_const_param_.LASER_NUM; i++)
     {
       /* vert angle calibration data */
-      lsb = p_ver_cali[i * 3];
-      mid = p_ver_cali[i * 3 + 1];
-      msb = p_ver_cali[i * 3 + 2];
-      neg = i < 8 ? -1 : 1;
-      this->vert_angle_list_[i] = (lsb * 256 * 256 + mid * 256 + msb) * neg * 0.01f;  // / 180 * M_PI;
+      union vertical_angle
+      {
+        uint8_t data[4];
+        uint32_t vertical_angle;
+      } ver_angle;
+      ver_angle.data[0] = dpkt_ptr->pitch_cali[i * 3 + 2];
+      ver_angle.data[1] = dpkt_ptr->pitch_cali[i * 3 + 1];
+      ver_angle.data[2] = dpkt_ptr->pitch_cali[i * 3];
+      ver_angle.data[3] = 0;
+      int neg = i < 8 ? -1 : 1;
+      this->vert_angle_list_[i] = static_cast<int>(ver_angle.vertical_angle) * neg * 0.01f;
       this->hori_angle_list_[i] = 0;
     }
     this->sortBeamTable();

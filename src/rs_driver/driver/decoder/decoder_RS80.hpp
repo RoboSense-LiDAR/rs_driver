@@ -97,7 +97,7 @@ inline DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param, const Lida
 template <typename T_Point>
 inline double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeUTC<RS80MsopPkt>(pkt,true);
+  return this->template calculateTimeUTC<RS80MsopPkt>(pkt, true);
 }
 
 template <typename T_Point>
@@ -244,22 +244,15 @@ inline RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
     {
       return RSDecoderResult::DECODE_OK;
     }
-    int lsb, mid, msb, neg = 1;
+    int neg = 1;
     for (size_t i = 0; i < this->lidar_const_param_.CHANNELS_PER_BLOCK; i++)
     {
-      // calculation of vertical angle
-      lsb = dpkt_ptr->ver_angle_cali[i].sign;
-      mid = dpkt_ptr->ver_angle_cali[i].value[0];
-      msb = dpkt_ptr->ver_angle_cali[i].value[1];
-      neg = lsb == 0 ? 1 : -1;
-      this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
-
-      // horizontal offset angle
-      lsb = dpkt_ptr->hori_angle_cali[i].sign;
-      mid = dpkt_ptr->hori_angle_cali[i].value[0];
-      msb = dpkt_ptr->hori_angle_cali[i].value[1];
-      neg = lsb == 0 ? 1 : -1;
-      this->hori_angle_list_[i] = (mid * 256 + msb) * neg;  // * 0.01f;
+            /* vert angle calibration data */
+       neg = static_cast<int>(dpkt_ptr->ver_angle_cali[i].sign) == 0 ? 1 : -1;
+      this->vert_angle_list_[i] = static_cast<int>(RS_SWAP_SHORT(dpkt_ptr->ver_angle_cali[i].value)) * neg;
+      /* horizon angle calibration data */
+      neg = static_cast<int>(dpkt_ptr->hori_angle_cali[i].sign) == 0 ? 1 : -1;
+      this->hori_angle_list_[i] = static_cast<int>(RS_SWAP_SHORT(dpkt_ptr->hori_angle_cali[i].value)) * neg;
     }
     this->sortBeamTable();
     this->difop_flag_ = true;

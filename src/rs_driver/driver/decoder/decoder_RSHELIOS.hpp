@@ -69,8 +69,8 @@ typedef struct
   uint8_t reserved_3[5];
   RSDiagnoNew diagno;
   uint8_t gprmc[86];
-  uint8_t pitch_cali[96];
-  uint8_t yaw_cali[96];
+  RSCalibrationAngle ver_angle_cali[32];
+  RSCalibrationAngle hori_angle_cali[32];
   uint8_t reserved_4[586];
   uint16_t tail;
 } RSHELIOSDifopPkt;
@@ -108,7 +108,7 @@ inline DecoderRSHELIOS<T_Point>::DecoderRSHELIOS(const RSDecoderParam& param,
 template <typename T_Point>
 inline double DecoderRSHELIOS<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeUTC<RSHELIOSMsopPkt>(pkt,false);
+  return this->template calculateTimeUTC<RSHELIOSMsopPkt>(pkt, false);
 }
 
 template <typename T_Point>
@@ -250,29 +250,21 @@ inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeDifopPkt(const uint8_t* p
       static_cast<float>(this->pkts_per_frame_);  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
   if (!this->difop_flag_)
   {
-    const uint8_t* p_ver_cali = ((RSHELIOSDifopPkt*)pkt)->pitch_cali;
+    const uint8_t* p_ver_cali = reinterpret_cast<const uint8_t*>(dpkt_ptr->ver_angle_cali);
     if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
         (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF))
     {
       return RSDecoderResult::DECODE_OK;
     }
-    int lsb, mid, msb, neg = 1;
-    const uint8_t* p_hori_cali = ((RSHELIOSDifopPkt*)pkt)->yaw_cali;
-    for (size_t i = 0; i < this->lidar_const_param_.CHANNELS_PER_BLOCK; i++)
+    int neg = 1;
+    for (size_t i = 0; i < this->lidar_const_param_.LASER_NUM; i++)
     {
       /* vert angle calibration data */
-      lsb = p_ver_cali[i * 3];
-      mid = p_ver_cali[i * 3 + 1];
-      msb = p_ver_cali[i * 3 + 2];
-      neg = lsb == 0 ? 1 : -1;
-      this->vert_angle_list_[i] = (mid * 256 + msb) * neg;  // / 180 * M_PI;
-
+      neg = static_cast<int>(dpkt_ptr->ver_angle_cali[i].sign) == 0 ? 1 : -1;
+      this->vert_angle_list_[i] = static_cast<int>(RS_SWAP_SHORT(dpkt_ptr->ver_angle_cali[i].value)) * neg;
       /* horizon angle calibration data */
-      lsb = p_hori_cali[i * 3];
-      mid = p_hori_cali[i * 3 + 1];
-      msb = p_hori_cali[i * 3 + 2];
-      neg = lsb == 0 ? 1 : -1;
-      this->hori_angle_list_[i] = (mid * 256 + msb) * neg;
+      neg = static_cast<int>(dpkt_ptr->hori_angle_cali[i].sign) == 0 ? 1 : -1;
+      this->hori_angle_list_[i] = static_cast<int>(RS_SWAP_SHORT(dpkt_ptr->hori_angle_cali[i].value)) * neg;
     }
     this->sortBeamTable();
     this->difop_flag_ = true;

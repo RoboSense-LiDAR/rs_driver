@@ -169,7 +169,7 @@ typedef struct
 typedef struct
 {
   uint8_t sign;
-  uint8_t value[2];
+  uint16_t value;
 } RSCalibrationAngle;
 
 typedef struct
