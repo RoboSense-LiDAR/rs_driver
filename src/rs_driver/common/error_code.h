@@ -35,27 +35,27 @@ namespace lidar
 enum class ErrCodeType
 {
   INFO_CODE,     ///< Common information
-  WARNING_CODE,  ///< The program may not work normally
-  ERROR_CODE     ///< The program will exit immediately
+  WARNING_CODE,  ///< Program may not work normally
+  ERROR_CODE     ///< Program will exit immediately
 };
 enum ErrCode
 {
   ErrCode_Success = 0x00,             ///< Normal
-  ErrCode_PcapRepeat = 0x01,          ///< The pcap file will play repeatedly
-  ErrCode_PcapExit = 0x02,            ///< The pcap thread will exit
-  ErrCode_MsopPktTimeout = 0x41,      ///< The msop packets receive overtime (1 sec)
-  ErrCode_DifopPktTimeout = 0x42,     ///< The difop packets receive overtime (2 sec)
-  ErrCode_MsopPktIncomplete = 0x43,   ///< The incomplete msop packets received
-  ErrCode_DifopPktIncomplete = 0x44,  ///< The incomplete difop packets received
-  ErrCode_NoDifopRecv = 0x45,      ///< The point cloud decoding process will not start until the difop packet receive
-  ErrCode_ZeroPoints = 0x46,       ///< The size of the point cloud is zero
-  ErrCode_StartBeforeInit = 0x47,  ///< The start() function is called before initializing successfully
-  ErrCode_PcapWrongDirectory = 0x48,  ///< The input directory of pcap file is wrong
-  ErrCode_MsopPortBuzy = 0x49,        ///< The input msop port is already used
-  ErrCode_DifopPortBuzy = 0x50,       ///< The input difop port is already used
-  ErrCode_WrongPktHeader = 0x51,      ///< The packet header is wrong
-  ErrCode_PktNull = 0x52,             ///< The input packet is null
-  ErrCode_PktBufOverFlow = 0x53       ///< The packet buffer is over flow
+  ErrCode_PcapRepeat = 0x01,          ///< Pcap file will play repeatedly
+  ErrCode_PcapExit = 0x02,            ///< Pcap thread will exit
+  ErrCode_MsopPktTimeout = 0x41,      ///< Msop packets receive overtime (1 sec)
+  ErrCode_DifopPktTimeout = 0x42,     ///< Difop packets receive overtime (2 sec)
+  ErrCode_MsopPktIncomplete = 0x43,   ///< Incomplete msop packets received
+  ErrCode_DifopPktIncomplete = 0x44,  ///< Incomplete difop packets received
+  ErrCode_NoDifopRecv = 0x45,         ///< Point cloud decoding process will not start until the difop packet receive
+  ErrCode_ZeroPoints = 0x46,          ///< Size of the point cloud is zero
+  ErrCode_StartBeforeInit = 0x47,     ///< start() function is called before initializing successfully
+  ErrCode_PcapWrongDirectory = 0x48,  ///< Input directory of pcap file is wrong
+  ErrCode_MsopPortBuzy = 0x49,        ///< Input msop port is already used
+  ErrCode_DifopPortBuzy = 0x50,       ///< Input difop port is already used
+  ErrCode_WrongPktHeader = 0x51,      ///< Packet header is wrong
+  ErrCode_PktNull = 0x52,             ///< Input packet is null
+  ErrCode_PktBufOverFlow = 0x53       ///< Packet buffer is over flow
 };
 
 struct Error

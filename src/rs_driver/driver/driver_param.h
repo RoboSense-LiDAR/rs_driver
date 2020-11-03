@@ -40,8 +40,8 @@ enum LidarType  ///< The lidar type
 enum SplitFrameMode
 {
   SPLIT_BY_ANGLE = 1,
-  SPLIT_BY_FIXED_PKTS = 2,
-  SPLIT_BY_CUSTOM_PKTS = 3
+  SPLIT_BY_FIXED_PKTS,
+  SPLIT_BY_CUSTOM_PKTS
 };
 
 typedef struct RSCameraTriggerParam  ///< The Camera trigger parameters

@@ -186,5 +186,4 @@ inline std::ostream& RS_REND(std::ostream& stream)
 #else
 #define RS_REND "\033[0m" << std::endl
 #endif
-
 #endif

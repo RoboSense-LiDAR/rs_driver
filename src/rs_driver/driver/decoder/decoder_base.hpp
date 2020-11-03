@@ -128,14 +128,14 @@ typedef struct
 typedef struct
 {
   uint32_t id;
-  uint8_t reserved1[3];
+  uint8_t reserved_1[3];
   uint8_t wave_mode;
   uint8_t temp_low;
   uint8_t temp_high;
   RSTimestampUTC timestamp;
-  uint8_t reserved2[10];
+  uint8_t reserved_2[10];
   uint8_t lidar_type;
-  uint8_t reserved3[49];
+  uint8_t reserved_3[49];
 } RSMsopHeaderNew;
 
 typedef struct
