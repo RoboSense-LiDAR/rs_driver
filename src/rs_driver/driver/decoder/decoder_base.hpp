@@ -50,7 +50,6 @@ DEFINE_MEMBER_CHECKER(timestamp)
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
 constexpr double RS_DIS_RESOLUTION = 0.005;
 constexpr double RS_ANGLE_RESOLUTION = 0.01;
-constexpr double NANO = 1000000000.0;
 constexpr double MICRO = 1000000.0;
 constexpr int RS_ONE_ROUND = 36000;
 
@@ -104,7 +103,7 @@ typedef struct
 typedef struct
 {
   uint8_t sec[6];
-  uint32_t ns;
+  uint32_t us;
 } RSTimestampUTC;
 
 typedef struct
@@ -283,7 +282,7 @@ protected:
   virtual RSDecoderResult decodeDifopPkt(const uint8_t* pkt) = 0;
   RSEchoMode getEchoMode(const LidarType& type, const uint8_t& return_mode);
   template <typename T_Msop>
-  double calculateTimeUTC(const uint8_t* pkt, const bool& is_nano);
+  double calculateTimeUTC(const uint8_t* pkt);
   template <typename T_Msop>
   double calculateTimeYMD(const uint8_t* pkt);
   template <typename T_Difop>
@@ -668,7 +667,7 @@ inline void DecoderBase<T_Point>::decodeDifopCalibration(const uint8_t* pkt, con
 }
 template <typename T_Point>
 template <typename T_Msop>
-inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt, const bool& is_nano)
+inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
 {
   const T_Msop* mpkt_ptr = reinterpret_cast<const T_Msop*>(pkt);
   union u_ts
@@ -684,16 +683,7 @@ inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt, const b
   timestamp.data[2] = mpkt_ptr->header.timestamp.sec[3];
   timestamp.data[1] = mpkt_ptr->header.timestamp.sec[4];
   timestamp.data[0] = mpkt_ptr->header.timestamp.sec[5];
-  if (is_nano)
-  {
-    return static_cast<double>(timestamp.ts) +
-           (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.ns))) / NANO;
-  }
-  else
-  {
-    return static_cast<double>(timestamp.ts) +
-           (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.ns))) / MICRO;
-  }
+  return static_cast<double>(timestamp.ts) + (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.us))) / MICRO;
 }
 template <typename T_Point>
 template <typename T_Msop>

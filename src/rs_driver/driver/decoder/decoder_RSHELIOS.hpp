@@ -108,7 +108,7 @@ inline DecoderRSHELIOS<T_Point>::DecoderRSHELIOS(const RSDecoderParam& param,
 template <typename T_Point>
 inline double DecoderRSHELIOS<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeUTC<RSHELIOSMsopPkt>(pkt, false);
+  return this->template calculateTimeUTC<RSHELIOSMsopPkt>(pkt);
 }
 
 template <typename T_Point>

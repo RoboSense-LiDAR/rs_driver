@@ -97,7 +97,7 @@ inline DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param, const Lida
 template <typename T_Point>
 inline double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeUTC<RS80MsopPkt>(pkt, true);
+  return this->template calculateTimeUTC<RS80MsopPkt>(pkt);
 }
 
 template <typename T_Point>
