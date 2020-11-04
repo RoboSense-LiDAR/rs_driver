@@ -266,6 +266,10 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   if (!this->difop_flag_)
   {
     this->echo_mode_ = this->getEchoMode(LidarType::RSM1, dpkt_ptr->return_mode);
+    if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
+    {
+      max_pkt_num_ = DUAL_PKT_NUM;
+    }
     this->difop_flag_ = true;
   }
   return RSDecoderResult::DECODE_OK;

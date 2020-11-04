@@ -56,9 +56,7 @@ constexpr int RS_ONE_ROUND = 36000;
 /* Echo mode definition */
 enum RSEchoMode
 {
-  ECHO_LAST,
-  ECHO_STRONGEST,
-  ECHO_NEAREST,
+  ECHO_SINGLE,
   ECHO_DUAL
 };
 
@@ -281,6 +279,7 @@ protected:
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth) = 0;
   virtual RSDecoderResult decodeDifopPkt(const uint8_t* pkt) = 0;
   RSEchoMode getEchoMode(const LidarType& type, const uint8_t& return_mode);
+  unsigned int getVersionNew(const RSVersionNew& ver);
   template <typename T_Msop>
   double calculateTimeUTC(const uint8_t* pkt);
   template <typename T_Msop>
@@ -305,6 +304,7 @@ protected:
   unsigned int trigger_index_;
   unsigned int prev_angle_diff_;
   unsigned int rpm_;
+  unsigned int hw_version_;
   int start_angle_;
   int end_angle_;
   int cut_angle_;
@@ -331,12 +331,13 @@ template <typename T_Point>
 inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
   : lidar_const_param_(lidar_const_param)
   , param_(param)
-  , echo_mode_(ECHO_STRONGEST)
+  , echo_mode_(ECHO_SINGLE)
   , pkts_per_frame_(lidar_const_param.PKT_RATE / 10)
   , pkt_count_(0)
   , trigger_index_(0)
   , prev_angle_diff_(RS_ONE_ROUND)
   , rpm_(600)
+  , hw_version_(0)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)
   , cut_angle_(param.cut_angle * 100)
@@ -605,7 +606,7 @@ template <typename T_Difop>
 inline void DecoderBase<T_Point>::decodeDifopCommon(const uint8_t* pkt, const LidarType& type)
 {
   const T_Difop* dpkt_ptr = reinterpret_cast<const T_Difop*>(pkt);
-  this->echo_mode_ = this->getEchoMode(LidarType::RS16, dpkt_ptr->return_mode);
+  this->echo_mode_ = this->getEchoMode(type, dpkt_ptr->return_mode);
   this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
   if (this->rpm_ == 0)
   {
@@ -797,66 +798,53 @@ inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const
   {
     case LidarType::RS128:
     case LidarType::RS80:
-      switch (return_mode)
-      {
-        case 0x01:
-          return RSEchoMode::ECHO_LAST;
-          break;
-        case 0x02:
-          return RSEchoMode::ECHO_STRONGEST;
-          break;
-        case 0x03:
-          return RSEchoMode::ECHO_DUAL;
-          break;
-        default:
-          return RSEchoMode::ECHO_STRONGEST;
-          break;
-      }
-      break;
-    case LidarType::RS16:
-    case LidarType::RS32:
-    case LidarType::RSBP:
     case LidarType::RSHELIOS:
       switch (return_mode)
       {
         case 0x00:
-          return RSEchoMode::ECHO_DUAL;
-          break;
-        case 0x01:
-          return RSEchoMode::ECHO_STRONGEST;
-          break;
-        case 0x02:
-          return RSEchoMode::ECHO_LAST;
-          break;
         case 0x03:
-          return RSEchoMode::ECHO_NEAREST;
-          break;
+          return RSEchoMode::ECHO_DUAL;
         default:
-          return RSEchoMode::ECHO_STRONGEST;
-          break;
+          return RSEchoMode::ECHO_SINGLE;
       }
-      break;
+    case LidarType::RS16:
+    case LidarType::RS32:
+    case LidarType::RSBP:
+      switch (return_mode)
+      {
+        case 0x00:
+          return RSEchoMode::ECHO_DUAL;
+        default:
+          return RSEchoMode::ECHO_SINGLE;
+      }
     case LidarType::RSM1:
       switch (return_mode)
       {
-        case 0x04:
-          return RSEchoMode::ECHO_STRONGEST;
-          break;
-        case 0x05:
-          return RSEchoMode::ECHO_LAST;
-          break;
-        case 0x06:
-          return RSEchoMode::ECHO_NEAREST;
-          break;
-        default:
+        case 0x00:
+        case 0x01:
+        case 0x02:
+        case 0x03:
           return RSEchoMode::ECHO_DUAL;
-          break;
+        default:
+          return RSEchoMode::ECHO_SINGLE;
       }
-      break;
-    default:
-      return RSEchoMode::ECHO_STRONGEST;
-      break;
   }
+  return RSEchoMode::ECHO_SINGLE;
+}
+
+template <typename T_Point>
+inline unsigned int DecoderBase<T_Point>::getVersionNew(const RSVersionNew& ver)
+{
+  union version
+  {
+    uint8_t data[4];
+    uint32_t version;
+  } hw_version;
+  hw_version.data[3] = 0;
+  hw_version.data[2] = ver.hw_ver[0];
+  hw_version.data[1] = ver.hw_ver[1];
+  hw_version.data[0] = ver.hw_ver[2];
+  return hw_version.version;
 }
 
 template <typename T_Point>

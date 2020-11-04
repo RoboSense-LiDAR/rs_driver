@@ -93,6 +93,7 @@ inline Input::Input(const LidarType& type, const RSInputParam& input_param,
   : lidar_type_(type), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr)
 {
   last_packet_time_ = std::chrono::system_clock::now();
+  input_param_.pcap_rate = input_param_.pcap_rate < 0.1 ? 0.1 : input_param_.pcap_rate;
   switch (type)
   {
     case LidarType::RSM1:

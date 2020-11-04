@@ -209,6 +209,7 @@ inline RSDecoderResult DecoderRS128<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+  this->hw_version_ = this->getVersionNew(dpkt_ptr->version);
   this->template decodeDifopCommon<RS128DifopPkt>(pkt, LidarType::RS128);
   if (!this->difop_flag_)
   {

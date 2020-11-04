@@ -219,6 +219,7 @@ inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeDifopPkt(const uint8_t* p
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+  this->hw_version_ = this->getVersionNew(dpkt_ptr->version);
   this->template decodeDifopCommon<RSHELIOSDifopPkt>(pkt, LidarType::RSHELIOS);
   if (!this->difop_flag_)
   {
