@@ -202,35 +202,7 @@ inline RSDecoderResult DecoderRS16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->echo_mode_ = this->getEchoMode(LidarType::RS16, dpkt_ptr->return_mode);
-  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
-  if (this->rpm_ == 0)
-  {
-    RS_WARNING << "LiDAR RPM is 0" << RS_REND;
-    this->rpm_ = 600;
-  }
-  this->time_duration_between_blocks_ =
-      (60 / static_cast<float>(this->rpm_)) /
-      ((this->lidar_const_param_.PKT_RATE * 60 / this->rpm_) * this->lidar_const_param_.BLOCKS_PER_PKT);
-  int fov_start_angle = RS_SWAP_SHORT(dpkt_ptr->fov.start_angle);
-  int fov_end_angle = RS_SWAP_SHORT(dpkt_ptr->fov.end_angle);
-  int fov_range = (fov_start_angle < fov_end_angle) ? (fov_end_angle - fov_start_angle) :
-                                                      (RS_ONE_ROUND - fov_start_angle + fov_end_angle);
-  int blocks_per_round =
-      (this->lidar_const_param_.PKT_RATE / (this->rpm_ / 60)) * this->lidar_const_param_.BLOCKS_PER_PKT;
-  this->fov_time_jump_diff_ =
-      this->time_duration_between_blocks_ * (fov_range / (RS_ONE_ROUND / static_cast<float>(blocks_per_round)));
-  if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
-  {
-    this->pkts_per_frame_ = ceil(2 * this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
-  }
-  else
-  {
-    this->pkts_per_frame_ = ceil(this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
-  }
-  this->azi_diff_between_block_theoretical_ =
-      (RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_PKT) /
-      static_cast<float>(this->pkts_per_frame_);  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
+  this->template decodeDifopCommon<RS16DifopPkt>(pkt, LidarType::RS16);
   if (!this->difop_flag_)
   {
     if ((dpkt_ptr->pitch_cali[0] == 0x00 || dpkt_ptr->pitch_cali[0] == 0xFF) &&

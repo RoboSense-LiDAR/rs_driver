@@ -281,14 +281,18 @@ protected:
   virtual void checkTriggerAngle(const int& angle, const double& timestamp);
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth) = 0;
   virtual RSDecoderResult decodeDifopPkt(const uint8_t* pkt) = 0;
+  RSEchoMode getEchoMode(const LidarType& type, const uint8_t& return_mode);
   template <typename T_Msop>
   double calculateTimeUTC(const uint8_t* pkt, const bool& is_nano);
   template <typename T_Msop>
   double calculateTimeYMD(const uint8_t* pkt);
-  void sortBeamTable();
+  template <typename T_Difop>
+  void decodeDifopCommon(const uint8_t* pkt, const LidarType& type);
+  template <typename T_Difop>
+  void decodeDifopCalibration(const uint8_t* pkt, const LidarType& type);
   float checkCosTable(const int& angle);
   float checkSinTable(const int& angle);
-  RSEchoMode getEchoMode(const LidarType& type, const uint8_t& return_mode);
+  void sortBeamTable();
 
 private:
   std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func);
@@ -597,6 +601,71 @@ inline int DecoderBase<T_Point>::azimuthCalibration(const float& azimuth, const 
   return (static_cast<int>(azimuth) + this->hori_angle_list_[channel] + RS_ONE_ROUND) % RS_ONE_ROUND;
 }
 
+template <typename T_Point>
+template <typename T_Difop>
+inline void DecoderBase<T_Point>::decodeDifopCommon(const uint8_t* pkt, const LidarType& type)
+{
+  const T_Difop* dpkt_ptr = reinterpret_cast<const T_Difop*>(pkt);
+  this->echo_mode_ = this->getEchoMode(LidarType::RS16, dpkt_ptr->return_mode);
+  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
+  if (this->rpm_ == 0)
+  {
+    RS_WARNING << "LiDAR RPM is 0" << RS_REND;
+    this->rpm_ = 600;
+  }
+  this->time_duration_between_blocks_ =
+      (60 / static_cast<float>(this->rpm_)) /
+      ((this->lidar_const_param_.PKT_RATE * 60 / this->rpm_) * this->lidar_const_param_.BLOCKS_PER_PKT);
+  int fov_start_angle = RS_SWAP_SHORT(dpkt_ptr->fov.start_angle);
+  int fov_end_angle = RS_SWAP_SHORT(dpkt_ptr->fov.end_angle);
+  int fov_range = (fov_start_angle < fov_end_angle) ? (fov_end_angle - fov_start_angle) :
+                                                      (RS_ONE_ROUND - fov_start_angle + fov_end_angle);
+  int blocks_per_round =
+      (this->lidar_const_param_.PKT_RATE / (this->rpm_ / 60)) * this->lidar_const_param_.BLOCKS_PER_PKT;
+  this->fov_time_jump_diff_ =
+      this->time_duration_between_blocks_ * (fov_range / (RS_ONE_ROUND / static_cast<float>(blocks_per_round)));
+  if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
+  {
+    this->pkts_per_frame_ = ceil(2 * this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
+  }
+  else
+  {
+    this->pkts_per_frame_ = ceil(this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
+  }
+  this->azi_diff_between_block_theoretical_ =
+      (RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_PKT) /
+      static_cast<float>(this->pkts_per_frame_);  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
+}
+
+template <typename T_Point>
+template <typename T_Difop>
+inline void DecoderBase<T_Point>::decodeDifopCalibration(const uint8_t* pkt, const LidarType& type)
+{
+  const T_Difop* dpkt_ptr = reinterpret_cast<const T_Difop*>(pkt);
+  const uint8_t* p_ver_cali = reinterpret_cast<const uint8_t*>(dpkt_ptr->ver_angle_cali);
+  if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
+      (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
+  {
+    return;
+  }
+  int neg = 1;
+  for (size_t i = 0; i < this->lidar_const_param_.LASER_NUM; i++)
+  {
+    /* vert angle calibration data */
+    neg = static_cast<int>(dpkt_ptr->ver_angle_cali[i].sign) == 0 ? 1 : -1;
+    this->vert_angle_list_[i] = static_cast<int>(RS_SWAP_SHORT(dpkt_ptr->ver_angle_cali[i].value)) * neg;
+    /* horizon angle calibration data */
+    neg = static_cast<int>(dpkt_ptr->hori_angle_cali[i].sign) == 0 ? 1 : -1;
+    this->hori_angle_list_[i] = static_cast<int>(RS_SWAP_SHORT(dpkt_ptr->hori_angle_cali[i].value)) * neg;
+    if (type == LidarType::RS32)
+    {
+      this->vert_angle_list_[i] *= 0.1f;
+      this->hori_angle_list_[i] *= 0.1f;
+    }
+  }
+  this->sortBeamTable();
+  this->difop_flag_ = true;
+}
 template <typename T_Point>
 template <typename T_Msop>
 inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt, const bool& is_nano)
