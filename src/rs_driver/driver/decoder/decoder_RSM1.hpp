@@ -228,6 +228,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
         float x = distance * this->checkCosTable(pitch) * this->checkCosTable(yaw);
         float y = distance * this->checkCosTable(pitch) * this->checkSinTable(yaw);
         float z = distance * this->checkSinTable(pitch);
+        this->transformPoint(x, y, z);
         setX(point, x);
         setY(point, y);
         setZ(point, z);

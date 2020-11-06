@@ -88,9 +88,9 @@ struct Error
       case ErrCode_DifopPortBuzy:
         return "ErrCode_DifopPortBuzy";
       case ErrCode_PcapRepeat:
-        return "ErrCode_PcapRepeat";
+        return "Info_PcapRepeat";
       case ErrCode_PcapExit:
-        return "ErrCode_PcapExit";
+        return "Info_PcapExit";
       case ErrCode_MsopPktTimeout:
         return "ErrCode_MsopPktTimeout";
       case ErrCode_DifopPktTimeout:

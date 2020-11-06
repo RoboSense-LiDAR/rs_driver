@@ -288,6 +288,7 @@ protected:
   void decodeDifopCommon(const uint8_t* pkt, const LidarType& type);
   template <typename T_Difop>
   void decodeDifopCalibration(const uint8_t* pkt, const LidarType& type);
+  void transformPoint(float& x, float& y, float& z);
   float checkCosTable(const int& angle);
   float checkSinTable(const int& angle);
   void sortBeamTable();
@@ -705,6 +706,24 @@ inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
   stm.tm_sec = mpkt_ptr->header.timestamp.second;
   return std::mktime(&stm) + static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms)) / 1000.0 +
          static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us)) / 1000000.0 - static_cast<double>(timezone);
+}
+
+template <typename T_Point>
+inline void DecoderBase<T_Point>::transformPoint(float& x, float& y, float& z)
+{
+#ifdef ENABLE_TRANSFORM
+RS_INFO<<"BBB"<<RS_REND;
+  Eigen::AngleAxisd current_rotation_x(0, Eigen::Vector3d::UnitX());
+  Eigen::AngleAxisd current_rotation_y(1.57, Eigen::Vector3d::UnitY());
+  Eigen::AngleAxisd current_rotation_z(0, Eigen::Vector3d::UnitZ());
+  Eigen::Translation3d current_translation(0, 0, 0);
+  Eigen::Matrix4d trans = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
+  Eigen::Vector4d target_ori(x, y, z, 1);
+  Eigen::Vector4d target_rotate = trans * target_ori;
+  x = target_rotate(0);
+  y = target_rotate(1);
+  z = target_rotate(2);
+#endif
 }
 
 template <typename T_Point>

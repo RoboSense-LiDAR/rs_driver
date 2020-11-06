@@ -11,6 +11,11 @@ project(rs_driver VERSION 1.3.0)
 option(COMPILE_DEMOS "Build rs_driver demos" OFF)
 option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
 
+#=============================
+#  Compile Demos&Tools
+#=============================
+option(ENABLE_TRANSFORM "Enable transform functions" OFF)
+
 #========================
 #  Project setup
 #========================
@@ -44,7 +49,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   else()
     message(FATAL_ERROR "Unsupported compiler.")
   endif()
-
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
@@ -97,13 +101,25 @@ list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
 #  PCAP
 #========================
 if(WIN32)
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-find_package(PCAP REQUIRED)
-include_directories(${PCAP_INCLUDE_DIR})
-list(APPEND EXTERNAL_LIBS ${PCAP_LIBRARY})
+  set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+  find_package(PCAP REQUIRED)
+  include_directories(${PCAP_INCLUDE_DIR})
+  list(APPEND EXTERNAL_LIBS ${PCAP_LIBRARY})
 else()
-list(APPEND EXTERNAL_LIBS pcap)
+  list(APPEND EXTERNAL_LIBS pcap)
 endif(WIN32)
+
+#========================
+#  Eigen
+#========================
+if(${ENABLE_TRANSFORM})
+  add_definitions("-DENABLE_TRANSFORM" PARENT_SCOPE)
+  find_package(Eigen3 REQUIRED)
+  include_directories(${EIGEN3_INCLUDE_DIR})
+  message(=============================================================)
+  message("-- Enable Transform Fcuntions")
+  message(=============================================================)
+endif(${ENABLE_TRANSFORM})
 
 #========================
 #  Build Demos
@@ -135,35 +151,30 @@ configure_file (
 )
 
 if(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
-set(rs_driver_DIR ${DRIVER_CMAKE_ROOT} PARENT_SCOPE)
+  set(rs_driver_DIR ${DRIVER_CMAKE_ROOT} PARENT_SCOPE)
 endif()
 
 #========================
-#  Installation
+#  Install & Uninstall
 #========================  
 if(UNIX)
-install(FILES ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake
-              ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake
-     DESTINATION ${INSTALL_CMAKE_DIR}/${CMAKE_PROJECT_NAME})
+  install(FILES ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake
+                ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake
+          DESTINATION ${INSTALL_CMAKE_DIR}/${CMAKE_PROJECT_NAME})
 
-install(DIRECTORY src/
-        DESTINATION ${INSTALL_DRIVER_DIR}
-        FILES_MATCHING PATTERN "*.h")
+  install(DIRECTORY src/
+          DESTINATION ${INSTALL_DRIVER_DIR}
+          FILES_MATCHING PATTERN "*.h")
 
-install(DIRECTORY src/
-        DESTINATION ${INSTALL_DRIVER_DIR}
-        FILES_MATCHING PATTERN "*.hpp")
-endif(UNIX)
-#========================
-#  Uninstall
-#======================== 
-if(UNIX)
-if(NOT TARGET uninstall)
-   configure_file(
-  ${CMAKE_CURRENT_LIST_DIR}/cmake/cmake_uninstall.cmake.in
-  ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake @ONLY
-)
+  install(DIRECTORY src/
+          DESTINATION ${INSTALL_DRIVER_DIR}
+          FILES_MATCHING PATTERN "*.hpp")
+
+  if(NOT TARGET uninstall)
+    configure_file(
+      ${CMAKE_CURRENT_LIST_DIR}/cmake/cmake_uninstall.cmake.in
+      ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake @ONLY)
     add_custom_target(uninstall
-        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-endif(NOT TARGET uninstall)
+      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+  endif(NOT TARGET uninstall)
 endif(UNIX)

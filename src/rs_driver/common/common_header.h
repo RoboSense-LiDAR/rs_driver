@@ -21,7 +21,7 @@
  *****************************************************************************/
 #pragma once
 #ifndef _USE_MATH_DEFINES
-#define _USE_MATH_DEFINES 
+#define _USE_MATH_DEFINES
 #endif
 /*Common*/
 #include <cstdint>
@@ -53,7 +53,7 @@
 #include <rs_driver/macro/version.h>
 /*Linux*/
 #ifdef __linux__
-#include <arpa/inet.h>  
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -61,6 +61,11 @@
 #elif _WIN32
 #include <winsock2.h>
 #include <windows.h>
+#endif
+
+/*Eigen*/
+#ifdef ENABLE_TRANSFORM
+#include <Eigen/Dense>
 #endif
 
 #if defined(_WIN32)
@@ -80,9 +85,9 @@ inline void setConsoleColor(WORD c)
 typedef std::pair<std::string, double> CameraTrigger;
 
 /*Packet Length*/
-const size_t MECH_PKT_LEN=1248;
-const size_t MEMS_MSOP_LEN=1210;
-const size_t MEMS_DIFOP_LEN=256;
+const size_t MECH_PKT_LEN = 1248;
+const size_t MEMS_MSOP_LEN = 1210;
+const size_t MEMS_DIFOP_LEN = 256;
 /*Output style*/
 #ifndef RS_INFOL
 #if defined(_WIN32)
