@@ -157,7 +157,7 @@ endif()
 #========================
 #  Install & Uninstall
 #========================  
-if(UNIX)
+if(UNIX AND NOT ${COMPILE_METHOD} STREQUAL "COLCON")
   install(FILES ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake
                 ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake
           DESTINATION ${INSTALL_CMAKE_DIR}/${CMAKE_PROJECT_NAME})
@@ -177,4 +177,4 @@ if(UNIX)
     add_custom_target(uninstall
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
   endif(NOT TARGET uninstall)
-endif(UNIX)
+endif(UNIX AND NOT ${COMPILE_METHOD} STREQUAL "COLCON")
