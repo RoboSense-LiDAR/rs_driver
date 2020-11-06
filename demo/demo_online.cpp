@@ -51,7 +51,7 @@ void exceptionCallback(const Error& code)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the error message and process it in another thread is recommended*/
-  RS_WARNING << "Error code : " << code.toString() << RS_REND;
+  RS_WARNING << code.toString() << RS_REND;
 }
 
 int main(int argc, char* argv[])
