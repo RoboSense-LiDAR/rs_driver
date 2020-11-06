@@ -36,11 +36,35 @@ Otherwise, the tool need to be start with the absolute path:
 
    Typer of LiDAR, the default value is *RS16*
 
+- -x
+
+   Transformation parameter, default is 0, unit: m
+
+- -y
+
+   Transformation parameter, default is 0, unit: m
+
+- -z
+
+   Transformation parameter, default is 0, unit: m
+
+- -roll
+
+   Transformation parameter, default is 0, unit: radian
+
+- -pitch
+
+   Transformation parameter, default is 0, unit: radian
+
+- -yaw
+
+   Transformation parameter, default is 0, unit: radian
+
 - -pcap
 
    The absolute path of pcap file. If this argument is set, the driver will work in off-line mode and the pcap file. Otherwise the driver work in online mode.
 
-  
+**The point cloud transformation function can only be used when the cmake option ENABLE_TRANSFORM is set to ON.**
 
 ## 3 Examples
 
@@ -56,4 +80,11 @@ Otherwise, the tool need to be start with the absolute path:
   rs_driver_viewer -pcap /home/robosense/helios.pcap -type RSHELIOS
   ```
 
+- Online decode a RS16 LiDAR with the coordinate transformation parameter x=1.5, y=2, z=0, roll=1.57, pitch=0, yaw=0
+
+  ```bash
+  rs_driver_viewer -type RS16 -x 1.5 -y 2 -roll 1.57 
+  ```
+
   
+

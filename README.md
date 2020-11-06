@@ -16,6 +16,8 @@
 - RSM1-B3
 - RSHELIOS
 
+
+
 ## 2 Compilation and Installation
 
 **rs_driver** is compatible with the following platforms and compilers: 
@@ -84,7 +86,7 @@ Since there'are no installers for mingw-w64 compiler available, PCL needs to be 
 
  Install the driver.
 
-```sh
+```bash
 cd rs_driver
 mkdir build && cd build
 cmake .. && make -j4
@@ -112,9 +114,17 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 
 
-## 4 Demo Code & Visualization Tool
+## 4 Quick Start
 
-### 4.1 Demo Code
+[Online connect LiDAR](doc/howto/how_to_online_use_driver.md)
+
+[Offline decode pcap bag](doc/howto/how_to_offline_decode_pcap.md)
+
+
+
+## 5 Demo Code & Visualization Tool
+
+### 5.1 Demo Code
 
 **rs_driver** offer two demo programs which are stored in ```rs_driver/demo```：
 
@@ -123,21 +133,19 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 User can refer to the demo code for usage of api. To build demo programs, set the following option to ```ON``` when configuring using cmake:
 
-```cmake
+```bash
 cmake -DCOMPILE_DEMOS=ON ..
 ```
 
-
-
-### 4.2 Visualization Tool
+### 5.2 Visualization Tool
 
 **rs_driver** offer a visualization tool based on PCL which is stored in ```rs_driver/tool```：
 
 - rs_driver_viewer.cpp
 
-To build the visualization tool, set the following option to ```ON``` when configuring using cmake: 
+To build the visualization tool, set the following option to ```ON``` when executing cmake command: 
 
-```cmake
+```bash
 cmake -DCOMPILE_TOOLS=ON ..
 ```
 
@@ -145,15 +153,27 @@ For more details about the tool, please refer to [Visualization tool guide](doc/
 
 
 
-## 5 Quick Start
+## 6 Coordinate Transformation
 
-[Online connect LiDAR](doc/howto/how_to_online_use_driver.md)
+ **rs_driver** has the coordinate transformation function built inside and it can output the transformed point cloud directly, which can help users saving time to do transformation for point cloud (e.g. for RS128, it costs about 3~5ms to do transformation for one frame point cloud). To enable this function, the dependency is listed below: 
 
-[Offline decode pcap bag](doc/howto/how_to_offline_decode_pcap.md)
+- Eigen3 - Installation method is listed below
+
+  ```bash
+  sudo apt-get install libeigen3-dev
+  ```
+
+set the following option to ```ON``` when executing cmake command:
+
+```bash
+cmake -DENABLE_TRANSFORM=ON ..
+```
+
+For more details about the tool, please refer to  [Transformation guide](doc/howto/how_to_use_transformation_function.md) 
 
 
 
-## 6 Others
+## 7 Others
 
 Please follow the paths list below to find related files.
 

@@ -110,9 +110,17 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 
 
-## 4 示例程序 & 可视化工具
+## 4 快速上手
 
-### 4.1 示例程序
+[在线连接雷达](doc/howto/how_to_online_use_driver.md)
+
+[离线解析pcap包](doc/howto/how_to_offline_decode_pcap.md)
+
+
+
+## 5 示例程序 & 可视化工具
+
+### 5.1 示例程序
 
 **rs_driver**提供了两个示例程序，存放于```rs_driver/demo``` 中：
 
@@ -121,13 +129,11 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 用户可参考示例程序编写代码调用接口。若希望编译这两个示例程序，执行CMake配置时加上参数：
 
-```cmake
+```bash
 cmake -DCOMPILE_DEMOS=ON ..
 ```
 
-
-
-### 4.2 可视化工具
+### 5.2 可视化工具
 
 **rs_driver**提供了一个基于PCL的点云可视化工具，存放于```rs_driver/tool``` 中：
 
@@ -135,7 +141,7 @@ cmake -DCOMPILE_DEMOS=ON ..
 
 若希望编译可视化工具，执行CMake配置时加上参数：
 
-```cmake
+```bash
 cmake -DCOMPILE_TOOLS=ON ..
 ```
 
@@ -143,15 +149,27 @@ cmake -DCOMPILE_TOOLS=ON ..
 
 
 
-## 5 快速上手
+## 6 坐标变换
 
-[在线连接雷达](doc/howto/how_to_online_use_driver.md)
+ **rs_driver**提供了内置的坐标变换功能，可以直接输出经过坐标变换后的点云，显著节省了用户对点云进行坐标变换的操作耗时（128线雷达一帧点云坐标变换耗时越3~5ms）。若希望启用此功能，用户需安装以下依赖：
 
-[离线解析pcap包](doc/howto/how_to_offline_decode_pcap.md)
+- Eigen3 - 安装方式如下
+
+  ```bash
+sudo apt-get install libeigen3-dev
+  ```
+
+同时，执行CMake配置时加上参数：
+
+```bash
+cmake -DENABLE_TRANSFORM=ON ..
+```
+
+具体使用请参考[坐标变换功能简介](doc/howto/how_to_use_transformation_function.md) 
 
 
 
-## 6 其他资料
+## 7 其他资料
 
 请根据以下路径去查看相关文件。
 
