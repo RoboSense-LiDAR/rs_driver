@@ -60,21 +60,43 @@ bool parseArgument(int argc, const char* const* argv, const char* str, std::stri
 
 void parseParam(int argc, char* argv[], RSDriverParam& param)
 {
-  param.wait_for_difop=false;
-  std::string lidar_type;
-  std::string msop_port;
-  std::string difop_port;
-  if (parseArgument(argc, argv, "-type", lidar_type))
+  param.wait_for_difop = false;
+  std::string result_str;
+  if (parseArgument(argc, argv, "-type", result_str))
   {
-    param.lidar_type = param.strToLidarType(lidar_type);
+    param.lidar_type = param.strToLidarType(result_str);
   }
-  if (parseArgument(argc, argv, "-msop", msop_port))
+  if (parseArgument(argc, argv, "-msop", result_str))
   {
-    param.input_param.msop_port = std::stoi(msop_port);
+    param.input_param.msop_port = std::stoi(result_str);
   }
-  if (parseArgument(argc, argv, "-difop", difop_port))
+  if (parseArgument(argc, argv, "-difop", result_str))
   {
-    param.input_param.difop_port = std::stoi(difop_port);
+    param.input_param.difop_port = std::stoi(result_str);
+  }
+  if (parseArgument(argc, argv, "-x", result_str))
+  {
+    param.decoder_param.transform_param.x = std::stof(result_str);
+  }
+  if (parseArgument(argc, argv, "-y", result_str))
+  {
+    param.decoder_param.transform_param.y = std::stof(result_str);
+  }
+  if (parseArgument(argc, argv, "-z", result_str))
+  {
+    param.decoder_param.transform_param.z = std::stof(result_str);
+  }
+  if (parseArgument(argc, argv, "-roll", result_str))
+  {
+    param.decoder_param.transform_param.roll = std::stof(result_str);
+  }
+  if (parseArgument(argc, argv, "-pitch", result_str))
+  {
+    param.decoder_param.transform_param.pitch = std::stof(result_str);
+  }
+  if (parseArgument(argc, argv, "-yaw", result_str))
+  {
+    param.decoder_param.transform_param.yaw = std::stof(result_str);
   }
   if (parseArgument(argc, argv, "-pcap", param.input_param.pcap_path))
   {
@@ -87,8 +109,15 @@ void printHelpMenu()
   RS_MSG << "Arguments are: " << RS_REND;
   RS_MSG << "        -msop             = LiDAR msop port number,the default value is 6699" << RS_REND;
   RS_MSG << "        -difop            = LiDAR difop port number,the default value is 7788" << RS_REND;
-  RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS ), the default value is RS16"
+  RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS ), the default "
+            "value is RS16"
          << RS_REND;
+  RS_MSG << "        -x                = Transformation parameter, unit: m " << RS_REND;
+  RS_MSG << "        -y                = Transformation parameter, unit: m " << RS_REND;
+  RS_MSG << "        -z                = Transformation parameter, unit: m " << RS_REND;
+  RS_MSG << "        -roll             = Transformation parameter, unit: radian " << RS_REND;
+  RS_MSG << "        -pitch            = Transformation parameter, unit: radian " << RS_REND;
+  RS_MSG << "        -yaw              = Transformation parameter, unit: radian " << RS_REND;
   RS_MSG << "        -pcap             = The path of the pcap file, if this argument is set, the driver "
             "will work in off-line mode and read the pcap file. Otherwise the driver work in online mode."
          << RS_REND;
@@ -114,6 +143,19 @@ void printParam(const RSDriverParam& param)
   RS_INFO << param.input_param.difop_port << RS_REND;
   RS_INFOL << "LiDAR Type: ";
   RS_INFO << param.lidarTypeToStr(param.lidar_type) << RS_REND;
+  RS_INFOL << "Transformation Parameters (x, y, z, roll, pitch, yaw): " << RS_REND;
+  RS_INFOL << "x: ";
+  RS_INFO << std::fixed << param.decoder_param.transform_param.x << RS_REND;
+  RS_INFOL << "y: ";
+  RS_INFO << std::fixed << param.decoder_param.transform_param.y << RS_REND;
+  RS_INFOL << "z: ";
+  RS_INFO << std::fixed << param.decoder_param.transform_param.z << RS_REND;
+  RS_INFOL << "roll: ";
+  RS_INFO << std::fixed << param.decoder_param.transform_param.yaw << RS_REND;
+  RS_INFOL << "pitch: ";
+  RS_INFO << std::fixed << param.decoder_param.transform_param.pitch << RS_REND;
+  RS_INFOL << "yaw: ";
+  RS_INFO << std::fixed << param.decoder_param.transform_param.yaw << RS_REND;
 }
 /**
  * @brief The point cloud callback function. This function will be registered to lidar driver.
@@ -144,7 +186,7 @@ void exceptionCallback(const Error& code)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the error message and process it in another thread is recommended*/
-  RS_WARNING << "Error code : " << code.toString() << RS_REND;
+  RS_WARNING << code.toString() << RS_REND;
 }
 
 int main(int argc, char* argv[])

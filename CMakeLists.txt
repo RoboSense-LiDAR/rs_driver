@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 cmake_policy(SET CMP0048 NEW)
 if(WIN32)
-cmake_policy(SET CMP0074 NEW)
+  cmake_policy(SET CMP0074 NEW)
 endif(WIN32)
 project(rs_driver VERSION 1.3.0)
 
@@ -113,7 +113,7 @@ endif(WIN32)
 #  Eigen
 #========================
 if(${ENABLE_TRANSFORM})
-  add_definitions("-DENABLE_TRANSFORM" PARENT_SCOPE)
+  add_definitions("-DENABLE_TRANSFORM")
   find_package(Eigen3 REQUIRED)
   include_directories(${EIGEN3_INCLUDE_DIR})
   message(=============================================================)

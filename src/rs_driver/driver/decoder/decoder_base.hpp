@@ -712,11 +712,11 @@ template <typename T_Point>
 inline void DecoderBase<T_Point>::transformPoint(float& x, float& y, float& z)
 {
 #ifdef ENABLE_TRANSFORM
-RS_INFO<<"BBB"<<RS_REND;
-  Eigen::AngleAxisd current_rotation_x(0, Eigen::Vector3d::UnitX());
-  Eigen::AngleAxisd current_rotation_y(1.57, Eigen::Vector3d::UnitY());
-  Eigen::AngleAxisd current_rotation_z(0, Eigen::Vector3d::UnitZ());
-  Eigen::Translation3d current_translation(0, 0, 0);
+  Eigen::AngleAxisd current_rotation_x(param_.transform_param.roll, Eigen::Vector3d::UnitX());
+  Eigen::AngleAxisd current_rotation_y(param_.transform_param.pitch, Eigen::Vector3d::UnitY());
+  Eigen::AngleAxisd current_rotation_z(param_.transform_param.yaw, Eigen::Vector3d::UnitZ());
+  Eigen::Translation3d current_translation(param_.transform_param.x, param_.transform_param.y,
+                                           param_.transform_param.z);
   Eigen::Matrix4d trans = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
   Eigen::Vector4d target_ori(x, y, z, 1);
   Eigen::Vector4d target_rotate = trans * target_ori;
