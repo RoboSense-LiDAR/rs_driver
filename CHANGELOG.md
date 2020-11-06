@@ -13,9 +13,8 @@
 
 ### Changed
 
-- Update some decoding part for LiDARS
+- Update some decoding part for LiDARs
 - Change the definition of packet message
-
 - Update documents
 
 

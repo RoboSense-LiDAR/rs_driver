@@ -60,7 +60,7 @@ bool parseArgument(int argc, const char* const* argv, const char* str, std::stri
 
 void parseParam(int argc, char* argv[], RSDriverParam& param)
 {
-  param.wait_for_difop=false;
+  param.wait_for_difop = false;
   std::string lidar_type;
   std::string msop_port;
   std::string difop_port;
@@ -85,9 +85,10 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
 void printHelpMenu()
 {
   RS_MSG << "Arguments are: " << RS_REND;
-  RS_MSG << "        -msop             = LiDAR msop port number,the default value is 6699" << RS_REND;
-  RS_MSG << "        -difop            = LiDAR difop port number,the default value is 7788" << RS_REND;
-  RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS ), the default value is RS16"
+  RS_MSG << "        -msop             = LiDAR msop port number, the default value is 6699" << RS_REND;
+  RS_MSG << "        -difop            = LiDAR difop port number, the default value is 7788" << RS_REND;
+  RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS ), the default "
+            "value is RS16"
          << RS_REND;
   RS_MSG << "        -pcap             = The path of the pcap file, if this argument is set, the driver "
             "will work in off-line mode and read the pcap file. Otherwise the driver work in online mode."
