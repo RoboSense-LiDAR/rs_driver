@@ -177,3 +177,5 @@ cmake -DENABLE_TRANSFORM=ON ..
 - 点云消息定义: ```rs_driver/src/rs_driver/msg/point_cloud_msg.h```
 - 接口定义: ```rs_driver/src/rs_driver/api/lidar_driver.h```
 - 错误码定义: ```rs_driver/src/rs_driver/common/error_code.h```
+
+组播模式:  [组播模式](doc/howto/how_to_use_multi_cast_function.md) 

@@ -18,8 +18,6 @@ To enable the coordinate transformation function, set the following option to ``
 cmake -DENABLE_TRANSFORM=ON ..
 ```
 
-
-
 ### 2.2 Set up parameters
 
 Set up the transformation parameters. The default value of each parameter is ```0```.  Here is an example for offline decoding pcap bag ( x=1, y=0, z=2.5, roll=0.1, pitch=0.2, yaw=1.57 ): 

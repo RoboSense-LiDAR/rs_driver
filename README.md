@@ -182,9 +182,5 @@ Please follow the paths list below to find related files.
 - API definition: ```rs_driver/src/rs_driver/api/lidar_driver.h```
 - Error code definition: ```rs_driver/src/rs_driver/common/error_code.h```
 
-
-
-
-
-
+Multi-Cast function: [Multi-Cast](doc/howto/how_to_use_multi_cast_function.md) 
 
