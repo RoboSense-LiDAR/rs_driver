@@ -196,7 +196,7 @@ template <typename T_Point>
 inline const LidarConstantParameter DecoderFactory<T_Point>::getRSHELIOSConstantParam()
 {
   LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0xA050A55A0A05AA55;
+  ret_param.MSOP_ID = 0x5A05AA55;
   ret_param.DIFOP_ID = 0x555511115A00FFA5;
   ret_param.BLOCK_ID = 0xEEFF;
   ret_param.PKT_RATE = 1500;

@@ -97,7 +97,7 @@ inline DecoderRS80<T_Point>::DecoderRS80(const RSDecoderParam& param, const Lida
 template <typename T_Point>
 inline double DecoderRS80<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeUTC<RS80MsopPkt>(pkt);
+  return this->template calculateTimeUTC<RS80MsopPkt>(pkt, LidarType::RS80);
 }
 
 template <typename T_Point>
@@ -110,6 +110,7 @@ inline RSDecoderResult DecoderRS80<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+  this->protocol_ver_ = RS_SWAP_SHORT(mpkt_ptr->header.protocol_version);
   azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
   double block_timestamp = this->get_point_time_func_(pkt);
@@ -208,7 +209,6 @@ inline RSDecoderResult DecoderRS80<T_Point>::decodeDifopPkt(const uint8_t* pkt)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->hw_version_ = this->getVersionNew(dpkt_ptr->version);
   this->template decodeDifopCommon<RS80DifopPkt>(pkt, LidarType::RS80);
   if (!this->difop_flag_)
   {

@@ -34,8 +34,9 @@ typedef struct
 
 typedef struct
 {
-  uint64_t id;
-  uint8_t reserved_1[12];
+  uint32_t id;
+  uint16_t protocol_version;
+  uint8_t reserved_1[14];
   RSTimestampUTC timestamp;
   uint8_t lidar_type;
   uint8_t reserved_2[7];
@@ -108,7 +109,7 @@ inline DecoderRSHELIOS<T_Point>::DecoderRSHELIOS(const RSDecoderParam& param,
 template <typename T_Point>
 inline double DecoderRSHELIOS<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeUTC<RSHELIOSMsopPkt>(pkt);
+  return this->template calculateTimeUTC<RSHELIOSMsopPkt>(pkt, LidarType::RSHELIOS);
 }
 
 template <typename T_Point>
@@ -121,6 +122,7 @@ inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeMsopPkt(const uint8_t* pk
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+  this->protocol_ver_ = RS_SWAP_SHORT(mpkt_ptr->header.protocol_version);
   azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   double block_timestamp = this->get_point_time_func_(pkt);
@@ -220,7 +222,6 @@ inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeDifopPkt(const uint8_t* p
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->hw_version_ = this->getVersionNew(dpkt_ptr->version);
   this->template decodeDifopCommon<RSHELIOSDifopPkt>(pkt, LidarType::RSHELIOS);
   if (!this->difop_flag_)
   {

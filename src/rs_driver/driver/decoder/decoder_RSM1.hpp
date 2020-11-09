@@ -51,7 +51,7 @@ typedef struct
 {
   uint32_t id;
   uint16_t pkt_cnt;
-  uint16_t protocal_version;
+  uint16_t protocol_version;
   uint8_t return_mode;
   uint8_t time_mode;
   RSTimestampUTC timestamp;
@@ -157,7 +157,7 @@ inline DecoderRSM1<T_Point>::DecoderRSM1(const RSDecoderParam& param, const Lida
 template <typename T_Point>
 inline double DecoderRSM1<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeUTC<RSM1MsopPkt>(pkt);
+  return this->template calculateTimeUTC<RSM1MsopPkt>(pkt, LidarType::RSM1);
 }
 
 template <typename T_Point>
@@ -197,6 +197,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+  this->protocol_ver_ = RS_SWAP_SHORT(mpkt_ptr->header.protocol_version);
   double pkt_timestamp = 0;
   switch (mpkt_ptr->blocks[0].return_seq)
   {

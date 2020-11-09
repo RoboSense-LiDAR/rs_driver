@@ -48,11 +48,12 @@ DEFINE_MEMBER_CHECKER(timestamp)
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
-constexpr double RS_DIS_RESOLUTION = 0.005;
-constexpr double RS_ANGLE_RESOLUTION = 0.01;
-constexpr double MICRO = 1000000.0;
+constexpr float RS_DIS_RESOLUTION = 0.005;
+constexpr float RS_ANGLE_RESOLUTION = 0.01;
+constexpr float MICRO = 1000000.0;
+constexpr float NANO = 1000000000.0;
 constexpr int RS_ONE_ROUND = 36000;
-
+constexpr uint16_t PROTOCOL_VER_0 = 0x00;
 /* Echo mode definition */
 enum RSEchoMode
 {
@@ -114,18 +115,19 @@ typedef struct
 typedef struct
 {
   uint64_t id;
-  uint8_t reserved1[12];
+  uint8_t reserved_1[12];
   RSTimestampYMD timestamp;
   uint8_t lidar_type;
-  uint8_t reserved2[7];
+  uint8_t reserved_2[7];
   uint16_t temp_raw;
-  uint8_t reserved3[2];
+  uint8_t reserved_3[2];
 } RSMsopHeader;
 
 typedef struct
 {
   uint32_t id;
-  uint8_t reserved_1[3];
+  uint16_t protocol_version;
+  uint8_t reserved_1;
   uint8_t wave_mode;
   uint8_t temp_low;
   uint8_t temp_high;
@@ -279,9 +281,8 @@ protected:
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth) = 0;
   virtual RSDecoderResult decodeDifopPkt(const uint8_t* pkt) = 0;
   RSEchoMode getEchoMode(const LidarType& type, const uint8_t& return_mode);
-  unsigned int getVersionNew(const RSVersionNew& ver);
   template <typename T_Msop>
-  double calculateTimeUTC(const uint8_t* pkt);
+  double calculateTimeUTC(const uint8_t* pkt, const LidarType& type);
   template <typename T_Msop>
   double calculateTimeYMD(const uint8_t* pkt);
   template <typename T_Difop>
@@ -305,7 +306,7 @@ protected:
   unsigned int trigger_index_;
   unsigned int prev_angle_diff_;
   unsigned int rpm_;
-  unsigned int hw_version_;
+  unsigned int protocol_ver_;
   int start_angle_;
   int end_angle_;
   int cut_angle_;
@@ -338,7 +339,7 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
   , trigger_index_(0)
   , prev_angle_diff_(RS_ONE_ROUND)
   , rpm_(600)
-  , hw_version_(0)
+  , protocol_ver_(0)
   , start_angle_(param.start_angle * 100)
   , end_angle_(param.end_angle * 100)
   , cut_angle_(param.cut_angle * 100)
@@ -669,7 +670,7 @@ inline void DecoderBase<T_Point>::decodeDifopCalibration(const uint8_t* pkt, con
 }
 template <typename T_Point>
 template <typename T_Msop>
-inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
+inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt, const LidarType& type)
 {
   const T_Msop* mpkt_ptr = reinterpret_cast<const T_Msop*>(pkt);
   union u_ts
@@ -685,6 +686,13 @@ inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
   timestamp.data[2] = mpkt_ptr->header.timestamp.sec[3];
   timestamp.data[1] = mpkt_ptr->header.timestamp.sec[4];
   timestamp.data[0] = mpkt_ptr->header.timestamp.sec[5];
+
+  if ((type == LidarType::RS80 || type == LidarType::RS128) && this->protocol_ver_ == PROTOCOL_VER_0)
+  {
+    return static_cast<double>(timestamp.ts) +
+           (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.us))) / NANO;
+  }
+
   return static_cast<double>(timestamp.ts) + (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.us))) / MICRO;
 }
 template <typename T_Point>
@@ -849,21 +857,6 @@ inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const
       }
   }
   return RSEchoMode::ECHO_SINGLE;
-}
-
-template <typename T_Point>
-inline unsigned int DecoderBase<T_Point>::getVersionNew(const RSVersionNew& ver)
-{
-  union version
-  {
-    uint8_t data[4];
-    uint32_t version;
-  } hw_version;
-  hw_version.data[3] = 0;
-  hw_version.data[2] = ver.hw_ver[0];
-  hw_version.data[1] = ver.hw_ver[1];
-  hw_version.data[0] = ver.hw_ver[2];
-  return hw_version.version;
 }
 
 template <typename T_Point>
