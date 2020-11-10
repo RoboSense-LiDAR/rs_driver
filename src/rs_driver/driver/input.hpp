@@ -1,24 +1,35 @@
-/******************************************************************************
- * Copyright 2020 RoboSense All rights reserved.
- * Suteng Innovation Technology Co., Ltd. www.robosense.ai
+/*********************************************************************************************************************
+Copyright (c) 2020 RoboSense
+All rights reserved
 
- * This software is provided to you directly by RoboSense and might
- * only be used to access RoboSense LiDAR. Any compilation,
- * modification, exploration, reproduction and redistribution are
- * restricted without RoboSense's prior consent.
+By downloading, copying, installing or using the software you agree to this license. If you do not agree to this
+license, do not download, install, copy or use the software.
 
- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL ROBOSENSE BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+License Agreement
+For RoboSense LiDAR SDK Library
+(3-clause BSD License)
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the names of the RoboSense, nor Suteng Innovation Technology, nor the names of other contributors may be used
+to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************************************************************/
+
 #pragma once
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/common/error_code.h>
@@ -127,7 +138,7 @@ inline bool Input::init()
     char errbuf[PCAP_ERRBUF_SIZE];
     if ((pcap_ = pcap_open_offline(input_param_.pcap_path.c_str(), errbuf)) == NULL)
     {
-      excb_(Error(ErrCode_PcapWrongDirectory));
+      excb_(Error(ERRCODE_PCAPWRONGPATH));
       return false;
     }
     else
@@ -158,7 +169,7 @@ inline bool Input::start()
 {
   if (!init_flag_)
   {
-    excb_(Error(ErrCode_StartBeforeInit));
+    excb_(Error(ERRCODE_STARTBEFOREINIT));
     return false;
   }
   if (!input_param_.read_pcap)
@@ -222,7 +233,7 @@ inline bool Input::setSocket(const std::string& pkt_type)
     }
     catch (...)
     {
-      excb_(Error(ErrCode_MsopPortBuzy));
+      excb_(Error(ERRCODE_MSOPPORTBUZY));
       return false;
     }
     if (input_param_.multi_cast_address != "0.0.0.0")
@@ -243,7 +254,7 @@ inline bool Input::setSocket(const std::string& pkt_type)
     }
     catch (...)
     {
-      excb_(Error(ErrCode_DifopPortBuzy));
+      excb_(Error(ERRCODE_DIFOPPORTBUZY));
       return false;
     }
     if (input_param_.multi_cast_address != "0.0.0.0")
@@ -275,12 +286,12 @@ inline void Input::getMsopPacket()
     } while (ec == boost::asio::error::would_block);
     if (ec)
     {
-      excb_(Error(ErrCode_MsopPktTimeout));
+      excb_(Error(ERRCODE_MSOPTIMEOUT));
       continue;
     }
     if (ret < msop_pkt_length_)
     {
-      excb_(Error(ErrCode_MsopPktIncomplete));
+      excb_(Error(ERRCODE_MSOPINCOMPLETE));
       continue;
     }
     PacketMsg msg(msop_pkt_length_);
@@ -310,12 +321,12 @@ inline void Input::getDifopPacket()
     } while (ec == boost::asio::error::would_block);
     if (ec)
     {
-      excb_(Error(ErrCode_DifopPktTimeout));
+      excb_(Error(ERRCODE_DIFOPTIMEOUT));
       continue;
     }
     if (ret < difop_pkt_length_)
     {
-      excb_(Error(ErrCode_DifopPktIncomplete));
+      excb_(Error(ERRCODE_DIFOPINCOMPLETE));
       continue;
     }
     PacketMsg msg(difop_pkt_length_);
@@ -410,13 +421,13 @@ inline void Input::getPcapPacket()
     {
       if (input_param_.pcap_repeat)
       {
-        excb_(Error(ErrCode_PcapRepeat));
+        excb_(Error(ERRCODE_PCAPREPEAT));
         char errbuf[PCAP_ERRBUF_SIZE];
         pcap_ = pcap_open_offline(input_param_.pcap_path.c_str(), errbuf);
       }
       else
       {
-        excb_(Error(ErrCode_PcapExit));
+        excb_(Error(ERRCODE_PCAPEXIT));
         break;
       }
     }

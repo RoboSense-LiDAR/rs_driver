@@ -1,24 +1,35 @@
-/******************************************************************************
- * Copyright 2020 RoboSense All rights reserved.
- * Suteng Innovation Technology Co., Ltd. www.robosense.ai
+/*********************************************************************************************************************
+Copyright (c) 2020 RoboSense
+All rights reserved
 
- * This software is provided to you directly by RoboSense and might
- * only be used to access RoboSense LiDAR. Any compilation,
- * modification, exploration, reproduction and redistribution are
- * restricted without RoboSense's prior consent.
+By downloading, copying, installing or using the software you agree to this license. If you do not agree to this
+license, do not download, install, copy or use the software.
 
- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL ROBOSENSE BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *****************************************************************************/
+License Agreement
+For RoboSense LiDAR SDK Library
+(3-clause BSD License)
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. Neither the names of the RoboSense, nor Suteng Innovation Technology, nor the names of other contributors may be used
+to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************************************************************/
+
 #pragma once
 #include <rs_driver/msg/point_cloud_msg.h>
 #include <rs_driver/msg/packet_msg.h>
@@ -259,7 +270,7 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
     ndifop_count_++;
     if (ndifop_count_ > 20)
     {
-      reportError(Error(ErrCode_NoDifopRecv));
+      reportError(Error(ERRCODE_NODIFOPRECV));
       ndifop_count_ = 0;
     }
     point_cloud_msg.point_cloud_ptr = output_point_cloud_ptr;
@@ -283,10 +294,10 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
         pointcloud_one_frame[i] = std::move(pointcloud_one_packet);
         break;
       case RSDecoderResult::WRONG_PKT_HEADER:
-        reportError(Error(ErrCode_WrongPktHeader));
+        reportError(Error(ERRCODE_WRONGPKTHEADER));
         break;
       case RSDecoderResult::PKT_NULL:
-        reportError(Error(ErrCode_PktNull));
+        reportError(Error(ERRCODE_PKTNULL));
         break;
       default:
         break;
@@ -303,7 +314,7 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
   point_cloud_msg.timestamp = scan_msg.timestamp;
   if (point_cloud_msg.point_cloud_ptr->size() == 0)
   {
-    reportError(Error(ErrCode_ZeroPoints));
+    reportError(Error(ERRCODE_ZEROPOINTS));
     return false;
   }
   return true;
@@ -363,7 +374,7 @@ inline void LidarDriverImpl<T_Point>::msopCallback(const PacketMsg& msg)
 {
   if (msop_pkt_queue_.size() > MAX_PACKETS_BUFFER_SIZE)
   {
-    reportError(Error(ErrCode_PktBufOverFlow));
+    reportError(Error(ERRCODE_PKTBUFOVERFLOW));
     msop_pkt_queue_.clear();
   }
   msop_pkt_queue_.push(msg);
@@ -393,7 +404,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     ndifop_count_++;
     if (ndifop_count_ > 120)
     {
-      reportError(Error(ErrCode_NoDifopRecv));
+      reportError(Error(ERRCODE_NODIFOPRECV));
       ndifop_count_ = 0;
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -425,7 +436,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
         }
         if (msg.point_cloud_ptr->size() == 0)
         {
-          reportError(Error(ErrCode_ZeroPoints));
+          reportError(Error(ERRCODE_ZEROPOINTS));
         }
         else
         {
@@ -439,7 +450,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     }
     else
     {
-      reportError(Error(ErrCode_WrongPktHeader));
+      reportError(Error(ERRCODE_WRONGPKTHEADER));
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   }
