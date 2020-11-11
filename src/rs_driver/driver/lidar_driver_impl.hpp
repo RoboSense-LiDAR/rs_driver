@@ -451,6 +451,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     else
     {
       reportError(Error(ERRCODE_WRONGPKTHEADER));
+      msop_pkt_queue_.clear();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   }
