@@ -161,7 +161,7 @@ void printParam(const RSDriverParam& param)
   RS_INFOL << "z: ";
   RS_INFO << std::fixed << param.decoder_param.transform_param.z << RS_REND;
   RS_INFOL << "roll: ";
-  RS_INFO << std::fixed << param.decoder_param.transform_param.yaw << RS_REND;
+  RS_INFO << std::fixed << param.decoder_param.transform_param.roll << RS_REND;
   RS_INFOL << "pitch: ";
   RS_INFO << std::fixed << param.decoder_param.transform_param.pitch << RS_REND;
   RS_INFOL << "yaw: ";

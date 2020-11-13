@@ -60,6 +60,7 @@ DEFINE_MEMBER_CHECKER(timestamp)
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
 constexpr float RS_DIS_RESOLUTION = 0.005;
+constexpr float RS_HELIOS_DIS_RESOLUTION = 0.0025;
 constexpr float RS_ANGLE_RESOLUTION = 0.01;
 constexpr float MICRO = 1000000.0;
 constexpr float NANO = 1000000000.0;
