@@ -172,7 +172,6 @@ inline void LidarDriverImpl<T_Point>::initPointCloudTransFunc()
           std::make_shared<typename PointCloudMsg<T_Point>::PointCloud>();
       row_major_ptr->resize(input_ptr->size());
       size_t width = input_ptr->size() / height;
-#pragma omp parallel for
       for (int i = 0; i < static_cast<int>(height); i++)
       {
         for (int j = 0; j < static_cast<int>(width); j++)
