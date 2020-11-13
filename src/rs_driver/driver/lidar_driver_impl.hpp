@@ -281,7 +281,6 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
   std::vector<std::vector<T_Point>> pointcloud_one_frame;
   int height = 1;
   pointcloud_one_frame.resize(scan_msg.packets.size());
-#pragma omp parallel for
   for (int i = 0; i < static_cast<int>(scan_msg.packets.size()); i++)
   {
     std::vector<T_Point> pointcloud_one_packet;

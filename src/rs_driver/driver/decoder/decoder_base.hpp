@@ -889,7 +889,6 @@ inline std::vector<double>
 DecoderBase<T_Point>::initTrigonometricLookupTable(const std::function<double(const double)>& func)
 {
   std::vector<double> temp_table = std::vector<double>(2 * RS_ONE_ROUND, 0.0);
-#pragma omp parallel for
   for (int i = 0; i < 2 * RS_ONE_ROUND; i++)
   {
     const double rad = RS_TO_RADS(static_cast<double>(i - RS_ONE_ROUND) * RS_ANGLE_RESOLUTION);
