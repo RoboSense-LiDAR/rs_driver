@@ -37,13 +37,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/driver_param.h>
 #include <rs_driver/msg/packet_msg.h>
 ///< 1.0 second / 10 Hz / (360 degree / horiz angle resolution / column per msop packet) * (s to us)
-constexpr double RS16_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / (2.0 * 12.0)) * 1e6;  ///< us
-constexpr double RS32_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;          ///< us
-constexpr double RSBP_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;          ///< us
-constexpr double RS128_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 3.0) * 1e6;          ///< us
-constexpr double RS80_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 3.0) * 1e6;           ///< us
-constexpr double RSM1_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (15750.0 / 25) * 1e6;                ///< us
-constexpr double RSHELIOS_PCAP_SLEEP_DURATION = 1.0 / 10.0 / (360.0 / 0.2 / 12.0) * 1e6;      ///< us
+constexpr double RS16_PCAP_SLEEP_DURATION = 1200;  ///< us
+constexpr double RS32_PCAP_SLEEP_DURATION = 530;          ///< us
+constexpr double RSBP_PCAP_SLEEP_DURATION = 530;          ///< us
+constexpr double RS128_PCAP_SLEEP_DURATION = 100;          ///< us
+constexpr double RS80_PCAP_SLEEP_DURATION = 135;           ///< us
+constexpr double RSM1_PCAP_SLEEP_DURATION = 90;                ///< us
+constexpr double RSHELIOS_PCAP_SLEEP_DURATION = 530;      ///< us
 using boost::asio::deadline_timer;
 using boost::asio::ip::address;
 using boost::asio::ip::udp;
@@ -346,7 +346,6 @@ inline void Input::getPcapPacket()
     struct pcap_pkthdr* header;
     const u_char* pkt_data;
     auto time2go = last_packet_time_;
-
     switch (lidar_type_)
     {
       case LidarType::RS16:
@@ -376,18 +375,8 @@ inline void Input::getPcapPacket()
       default:
         break;
     }
-    while (time2go > std::chrono::system_clock::now())
-    {
-#ifdef _MSC_VER
-      __nop();
-      __nop();
-#else
-      asm("nop");
-      asm("nop");
-#endif
-    }
+    std::this_thread::sleep_until(time2go);
     last_packet_time_ = std::chrono::system_clock::now();
-
     if (!pcap_thread_.start_.load())
     {
       break;
