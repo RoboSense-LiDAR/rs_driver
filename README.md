@@ -153,12 +153,7 @@ For basic usage of this tool, please refer to [Visualization tool guide](doc/how
 
 ## 6 Coordinate Transformation
 
-<<<<<<< Updated upstream
- **rs_driver** has the coordinate transformation function built inside and it can output the transformed point cloud directly, which can help users saving extra time to do transformation for point cloud . To enable this function, set the following option to ```ON``` when executing cmake command:
-=======
- **rs_driver** has the coordinate transformation function built inside and it can output the transformed point cloud directly, which can save the extra time cost of doing transformation after receiving point clouds from rs_driver. To enable this function, set the following option to ```ON``` when executing cmake command:
->>>>>>> Stashed changes
-
+**rs_driver** has the coordinate transformation function built inside and it can output the transformed point cloud directly, which can save the extra time cost of doing transformation after receiving point clouds from rs_driver. To enable this function, set the following option to ```ON``` when executing cmake command:
 ```bash
 cmake -DENABLE_TRANSFORM=ON ..
 ```
