@@ -35,10 +35,12 @@
 - pcap
 - PCL (非必须，如果不需要可视化工具可忽略)
 
+- Eigen3 (非必须，如果不需要内置坐标变换可忽略)
+
 #### 2.1.1 Ubuntu中的依赖库安装
 
 ```shell
-sudo apt-get install libboost-dev libpcap-dev libpcl-dev
+sudo apt-get install libboost-dev libpcap-dev libpcl-dev libeigen3-dev
 ```
 
 #### 2.1.2 Windows下的依赖库安装
@@ -151,15 +153,7 @@ cmake -DCOMPILE_TOOLS=ON ..
 
 ## 6 坐标变换
 
- **rs_driver**提供了内置的坐标变换功能，可以直接输出经过坐标变换后的点云，显著节省了用户对点云进行坐标变换的操作耗时（128线雷达一帧点云坐标变换耗时约3~5ms）。若希望启用此功能，用户需安装以下依赖：
-
-- Eigen3 - 安装方式如下
-
-  ```bash
-sudo apt-get install libeigen3-dev
-  ```
-
-同时，执行CMake配置时加上参数：
+ **rs_driver**提供了内置的坐标变换功能，可以直接输出经过坐标变换后的点云，显著节省了用户对点云进行坐标变换的操作耗时（128线雷达一帧点云坐标变换耗时约3~5ms）。若希望启用此功能，执行CMake配置时加上参数：
 
 ```bash
 cmake -DENABLE_TRANSFORM=ON ..

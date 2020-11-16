@@ -33,15 +33,14 @@
 **rs_driver** depends on the following third-party libraries. They must be compiled/installed properly in advance:
 
 - Boost 
-
 - pcap
-
 - PCL (optional, only needed if build the visualization tool)
+- Eigen3 (optional, only needed if use the internal transformation function)
 
 #### 2.1.1 Install dependencies in Ubuntu
 
 ```sh
-sudo apt-get install libboost-dev libpcap-dev libpcl-dev
+sudo apt-get install libboost-dev libpcap-dev libpcl-dev libeigen3-dev
 ```
 
 #### 2.1.2 Install dependencies in Windows
@@ -155,15 +154,7 @@ For more details about the tool, please refer to [Visualization tool guide](doc/
 
 ## 6 Coordinate Transformation
 
- **rs_driver** has the coordinate transformation function built inside and it can output the transformed point cloud directly, which can help users saving time to do transformation for point cloud (e.g. for RS128, it costs about 3~5ms to do transformation for one frame point cloud). To enable this function, the dependency is listed below: 
-
-- Eigen3 - Installation method is listed below
-
-  ```bash
-  sudo apt-get install libeigen3-dev
-  ```
-
-set the following option to ```ON``` when executing cmake command:
+ **rs_driver** has the coordinate transformation function built inside and it can output the transformed point cloud directly, which can help users saving time to do transformation for point cloud (e.g. for RS128, it costs about 3~5ms to do transformation for one frame point cloud). To enable this function, set the following option to ```ON``` when executing cmake command:
 
 ```bash
 cmake -DENABLE_TRANSFORM=ON ..
