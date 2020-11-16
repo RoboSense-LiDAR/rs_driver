@@ -41,55 +41,67 @@ typedef struct
   uint16_t id;
   uint16_t azimuth;
   RSChannel channels[32];
-} RSBPMsopBlock;
+} RSHELIOSMsopBlock;
 
 typedef struct
 {
-  RSMsopHeader header;
-  RSBPMsopBlock blocks[12];
+  uint32_t id;
+  uint16_t protocol_version;
+  uint8_t reserved_1[14];
+  RSTimestampUTC timestamp;
+  uint8_t lidar_type;
+  uint8_t reserved_2[7];
+  uint16_t temp_raw;
+  uint8_t reserved_3[2];
+} RSHeliosMsopHeader;
+
+typedef struct
+{
+  RSHeliosMsopHeader header;
+  RSHELIOSMsopBlock blocks[12];
   unsigned int index;
   uint16_t tail;
-} RSBPMsopPkt;
+} RSHELIOSMsopPkt;
 
 typedef struct
 {
   uint64_t id;
   uint16_t rpm;
-  RSEthNet eth;
+  RSEthNetNew eth;
   RSFOV fov;
-  uint16_t reserved0;
+  uint8_t reserved_1[2];
   uint16_t phase_lock_angle;
-  RSVersion version;
-  uint8_t reserved_1[242];
+  RSVersionNew version;
+  uint8_t reserved_2[229];
   RSSn sn;
   uint16_t zero_cali;
   uint8_t return_mode;
-  uint16_t sw_ver;
-  RSTimestampYMD timestamp;
-  RSStatus status;
-  uint8_t reserved_2[5];
-  RSDiagno diagno;
+  RSTimeInfo time_info;
+  RSStatusNew status;
+  uint8_t reserved_3[5];
+  RSDiagnoNew diagno;
   uint8_t gprmc[86];
   RSCalibrationAngle ver_angle_cali[32];
   RSCalibrationAngle hori_angle_cali[32];
-  uint8_t reserved_3[586];
+  uint8_t reserved_4[586];
   uint16_t tail;
-} RSBPDifopPkt;
+} RSHELIOSDifopPkt;
 
 #pragma pack(pop)
 
 template <typename T_Point>
-class DecoderRSBP : public DecoderBase<T_Point>
+class DecoderRSHELIOS : public DecoderBase<T_Point>
 {
 public:
-  explicit DecoderRSBP(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
+  explicit DecoderRSHELIOS(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
   RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
 };
 
 template <typename T_Point>
-inline DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
+inline DecoderRSHELIOS<T_Point>::DecoderRSHELIOS(const RSDecoderParam& param,
+                                                 const LidarConstantParameter& lidar_const_param)
   : DecoderBase<T_Point>(param, lidar_const_param)
 {
   this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
@@ -106,21 +118,22 @@ inline DecoderRSBP<T_Point>::DecoderRSBP(const RSDecoderParam& param, const Lida
 }
 
 template <typename T_Point>
-inline double DecoderRSBP<T_Point>::getLidarTime(const uint8_t* pkt)
+inline double DecoderRSHELIOS<T_Point>::getLidarTime(const uint8_t* pkt)
 {
-  return this->template calculateTimeYMD<RSBPMsopPkt>(pkt);
+  return this->template calculateTimeUTC<RSHELIOSMsopPkt>(pkt, LidarType::RSHELIOS);
 }
 
 template <typename T_Point>
-inline RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
-                                                           int& azimuth)
+inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec,
+                                                               int& height, int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
-  const RSBPMsopPkt* mpkt_ptr = reinterpret_cast<const RSBPMsopPkt*>(pkt);
+  const RSHELIOSMsopPkt* mpkt_ptr = reinterpret_cast<const RSHELIOSMsopPkt*>(pkt);
   if (mpkt_ptr->header.id != this->lidar_const_param_.MSOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+  this->protocol_ver_ = RS_SWAP_SHORT(mpkt_ptr->header.protocol_version);
   azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   double block_timestamp = this->get_point_time_func_(pkt);
@@ -169,13 +182,14 @@ inline RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
     azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
     for (int channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
-      float azi_channel_ori = cur_azi + azi_diff * this->lidar_const_param_.DSR_TOFFSET *
-                                            this->lidar_const_param_.FIRING_FREQUENCY *
-                                            (static_cast<float>(2 * (channel_idx % 16) + (channel_idx / 16)) +
-                                             static_cast<float>(channel_idx / 8 % 2) * 5.2f);
+      float azi_channel_ori =
+          cur_azi +
+          azi_diff * this->lidar_const_param_.DSR_TOFFSET * this->lidar_const_param_.FIRING_FREQUENCY *
+              ((-0.014f * static_cast<float>(channel_idx) + 1.8965f) * static_cast<float>(channel_idx) - 0.6543f);
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
-      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_DIS_RESOLUTION;
-      int angle_horiz = static_cast<int>(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
+      float distance =
+          RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_HELIOS_DIS_RESOLUTION;
+      int angle_horiz = (int)(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
       int angle_vert = ((this->vert_angle_list_[channel_idx]) + RS_ONE_ROUND) % RS_ONE_ROUND;
 
       // store to point cloud buffer
@@ -213,17 +227,17 @@ inline RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
 }
 
 template <typename T_Point>
-inline RSDecoderResult DecoderRSBP<T_Point>::decodeDifopPkt(const uint8_t* pkt)
+inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
-  const RSBPDifopPkt* dpkt_ptr = reinterpret_cast<const RSBPDifopPkt*>(pkt);
+  RSHELIOSDifopPkt* dpkt_ptr = (RSHELIOSDifopPkt*)pkt;
   if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->template decodeDifopCommon<RSBPDifopPkt>(pkt, LidarType::RSBP);
+  this->template decodeDifopCommon<RSHELIOSDifopPkt>(pkt, LidarType::RSHELIOS);
   if (!this->difop_flag_)
   {
-    this->template decodeDifopCalibration<RSBPDifopPkt>(pkt, LidarType::RSBP);
+    this->template decodeDifopCalibration<RSHELIOSDifopPkt>(pkt, LidarType::RSHELIOS);
   }
   return RSDecoderResult::DECODE_OK;
 }

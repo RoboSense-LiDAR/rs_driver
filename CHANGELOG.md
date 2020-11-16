@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.3.0 - 2020-11-10
+
+### Added
+
+- Add RSHELIOS support
+- Add RSM1 (B3) support
+- Add Windows support
+- Add rs_driver_viewer, a small tool to show point cloud
+- Add save_by_rows argument
+- Add multi-cast support
+- Add points transformation function
+
+### Changed
+
+- Update some decoding part for LiDARs
+- Change the definition of packet message
+- Update documents
+
+
 
 ## v1.2.1 - 2020-09-04
 
