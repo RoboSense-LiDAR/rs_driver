@@ -30,6 +30,7 @@ param.input_param.msop_port = 6699;             ///< Set the lidar msop port num
 param.input_param.difop_port = 7788;            ///< Set the lidar difop port number, the default is 7788
 param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct
 param.decoder_param.transform_param.x = 1;		///< unit: m
+param.decoder_param.transform_param.y = 0;		///< unit: m
 param.decoder_param.transform_param.z = 2.5;	///< unit: m
 param.decoder_param.transform_param.roll = 0.1; ///< unit: radian
 param.decoder_param.transform_param.pitch = 0.2;///< unit: radian

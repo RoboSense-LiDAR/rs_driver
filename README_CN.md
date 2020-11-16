@@ -116,7 +116,7 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 [在线连接雷达](doc/howto/how_to_online_use_driver.md)
 
-[离线解析pcap包](doc/howto/how_to_offline_decode_pcap.md)
+[解析pcap包](doc/howto/how_to_decode_pcap.md)
 
 
 
@@ -153,7 +153,7 @@ cmake -DCOMPILE_TOOLS=ON ..
 
 ## 6 坐标变换
 
- **rs_driver**提供了内置的坐标变换功能，可以直接输出经过坐标变换后的点云，显著节省了用户对点云进行坐标变换的操作耗时（128线雷达一帧点云坐标变换耗时约3~5ms）。若希望启用此功能，执行CMake配置时加上参数：
+ **rs_driver**提供了内置的坐标变换功能，可以直接输出经过坐标变换后的点云，节省了用户对点云进行坐标变换的额外操作耗时。若希望启用此功能，执行CMake配置时加上参数：
 
 ```bash
 cmake -DENABLE_TRANSFORM=ON ..

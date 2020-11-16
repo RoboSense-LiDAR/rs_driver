@@ -117,7 +117,7 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 [Online connect LiDAR](doc/howto/how_to_online_use_driver.md)
 
-[Offline decode pcap bag](doc/howto/how_to_offline_decode_pcap.md)
+[Decode pcap bag](doc/howto/how_to_decode_pcap.md)
 
 
 
@@ -154,7 +154,7 @@ For more details about the tool, please refer to [Visualization tool guide](doc/
 
 ## 6 Coordinate Transformation
 
- **rs_driver** has the coordinate transformation function built inside and it can output the transformed point cloud directly, which can help users saving time to do transformation for point cloud (e.g. for RS128, it costs about 3~5ms to do transformation for one frame point cloud). To enable this function, set the following option to ```ON``` when executing cmake command:
+ **rs_driver** has the coordinate transformation function built inside and it can output the transformed point cloud directly, which can help users saving extra time to do transformation for point cloud . To enable this function, set the following option to ```ON``` when executing cmake command:
 
 ```bash
 cmake -DENABLE_TRANSFORM=ON ..

@@ -1,4 +1,4 @@
-# How to offline decode pcap bag
+# How to decode pcap bag
 
 ## 1 Introduction
 
