@@ -125,7 +125,7 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 ### 5.1 Demo Code
 
-**rs_driver** offer two demo programs which are stored in ```rs_driver/demo```：
+**rs_driver** offers two demo programs in ```rs_driver/demo```：
 
 - demo_online.cpp
 - demo_pcap.cpp
@@ -138,23 +138,26 @@ cmake -DCOMPILE_DEMOS=ON ..
 
 ### 5.2 Visualization Tool
 
-**rs_driver** offer a visualization tool based on PCL which is stored in ```rs_driver/tool```：
+**rs_driver** offer a visualization tool based on PCL in ```rs_driver/tool```：
 
 - rs_driver_viewer.cpp
 
-To build the visualization tool, set the following option to ```ON``` when executing cmake command: 
+To build it, set the following option to ```ON``` when configuring using cmake: 
 
 ```bash
 cmake -DCOMPILE_TOOLS=ON ..
 ```
 
-For more details about the tool, please refer to [Visualization tool guide](doc/howto/how_to_use_rs_driver_viewer.md) 
-
+For basic usage of this tool, please refer to [Visualization tool guide](doc/howto/how_to_use_rs_driver_viewer.md) 
 
 
 ## 6 Coordinate Transformation
 
+<<<<<<< Updated upstream
  **rs_driver** has the coordinate transformation function built inside and it can output the transformed point cloud directly, which can help users saving extra time to do transformation for point cloud . To enable this function, set the following option to ```ON``` when executing cmake command:
+=======
+ **rs_driver** has the coordinate transformation function built inside and it can output the transformed point cloud directly, which can save the extra time cost of doing transformation after receiving point clouds from rs_driver. To enable this function, set the following option to ```ON``` when executing cmake command:
+>>>>>>> Stashed changes
 
 ```bash
 cmake -DENABLE_TRANSFORM=ON ..
@@ -166,12 +169,12 @@ For more details about the tool, please refer to  [Transformation guide](doc/how
 
 ## 7 Others
 
-Please follow the paths list below to find related files.
+Please refer to the following files for more infomation.
 
-- Parameters definition: ```rs_driver/src/rs_driver/driver/driver_param.h```
-- Point Cloud message definition: ```rs_driver/src/rs_driver/msg/point_cloud_msg.h```
-- API definition: ```rs_driver/src/rs_driver/api/lidar_driver.h```
-- Error code definition: ```rs_driver/src/rs_driver/common/error_code.h```
+- **Parameters definition**: ```rs_driver/src/rs_driver/driver/driver_param.h```
+- **Point Cloud message definition**: ```rs_driver/src/rs_driver/msg/point_cloud_msg.h```
+- **API definition**: ```rs_driver/src/rs_driver/api/lidar_driver.h```
+- **Error code definition**: ```rs_driver/src/rs_driver/common/error_code.h```
 
 Multi-Cast function: [Multi-Cast](doc/howto/how_to_use_multi_cast_function.md) 
 
