@@ -415,7 +415,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     PacketMsg pkt = msop_pkt_queue_.popFront();
     int height = 1;
     int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), *point_cloud_ptr_, height);
-    scan_ptr_->packets.emplace_back(std::move(pkt));
+    scan_ptr_->packets.emplace_back(pkt);
     if ((ret == DECODE_OK || ret == FRAME_SPLIT))
     {
       if (ret == FRAME_SPLIT)
