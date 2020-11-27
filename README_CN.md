@@ -6,15 +6,13 @@
 
 ### 1.1 雷达型号支持
 
-- RS16
-- RS32
-- RSBP
-- RS128
-- RS80
-- RSM1-B3
-- RSHELIOS
-
-
+- RS-LiDAR-16
+- RS-LiDAR-32
+- RS-Bpearl
+- RS-Ruby
+- RS-Ruby Lite
+- RS-LiDAR-M1
+- RS-Helios
 
 ## 2 编译与安装
 

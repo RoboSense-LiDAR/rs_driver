@@ -59,8 +59,6 @@ DEFINE_MEMBER_CHECKER(timestamp)
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
-constexpr float RS_DIS_RESOLUTION = 0.005;
-constexpr float RS_HELIOS_DIS_RESOLUTION = 0.0025;
 constexpr float RS_ANGLE_RESOLUTION = 0.01;
 constexpr float MICRO = 1000000.0;
 constexpr float NANO = 1000000000.0;
@@ -94,6 +92,7 @@ typedef struct
   uint16_t LASER_NUM;
   float DSR_TOFFSET;
   float FIRING_FREQUENCY;
+  float DIS_RESOLUTION;
   float RX;
   float RY;
   float RZ;
@@ -280,7 +279,7 @@ public:
   virtual ~DecoderBase() = default;
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec, int& height);
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt);
-  virtual void loadCalibrationFile(const std::string& angle_path);
+  virtual void loadAngleFile(const std::string& angle_path);
   virtual void regRecvCallback(const std::function<void(const CameraTrigger&)>& callback);  ///< Camera trigger
   virtual double getLidarTemperature();
   virtual double getLidarTime(const uint8_t* pkt) = 0;
@@ -504,7 +503,7 @@ inline double DecoderBase<T_Point>::getLidarTemperature()
 }
 
 template <typename T_Point>
-inline void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
+inline void DecoderBase<T_Point>::loadAngleFile(const std::string& angle_path)
 {
   std::string line_str;
   std::ifstream fd_angle(angle_path.c_str(), std::ios::in);

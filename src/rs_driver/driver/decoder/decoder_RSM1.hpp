@@ -231,7 +231,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
     for (size_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
       T_Point point;
-      float distance = RS_SWAP_SHORT(blk.channel[channel_idx].distance) * RS_DIS_RESOLUTION;
+      float distance = RS_SWAP_SHORT(blk.channel[channel_idx].distance) * this->lidar_const_param_.DIS_RESOLUTION;
       if (distance <= this->param_.max_distance && distance >= this->param_.min_distance)
       {
         int pitch = RS_SWAP_SHORT(blk.channel[channel_idx].pitch) - ANGLE_OFFSET;

@@ -92,7 +92,7 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDeco
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
       exit(-1);
   }
-  ret_ptr->loadCalibrationFile(param.angle_path);
+  ret_ptr->loadAngleFile(param.angle_path);
   return ret_ptr;
 }
 
@@ -109,6 +109,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS16ConstantPara
   ret_param.LASER_NUM = 16;
   ret_param.DSR_TOFFSET = 2.8;
   ret_param.FIRING_FREQUENCY = 0.009;
+  ret_param.DIS_RESOLUTION = 0.005;
   ret_param.RX = 0.03825;
   ret_param.RY = -0.01088;
   ret_param.RZ = 0;
@@ -128,6 +129,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS32ConstantPara
   ret_param.LASER_NUM = 32;
   ret_param.DSR_TOFFSET = 1.44;
   ret_param.FIRING_FREQUENCY = 0.018;
+  ret_param.DIS_RESOLUTION = 0.005;
   ret_param.RX = 0.03997;
   ret_param.RY = -0.01087;
   ret_param.RZ = 0;
@@ -147,6 +149,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSBPConstantPara
   ret_param.LASER_NUM = 32;
   ret_param.DSR_TOFFSET = 1.28;
   ret_param.FIRING_FREQUENCY = 0.018;
+  ret_param.DIS_RESOLUTION = 0.005;
   ret_param.RX = 0.01473;
   ret_param.RY = 0.0085;
   ret_param.RZ = 0.09427;
@@ -166,6 +169,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS80ConstantPara
   ret_param.LASER_NUM = 80;
   ret_param.DSR_TOFFSET = 3.236;
   ret_param.FIRING_FREQUENCY = 0.018;
+  ret_param.DIS_RESOLUTION = 0.005;
   ret_param.RX = 0.03615;
   ret_param.RY = -0.017;
   ret_param.RZ = 0;
@@ -185,6 +189,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS128ConstantPar
   ret_param.LASER_NUM = 128;
   ret_param.DSR_TOFFSET = 3.236;
   ret_param.FIRING_FREQUENCY = 0.018;
+  ret_param.DIS_RESOLUTION = 0.005;
   ret_param.RX = 0.03615;
   ret_param.RY = -0.017;
   ret_param.RZ = 0;
@@ -200,6 +205,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSM1ConstantPara
   ret_param.BLOCKS_PER_PKT = 25;
   ret_param.CHANNELS_PER_BLOCK = 5;
   ret_param.LASER_NUM = 5;
+  ret_param.DIS_RESOLUTION = 0.005;
   return ret_param;
 }
 
@@ -216,6 +222,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSHELIOSConstant
   ret_param.LASER_NUM = 32;
   ret_param.DSR_TOFFSET = 1.0;
   ret_param.FIRING_FREQUENCY = 0.018;
+  ret_param.DIS_RESOLUTION = 0.0025;
   ret_param.RX = 0.03498;
   ret_param.RY = -0.015;
   ret_param.RZ = 0.0;
