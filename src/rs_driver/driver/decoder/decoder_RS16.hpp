@@ -201,7 +201,12 @@ inline RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
       {
         setTimestamp(point, block_timestamp);
       }
-      vec.emplace_back(std::move(point));
+      if (((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
+           (!this->angle_flag_ &&
+            ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
+      {
+        vec.emplace_back(std::move(point));
+      }
     }
   }
   return RSDecoderResult::DECODE_OK;

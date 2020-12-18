@@ -423,6 +423,11 @@ inline void LidarDriverImpl<T_Point>::processMsop()
         PointCloudMsg<T_Point> msg(point_cloud_transform_func_(point_cloud_ptr_, height));
         msg.height = height;
         msg.width = point_cloud_ptr_->size() / msg.height;
+        size_t iter_move = point_cloud_ptr_->size() - msg.height * msg.width;
+        for (size_t i = 0; i < iter_move; i++)
+        {
+          point_cloud_ptr_->erase(point_cloud_ptr_->end());
+        }
         setPointCloudMsgHeader(msg);
         if (driver_param_.decoder_param.use_lidar_clock == true)
         {
