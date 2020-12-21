@@ -308,6 +308,11 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
   point_cloud_msg.point_cloud_ptr = point_cloud_transform_func_(output_point_cloud_ptr, height);
   point_cloud_msg.height = height;
   point_cloud_msg.width = point_cloud_msg.point_cloud_ptr->size() / point_cloud_msg.height;
+  size_t iter_move = point_cloud_msg.point_cloud_ptr->size() - point_cloud_msg.height * point_cloud_msg.width;
+  for (size_t i = 0; i < iter_move; i++)
+  {
+    point_cloud_msg.point_cloud_ptr->erase(point_cloud_msg.point_cloud_ptr->end());
+  }
   setPointCloudMsgHeader(point_cloud_msg);
   point_cloud_msg.timestamp = scan_msg.timestamp;
   if (point_cloud_msg.point_cloud_ptr->size() == 0)
