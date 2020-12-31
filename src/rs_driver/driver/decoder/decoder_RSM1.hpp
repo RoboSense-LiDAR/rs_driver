@@ -145,6 +145,7 @@ public:
   RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& pointcloud_vec, int& height);
 
 private:
+  uint32_t local_pkt_cnt_;
   uint32_t last_pkt_cnt_;
   uint32_t max_pkt_num_;
   double last_pkt_time_;
@@ -152,7 +153,11 @@ private:
 
 template <typename T_Point>
 inline DecoderRSM1<T_Point>::DecoderRSM1(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
-  : DecoderBase<T_Point>(param, lidar_const_param), last_pkt_cnt_(1), max_pkt_num_(SINGLE_PKT_NUM), last_pkt_time_(0)
+  : DecoderBase<T_Point>(param, lidar_const_param)
+  , local_pkt_cnt_(0)
+  , last_pkt_cnt_(1)
+  , max_pkt_num_(SINGLE_PKT_NUM)
+  , last_pkt_time_(0)
 {
   if (this->param_.max_distance > 200.0f)
   {
@@ -259,12 +264,26 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
     }
   }
   unsigned int pkt_cnt = RS_SWAP_SHORT(mpkt_ptr->header.pkt_cnt);
-  if (pkt_cnt == max_pkt_num_ || pkt_cnt < last_pkt_cnt_)
+  if (pkt_cnt - last_pkt_cnt_ != 1)
   {
-    last_pkt_cnt_ = 1;
-    return RSDecoderResult::FRAME_SPLIT;
+    local_pkt_cnt_ = 0;
   }
+  local_pkt_cnt_++;
   last_pkt_cnt_ = pkt_cnt;
+  if (pkt_cnt == max_pkt_num_)
+  {
+    if (local_pkt_cnt_ == max_pkt_num_)
+    {
+      local_pkt_cnt_ = 0;
+      last_pkt_cnt_ = 1;
+      return RSDecoderResult::FRAME_SPLIT;
+    }
+    else
+    {
+      local_pkt_cnt_ = 0;
+      return RSDecoderResult::DISCARD_PKT;
+    }
+  }
   return RSDecoderResult::DECODE_OK;
 }
 

@@ -456,6 +456,11 @@ inline void LidarDriverImpl<T_Point>::processMsop()
         scan_ptr_.reset(new ScanMsg);
       }
     }
+    else if (ret == DISCARD_PKT)
+    {
+      scan_ptr_->packets.clear();
+      point_cloud_ptr_.reset(new typename PointCloudMsg<T_Point>::PointCloud);
+    }
     else
     {
       reportError(Error(ERRCODE_WRONGPKTHEADER));

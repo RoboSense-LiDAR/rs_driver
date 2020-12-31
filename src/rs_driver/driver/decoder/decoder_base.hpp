@@ -77,7 +77,8 @@ enum RSDecoderResult
   DECODE_OK = 0,
   FRAME_SPLIT = 1,
   WRONG_PKT_HEADER = -1,
-  PKT_NULL = -2
+  PKT_NULL = -2,
+  DISCARD_PKT = -3
 };
 
 #pragma pack(push, 1)
