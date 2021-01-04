@@ -37,13 +37,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/driver_param.h>
 #include <rs_driver/msg/packet_msg.h>
 ///< 1.0 second / 10 Hz / (360 degree / horiz angle resolution / column per msop packet) * (s to us)
-constexpr double RS16_PCAP_SLEEP_DURATION = 1200;  ///< us
-constexpr double RS32_PCAP_SLEEP_DURATION = 530;          ///< us
-constexpr double RSBP_PCAP_SLEEP_DURATION = 530;          ///< us
-constexpr double RS128_PCAP_SLEEP_DURATION = 100;          ///< us
-constexpr double RS80_PCAP_SLEEP_DURATION = 135;           ///< us
-constexpr double RSM1_PCAP_SLEEP_DURATION = 90;                ///< us
-constexpr double RSHELIOS_PCAP_SLEEP_DURATION = 530;      ///< us
+constexpr double RS16_PCAP_SLEEP_DURATION = 1200;     ///< us
+constexpr double RS32_PCAP_SLEEP_DURATION = 530;      ///< us
+constexpr double RSBP_PCAP_SLEEP_DURATION = 530;      ///< us
+constexpr double RS128_PCAP_SLEEP_DURATION = 100;     ///< us
+constexpr double RS80_PCAP_SLEEP_DURATION = 135;      ///< us
+constexpr double RSM1_PCAP_SLEEP_DURATION = 90;       ///< us
+constexpr double RSHELIOS_PCAP_SLEEP_DURATION = 530;  ///< us
 using boost::asio::deadline_timer;
 using boost::asio::ip::address;
 using boost::asio::ip::udp;
@@ -93,6 +93,7 @@ private:
   Thread msop_thread_;
   Thread difop_thread_;
   Thread pcap_thread_;
+  int udp_offset_;
   boost::asio::io_service msop_io_service_;
   boost::asio::io_service difop_io_service_;
   std::vector<std::function<void(const PacketMsg&)>> difop_cb_;
@@ -101,7 +102,7 @@ private:
 
 inline Input::Input(const LidarType& type, const RSInputParam& input_param,
                     const std::function<void(const Error&)>& excb)
-  : lidar_type_(type), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr)
+  : lidar_type_(type), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr), udp_offset_(42)
 {
   last_packet_time_ = std::chrono::system_clock::now();
   input_param_.pcap_rate = input_param_.pcap_rate < 0.1 ? 0.1 : input_param_.pcap_rate;
@@ -115,6 +116,10 @@ inline Input::Input(const LidarType& type, const RSInputParam& input_param,
       msop_pkt_length_ = MECH_PKT_LEN;
       difop_pkt_length_ = MECH_PKT_LEN;
       break;
+  }
+  if (input_param_.use_vlan)
+  {
+    udp_offset_ = 46;
   }
 }
 
@@ -148,6 +153,11 @@ inline bool Input::init()
       /*ip address filter*/
       // msop_filter << "src host " << input_param_.device_ip << " && ";
       // difop_filter << "src host " << input_param_.device_ip << " && ";
+      if (input_param_.use_vlan)
+      {
+        msop_filter << "vlan && ";
+        difop_filter << "vlan && ";
+      }
       msop_filter << "udp dst port " << input_param_.msop_port;
       difop_filter << "udp dst port " << input_param_.difop_port;
       pcap_compile(pcap_, &pcap_msop_filter_, msop_filter.str().c_str(), 1, 0xFFFFFFFF);
@@ -386,7 +396,7 @@ inline void Input::getPcapPacket()
       if (pcap_offline_filter(&pcap_msop_filter_, header, pkt_data) != 0)
       {
         PacketMsg msg(msop_pkt_length_);
-        memcpy(msg.packet.data(), pkt_data + 42, msop_pkt_length_);
+        memcpy(msg.packet.data(), pkt_data + udp_offset_, msop_pkt_length_);
         for (auto& iter : msop_cb_)
         {
           iter(msg);
@@ -395,7 +405,7 @@ inline void Input::getPcapPacket()
       else if (pcap_offline_filter(&pcap_difop_filter_, header, pkt_data) != 0)
       {
         PacketMsg msg(difop_pkt_length_);
-        memcpy(msg.packet.data(), pkt_data + 42, difop_pkt_length_);
+        memcpy(msg.packet.data(), pkt_data + udp_offset_, difop_pkt_length_);
         for (auto& iter : difop_cb_)
         {
           iter(msg);
