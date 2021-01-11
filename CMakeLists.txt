@@ -4,6 +4,7 @@ if(WIN32)
   cmake_policy(SET CMP0074 NEW)
 endif(WIN32)
 project(rs_driver VERSION 1.3.0)
+add_library(rs_driver INTERFACE)
 
 #=============================
 #  Compile Demos&Tools
@@ -83,6 +84,7 @@ endif(WIN32)
 
 find_package(Boost COMPONENTS system date_time regex REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} INTERFACE ${Boost_INCLUDE_DIRS})
 list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
 
 #========================
@@ -92,6 +94,7 @@ if(WIN32)
   set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
   find_package(PCAP REQUIRED)
   include_directories(${PCAP_INCLUDE_DIR})
+  target_include_directories(${PROJECT_NAME} INTERFACE ${PCAP_INCLUDE_DIR})
   list(APPEND EXTERNAL_LIBS ${PCAP_LIBRARY})
 else()
   list(APPEND EXTERNAL_LIBS pcap)
@@ -104,6 +107,7 @@ if(${ENABLE_TRANSFORM})
   add_definitions("-DENABLE_TRANSFORM")
   find_package(Eigen3 REQUIRED)
   include_directories(${EIGEN3_INCLUDE_DIR})
+  target_include_directories(${PROJECT_NAME} INTERFACE ${EIGEN3_INCLUDE_DIR})
   message(=============================================================)
   message("-- Enable Transform Fcuntions")
   message(=============================================================)
