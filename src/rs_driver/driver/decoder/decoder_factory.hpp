@@ -51,7 +51,7 @@ public:
   ~DecoderFactory() = default;
   static std::shared_ptr<DecoderBase<T_Point>> createDecoder(const RSDriverParam& param);
 
-private:
+public:
   static const LidarConstantParameter getRS16ConstantParam();
   static const LidarConstantParameter getRS32ConstantParam();
   static const LidarConstantParameter getRSBPConstantParam();
