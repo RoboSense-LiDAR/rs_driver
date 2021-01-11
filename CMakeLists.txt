@@ -6,7 +6,6 @@ endif(WIN32)
 project(rs_driver VERSION 1.3.0)
 add_library(rs_driver INTERFACE)
 
-
 #=============================
 #  Compile Demos&Tools
 #=============================
