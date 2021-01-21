@@ -84,6 +84,7 @@ endif(WIN32)
 find_package(Boost COMPONENTS system date_time regex REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
+list(APPEND EXTERNAL_LIBS "-lpthread")
 
 #========================
 #  PCAP
@@ -119,6 +120,14 @@ endif(${COMPILE_DEMOS})
 if(${COMPILE_TOOLS})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tool)
 endif(${COMPILE_TOOLS})
+
+#===========================
+#  Append Include Directory
+#===========================
+get_property(rs_driver_include_dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+foreach(dir ${rs_driver_include_dirs})
+  list(APPEND DRIVER_INCLUDE_DIRS ${dir})
+endforeach()
 
 #========================
 #  Cmake
