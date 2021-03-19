@@ -104,6 +104,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
   uint32_t num_pkts_split = 1;         ///< Number of packets in one frame, only be used when split_frame_mode=3
   float cut_angle = 0.0f;              ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
   bool use_lidar_clock = false;        ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
+  float time_offset = 0.0;             ///< Timestamp offset in seconds
   RSTransformParam transform_param;    ///< Used to transform points
   RSCameraTriggerParam trigger_param;  ///< Used to trigger camera
   void print() const                  
@@ -117,6 +118,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFOL << "start_angle: " << start_angle << RS_REND;
     RS_INFOL << "end_angle: " << end_angle << RS_REND;
     RS_INFOL << "use_lidar_clock: " << use_lidar_clock << RS_REND;
+    RS_INFOL << "time_offset: " << time_offset << RS_REND;
     RS_INFOL << "split_frame_mode: " << split_frame_mode << RS_REND;
     RS_INFOL << "num_pkts_split: " << num_pkts_split << RS_REND;
     RS_INFOL << "cut_angle: " << cut_angle << RS_REND;

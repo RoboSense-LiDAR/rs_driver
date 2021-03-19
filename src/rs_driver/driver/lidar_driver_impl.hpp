@@ -426,11 +426,11 @@ inline void LidarDriverImpl<T_Point>::processMsop()
         setPointCloudMsgHeader(msg);
         if (driver_param_.decoder_param.use_lidar_clock == true)
         {
-          msg.timestamp = lidar_decoder_ptr_->getLidarTime(pkt.packet.data());
+          msg.timestamp = lidar_decoder_ptr_->getLidarTime(pkt.packet.data()); // Time offset alredy applied in getLidarTime
         }
         else
         {
-          msg.timestamp = getTime();
+          msg.timestamp = getTime() + driver_param_.decoder_param.time_offset;
         }
         if (msg.point_cloud_ptr->size() == 0)
         {
@@ -480,10 +480,10 @@ inline void LidarDriverImpl<T_Point>::processDifop()
 template <typename T_Point>
 inline void LidarDriverImpl<T_Point>::setScanMsgHeader(ScanMsg& msg)
 {
-  msg.timestamp = getTime();
+  msg.timestamp = getTime() + driver_param_.decoder_param.time_offset;
   if (driver_param_.decoder_param.use_lidar_clock == true)
   {
-    msg.timestamp = lidar_decoder_ptr_->getLidarTime(msg.packets.back().packet.data());
+    msg.timestamp = lidar_decoder_ptr_->getLidarTime(msg.packets.back().packet.data()); // Time offset alredy applied in getLidarTime
   }
   msg.seq = scan_seq_++;
   msg.frame_id = driver_param_.frame_id;

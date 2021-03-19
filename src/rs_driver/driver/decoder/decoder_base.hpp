@@ -390,7 +390,7 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
     {
       get_point_time_func_ = [this](const uint8_t* pkt) {
         double ret_time =
-            getTime() - (this->lidar_const_param_.BLOCKS_PER_PKT - 1) * this->time_duration_between_blocks_;
+            getTime() + static_cast<double>(this->param_.time_offset) - (this->lidar_const_param_.BLOCKS_PER_PKT - 1) * this->time_duration_between_blocks_;
         return ret_time;
       };
     }
@@ -703,10 +703,12 @@ inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt, const L
   if ((type == LidarType::RS80 || type == LidarType::RS128) && this->protocol_ver_ == PROTOCOL_VER_0)
   {
     return static_cast<double>(timestamp.ts) +
-           (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.us))) / NANO;
+           ((static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.us))) / NANO) +
+           static_cast<double>(this->param_.time_offset);
   }
 
-  return static_cast<double>(timestamp.ts) + (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.us))) / MICRO;
+  return static_cast<double>(timestamp.ts) + ((static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.us))) / MICRO) +
+           static_cast<double>(this->param_.time_offset);
 }
 
 template <typename T_Point>
@@ -727,7 +729,8 @@ inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
   stm.tm_min = mpkt_ptr->header.timestamp.minute;
   stm.tm_sec = mpkt_ptr->header.timestamp.second;
   return std::mktime(&stm) + static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms)) / 1000.0 +
-         static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us)) / 1000000.0 - static_cast<double>(timezone);
+         static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us)) / 1000000.0 - static_cast<double>(timezone) +
+         static_cast<double>(this->param_.time_offset);
 }
 
 template <typename T_Point>
