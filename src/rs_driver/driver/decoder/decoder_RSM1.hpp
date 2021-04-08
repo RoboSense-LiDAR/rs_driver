@@ -68,7 +68,7 @@ typedef struct
   RSTimestampUTC timestamp;
   uint8_t reserved[10];
   uint8_t lidar_type;
-  uint8_t temperature;
+  int8_t temperature;
 } RSM1MsopHeader;
 
 typedef struct
@@ -213,6 +213,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+  this->current_temperature_ = static_cast<float>(mpkt_ptr->header.temperature);
   this->protocol_ver_ = RS_SWAP_SHORT(mpkt_ptr->header.protocol_version);
   double pkt_timestamp = 0;
   switch (mpkt_ptr->blocks[0].return_seq)
