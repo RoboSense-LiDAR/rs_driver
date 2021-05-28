@@ -119,7 +119,8 @@ void printHelpMenu()
   RS_MSG << "Arguments are: " << RS_REND;
   RS_MSG << "        -msop             = LiDAR msop port number,the default value is 6699" << RS_REND;
   RS_MSG << "        -difop            = LiDAR difop port number,the default value is 7788" << RS_REND;
-  RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS ), the default "
+  RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS, RSROCK ), the "
+            "default "
             "value is RS16"
          << RS_REND;
   RS_MSG << "        -x                = Transformation parameter, unit: m " << RS_REND;

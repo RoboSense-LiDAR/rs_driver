@@ -44,6 +44,7 @@ constexpr double RS128_PCAP_SLEEP_DURATION = 100;     ///< us
 constexpr double RS80_PCAP_SLEEP_DURATION = 135;      ///< us
 constexpr double RSM1_PCAP_SLEEP_DURATION = 90;       ///< us
 constexpr double RSHELIOS_PCAP_SLEEP_DURATION = 530;  ///< us
+constexpr double RSROCK_PCAP_SLEEP_DURATION = 530;    ///< us TODO
 using boost::asio::deadline_timer;
 using boost::asio::ip::address;
 using boost::asio::ip::udp;
@@ -111,6 +112,10 @@ inline Input::Input(const LidarType& type, const RSInputParam& input_param,
     case LidarType::RSM1:
       msop_pkt_length_ = MEMS_MSOP_LEN;
       difop_pkt_length_ = MEMS_DIFOP_LEN;
+      break;
+    case LidarType::RSROCK:
+      msop_pkt_length_ = 1236;  // TODO
+      difop_pkt_length_ = MECH_PKT_LEN;
       break;
     default:
       msop_pkt_length_ = MECH_PKT_LEN;
@@ -384,6 +389,9 @@ inline void Input::getPcapPacket()
       case LidarType::RSHELIOS:
         time2go +=
             std::chrono::microseconds(static_cast<long long>(RSHELIOS_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
+      case LidarType::RSROCK:
+        time2go +=
+            std::chrono::microseconds(static_cast<long long>(RSROCK_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
 
       default:
