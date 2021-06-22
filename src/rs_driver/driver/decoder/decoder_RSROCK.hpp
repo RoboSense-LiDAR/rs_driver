@@ -215,15 +215,15 @@ inline RSDecoderResult DecoderRSROCK<T_Point>::decodeMsopPkt(const uint8_t* pkt,
 template <typename T_Point>
 inline RSDecoderResult DecoderRSROCK<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
-  const RS32DifopPkt* dpkt_ptr = reinterpret_cast<const RS32DifopPkt*>(pkt);
+  const RSROCKDifopPkt* dpkt_ptr = reinterpret_cast<const RSROCKDifopPkt*>(pkt);
   if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->template decodeDifopCommon<RS32DifopPkt>(pkt, LidarType::RSROCK);
+  this->template decodeDifopCommon<RSROCKDifopPkt>(pkt, LidarType::RSROCK);
   if (!this->difop_flag_)
   {
-    this->template decodeDifopCalibration<RS32DifopPkt>(pkt, LidarType::RSROCK);
+    this->template decodeDifopCalibration<RSROCKDifopPkt>(pkt, LidarType::RSROCK);
   }
   return RSDecoderResult::DECODE_OK;
 }
