@@ -379,26 +379,26 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
     this->angle_flag_ = false;
   }
 
+  // even though T_Point does not have timestamp, it gives the timestamp
   /* Point time function*/
-  if (RS_HAS_MEMBER(T_Point, timestamp))  ///< return the timestamp of the first block in one packet
+  // if (RS_HAS_MEMBER(T_Point, timestamp))  ///< return the timestamp of the first block in one packet
+  // {
+  if (this->param_.use_lidar_clock)
   {
-    if (this->param_.use_lidar_clock)
-    {
-      get_point_time_func_ = [this](const uint8_t* pkt) { return getLidarTime(pkt); };
-    }
-    else
-    {
-      get_point_time_func_ = [this](const uint8_t* pkt) {
-        double ret_time =
-            getTime() - (this->lidar_const_param_.BLOCKS_PER_PKT - 1) * this->time_duration_between_blocks_;
-        return ret_time;
-      };
-    }
+    get_point_time_func_ = [this](const uint8_t* pkt) { return getLidarTime(pkt); };
   }
   else
   {
-    get_point_time_func_ = [this](const uint8_t* pkt) { return 0; };
+    get_point_time_func_ = [this](const uint8_t* pkt) {
+      double ret_time = getTime() - (this->lidar_const_param_.BLOCKS_PER_PKT - 1) * this->time_duration_between_blocks_;
+      return ret_time;
+    };
   }
+  // }
+  // else
+  // {
+  //   get_point_time_func_ = [this](const uint8_t* pkt) { return 0; };
+  // }
   /*Camera trigger function*/
   if (param.trigger_param.trigger_map.size() != 0)
   {
