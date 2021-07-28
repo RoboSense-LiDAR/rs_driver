@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+### Added
+- Add vlan support
+- Add somip support
+- Add split frame when pkt_cnt < last_pkt_cnt in mems
+- Add temperature in mems
+
+### Fixed
+- Fix don't get time when PointType doesn't have timestamp member
+
+
 ## v1.3.0 - 2020-11-10
 
 ### Added

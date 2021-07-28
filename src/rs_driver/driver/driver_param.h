@@ -94,14 +94,13 @@ typedef struct RSTransformParam  ///< The Point transform parameter
 
 typedef struct RSDecoderParam  ///< LiDAR decoder parameter
 {
-  float max_distance = 200.0f;  ///< Max distance of point cloud range
-  float min_distance = 0.2f;    ///< Minimum distance of point cloud range
-  float start_angle = 0.0f;     ///< Start angle of point cloud
-  float end_angle = 360.0f;     ///< End angle of point cloud
-  SplitFrameMode split_frame_mode =
-      SplitFrameMode::SPLIT_BY_ANGLE;  ///< 1: Split frames by cut_angle;
-                                       ///< 2: Split frames by fixed number of packets;
-                                       ///< 3: Split frames by custom number of packets (num_pkts_split)
+  float max_distance = 200.0f;                                       ///< Max distance of point cloud range
+  float min_distance = 0.2f;                                         ///< Minimum distance of point cloud range
+  float start_angle = 0.0f;                                          ///< Start angle of point cloud
+  float end_angle = 360.0f;                                          ///< End angle of point cloud
+  SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;  ///< 1: Split frames by cut_angle;
+                                                                     ///< 2: Split frames by fixed number of packets;
+  ///< 3: Split frames by custom number of packets (num_pkts_split)
   uint32_t num_pkts_split = 1;         ///< Number of packets in one frame, only be used when split_frame_mode=3
   float cut_angle = 0.0f;              ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
   bool use_lidar_clock = false;        ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
@@ -131,7 +130,8 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   std::string multi_cast_address = "0.0.0.0";  ///< Address of multicast
   uint16_t msop_port = 6699;                   ///< Msop packet port number
   uint16_t difop_port = 7788;                  ///< Difop packet port number
-  bool use_vlan = false;
+  bool use_vlan = false;                       ///< Vlan on-off
+  bool use_someip = false;                     ///< Someip on-off
   bool read_pcap = false;          ///< true: The driver will process the pcap through pcap_path. false: The driver will
                                    ///< Get data from online LiDAR
   double pcap_rate = 1;            ///< Rate to read the pcap file
