@@ -121,6 +121,10 @@ inline Input::Input(const LidarType& type, const RSInputParam& input_param,
   {
     udp_offset_ = 46;
   }
+  if (input_param_.use_someip)
+  {
+    udp_offset_ += 16;
+  }
 }
 
 inline Input::~Input()
