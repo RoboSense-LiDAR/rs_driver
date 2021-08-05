@@ -85,6 +85,12 @@ find_package(Boost COMPONENTS system date_time regex REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
 
+# fix pthread missing on ubuntu18.04 or ubuntu20.04
+if(WIN32)
+else()
+  list(APPEND EXTERNAL_LIBS pthread)
+endif(WIN32)
+
 #========================
 #  PCAP
 #========================
@@ -96,6 +102,7 @@ if(WIN32)
 else()
   list(APPEND EXTERNAL_LIBS pcap)
 endif(WIN32)
+
 
 #========================
 #  Eigen
