@@ -6,9 +6,11 @@
 - Add somip support
 - Add split frame when pkt_cnt < last_pkt_cnt in mems
 - Add temperature in mems
+- Add ROCK support
 
 ### Fixed
 - Fix don't get time when PointType doesn't have timestamp member
+- Fix ROCK light center compensation algorithm
 
 
 ## v1.3.0 - 2020-11-10

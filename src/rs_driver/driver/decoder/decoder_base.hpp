@@ -46,7 +46,7 @@ namespace lidar
   template <typename T>                                                                                                \
   struct has_##member<                                                                                                 \
       T, typename std::enable_if<!std::is_same<decltype(std::declval<T>().member), void>::value, bool>::type>          \
-    : std::true_type                                                                                                   \
+      : std::true_type                                                                                                 \
   {                                                                                                                    \
   };
 #define RS_HAS_MEMBER(C, member) has_##member<C>::value
@@ -335,6 +335,8 @@ protected:
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   std::function<double(const uint8_t*)> get_point_time_func_;
   std::function<void(const int&, const uint8_t*)> check_camera_trigger_func_;
+  float lidar_alph0_;  // atan2(Ry, Rx)
+  float lidar_Rxy_;    // sqrt(Rx*Rx + Ry*Ry)
 
 private:
   std::vector<double> cos_lookup_table_;
@@ -423,6 +425,10 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
   /* Cos & Sin look-up table*/
   cos_lookup_table_ = initTrigonometricLookupTable([](const double rad) -> double { return std::cos(rad); });
   sin_lookup_table_ = initTrigonometricLookupTable([](const double rad) -> double { return std::sin(rad); });
+
+  /*  Calulate the lidar_alph0 and lidar_Rxy */
+  lidar_alph0_ = std::atan2(lidar_const_param_.RY, lidar_const_param_.RX);
+  lidar_Rxy_ = std::sqrt(lidar_const_param_.RX * lidar_const_param_.RX + lidar_const_param_.RY * lidar_const_param_.RY);
 }
 
 template <typename T_Point>

@@ -249,9 +249,9 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSROCKConstantPa
   ret_param.DSR_TOFFSET = 1.0;
   ret_param.FIRING_FREQUENCY = 0.018;
   ret_param.DIS_RESOLUTION = 0.0025;
-  ret_param.RX = 0.0;  // TODO
-  ret_param.RY = 0.0;  // TODO
-  ret_param.RZ = 0.0;  // TODO
+  ret_param.RX = 0.07526;
+  ret_param.RY = 0.00968;
+  ret_param.RZ = 0.0;
   return ret_param;
 }
 
