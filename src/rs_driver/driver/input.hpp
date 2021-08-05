@@ -102,7 +102,7 @@ private:
 
 inline Input::Input(const LidarType& type, const RSInputParam& input_param,
                     const std::function<void(const Error&)>& excb)
-  : lidar_type_(type), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr), udp_offset_(42)
+  : lidar_type_(type), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr), udp_offset_(0)
 {
   last_packet_time_ = std::chrono::system_clock::now();
   input_param_.pcap_rate = input_param_.pcap_rate < 0.1 ? 0.1 : input_param_.pcap_rate;
@@ -119,7 +119,7 @@ inline Input::Input(const LidarType& type, const RSInputParam& input_param,
   }
   if (input_param_.use_vlan)
   {
-    udp_offset_ = 46;
+    udp_offset_ = 4;
   }
   if (input_param_.use_someip)
   {
@@ -309,7 +309,7 @@ inline void Input::getMsopPacket()
       continue;
     }
     PacketMsg msg(msop_pkt_length_);
-    memcpy(msg.packet.data(), precv_buffer, msop_pkt_length_);
+    memcpy(msg.packet.data(), precv_buffer + udp_offset_, msop_pkt_length_);
     for (auto& iter : msop_cb_)
     {
       iter(msg);
@@ -344,7 +344,7 @@ inline void Input::getDifopPacket()
       continue;
     }
     PacketMsg msg(difop_pkt_length_);
-    memcpy(msg.packet.data(), precv_buffer, difop_pkt_length_);
+    memcpy(msg.packet.data(), precv_buffer + udp_offset_, difop_pkt_length_);
     for (auto& iter : difop_cb_)
     {
       iter(msg);
@@ -400,7 +400,7 @@ inline void Input::getPcapPacket()
       if (pcap_offline_filter(&pcap_msop_filter_, header, pkt_data) != 0)
       {
         PacketMsg msg(msop_pkt_length_);
-        memcpy(msg.packet.data(), pkt_data + udp_offset_, msop_pkt_length_);
+        memcpy(msg.packet.data(), pkt_data + udp_offset_ + 42, msop_pkt_length_);
         for (auto& iter : msop_cb_)
         {
           iter(msg);
@@ -409,7 +409,7 @@ inline void Input::getPcapPacket()
       else if (pcap_offline_filter(&pcap_difop_filter_, header, pkt_data) != 0)
       {
         PacketMsg msg(difop_pkt_length_);
-        memcpy(msg.packet.data(), pkt_data + udp_offset_, difop_pkt_length_);
+        memcpy(msg.packet.data(), pkt_data + udp_offset_ + 42, difop_pkt_length_);
         for (auto& iter : difop_cb_)
         {
           iter(msg);
