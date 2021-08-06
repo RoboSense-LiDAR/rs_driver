@@ -12,6 +12,11 @@
 - Fix don't get time when PointType doesn't have timestamp member
 - Fix ROCK light center compensation algorithm
 
+### Removed
+- Remove redundance condition code in vec.emplace_back(std::move(point)) in mech lidars
+
+
+
 
 ## v1.3.0 - 2020-11-10
 

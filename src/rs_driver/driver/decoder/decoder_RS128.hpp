@@ -209,12 +209,7 @@ inline RSDecoderResult DecoderRS128<T_Point>::decodeMsopPkt(const uint8_t* pkt, 
       }
       setRing(point, this->beam_ring_table_[channel_idx]);
       setTimestamp(point, block_timestamp);
-      if (((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
-           (!this->angle_flag_ &&
-            ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
-      {
-        vec.emplace_back(std::move(point));
-      }
+      vec.emplace_back(std::move(point));
     }
   }
   return RSDecoderResult::DECODE_OK;

@@ -151,16 +151,17 @@ inline RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
       float azi_channel_ori = 0;
       if (this->echo_mode_ == ECHO_DUAL)
       {
-        azi_channel_ori = cur_azi + azi_diff * this->lidar_const_param_.DSR_TOFFSET *
-                                        this->lidar_const_param_.FIRING_FREQUENCY * 2.0f *
-                                        static_cast<float>(channel_idx % 16);
+        azi_channel_ori = cur_azi +
+                          azi_diff * this->lidar_const_param_.DSR_TOFFSET * this->lidar_const_param_.FIRING_FREQUENCY *
+                              2.0f * static_cast<float>(channel_idx % 16);
       }
       else
       {
         azi_channel_ori =
-            cur_azi + azi_diff * ((this->lidar_const_param_.DSR_TOFFSET * this->lidar_const_param_.FIRING_FREQUENCY *
-                                   static_cast<float>(channel_idx % 16)) +
-                                  static_cast<float>(channel_idx / 16) * 0.5f);
+            cur_azi +
+            azi_diff * ((this->lidar_const_param_.DSR_TOFFSET * this->lidar_const_param_.FIRING_FREQUENCY *
+                         static_cast<float>(channel_idx % 16)) +
+                        static_cast<float>(channel_idx / 16) * 0.5f);
       }
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx % 16);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) *
@@ -201,12 +202,7 @@ inline RSDecoderResult DecoderRS16<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
       {
         setTimestamp(point, block_timestamp);
       }
-      if (((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
-           (!this->angle_flag_ &&
-            ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
-      {
-        vec.emplace_back(std::move(point));
-      }
+      vec.emplace_back(std::move(point));
     }
   }
   return RSDecoderResult::DECODE_OK;

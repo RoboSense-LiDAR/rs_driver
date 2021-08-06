@@ -162,10 +162,9 @@ inline RSDecoderResult DecoderRSROCK<T_Point>::decodeMsopPkt(const uint8_t* pkt,
       azi_diff = 0.0;  // TODO
       for (int channel_idx = 0; channel_idx < this->lidar_const_param_.LASER_NUM; channel_idx++)
       {
-        float azi_channel_ori =
-            cur_azi + azi_diff * 1;  // this->lidar_const_param_.FIRING_FREQUENCY *
-                                     // this->lidar_const_param_.DSR_TOFFSET *
-                                     // static_cast<float>(2 * (channel_idx % 16) + (channel_idx / 16)); // TODO
+        float azi_channel_ori = cur_azi + azi_diff * 1;  // this->lidar_const_param_.FIRING_FREQUENCY *
+                                                         // this->lidar_const_param_.DSR_TOFFSET *
+        // static_cast<float>(2 * (channel_idx % 16) + (channel_idx / 16)); // TODO
         int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
         float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[firing_idx].channels[channel_idx].distance) *
                          this->lidar_const_param_.DIS_RESOLUTION;
@@ -200,12 +199,7 @@ inline RSDecoderResult DecoderRSROCK<T_Point>::decodeMsopPkt(const uint8_t* pkt,
         }
         setRing(point, this->beam_ring_table_[channel_idx]);
         setTimestamp(point, block_timestamp);
-        if (((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
-             (!this->angle_flag_ &&
-              ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
-        {
-          vec.emplace_back(std::move(point));
-        }
+        vec.emplace_back(std::move(point));
       }
     }
   }
