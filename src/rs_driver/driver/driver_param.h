@@ -45,7 +45,6 @@ enum LidarType  ///< LiDAR type
   RS128,
   RS80,
   RSHELIOS,
-  RSROCK,
   RSM1 = 10
 };
 
@@ -131,13 +130,13 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   std::string multi_cast_address = "0.0.0.0";  ///< Address of multicast
   uint16_t msop_port = 6699;                   ///< Msop packet port number
   uint16_t difop_port = 7788;                  ///< Difop packet port number
-  bool use_vlan = false;                       ///< Vlan on-off
-  bool use_someip = false;                     ///< Someip on-off
   bool read_pcap = false;          ///< true: The driver will process the pcap through pcap_path. false: The driver will
                                    ///< Get data from online LiDAR
   double pcap_rate = 1;            ///< Rate to read the pcap file
   bool pcap_repeat = true;         ///< true: The pcap bag will repeat play
   std::string pcap_path = "null";  ///< Absolute path of pcap file
+  bool use_vlan = false;           ///< Vlan on-off
+  bool use_someip = false;         ///< Someip on-off
   void print() const
   {
     RS_INFO << "------------------------------------------------------" << RS_REND;
@@ -148,6 +147,8 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "read_pcap: " << read_pcap << RS_REND;
     RS_INFOL << "pcap_repeat: " << pcap_repeat << RS_REND;
     RS_INFOL << "pcap_path: " << pcap_path << RS_REND;
+    RS_INFOL << "use_vlan: " << use_vlan << RS_REND;
+    RS_INFOL << "use_someip: " << use_someip << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 } RSInputParam;
@@ -199,9 +200,6 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
       case LidarType::RSHELIOS:
         str = "RSHELIOS";
         break;
-      case LidarType::RSROCK:
-        str = "RSROCK";
-        break;
       default:
         str = "ERROR";
         RS_ERROR << "RS_ERROR" << RS_REND;
@@ -237,10 +235,6 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
     else if (type == "RSHELIOS")
     {
       return lidar::LidarType::RSHELIOS;
-    }
-    else if (type == "RSROCK")
-    {
-      return lidar::LidarType::RSROCK;
     }
     else
     {

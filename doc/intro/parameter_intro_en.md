@@ -1,6 +1,6 @@
 # Parameters Intorduction
-## TODO
-
+## 1 Parameter Definition
+The detail parameters are defined in `rs_driver/src/rs_driver/driver_param.h` file.
 
 ```
 typedef struct RSTransformParam  ///< The Point transform parameter
@@ -36,13 +36,13 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   std::string multi_cast_address = "0.0.0.0";  ///< Address of multicast
   uint16_t msop_port = 6699;                   ///< Msop packet port number
   uint16_t difop_port = 7788;                  ///< Difop packet port number
-  bool use_vlan = false;                       ///< Vlan on-off
-  bool use_someip = false;                     ///< Someip on-off
   bool read_pcap = false;          ///< true: The driver will process the pcap through pcap_path. false: The driver will
                                    ///< Get data from online LiDAR
   double pcap_rate = 1;            ///< Rate to read the pcap file
   bool pcap_repeat = true;         ///< true: The pcap bag will repeat play
   std::string pcap_path = "null";  ///< Absolute path of pcap file
+  bool use_vlan = false;                       ///< Vlan on-off
+  bool use_someip = false;                     ///< Someip on-off
 } RSInputParam;
 
 typedef struct RSDriverParam  ///< The LiDAR driver parameter
