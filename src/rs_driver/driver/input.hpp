@@ -94,7 +94,9 @@ private:
   Thread msop_thread_;
   Thread difop_thread_;
   Thread pcap_thread_;
-  int udp_offset_;
+  int vlan_offset_;
+  int someip_offset_;
+  int pcap_offset_;
   boost::asio::io_service msop_io_service_;
   boost::asio::io_service difop_io_service_;
   std::vector<std::function<void(const PacketMsg&)>> difop_cb_;
@@ -103,7 +105,14 @@ private:
 
 inline Input::Input(const LidarType& type, const RSInputParam& input_param,
                     const std::function<void(const Error&)>& excb)
-  : lidar_type_(type), input_param_(input_param), excb_(excb), init_flag_(false), pcap_(nullptr), udp_offset_(0)
+  : lidar_type_(type)
+  , input_param_(input_param)
+  , excb_(excb)
+  , init_flag_(false)
+  , pcap_(nullptr)
+  , vlan_offset_(0)
+  , someip_offset_(0)
+  , pcap_offset_(42)
 {
   last_packet_time_ = std::chrono::system_clock::now();
   input_param_.pcap_rate = input_param_.pcap_rate < 0.1 ? 0.1 : input_param_.pcap_rate;
@@ -124,11 +133,11 @@ inline Input::Input(const LidarType& type, const RSInputParam& input_param,
   }
   if (input_param_.use_vlan)
   {
-    udp_offset_ = 4;
+    vlan_offset_ = 4;
   }
   if (input_param_.use_someip)
   {
-    udp_offset_ += 16;
+    someip_offset_ = 16;
   }
 }
 
@@ -171,6 +180,7 @@ inline bool Input::init()
       difop_filter << "udp dst port " << input_param_.difop_port;
       pcap_compile(pcap_, &pcap_msop_filter_, msop_filter.str().c_str(), 1, 0xFFFFFFFF);
       pcap_compile(pcap_, &pcap_difop_filter_, difop_filter.str().c_str(), 1, 0xFFFFFFFF);
+      pcap_offset_ += vlan_offset_ + someip_offset_;
     }
   }
   else
@@ -290,14 +300,14 @@ inline bool Input::setSocket(const std::string& pkt_type)
 
 inline void Input::getMsopPacket()
 {
-  char* precv_buffer = (char*)malloc(msop_pkt_length_);
+  char* precv_buffer = (char*)malloc(msop_pkt_length_ + someip_offset_);
   while (msop_thread_.start_.load())
   {
     msop_deadline_->expires_from_now(boost::posix_time::seconds(1));
     boost::system::error_code ec = boost::asio::error::would_block;
     std::size_t ret = 0;
 
-    msop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, msop_pkt_length_),
+    msop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, msop_pkt_length_ + someip_offset_),
                                   boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
     do
     {
@@ -308,13 +318,27 @@ inline void Input::getMsopPacket()
       excb_(Error(ERRCODE_MSOPTIMEOUT));
       continue;
     }
-    if (ret < msop_pkt_length_)
+
+    // use_someip, the msop and difop port are the same.
+    if (input_param_.use_someip && ret == difop_pkt_length_ + someip_offset_)
+    {
+      PacketMsg msg(difop_pkt_length_);
+      memcpy(msg.packet.data(), precv_buffer + someip_offset_, difop_pkt_length_);
+      for (auto& iter : difop_cb_)
+      {
+        iter(msg);
+      }
+      continue;
+    }
+
+    if (ret < msop_pkt_length_ + someip_offset_)
     {
       excb_(Error(ERRCODE_MSOPINCOMPLETE));
       continue;
     }
+
     PacketMsg msg(msop_pkt_length_);
-    memcpy(msg.packet.data(), precv_buffer + udp_offset_, msop_pkt_length_);
+    memcpy(msg.packet.data(), precv_buffer + someip_offset_, msop_pkt_length_);
     for (auto& iter : msop_cb_)
     {
       iter(msg);
@@ -325,37 +349,40 @@ inline void Input::getMsopPacket()
 
 inline void Input::getDifopPacket()
 {
-  char* precv_buffer = (char*)malloc(difop_pkt_length_);
-  while (difop_thread_.start_.load())
+  if (!input_param_.use_someip)
   {
-    difop_deadline_->expires_from_now(boost::posix_time::seconds(2));
-    boost::system::error_code ec = boost::asio::error::would_block;
-    std::size_t ret = 0;
+    char* precv_buffer = (char*)malloc(difop_pkt_length_);
+    while (difop_thread_.start_.load())
+    {
+      difop_deadline_->expires_from_now(boost::posix_time::seconds(2));
+      boost::system::error_code ec = boost::asio::error::would_block;
+      std::size_t ret = 0;
 
-    difop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, difop_pkt_length_),
-                                   boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
-    do
-    {
-      difop_io_service_.run_one();
-    } while (ec == boost::asio::error::would_block);
-    if (ec)
-    {
-      excb_(Error(ERRCODE_DIFOPTIMEOUT));
-      continue;
+      difop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, difop_pkt_length_),
+                                     boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
+      do
+      {
+        difop_io_service_.run_one();
+      } while (ec == boost::asio::error::would_block);
+      if (ec)
+      {
+        excb_(Error(ERRCODE_DIFOPTIMEOUT));
+        continue;
+      }
+      if (ret < difop_pkt_length_)
+      {
+        excb_(Error(ERRCODE_DIFOPINCOMPLETE));
+        continue;
+      }
+      PacketMsg msg(difop_pkt_length_);
+      memcpy(msg.packet.data(), precv_buffer, difop_pkt_length_);
+      for (auto& iter : difop_cb_)
+      {
+        iter(msg);
+      }
     }
-    if (ret < difop_pkt_length_)
-    {
-      excb_(Error(ERRCODE_DIFOPINCOMPLETE));
-      continue;
-    }
-    PacketMsg msg(difop_pkt_length_);
-    memcpy(msg.packet.data(), precv_buffer + udp_offset_, difop_pkt_length_);
-    for (auto& iter : difop_cb_)
-    {
-      iter(msg);
-    }
+    free(precv_buffer);
   }
-  free(precv_buffer);
 }
 
 inline void Input::getPcapPacket()
@@ -407,17 +434,33 @@ inline void Input::getPcapPacket()
     {
       if (pcap_offline_filter(&pcap_msop_filter_, header, pkt_data) != 0)
       {
-        PacketMsg msg(msop_pkt_length_);
-        memcpy(msg.packet.data(), pkt_data + udp_offset_ + 42, msop_pkt_length_);
-        for (auto& iter : msop_cb_)
+        if (header->len == msop_pkt_length_ + pcap_offset_)
         {
-          iter(msg);
+          PacketMsg msg(msop_pkt_length_);
+          memcpy(msg.packet.data(), pkt_data + pcap_offset_, msop_pkt_length_);
+          for (auto& iter : msop_cb_)
+          {
+            iter(msg);
+          }
+        }
+        else if (input_param_.use_someip && header->len == difop_pkt_length_ + pcap_offset_)  // the someip case
+        {
+          PacketMsg msg(difop_pkt_length_);
+          memcpy(msg.packet.data(), pkt_data + pcap_offset_, difop_pkt_length_);
+          for (auto& iter : difop_cb_)
+          {
+            iter(msg);
+          }
+        }
+        else
+        {
+          continue;
         }
       }
       else if (pcap_offline_filter(&pcap_difop_filter_, header, pkt_data) != 0)
       {
         PacketMsg msg(difop_pkt_length_);
-        memcpy(msg.packet.data(), pkt_data + udp_offset_ + 42, difop_pkt_length_);
+        memcpy(msg.packet.data(), pkt_data + pcap_offset_, difop_pkt_length_);
         for (auto& iter : difop_cb_)
         {
           iter(msg);
