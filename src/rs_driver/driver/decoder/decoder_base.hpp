@@ -335,8 +335,8 @@ protected:
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   std::function<double(const uint8_t*)> get_point_time_func_;
   std::function<void(const int&, const uint8_t*)> check_camera_trigger_func_;
-  float lidar_alph0_;  // atan2(Ry, Rx)
-  float lidar_Rxy_;    // sqrt(Rx*Rx + Ry*Ry)
+  int lidar_alph0_;  // atan2(Ry, Rx) * 180 / M_PI * 100
+  float lidar_Rxy_;  // sqrt(Rx*Rx + Ry*Ry)
 
 private:
   std::vector<double> cos_lookup_table_;
@@ -427,7 +427,7 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
   sin_lookup_table_ = initTrigonometricLookupTable([](const double rad) -> double { return std::sin(rad); });
 
   /*  Calulate the lidar_alph0 and lidar_Rxy */
-  lidar_alph0_ = std::atan2(lidar_const_param_.RY, lidar_const_param_.RX);
+  lidar_alph0_ = std::atan2(lidar_const_param_.RY, lidar_const_param_.RX) * 180 / M_PI * 100;
   lidar_Rxy_ = std::sqrt(lidar_const_param_.RX * lidar_const_param_.RX + lidar_const_param_.RY * lidar_const_param_.RY);
 }
 
