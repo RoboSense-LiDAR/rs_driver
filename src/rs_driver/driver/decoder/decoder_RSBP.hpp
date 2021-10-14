@@ -169,11 +169,11 @@ inline RSDecoderResult DecoderRSBP<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
     azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
     for (int channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
-      float azi_channel_ori = cur_azi +
-                              azi_diff * this->lidar_const_param_.DSR_TOFFSET *
-                                  this->lidar_const_param_.FIRING_FREQUENCY *
-                                  (static_cast<float>(2 * (channel_idx % 16) + (channel_idx / 16)) +
-                                   static_cast<float>(channel_idx / 8 % 2) * 5.2f);
+      // charge + reserved = 5.2f
+      float azi_channel_ori = cur_azi + 
+                              azi_diff * this->lidar_const_param_.FIRING_FREQUENCY * 
+                              (this->lidar_const_param_.DSR_TOFFSET * static_cast<float>(2 * (channel_idx % 16) + (channel_idx / 16)) + 5.2f * static_cast<float>(channel_idx / 8 % 2));
+
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) *
                        this->lidar_const_param_.DIS_RESOLUTION;
