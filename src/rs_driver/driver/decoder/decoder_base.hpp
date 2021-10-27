@@ -270,7 +270,7 @@ typedef struct
 #pragma pack(pop)
 
 //----------------- Decoder ---------------------
-template <typename T_Point>
+template <typename T_PointCloud>
 class DecoderBase
 {
 public:
@@ -278,7 +278,8 @@ public:
   DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase() = default;
-  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec, int& height);
+  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, 
+      typename T_PointCloud::VectorT& point_cloud_vec, int& height);
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt);
   virtual void loadAngleFile(const std::string& angle_path);
   virtual void regRecvCallback(const std::function<void(const CameraTrigger&)>& callback);  ///< Camera trigger
@@ -290,7 +291,8 @@ protected:
   virtual float computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high);
   virtual int azimuthCalibration(const float& azimuth, const int& channel);
   virtual void checkTriggerAngle(const int& angle, const double& timestamp);
-  virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth) = 0;
+  virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, 
+      typename T_PointCloud::VectorT& vec, int& height, int& azimuth) = 0;
   virtual RSDecoderResult decodeDifopPkt(const uint8_t* pkt) = 0;
   RSEchoMode getEchoMode(const LidarType& type, const uint8_t& return_mode);
   template <typename T_Msop>
@@ -343,8 +345,8 @@ private:
   std::vector<double> sin_lookup_table_;
 };
 
-template <typename T_Point>
-inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
+template <typename T_PointCloud>
+inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
   : lidar_const_param_(lidar_const_param)
   , param_(param)
   , echo_mode_(ECHO_SINGLE)
@@ -383,6 +385,7 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
 
   // even though T_Point does not have timestamp, it gives the timestamp
   /* Point time function*/
+  // typedef typename T_PointCloud::PointT T_Point;
   // if (RS_HAS_MEMBER(T_Point, timestamp))  ///< return the timestamp of the first block in one packet
   // {
   if (this->param_.use_lidar_clock)
@@ -431,8 +434,8 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
   lidar_Rxy_ = std::sqrt(lidar_const_param_.RX * lidar_const_param_.RX + lidar_const_param_.RY * lidar_const_param_.RY);
 }
 
-template <typename T_Point>
-inline RSDecoderResult DecoderBase<T_Point>::processDifopPkt(const uint8_t* pkt)
+template <typename T_PointCloud>
+inline RSDecoderResult DecoderBase<T_PointCloud>::processDifopPkt(const uint8_t* pkt)
 {
   if (pkt == NULL)
   {
@@ -441,9 +444,9 @@ inline RSDecoderResult DecoderBase<T_Point>::processDifopPkt(const uint8_t* pkt)
   return decodeDifopPkt(pkt);
 }
 
-template <typename T_Point>
-inline RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec,
-                                                            int& height)
+template <typename T_PointCloud>
+inline RSDecoderResult DecoderBase<T_PointCloud>::processMsopPkt(const uint8_t* pkt, 
+    typename T_PointCloud::VectorT& point_cloud_vec, int& height)
 {
   if (pkt == NULL)
   {
@@ -497,20 +500,20 @@ inline RSDecoderResult DecoderBase<T_Point>::processMsopPkt(const uint8_t* pkt, 
   return DECODE_OK;
 }
 
-template <typename T_Point>
-inline void DecoderBase<T_Point>::regRecvCallback(const std::function<void(const CameraTrigger&)>& callback)
+template <typename T_PointCloud>
+inline void DecoderBase<T_PointCloud>::regRecvCallback(const std::function<void(const CameraTrigger&)>& callback)
 {
   camera_trigger_cb_vec_.emplace_back(callback);
 }
 
-template <typename T_Point>
-inline double DecoderBase<T_Point>::getLidarTemperature()
+template <typename T_PointCloud>
+inline double DecoderBase<T_PointCloud>::getLidarTemperature()
 {
   return current_temperature_;
 }
 
-template <typename T_Point>
-inline void DecoderBase<T_Point>::loadAngleFile(const std::string& angle_path)
+template <typename T_PointCloud>
+inline void DecoderBase<T_PointCloud>::loadAngleFile(const std::string& angle_path)
 {
   std::string line_str;
   std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
@@ -547,8 +550,8 @@ inline void DecoderBase<T_Point>::loadAngleFile(const std::string& angle_path)
   }
 }
 
-template <typename T_Point>
-inline void DecoderBase<T_Point>::checkTriggerAngle(const int& angle, const double& timestamp)
+template <typename T_PointCloud>
+inline void DecoderBase<T_PointCloud>::checkTriggerAngle(const int& angle, const double& timestamp)
 {
   std::map<double, std::string>::iterator iter = param_.trigger_param.trigger_map.begin();
   for (size_t i = 0; i < trigger_index_; i++)
@@ -576,8 +579,8 @@ inline void DecoderBase<T_Point>::checkTriggerAngle(const int& angle, const doub
 }
 
 /* 16, 32, BP & RSHELIOS */
-template <typename T_Point>
-inline float DecoderBase<T_Point>::computeTemperature(const uint16_t& temp_raw)
+template <typename T_PointCloud>
+inline float DecoderBase<T_PointCloud>::computeTemperature(const uint16_t& temp_raw)
 {
   uint8_t neg_flag = (temp_raw >> 8) & 0x80;
   float msb = (temp_raw >> 8) & 0x7F;
@@ -596,8 +599,8 @@ inline float DecoderBase<T_Point>::computeTemperature(const uint16_t& temp_raw)
 }
 
 /* 128 & 80 */
-template <typename T_Point>
-inline float DecoderBase<T_Point>::computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high)
+template <typename T_PointCloud>
+inline float DecoderBase<T_PointCloud>::computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high)
 {
   uint8_t neg_flag = temp_low & 0x80;
   float msb = temp_low & 0x7F;
@@ -615,15 +618,15 @@ inline float DecoderBase<T_Point>::computeTemperature(const uint8_t& temp_low, c
   return temp;
 }
 
-template <typename T_Point>
-inline int DecoderBase<T_Point>::azimuthCalibration(const float& azimuth, const int& channel)
+template <typename T_PointCloud>
+inline int DecoderBase<T_PointCloud>::azimuthCalibration(const float& azimuth, const int& channel)
 {
   return (static_cast<int>(azimuth) + this->hori_angle_list_[channel] + RS_ONE_ROUND) % RS_ONE_ROUND;
 }
 
-template <typename T_Point>
+template <typename T_PointCloud>
 template <typename T_Difop>
-inline void DecoderBase<T_Point>::decodeDifopCommon(const uint8_t* pkt, const LidarType& type)
+inline void DecoderBase<T_PointCloud>::decodeDifopCommon(const uint8_t* pkt, const LidarType& type)
 {
   const T_Difop* dpkt_ptr = reinterpret_cast<const T_Difop*>(pkt);
   this->echo_mode_ = this->getEchoMode(type, dpkt_ptr->return_mode);
@@ -657,9 +660,9 @@ inline void DecoderBase<T_Point>::decodeDifopCommon(const uint8_t* pkt, const Li
       static_cast<float>(this->pkts_per_frame_);  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
 }
 
-template <typename T_Point>
+template <typename T_PointCloud>
 template <typename T_Difop>
-inline void DecoderBase<T_Point>::decodeDifopCalibration(const uint8_t* pkt, const LidarType& type)
+inline void DecoderBase<T_PointCloud>::decodeDifopCalibration(const uint8_t* pkt, const LidarType& type)
 {
   const T_Difop* dpkt_ptr = reinterpret_cast<const T_Difop*>(pkt);
   const uint8_t* p_ver_cali = reinterpret_cast<const uint8_t*>(dpkt_ptr->ver_angle_cali);
@@ -687,9 +690,9 @@ inline void DecoderBase<T_Point>::decodeDifopCalibration(const uint8_t* pkt, con
   this->difop_flag_ = true;
 }
 
-template <typename T_Point>
+template <typename T_PointCloud>
 template <typename T_Msop>
-inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt, const LidarType& type)
+inline double DecoderBase<T_PointCloud>::calculateTimeUTC(const uint8_t* pkt, const LidarType& type)
 {
   const T_Msop* mpkt_ptr = reinterpret_cast<const T_Msop*>(pkt);
   union u_ts
@@ -715,9 +718,9 @@ inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt, const L
   return static_cast<double>(timestamp.ts) + (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.us))) / MICRO;
 }
 
-template <typename T_Point>
+template <typename T_PointCloud>
 template <typename T_Msop>
-inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
+inline double DecoderBase<T_PointCloud>::calculateTimeYMD(const uint8_t* pkt)
 {
 #ifdef _MSC_VER
   long timezone = 0;
@@ -736,8 +739,8 @@ inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
          static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us)) / 1000000.0 - static_cast<double>(timezone);
 }
 
-template <typename T_Point>
-inline void DecoderBase<T_Point>::transformPoint(float& x, float& y, float& z)
+template <typename T_PointCloud>
+inline void DecoderBase<T_PointCloud>::transformPoint(float& x, float& y, float& z)
 {
 #ifdef ENABLE_TRANSFORM
   Eigen::AngleAxisd current_rotation_x(param_.transform_param.roll, Eigen::Vector3d::UnitX());
@@ -754,8 +757,8 @@ inline void DecoderBase<T_Point>::transformPoint(float& x, float& y, float& z)
 #endif
 }
 
-template <typename T_Point>
-inline void DecoderBase<T_Point>::sortBeamTable()
+template <typename T_PointCloud>
+inline void DecoderBase<T_PointCloud>::sortBeamTable()
 {
   std::vector<size_t> sorted_idx(this->lidar_const_param_.LASER_NUM);
   std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
@@ -838,8 +841,8 @@ inline typename std::enable_if<RS_HAS_MEMBER(T_Point, timestamp)>::type setTimes
   point.timestamp = value;
 }
 
-template <typename T_Point>
-inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const uint8_t& return_mode)
+template <typename T_PointCloud>
+inline RSEchoMode DecoderBase<T_PointCloud>::getEchoMode(const LidarType& type, const uint8_t& return_mode)
 {
   switch (type)
   {
@@ -881,20 +884,20 @@ inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const
   return RSEchoMode::ECHO_SINGLE;
 }
 
-template <typename T_Point>
-inline float DecoderBase<T_Point>::checkCosTable(const int& angle)
+template <typename T_PointCloud>
+inline float DecoderBase<T_PointCloud>::checkCosTable(const int& angle)
 {
   return cos_lookup_table_[angle + RS_ONE_ROUND];
 }
-template <typename T_Point>
-inline float DecoderBase<T_Point>::checkSinTable(const int& angle)
+template <typename T_PointCloud>
+inline float DecoderBase<T_PointCloud>::checkSinTable(const int& angle)
 {
   return sin_lookup_table_[angle + RS_ONE_ROUND];
 }
 
-template <typename T_Point>
+template <typename T_PointCloud>
 inline std::vector<double>
-DecoderBase<T_Point>::initTrigonometricLookupTable(const std::function<double(const double)>& func)
+DecoderBase<T_PointCloud>::initTrigonometricLookupTable(const std::function<double(const double)>& func)
 {
   std::vector<double> temp_table = std::vector<double>(2 * RS_ONE_ROUND, 0.0);
   for (int i = 0; i < 2 * RS_ONE_ROUND; i++)

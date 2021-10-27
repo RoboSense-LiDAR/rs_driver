@@ -44,13 +44,13 @@ namespace robosense
 {
 namespace lidar
 {
-template <typename T_Point>
+template <typename T_PointCloud>
 class DecoderFactory
 {
 public:
   DecoderFactory() = default;
   ~DecoderFactory() = default;
-  static std::shared_ptr<DecoderBase<T_Point>> createDecoder(const RSDriverParam& param);
+  static std::shared_ptr<DecoderBase<T_PointCloud>> createDecoder(const RSDriverParam& param);
 
 private:
   static const LidarConstantParameter getRS16ConstantParam();
@@ -63,35 +63,35 @@ private:
   static const LidarConstantParameter getRSROCKConstantParam();
 };
 
-template <typename T_Point>
-inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDecoder(const RSDriverParam& param)
+template <typename T_PointCloud>
+inline std::shared_ptr<DecoderBase<T_PointCloud>> DecoderFactory<T_PointCloud>::createDecoder(const RSDriverParam& param)
 {
-  std::shared_ptr<DecoderBase<T_Point>> ret_ptr;
+  std::shared_ptr<DecoderBase<T_PointCloud>> ret_ptr;
   switch (param.lidar_type)
   {
     case LidarType::RS16:
-      ret_ptr = std::make_shared<DecoderRS16<T_Point>>(param.decoder_param, getRS16ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param.decoder_param, getRS16ConstantParam());
       break;
     case LidarType::RS32:
-      ret_ptr = std::make_shared<DecoderRS32<T_Point>>(param.decoder_param, getRS32ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param.decoder_param, getRS32ConstantParam());
       break;
     case LidarType::RSBP:
-      ret_ptr = std::make_shared<DecoderRSBP<T_Point>>(param.decoder_param, getRSBPConstantParam());
+      ret_ptr = std::make_shared<DecoderRSBP<T_PointCloud>>(param.decoder_param, getRSBPConstantParam());
       break;
     case LidarType::RS128:
-      ret_ptr = std::make_shared<DecoderRS128<T_Point>>(param.decoder_param, getRS128ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS128<T_PointCloud>>(param.decoder_param, getRS128ConstantParam());
       break;
     case LidarType::RS80:
-      ret_ptr = std::make_shared<DecoderRS80<T_Point>>(param.decoder_param, getRS80ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS80<T_PointCloud>>(param.decoder_param, getRS80ConstantParam());
       break;
     case LidarType::RSM1:
-      ret_ptr = std::make_shared<DecoderRSM1<T_Point>>(param.decoder_param, getRSM1ConstantParam());
+      ret_ptr = std::make_shared<DecoderRSM1<T_PointCloud>>(param.decoder_param, getRSM1ConstantParam());
       break;
     case LidarType::RSHELIOS:
-      ret_ptr = std::make_shared<DecoderRSHELIOS<T_Point>>(param.decoder_param, getRSHELIOSConstantParam());
+      ret_ptr = std::make_shared<DecoderRSHELIOS<T_PointCloud>>(param.decoder_param, getRSHELIOSConstantParam());
       break;
     case LidarType::RSROCK:
-      ret_ptr = std::make_shared<DecoderRSROCK<T_Point>>(param.decoder_param, getRSROCKConstantParam());
+      ret_ptr = std::make_shared<DecoderRSROCK<T_PointCloud>>(param.decoder_param, getRSROCKConstantParam());
       break;
     default:
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
@@ -101,8 +101,8 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDeco
   return ret_ptr;
 }
 
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRS16ConstantParam()
+template <typename T_PointCloud>
+inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS16ConstantParam()
 {
   LidarConstantParameter ret_param;
   ret_param.MSOP_ID = 0xA050A55A0A05AA55;
@@ -121,8 +121,8 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS16ConstantPara
   return ret_param;
 }
 
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRS32ConstantParam()
+template <typename T_PointCloud>
+inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS32ConstantParam()
 {
   LidarConstantParameter ret_param;
   ret_param.MSOP_ID = 0xA050A55A0A05AA55;
@@ -141,8 +141,8 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS32ConstantPara
   return ret_param;
 }
 
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRSBPConstantParam()
+template <typename T_PointCloud>
+inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRSBPConstantParam()
 {
   LidarConstantParameter ret_param;
   ret_param.MSOP_ID = 0xA050A55A0A05AA55;
@@ -161,8 +161,8 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSBPConstantPara
   return ret_param;
 }
 
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRS80ConstantParam()
+template <typename T_PointCloud>
+inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS80ConstantParam()
 {
   LidarConstantParameter ret_param;
   ret_param.MSOP_ID = 0x5A05AA55;
@@ -181,8 +181,8 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS80ConstantPara
   return ret_param;
 }
 
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRS128ConstantParam()
+template <typename T_PointCloud>
+inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS128ConstantParam()
 {
   LidarConstantParameter ret_param;
   ret_param.MSOP_ID = 0x5A05AA55;
@@ -201,8 +201,8 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS128ConstantPar
   return ret_param;
 }
 
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRSM1ConstantParam()
+template <typename T_PointCloud>
+inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRSM1ConstantParam()
 {
   LidarConstantParameter ret_param;
   ret_param.MSOP_ID = 0xA55AAA55;
@@ -214,8 +214,8 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSM1ConstantPara
   return ret_param;
 }
 
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRSHELIOSConstantParam()
+template <typename T_PointCloud>
+inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRSHELIOSConstantParam()
 {
   LidarConstantParameter ret_param;
   ret_param.MSOP_ID = 0x5A05AA55;

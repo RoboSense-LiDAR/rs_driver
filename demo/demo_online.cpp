@@ -31,26 +31,30 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #include "rs_driver/api/lidar_driver.h"
-using namespace robosense::lidar;
 
-struct PointXYZI  ///< user defined point type
-{
-  float x;
-  float y;
-  float z;
-  uint8_t intensity;
-};
+#define PCL_POINTCLOUD
+
+#ifdef PCL_POINTCLOUD
+#include "pcl_point_cloud_msg.h"
+#else
+#include "point_cloud_msg.h"
+#endif
+
+typedef PointCloudT<PointT> PointCloudMsg; 
+
+using namespace robosense::lidar;
 
 /**
  * @brief The point cloud callback function. This function will be registered to lidar driver.
  *              When the point cloud message is ready, driver can send out messages through this function.
  * @param msg  The lidar point cloud message.
  */
-void pointCloudCallback(const PointCloudMsg<PointXYZI>& msg)
+void pointCloudCallback(const PointCloudMsg& msg)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the message and process it in another thread is recommended*/
-  RS_MSG << "msg: " << msg.seq << " point cloud size: " << msg.point_cloud_ptr->size() << RS_REND;
+  RS_MSG << "msg: " << msg.seq 
+         << " point cloud size: " << msg.points.size() << RS_REND;
 }
 
 /**
@@ -71,12 +75,14 @@ int main(int argc, char* argv[])
            << RSLIDAR_VERSION_PATCH << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
-  LidarDriver<PointXYZI> driver;  ///< Declare the driver object
+  std::shared_ptr<LidarDriver<PointCloudMsg>> driver_ = std::make_shared<LidarDriver<PointCloudMsg>>();
+  LidarDriver<PointCloudMsg>& driver = *driver_;
 
   RSDriverParam param;                  ///< Create a parameter object
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
-  param.lidar_type = LidarType::RS16;   ///< Set the lidar type. Make sure this type is correct
+  param.lidar_type = LidarType::RSBP;   ///< Set the lidar type. Make sure this type is correct
+  param.wait_for_difop = true;              ///< true: start sending point cloud until receive difop packet
   param.print();
 
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver

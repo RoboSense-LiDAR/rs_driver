@@ -1,14 +1,17 @@
 cmake_minimum_required(VERSION 3.5)
+
 cmake_policy(SET CMP0048 NEW)
+
 if(WIN32)
   cmake_policy(SET CMP0074 NEW)
 endif(WIN32)
+
 project(rs_driver VERSION 1.3.0)
 
 #=============================
 #  Compile Demos&Tools
 #=============================
-option(COMPILE_DEMOS "Build rs_driver demos" OFF)
+option(COMPILE_DEMOS "Build rs_driver demos" ON)
 option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
 
 #=============================

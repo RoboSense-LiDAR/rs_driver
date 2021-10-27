@@ -40,14 +40,15 @@ namespace lidar
 /**
  * @brief This is the RoboSense LiDAR driver interface class
  */
-template <typename PointT>
+template <typename T_PointCloud>
 class LidarDriver
 {
 public:
   /**
    * @brief Constructor, instanciate the driver pointer
    */
-  LidarDriver():driver_ptr_(std::make_shared<LidarDriverImpl<PointT>>())
+  LidarDriver() 
+    : driver_ptr_(std::make_shared<LidarDriverImpl<T_PointCloud>>())
   {
   }
 
@@ -102,7 +103,7 @@ public:
    * called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<void(const PointCloudMsg<PointT>&)>& callback)
+  inline void regRecvCallback(const std::function<void(const T_PointCloud&)>& callback)
   {
     driver_ptr_->regRecvCallback(callback);
   }
@@ -163,7 +164,7 @@ public:
    * @param point_cloud_msg The output point cloud message
    * @return if decode successfully, return true; else return false
    */
-  inline bool decodeMsopScan(const ScanMsg& pkt_scan_msg, PointCloudMsg<PointT>& point_msg)
+  inline bool decodeMsopScan(const ScanMsg& pkt_scan_msg, T_PointCloud& point_msg)
   {
     return driver_ptr_->decodeMsopScan(pkt_scan_msg, point_msg);
   }
@@ -178,7 +179,7 @@ public:
   }
 
 private:
-  std::shared_ptr<LidarDriverImpl<PointT>> driver_ptr_;  ///< The driver pointer
+  std::shared_ptr<LidarDriverImpl<T_PointCloud>> driver_ptr_;  ///< The driver pointer
 };
 
 }  // namespace lidar

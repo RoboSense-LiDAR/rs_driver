@@ -89,20 +89,21 @@ typedef struct
 
 #pragma pack(pop)
 
-template <typename T_Point>
-class DecoderRSHELIOS : public DecoderBase<T_Point>
+template <typename T_PointCloud>
+class DecoderRSHELIOS : public DecoderBase<T_PointCloud>
 {
 public:
   explicit DecoderRSHELIOS(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
-  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
+  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, 
+      typename T_PointCloud::VectorT& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
 };
 
-template <typename T_Point>
-inline DecoderRSHELIOS<T_Point>::DecoderRSHELIOS(const RSDecoderParam& param,
+template <typename T_PointCloud>
+inline DecoderRSHELIOS<T_PointCloud>::DecoderRSHELIOS(const RSDecoderParam& param,
                                                  const LidarConstantParameter& lidar_const_param)
-  : DecoderBase<T_Point>(param, lidar_const_param)
+  : DecoderBase<T_PointCloud>(param, lidar_const_param)
 {
   this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
   this->hori_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
@@ -117,15 +118,15 @@ inline DecoderRSHELIOS<T_Point>::DecoderRSHELIOS(const RSDecoderParam& param,
   }
 }
 
-template <typename T_Point>
-inline double DecoderRSHELIOS<T_Point>::getLidarTime(const uint8_t* pkt)
+template <typename T_PointCloud>
+inline double DecoderRSHELIOS<T_PointCloud>::getLidarTime(const uint8_t* pkt)
 {
   return this->template calculateTimeUTC<RSHELIOSMsopPkt>(pkt, LidarType::RSHELIOS);
 }
 
-template <typename T_Point>
-inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec,
-                                                               int& height, int& azimuth)
+template <typename T_PointCloud>
+inline RSDecoderResult DecoderRSHELIOS<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, 
+    typename T_PointCloud::VectorT& vec, int& height, int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
   const RSHELIOSMsopPkt* mpkt_ptr = reinterpret_cast<const RSHELIOSMsopPkt*>(pkt);
@@ -193,7 +194,7 @@ inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeMsopPkt(const uint8_t* pk
       int angle_vert = ((this->vert_angle_list_[channel_idx]) + RS_ONE_ROUND) % RS_ONE_ROUND;
 
       // store to point cloud buffer
-      T_Point point;
+      typename T_PointCloud::PointT point;
       if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
           ((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
            (!this->angle_flag_ &&
@@ -226,8 +227,8 @@ inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeMsopPkt(const uint8_t* pk
   return RSDecoderResult::DECODE_OK;
 }
 
-template <typename T_Point>
-inline RSDecoderResult DecoderRSHELIOS<T_Point>::decodeDifopPkt(const uint8_t* pkt)
+template <typename T_PointCloud>
+inline RSDecoderResult DecoderRSHELIOS<T_PointCloud>::decodeDifopPkt(const uint8_t* pkt)
 {
   RSHELIOSDifopPkt* dpkt_ptr = (RSHELIOSDifopPkt*)pkt;
   if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)
