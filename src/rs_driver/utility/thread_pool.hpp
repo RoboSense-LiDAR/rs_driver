@@ -36,7 +36,7 @@ namespace robosense
 {
 namespace lidar
 {
-constexpr uint16_t MAX_THREAD_NUM = 4;
+constexpr uint16_t MAX_THREAD_NUM = 2;
 struct Thread
 {
   Thread() : start_(false)

@@ -374,7 +374,9 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     PacketMsg pkt = msop_pkt_queue_.popFront();
     int height = 1;
     int ret = lidar_decoder_ptr_->processMsopPkt (pkt.packet.data(), point_cloud_.points, height);
+#if 0
     scan_ptr_->packets.emplace_back(pkt);
+#endif
     if ((ret == DECODE_OK || ret == FRAME_SPLIT))
     {
       if (ret == FRAME_SPLIT)
@@ -401,16 +403,20 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
           runCallBack(msg);
         }
 
+#if 0
         setScanMsgHeader(*scan_ptr_);
         runCallBack(*scan_ptr_);
         scan_ptr_.reset(new ScanMsg);
+#endif
 
         point_cloud_.points.resize(0);
       }
     }
     else if (ret == DISCARD_PKT)
     {
+#if 0
       scan_ptr_->packets.clear();
+#endif
       point_cloud_.points.resize(0);
     }
     else
