@@ -309,7 +309,7 @@ protected:
   void sortBeamTable();
 
 private:
-  std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func);
+  std::vector<float> initTrigonometricLookupTable(const std::function<double(const double)>& func);
 
 protected:
   const LidarConstantParameter lidar_const_param_;
@@ -341,8 +341,8 @@ protected:
   float lidar_Rxy_;  // sqrt(Rx*Rx + Ry*Ry)
 
 private:
-  std::vector<double> cos_lookup_table_;
-  std::vector<double> sin_lookup_table_;
+  std::vector<float> cos_lookup_table_;
+  std::vector<float> sin_lookup_table_;
 };
 
 template <typename T_PointCloud>
@@ -896,14 +896,15 @@ inline float DecoderBase<T_PointCloud>::checkSinTable(const int& angle)
 }
 
 template <typename T_PointCloud>
-inline std::vector<double>
+inline std::vector<float>
 DecoderBase<T_PointCloud>::initTrigonometricLookupTable(const std::function<double(const double)>& func)
 {
-  std::vector<double> temp_table = std::vector<double>(2 * RS_ONE_ROUND, 0.0);
+  std::vector<float> temp_table = std::vector<float>(2 * RS_ONE_ROUND, 0.0);
+
   for (int i = 0; i < 2 * RS_ONE_ROUND; i++)
   {
     const double rad = RS_TO_RADS(static_cast<double>(i - RS_ONE_ROUND) * RS_ANGLE_RESOLUTION);
-    temp_table[i] = func(rad);
+    temp_table[i] = (float)func(rad);
   }
   return temp_table;
 }

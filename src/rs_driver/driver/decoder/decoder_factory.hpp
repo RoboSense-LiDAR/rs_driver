@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
 #include <rs_driver/driver/decoder/decoder_RSROCK.hpp>
-#include <rs_driver/driver/input.hpp>
+#include <rs_driver/driver/input/input.hpp>
 #include <rs_driver/msg/packet_msg.h>
 namespace robosense
 {
@@ -253,6 +253,25 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSROCKConstantPa
   ret_param.RY = 0.00968;
   ret_param.RZ = 0.0;
   return ret_param;
+}
+
+void getLidarPktLength(uint8_t type, uint32_t* msop_pkt_len, uint32_t* difop_pkt_len)
+{
+  switch (type)
+  {
+    case LidarType::RSM1:
+      *msop_pkt_len = MEMS_MSOP_LEN;
+      *difop_pkt_len = MEMS_DIFOP_LEN;
+      break;
+    case LidarType::RSROCK:
+      *msop_pkt_len = 1236;  // TODO
+      *difop_pkt_len = MECH_PKT_LEN;
+      break;
+    default:
+      *msop_pkt_len = MECH_PKT_LEN;
+      *difop_pkt_len = MECH_PKT_LEN;
+      break;
+  }
 }
 
 }  // namespace lidar

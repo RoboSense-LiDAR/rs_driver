@@ -37,54 +37,19 @@ namespace robosense
 {
 namespace lidar
 {
-#if 0
-enum PktType
+
+inline void hexdump (const unsigned char* data, size_t size, const char* desc = NULL)
 {
-  MSOP = 0,
-  DIFOP
-};
-#endif
-#ifdef _MSC_VER
-struct __declspec(align(16)) PacketMsg
-#elif __GNUC__
-struct __attribute__((aligned(16))) PacketMsg  ///< LiDAR single packet message
-#endif
-{
-  PacketMsg(size_t cap) : off_(0), len_(0)
+  printf ("\n---------------%s------------------", (desc ? desc : ""));
+
+  for (size_t i = 0; i < size; i++)
   {
-    buf_ = (uint8_t*) malloc(cap);
+    if (i % 16 == 0) printf ("\n");
+    printf ("%02x ", data[i]);
   }
 
-  void setData (size_t off, size_t len)
-  {
-    off_ = off;
-    len_ = len;
-  }
+  printf ("\n---------------------------------\n");
+}
 
-  void resetData()
-  {
-    setData(0, 0);
-  }
-
-  const uint8_t* data() const
-  {
-    return buf_ + off_;
-  }
-
-  uint8_t* data()
-  {
-    return buf_ + off_;
-  }
-
-  size_t len() const
-  {
-    return len_;
-  }
-
-  private:
-  uint8_t* buf_;
-  size_t off_;
-  size_t len_;
-};
 }  // namespace lidar
 }  // namespace robosense

@@ -17,6 +17,7 @@ option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
 #=============================
 #  Compile Demos&Tools
 #=============================
+option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
 option(ENABLE_TRANSFORM "Enable transform functions" OFF)
 
 #========================
@@ -118,6 +119,10 @@ if(${ENABLE_TRANSFORM})
   message("-- Enable Transform Fcuntions")
   message(=============================================================)
 endif(${ENABLE_TRANSFORM})
+
+if(${ENABLE_HIGH_PRIORITY_THREAD})
+  add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
+endif(${ENABLE_HIGH_PRIORITY_THREAD})
 
 #========================
 #  Build Demos

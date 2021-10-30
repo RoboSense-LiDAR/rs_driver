@@ -75,18 +75,17 @@ int main(int argc, char* argv[])
            << RSLIDAR_VERSION_PATCH << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
-  std::shared_ptr<LidarDriver<PointCloudMsg>> driver_ = std::make_shared<LidarDriver<PointCloudMsg>>();
-  LidarDriver<PointCloudMsg>& driver = *driver_;
-
   RSDriverParam param;                  ///< Create a parameter object
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
   param.lidar_type = LidarType::RSBP;   ///< Set the lidar type. Make sure this type is correct
+  param.angle_path = "/mnt/share/channel_bp/angle.csv";
   param.wait_for_difop = true;              ///< true: start sending point cloud until receive difop packet
   param.print();
 
-  driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
+  LidarDriver<PointCloudMsg> driver;
   driver.regRecvCallback(pointCloudCallback);      ///< Register the point cloud callback function into the driver
+  driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
   if (!driver.init(param))                         ///< Call the init function and pass the parameter
   {
     RS_ERROR << "Driver Initialize Error..." << RS_REND;

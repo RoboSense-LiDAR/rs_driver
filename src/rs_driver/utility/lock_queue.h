@@ -40,62 +40,64 @@ template <typename T>
 class Queue
 {
 public:
-  inline Queue():is_task_finished_(true)
-  {
-  }
 
-  inline T front()
+  inline Queue()
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return queue_.front();
   }
 
   inline void push(const T& value)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lg(mtx_);
+
+    bool empty = queue_.empty();
+
     queue_.push(value);
+
+    if (empty)
+      cv_.notify_one();
   }
 
-  inline void pop()
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (!queue_.empty())
-    {
-      queue_.pop();
-    }
-  }
-
-  inline T popFront()
+  inline T pop()
   {
     T value;
-    std::lock_guard<std::mutex> lock(mutex_);
+
+    std::lock_guard<std::mutex> lg(mtx_);
     if (!queue_.empty())
     {
-      value = std::move(queue_.front());
+      value = queue_.front();
       queue_.pop();
     }
+
     return value;
   }
 
-  inline void clear()
+  inline T popWait (unsigned int usec)
   {
-    std::queue<T> empty;
-    std::lock_guard<std::mutex> lock(mutex_);
-    swap(empty, queue_);
+    T value;
+
+    std::unique_lock<std::mutex> lck(mtx_);
+
+    cv_.wait_for (lck, std::chrono::microseconds(usec), 
+        [this]{return (!queue_.empty());});
+
+    if (!queue_.empty())
+    {
+      value = queue_.front();
+      queue_.pop();
+    }
+
+    return value;
   }
 
-  inline size_t size()
+  int count()
   {
-    std::lock_guard<std::mutex> lock(mutex_);
     return queue_.size();
   }
 
-public:
-  std::queue<T> queue_;
-  std::atomic<bool> is_task_finished_;
-
 private:
-  mutable std::mutex mutex_;
+  std::queue<T> queue_;
+  std::mutex mtx_;
+  std::condition_variable cv_;
 };
 }  // namespace lidar
 }  // namespace robosense
