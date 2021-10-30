@@ -37,54 +37,29 @@ namespace robosense
 {
 namespace lidar
 {
-#if 0
 enum PktType
 {
   MSOP = 0,
   DIFOP
 };
-#endif
 #ifdef _MSC_VER
 struct __declspec(align(16)) PacketMsg
 #elif __GNUC__
 struct __attribute__((aligned(16))) PacketMsg  ///< LiDAR single packet message
 #endif
 {
-  PacketMsg(size_t cap) : off_(0), len_(0)
+  std::vector<uint8_t> packet;
+  PacketMsg()
   {
-    buf_ = (uint8_t*) malloc(cap);
   }
-
-  void setData (size_t off, size_t len)
+  PacketMsg(const PacketMsg& msg)
   {
-    off_ = off;
-    len_ = len;
+    this->packet.assign(msg.packet.begin(), msg.packet.end());
   }
-
-  void resetData()
+  PacketMsg(const size_t& pkt_length)
   {
-    setData(0, 0);
+    packet.resize(pkt_length);
   }
-
-  const uint8_t* data() const
-  {
-    return buf_ + off_;
-  }
-
-  uint8_t* data()
-  {
-    return buf_ + off_;
-  }
-
-  size_t len() const
-  {
-    return len_;
-  }
-
-  private:
-  uint8_t* buf_;
-  size_t off_;
-  size_t len_;
 };
 }  // namespace lidar
 }  // namespace robosense

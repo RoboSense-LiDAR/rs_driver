@@ -194,9 +194,7 @@ inline RSDecoderResult DecoderRSBP<T_PointCloud>::decodeMsopPkt(const uint8_t* p
                   this->lidar_const_param_.RX * this->checkSinTable(angle_horiz);
         float z = distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
         uint8_t intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
-#if 0
         this->transformPoint(x, y, z);
-#endif
         setX(point, x);
         setY(point, y);
         setZ(point, z);

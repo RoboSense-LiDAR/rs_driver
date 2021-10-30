@@ -32,70 +32,49 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/common/common_header.h>
+
 namespace robosense
 {
 namespace lidar
 {
-template <typename T>
-class Queue
+class Packet
 {
 public:
-  inline Queue() : is_task_finished_(true)
+  Packet(size_t cap) : off_(0), len_(0)
   {
+    buf_ = (uint8_t*) malloc(cap);
   }
 
-  inline T front()
+  void setData (size_t off, size_t len)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return queue_.front();
+    off_ = off;
+    len_ = len;
   }
 
-  inline void push(const T& value)
+  void resetData()
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    queue_.push(value);
+    setData(0, 0);
   }
 
-  inline void pop()
+  const uint8_t* data() const
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (!queue_.empty())
-    {
-      queue_.pop();
-    }
+    return buf_ + off_;
   }
 
-  inline T popFront()
+  uint8_t* data()
   {
-    T value;
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (!queue_.empty())
-    {
-      value = std::move(queue_.front());
-      queue_.pop();
-    }
-    return value;
+    return buf_ + off_;
   }
 
-  inline void clear()
+  size_t len() const
   {
-    std::queue<T> empty;
-    std::lock_guard<std::mutex> lock(mutex_);
-    swap(empty, queue_);
+    return len_;
   }
-
-  inline size_t size()
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return queue_.size();
-  }
-
-public:
-  std::queue<T> queue_;
-  std::atomic<bool> is_task_finished_;
 
 private:
-  mutable std::mutex mutex_;
+  uint8_t* buf_;
+  size_t off_;
+  size_t len_;
 };
 }  // namespace lidar
 }  // namespace robosense

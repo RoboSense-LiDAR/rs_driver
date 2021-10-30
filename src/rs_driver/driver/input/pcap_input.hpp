@@ -153,7 +153,7 @@ inline void PcapInput::recvPacket()
 
     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
     {
-      std::shared_ptr<PacketMsg> pkt = cb_get_(MAX_ETH_LEN);
+      std::shared_ptr<Packet> pkt = cb_get_(MAX_ETH_LEN);
       memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_);
       pkt->setData(0, header->len - pcap_offset_);
       pushPacket (pkt);
@@ -161,7 +161,7 @@ inline void PcapInput::recvPacket()
     else if (difop_filter_valid_ && 
         (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
     {
-      std::shared_ptr<PacketMsg> pkt = cb_get_(MAX_ETH_LEN);
+      std::shared_ptr<Packet> pkt = cb_get_(MAX_ETH_LEN);
       memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_);
       pkt->setData(0, header->len - pcap_offset_);
       pushPacket (pkt);

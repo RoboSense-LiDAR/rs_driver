@@ -18,6 +18,8 @@ option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
 #  Compile Demos&Tools
 #=============================
 option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
+option(ENABLE_PUBLISH_RAW_MSG "Publish raw messages" OFF)
+option(ENABLE_PUBLISH_CAM_MSG "Publish camera trigger messages" OFF)
 option(ENABLE_TRANSFORM "Enable transform functions" OFF)
 
 #========================
@@ -123,6 +125,16 @@ endif(${ENABLE_TRANSFORM})
 if(${ENABLE_HIGH_PRIORITY_THREAD})
   add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
 endif(${ENABLE_HIGH_PRIORITY_THREAD})
+
+if(${ENABLE_PUBLISH_RAW_MSG})
+  add_definitions("-DENABLE_PUBLISH_RAW_MSG")
+endif(${ENABLE_PUBLISH_RAW_MSG})
+
+option(ENABLE_PUBLISH_CAM_MSG "Publish camera trigger messages" OFF)
+if(${ENABLE_PUBLISH_CAM_MSG})
+  add_definitions("-DENABLE_PUBLISH_CAM_MSG")
+endif(${ENABLE_PUBLISH_CAM_MSG})
+
 
 #========================
 #  Build Demos

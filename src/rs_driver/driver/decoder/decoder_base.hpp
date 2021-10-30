@@ -404,8 +404,10 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param, const
   // {
   //   get_point_time_func_ = [this](const uint8_t* pkt) { return 0; };
   // }
-  /*Camera trigger function*/
-  if (param.trigger_param.trigger_map.size() != 0)
+
+  // Camera trigger function
+#ifdef ENABLE_PUBLISH_CAM_MSG
+  if (param.trigger_param.trigger_map.size() > 0)
   {
     if (this->param_.use_lidar_clock)
     {
@@ -421,6 +423,7 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param, const
     }
   }
   else
+#endif
   {
     check_camera_trigger_func_ = [this](const int& azimuth, const uint8_t* pkt) { return; };
   }

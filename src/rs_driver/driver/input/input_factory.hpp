@@ -39,7 +39,7 @@ namespace robosense
 namespace lidar
 {
 
-long long msecToDelay(LidarType type, double replay_rate)
+inline long long msecToDelay(LidarType type, double replay_rate)
 {
   constexpr double RS16_PCAP_SLEEP_DURATION = 1200;     ///< us
   constexpr double RS32_PCAP_SLEEP_DURATION = 530;      ///< us
