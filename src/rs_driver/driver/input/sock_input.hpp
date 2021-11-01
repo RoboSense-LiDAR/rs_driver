@@ -38,16 +38,14 @@ namespace robosense
 {
 namespace lidar
 {
-
 class SockInput : public Input
 {
 public:
-
-  SockInput(const RSInputParam& input_param, const std::function<void(const Error&)>& excb) 
-    : Input (input_param, excb), sock_offset_(0)
+  SockInput(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
+    : Input(input_param, excb), sock_offset_(0)
   {
     if (input_param.use_someip)
-      sock_offset_ += SOME_IP_LEN; 
+      sock_offset_ += SOME_IP_LEN;
   }
 
   virtual bool init();
@@ -55,7 +53,6 @@ public:
   virtual ~SockInput();
 
 private:
-
   inline void recvPacket();
   inline void higherThreadPrioty(std::thread::native_handle_type handle);
   inline int createSocket(uint16_t port, const std::string& ip);
@@ -67,15 +64,15 @@ private:
 
 inline void SockInput::higherThreadPrioty(std::thread::native_handle_type handle)
 {
-#ifdef ENABLE_HIGH_PRIORITY_THREAD  
+#ifdef ENABLE_HIGH_PRIORITY_THREAD
   int policy;
   sched_param sch;
-  pthread_getschedparam (handle, &policy, &sch);
+  pthread_getschedparam(handle, &policy, &sch);
 
   sch.sched_priority = 63;
-  if (pthread_setschedparam (handle, SCHED_RR, &sch))
+  if (pthread_setschedparam(handle, SCHED_RR, &sch))
   {
-     std::cout << "setschedparam failed: " << std::strerror(errno) << '\n';
+    std::cout << "setschedparam failed: " << std::strerror(errno) << '\n';
   }
 #endif
 }
@@ -87,20 +84,20 @@ inline bool SockInput::init()
 
   int msop_fd = -1, difop_fd = -1;
 
-  msop_fd = createSocket (input_param_.msop_port, input_param_.multi_cast_address);
+  msop_fd = createSocket(input_param_.msop_port, input_param_.multi_cast_address);
   if (msop_fd < 0)
     goto failMsop;
-    
+
   if ((input_param_.difop_port != 0) && (input_param_.difop_port != input_param_.msop_port))
   {
-    difop_fd = createSocket (input_param_.difop_port, input_param_.multi_cast_address);
+    difop_fd = createSocket(input_param_.difop_port, input_param_.multi_cast_address);
     if (difop_fd < 0)
       goto failDifop;
   }
 
   fds_[0] = msop_fd;
   fds_[1] = difop_fd;
- 
+
   init_flag_ = true;
   return true;
 
@@ -118,9 +115,9 @@ inline bool SockInput::start()
     return false;
   }
 
-  recv_thread_ = std::thread (std::bind(&SockInput::recvPacket, this));
+  recv_thread_ = std::thread(std::bind(&SockInput::recvPacket, this));
 
-  higherThreadPrioty (recv_thread_.native_handle());
+  higherThreadPrioty(recv_thread_.native_handle());
 
   return true;
 }
@@ -130,7 +127,7 @@ inline SockInput::~SockInput()
   stop();
 
   close(fds_[0]);
-  if (fds_[1] >= 0) 
+  if (fds_[1] >= 0)
     close(fds_[1]);
 }
 
@@ -174,8 +171,8 @@ inline int SockInput::createSocket(uint16_t port, const std::string& ip)
     }
   }
 
-  flags = fcntl (fd, F_GETFL, 0);
-  ret = fcntl (fd, F_SETFL, flags|O_NONBLOCK);
+  flags = fcntl(fd, F_GETFL, 0);
+  ret = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
   if (ret < 0)
   {
     std::cerr << "setsockopt: " << std::strerror(errno) << std::endl;
@@ -200,7 +197,8 @@ inline void SockInput::recvPacket()
   {
     FD_ZERO(&rfds);
     FD_SET(fds_[0], &rfds);
-    if (fds_[1] >= 0) FD_SET(fds_[1], &rfds);
+    if (fds_[1] >= 0)
+      FD_SET(fds_[1], &rfds);
     int max_fd = std::max(fds_[0], fds_[1]);
 
     struct timeval tv;
@@ -222,27 +220,27 @@ inline void SockInput::recvPacket()
 
     if (FD_ISSET(fds_[0], &rfds))
     {
-      std::shared_ptr<Packet> pkt = cb_get_(MAX_ETH_LEN);
+      std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
       pkt->resetData();
-      ssize_t ret = recvfrom(fds_[0], pkt->data(), MAX_ETH_LEN, 0, NULL, NULL);
+      ssize_t ret = recvfrom(fds_[0], pkt->data(), MAX_PKT_LEN, 0, NULL, NULL);
       if (ret <= 0)
       {
         std::cout << "recv failed" << std::endl;
         break;
       }
 
-      pkt->setData (sock_offset_, ret - sock_offset_);
-      pushPacket (pkt);
+      pkt->setData(sock_offset_, ret - sock_offset_);
+      pushPacket(pkt);
     }
     else if (FD_ISSET(fds_[1], &rfds))
     {
-      std::shared_ptr<Packet> pkt = cb_get_(MAX_ETH_LEN);
+      std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
       pkt->resetData();
-      ssize_t ret = recvfrom(fds_[1], pkt->data(), MAX_ETH_LEN, 0, NULL, NULL);
+      ssize_t ret = recvfrom(fds_[1], pkt->data(), MAX_PKT_LEN, 0, NULL, NULL);
       if (ret <= 0)
         break;
 
-      pkt->setData (sock_offset_, ret - sock_offset_);
+      pkt->setData(sock_offset_, ret - sock_offset_);
       pushPacket(pkt);
     }
   }

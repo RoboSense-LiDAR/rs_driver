@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "point_cloud_msg.h"
 #endif
 
-typedef PointCloudT<PointT> PointCloudMsg; 
+typedef PointCloudT<PointT> PointCloudMsg;
 
 using namespace robosense::lidar;
 
@@ -53,8 +53,7 @@ void pointCloudCallback(const PointCloudMsg& msg)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the message and process it in another thread is recommended*/
-  RS_MSG << "msg: " << msg.seq 
-    << " point cloud size: " << msg.points.size() << RS_REND;
+  RS_MSG << "msg: " << msg.seq << " point cloud size: " << msg.points.size() << RS_REND;
 }
 
 /**
@@ -79,11 +78,10 @@ int main(int argc, char* argv[])
 
   RSDriverParam param;                                         ///< Create a parameter object
   param.input_param.read_pcap = true;                          ///< Set read_pcap to true
-  param.input_param.pcap_path = "/mnt/share/pcap/BP/RsBp.pcap";///< Set the pcap file directory
-  param.input_param.msop_port = 2370;                          ///< Set the lidar msop port number, the default is 6699
-  param.input_param.difop_port = 8310;                         ///< Set the lidar difop port number, the default is 7788
-  param.lidar_type = LidarType::RSBP;                          ///< Set the lidar type. Make sure this type is correct
-  param.angle_path = "/mnt/share/channel_bp/angle.csv";
+  param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap file directory
+  param.input_param.msop_port = 6699;                          ///< Set the lidar msop port number, the default is 6699
+  param.input_param.difop_port = 7788;                         ///< Set the lidar difop port number, the default is 7788
+  param.lidar_type = LidarType::RSM1;                          ///< Set the lidar type. Make sure this type is correct
 
   param.print();
 

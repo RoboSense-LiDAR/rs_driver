@@ -62,7 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 #include <chrono>
 
-#define MAX_ETH_LEN 1500
+#define MAX_PKT_LEN 1500
 #define ETH_HDR_LEN 42
 #define VLAN_LEN 4
 #define SOME_IP_LEN 16
@@ -71,25 +71,24 @@ namespace robosense
 {
 namespace lidar
 {
-
 class Input
 {
 public:
-
   Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb);
 
   inline void regRecvCallback(const std::function<std::shared_ptr<Packet>(size_t)>& cb_get,
-      const std::function<void(std::shared_ptr<Packet>)>& cb_put_msop,
-      const std::function<void(std::shared_ptr<Packet>)>& cb_put_difop);
+                              const std::function<void(std::shared_ptr<Packet>)>& cb_put_msop,
+                              const std::function<void(std::shared_ptr<Packet>)>& cb_put_difop);
 
   virtual bool init() = 0;
   virtual bool start() = 0;
   virtual void stop();
-  virtual ~Input() {}
+  virtual ~Input()
+  {
+  }
 
 protected:
-
-  inline void pushPacket (std::shared_ptr<Packet> pkt);
+  inline void pushPacket(std::shared_ptr<Packet> pkt);
 
   RSInputParam input_param_;
   std::function<std::shared_ptr<Packet>(size_t size)> cb_get_;
@@ -101,15 +100,14 @@ protected:
   bool init_flag_;
 };
 
-inline Input::Input(const RSInputParam& input_param, 
-    const std::function<void(const Error&)>& excb)
+inline Input::Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
   : input_param_(input_param), excb_(excb), to_exit_recv_(false), init_flag_(false)
 {
 }
 
 inline void Input::regRecvCallback(const std::function<std::shared_ptr<Packet>(size_t)>& cb_get,
-    const std::function<void(std::shared_ptr<Packet>)>& cb_put_msop,
-    const std::function<void(std::shared_ptr<Packet>)>& cb_put_difop)
+                                   const std::function<void(std::shared_ptr<Packet>)>& cb_put_msop,
+                                   const std::function<void(std::shared_ptr<Packet>)>& cb_put_difop)
 {
   cb_get_ = cb_get;
   cb_put_msop_ = cb_put_msop;
@@ -122,14 +120,14 @@ inline void Input::stop()
   recv_thread_.join();
 }
 
-inline void Input::pushPacket (std::shared_ptr<Packet> pkt)
+inline void Input::pushPacket(std::shared_ptr<Packet> pkt)
 {
   uint8_t* id = pkt->data();
-  if (*id == 0x55) 
+  if (*id == 0x55)
   {
     cb_put_msop_(pkt);
   }
-  else if (*id == 0xA5) 
+  else if (*id == 0xA5)
   {
     cb_put_difop_(pkt);
   }

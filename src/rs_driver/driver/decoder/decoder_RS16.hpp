@@ -84,13 +84,13 @@ class DecoderRS16 : public DecoderBase<T_PointCloud>
 public:
   DecoderRS16(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
-  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, 
-      typename T_PointCloud::VectorT& vec, int& height, int& azimuth);
+  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
 };
 
 template <typename T_PointCloud>
-inline DecoderRS16<T_PointCloud>::DecoderRS16(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
+inline DecoderRS16<T_PointCloud>::DecoderRS16(const RSDecoderParam& param,
+                                              const LidarConstantParameter& lidar_const_param)
   : DecoderBase<T_PointCloud>(param, lidar_const_param)
 {
   this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
@@ -113,8 +113,8 @@ inline double DecoderRS16<T_PointCloud>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderRS16<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, 
-    typename T_PointCloud::VectorT& vec, int& height, int& azimuth)
+inline RSDecoderResult DecoderRS16<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& vec,
+                                                                int& height, int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
   const RS16MsopPkt* mpkt_ptr = reinterpret_cast<const RS16MsopPkt*>(pkt);

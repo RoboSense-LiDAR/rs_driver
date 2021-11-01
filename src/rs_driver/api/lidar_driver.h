@@ -47,8 +47,7 @@ public:
   /**
    * @brief Constructor, instanciate the driver pointer
    */
-  LidarDriver() 
-    : driver_ptr_(std::make_shared<LidarDriverImpl<T_PointCloud>>())
+  LidarDriver() : driver_ptr_(std::make_shared<LidarDriverImpl<T_PointCloud>>())
   {
   }
 

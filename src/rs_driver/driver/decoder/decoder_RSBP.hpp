@@ -84,13 +84,13 @@ class DecoderRSBP : public DecoderBase<T_PointCloud>
 public:
   explicit DecoderRSBP(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
-  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, 
-      typename T_PointCloud::VectorT& vec, int& height, int& azimuth);
+  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
 };
 
 template <typename T_PointCloud>
-inline DecoderRSBP<T_PointCloud>::DecoderRSBP(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
+inline DecoderRSBP<T_PointCloud>::DecoderRSBP(const RSDecoderParam& param,
+                                              const LidarConstantParameter& lidar_const_param)
   : DecoderBase<T_PointCloud>(param, lidar_const_param)
 {
   this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
@@ -113,8 +113,8 @@ inline double DecoderRSBP<T_PointCloud>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderRSBP<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, 
-    typename T_PointCloud::VectorT& vec, int& height, int& azimuth)
+inline RSDecoderResult DecoderRSBP<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& vec,
+                                                                int& height, int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
   const RSBPMsopPkt* mpkt_ptr = reinterpret_cast<const RSBPMsopPkt*>(pkt);
@@ -171,9 +171,11 @@ inline RSDecoderResult DecoderRSBP<T_PointCloud>::decodeMsopPkt(const uint8_t* p
     for (int channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
       // charge + reserved = 5.2f
-      float azi_channel_ori = cur_azi + 
-                              azi_diff * this->lidar_const_param_.FIRING_FREQUENCY * 
-                              (this->lidar_const_param_.DSR_TOFFSET * static_cast<float>(2 * (channel_idx % 16) + (channel_idx / 16)) + 5.2f * static_cast<float>(channel_idx / 8 % 2));
+      float azi_channel_ori =
+          cur_azi +
+          azi_diff * this->lidar_const_param_.FIRING_FREQUENCY *
+              (this->lidar_const_param_.DSR_TOFFSET * static_cast<float>(2 * (channel_idx % 16) + (channel_idx / 16)) +
+               5.2f * static_cast<float>(channel_idx / 8 % 2));
 
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) *

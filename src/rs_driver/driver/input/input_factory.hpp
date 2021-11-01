@@ -38,7 +38,6 @@ namespace robosense
 {
 namespace lidar
 {
-
 inline long long msecToDelay(LidarType type, double replay_rate)
 {
   constexpr double RS16_PCAP_SLEEP_DURATION = 1200;     ///< us
@@ -86,12 +85,12 @@ inline long long msecToDelay(LidarType type, double replay_rate)
 class InputFactory
 {
 public:
-  static std::shared_ptr<Input> createInput(
-      const RSDriverParam& driver_param, const std::function<void(const Error&)>& excb);
+  static std::shared_ptr<Input> createInput(const RSDriverParam& driver_param,
+                                            const std::function<void(const Error&)>& excb);
 };
 
-inline std::shared_ptr<Input> InputFactory::createInput(
-    const RSDriverParam& driver_param, const std::function<void(const Error&)>& excb)
+inline std::shared_ptr<Input> InputFactory::createInput(const RSDriverParam& driver_param,
+                                                        const std::function<void(const Error&)>& excb)
 {
   const RSInputParam& input_param = driver_param.input_param;
   std::shared_ptr<Input> input;

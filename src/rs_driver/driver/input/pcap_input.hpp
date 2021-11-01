@@ -37,20 +37,16 @@ namespace robosense
 {
 namespace lidar
 {
-
 class PcapInput : public Input
 {
 public:
-
-  PcapInput(const RSInputParam& input_param,
-      const std::function<void(const Error&)>& excb, long long msec_to_delay) 
-    : Input (input_param, excb), 
-    pcap_offset_(ETH_HDR_LEN), difop_filter_valid_(false), msec_to_delay_(msec_to_delay)
+  PcapInput(const RSInputParam& input_param, const std::function<void(const Error&)>& excb, long long msec_to_delay)
+    : Input(input_param, excb), pcap_offset_(ETH_HDR_LEN), difop_filter_valid_(false), msec_to_delay_(msec_to_delay)
   {
     if (input_param.use_vlan)
-      pcap_offset_ += VLAN_LEN; 
+      pcap_offset_ += VLAN_LEN;
     if (input_param.use_someip)
-      pcap_offset_ += SOME_IP_LEN; 
+      pcap_offset_ += SOME_IP_LEN;
 
     std::stringstream msop_stream, difop_stream;
     if (input_param_.use_vlan)
@@ -114,7 +110,7 @@ inline bool PcapInput::start()
     return false;
   }
 
-  recv_thread_ = std::thread (std::bind(&PcapInput::recvPacket, this));
+  recv_thread_ = std::thread(std::bind(&PcapInput::recvPacket, this));
 
   return true;
 }
@@ -134,7 +130,7 @@ inline void PcapInput::recvPacket()
     struct pcap_pkthdr* header;
     const u_char* pkt_data;
     int ret = pcap_next_ex(pcap_, &header, &pkt_data);
-    if (ret < 0) // reach file end.
+    if (ret < 0)  // reach file end.
     {
       if (input_param_.pcap_repeat)
       {
@@ -153,18 +149,17 @@ inline void PcapInput::recvPacket()
 
     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
     {
-      std::shared_ptr<Packet> pkt = cb_get_(MAX_ETH_LEN);
+      std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
       memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_);
       pkt->setData(0, header->len - pcap_offset_);
-      pushPacket (pkt);
+      pushPacket(pkt);
     }
-    else if (difop_filter_valid_ && 
-        (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
+    else if (difop_filter_valid_ && (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
     {
-      std::shared_ptr<Packet> pkt = cb_get_(MAX_ETH_LEN);
+      std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
       memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_);
       pkt->setData(0, header->len - pcap_offset_);
-      pushPacket (pkt);
+      pushPacket(pkt);
     }
     else
     {

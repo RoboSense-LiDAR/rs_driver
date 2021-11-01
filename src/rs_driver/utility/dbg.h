@@ -37,18 +37,18 @@ namespace robosense
 {
 namespace lidar
 {
-
-inline void hexdump (const unsigned char* data, size_t size, const char* desc = NULL)
+inline void hexdump(const unsigned char* data, size_t size, const char* desc = NULL)
 {
-  printf ("\n---------------%s------------------", (desc ? desc : ""));
+  printf("\n---------------%s------------------", (desc ? desc : ""));
 
   for (size_t i = 0; i < size; i++)
   {
-    if (i % 16 == 0) printf ("\n");
-    printf ("%02x ", data[i]);
+    if (i % 16 == 0)
+      printf("\n");
+    printf("%02x ", data[i]);
   }
 
-  printf ("\n---------------------------------\n");
+  printf("\n---------------------------------\n");
 }
 
 }  // namespace lidar

@@ -97,7 +97,7 @@ public:
 
 template <typename T_PointCloud>
 inline DecoderRSROCK<T_PointCloud>::DecoderRSROCK(const RSDecoderParam& param,
-                                             const LidarConstantParameter& lidar_const_param)
+                                                  const LidarConstantParameter& lidar_const_param)
   : DecoderBase<T_PointCloud>(param, lidar_const_param)
 {
   this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
@@ -132,8 +132,9 @@ inline double DecoderRSROCK<T_PointCloud>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderRSROCK<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, 
-        typename T_PointCloud::VectorT& vec, int& height, int& azimuth)
+inline RSDecoderResult DecoderRSROCK<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt,
+                                                                  typename T_PointCloud::VectorT& vec, int& height,
+                                                                  int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
   const RSROCKMsopPkt* mpkt_ptr = reinterpret_cast<const RSROCKMsopPkt*>(pkt);

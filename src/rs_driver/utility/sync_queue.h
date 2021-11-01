@@ -40,7 +40,6 @@ template <typename T>
 class SyncQueue
 {
 public:
-
   inline void push(const T& value)
   {
     std::lock_guard<std::mutex> lg(mtx_);
@@ -67,14 +66,13 @@ public:
     return value;
   }
 
-  inline T popWait (unsigned int usec)
+  inline T popWait(unsigned int usec)
   {
     T value;
 
     std::unique_lock<std::mutex> lck(mtx_);
 
-    cv_.wait_for (lck, std::chrono::microseconds(usec), 
-        [this]{return (!queue_.empty());});
+    cv_.wait_for(lck, std::chrono::microseconds(usec), [this] { return (!queue_.empty()); });
 
     if (!queue_.empty())
     {

@@ -34,29 +34,29 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if 1
 
-  struct PointXYZI
-  {
-    float x;
-    float y;
-    float z;
-    uint8_t intensity;
-  };
+struct PointXYZI
+{
+  float x;
+  float y;
+  float z;
+  uint8_t intensity;
+};
 
-  typedef PointXYZI PointT;
+typedef PointXYZI PointT;
 
 #else
 
-  struct PointXYZIRT
-  {
-    float x;
-    float y;
-    float z;
-    uint8_t intensity;
-    uint16_t ring;
-    double timestamp;
-  };
+struct PointXYZIRT
+{
+  float x;
+  float y;
+  float z;
+  uint8_t intensity;
+  uint16_t ring;
+  double timestamp;
+};
 
-  typedef PointXYZIRT PointT;
+typedef PointXYZIRT PointT;
 
 #endif
 
@@ -64,17 +64,15 @@ template <typename T_Point>
 class PointCloudT
 {
 public:
-
   typedef T_Point PointT;
   typedef std::vector<PointT> VectorT;
 
-  uint32_t height = 0;            ///< Height of point cloud
-  uint32_t width = 0;             ///< Width of point cloud
+  uint32_t height = 0;    ///< Height of point cloud
+  uint32_t width = 0;     ///< Width of point cloud
   bool is_dense = false;  ///< If is_dense=true, the point cloud does not contain NAN points
   double timestamp = 0.0;
-  std::string frame_id = "";      ///< Point cloud frame id
-  uint32_t seq = 0;               ///< Sequence number of message
+  std::string frame_id = "";  ///< Point cloud frame id
+  uint32_t seq = 0;           ///< Sequence number of message
 
   VectorT points;
 };
-

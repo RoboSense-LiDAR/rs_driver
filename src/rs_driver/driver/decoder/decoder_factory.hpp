@@ -65,7 +65,8 @@ private:
 };
 
 template <typename T_PointCloud>
-inline std::shared_ptr<DecoderBase<T_PointCloud>> DecoderFactory<T_PointCloud>::createDecoder(const RSDriverParam& param)
+inline std::shared_ptr<DecoderBase<T_PointCloud>>
+DecoderFactory<T_PointCloud>::createDecoder(const RSDriverParam& param)
 {
   std::shared_ptr<DecoderBase<T_PointCloud>> ret_ptr;
   switch (param.lidar_type)

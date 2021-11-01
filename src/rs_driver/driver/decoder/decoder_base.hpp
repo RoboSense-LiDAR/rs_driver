@@ -278,8 +278,8 @@ public:
   DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase() = default;
-  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, 
-      typename T_PointCloud::VectorT& point_cloud_vec, int& height);
+  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& point_cloud_vec,
+                                         int& height);
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt);
   virtual void loadAngleFile(const std::string& angle_path);
   virtual void regRecvCallback(const std::function<void(const CameraTrigger&)>& callback);  ///< Camera trigger
@@ -291,8 +291,8 @@ protected:
   virtual float computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high);
   virtual int azimuthCalibration(const float& azimuth, const int& channel);
   virtual void checkTriggerAngle(const int& angle, const double& timestamp);
-  virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, 
-      typename T_PointCloud::VectorT& vec, int& height, int& azimuth) = 0;
+  virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& vec, int& height,
+                                        int& azimuth) = 0;
   virtual RSDecoderResult decodeDifopPkt(const uint8_t* pkt) = 0;
   RSEchoMode getEchoMode(const LidarType& type, const uint8_t& return_mode);
   template <typename T_Msop>
@@ -346,7 +346,8 @@ private:
 };
 
 template <typename T_PointCloud>
-inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
+inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
+                                              const LidarConstantParameter& lidar_const_param)
   : lidar_const_param_(lidar_const_param)
   , param_(param)
   , echo_mode_(ECHO_SINGLE)
@@ -399,13 +400,13 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param, const
       return ret_time;
     };
   }
-  // }
-  // else
-  // {
-  //   get_point_time_func_ = [this](const uint8_t* pkt) { return 0; };
-  // }
+// }
+// else
+// {
+//   get_point_time_func_ = [this](const uint8_t* pkt) { return 0; };
+// }
 
-  // Camera trigger function
+// Camera trigger function
 #ifdef ENABLE_PUBLISH_CAM_MSG
   if (param.trigger_param.trigger_map.size() > 0)
   {
@@ -448,8 +449,9 @@ inline RSDecoderResult DecoderBase<T_PointCloud>::processDifopPkt(const uint8_t*
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderBase<T_PointCloud>::processMsopPkt(const uint8_t* pkt, 
-    typename T_PointCloud::VectorT& point_cloud_vec, int& height)
+inline RSDecoderResult DecoderBase<T_PointCloud>::processMsopPkt(const uint8_t* pkt,
+                                                                 typename T_PointCloud::VectorT& point_cloud_vec,
+                                                                 int& height)
 {
   if (pkt == NULL)
   {

@@ -50,9 +50,8 @@ struct RsPointXYZIRT
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN16;
 
-POINT_CLOUD_REGISTER_POINT_STRUCT(RsPointXYZIRT, 
-    (float, x, x)(float, y, y)(float, z, z)(uint8_t, intensity, intensity)
-    (uint16_t, ring, ring)(double, timestamp, timestamp))
+POINT_CLOUD_REGISTER_POINT_STRUCT(RsPointXYZIRT, (float, x, x)(float, y, y)(float, z, z)(uint8_t, intensity, intensity)(
+                                                     uint16_t, ring, ring)(double, timestamp, timestamp))
 
 typedef RsPointXYZIRT PointT;
 
@@ -62,12 +61,10 @@ template <typename T_Point>
 class PointCloudT : public pcl::PointCloud<T_Point>
 {
 public:
-
   typedef T_Point PointT;
   typedef typename pcl::PointCloud<T_Point>::VectorType VectorT;
 
   double timestamp = 0.0;
-  std::string frame_id = "";      ///< Point cloud frame id
-  uint32_t seq = 0;               ///< Sequence number of message
+  std::string frame_id = "";  ///< Point cloud frame id
+  uint32_t seq = 0;           ///< Sequence number of message
 };
-

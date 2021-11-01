@@ -42,10 +42,10 @@ class Packet
 public:
   Packet(size_t cap) : off_(0), len_(0)
   {
-    buf_ = (uint8_t*) malloc(cap);
+    buf_ = (uint8_t*)malloc(cap);
   }
 
-  void setData (size_t off, size_t len)
+  void setData(size_t off, size_t len)
   {
     off_ = off;
     len_ = len;
