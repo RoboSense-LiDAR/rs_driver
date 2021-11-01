@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased
+## v1.4.0 - 2021-11-01
+
+### Changed
+
+Optimazation to decrease CPU uage, includes: 
+- replace point with point cloud as template parameter
+- instead of alloc/free packet, use packet pool
+- instead of alloc/free point cloud, always keep point cloud memory
+- by default, use conditional macro to disable scan_msg/camera_trigger related code
+
+## V1.3.1
 ### Added
 - Add vlan support
 - Add somip support
@@ -14,9 +24,6 @@
 
 ### Removed
 - Remove redundance condition code in vec.emplace_back(std::move(point)) in mech lidars
-
-
-
 
 ## v1.3.0 - 2020-11-10
 
