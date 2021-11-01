@@ -64,7 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_ETH_LEN 1500
 #define ETH_HDR_LEN 42
-#define VLAN_LEN 16
+#define VLAN_LEN 4
 #define SOME_IP_LEN 16
 
 namespace robosense
