@@ -65,8 +65,9 @@ enum ErrCode
   ERRCODE_MSOPPORTBUZY = 0x49,     ///< Input msop port is already used
   ERRCODE_DIFOPPORTBUZY = 0x50,    ///< Input difop port is already used
   ERRCODE_WRONGPKTHEADER = 0x51,   ///< Packet header is wrong
-  ERRCODE_PKTNULL = 0x52,          ///< Input packet is null
-  ERRCODE_PKTBUFOVERFLOW = 0x53    ///< Packet buffer is over flow
+  ERRCODE_WRONGPKTLENGTH = 0x52,   ///< Packet length is wrong
+  ERRCODE_PKTNULL = 0x53,          ///< Input packet is null
+  ERRCODE_PKTBUFOVERFLOW = 0x54    ///< Packet buffer is over flow
 };
 
 struct Error
@@ -118,6 +119,8 @@ struct Error
         return "ERRCODE_STARTBEFOREINIT";
       case ERRCODE_WRONGPKTHEADER:
         return "ERRCODE_WRONGPKTHEADER";
+      case ERRCODE_WRONGPKTLENGTH:
+        return "ERRCODE_WRONGPKTLENGTH";
       case ERRCODE_PKTNULL:
         return "ERRCODE_PKTNULL";
       case ERRCODE_PKTBUFOVERFLOW:

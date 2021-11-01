@@ -100,6 +100,8 @@ inline DecoderRSROCK<T_PointCloud>::DecoderRSROCK(const RSDecoderParam& param,
                                                   const LidarConstantParameter& lidar_const_param)
   : DecoderBase<T_PointCloud>(param, lidar_const_param)
 {
+  this->msop_pkt_len_ = 1236;  // TODO
+
   this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
   this->hori_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
   this->beam_ring_table_.resize(this->lidar_const_param_.LASER_NUM);

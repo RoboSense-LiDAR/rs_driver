@@ -142,7 +142,8 @@ public:
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
   RSDecoderResult decodeMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
-  RSDecoderResult processMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& pointcloud_vec, int& height);
+  RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size, typename T_PointCloud::VectorT& pointcloud_vec,
+                                 int& height);
 
 private:
   uint32_t last_pkt_cnt_;
@@ -158,6 +159,9 @@ inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param,
   , max_pkt_num_(SINGLE_PKT_NUM)
   , last_pkt_time_(0)
 {
+  this->msop_pkt_len_ = MEMS_MSOP_LEN;
+  this->difop_pkt_len_ = MEMS_DIFOP_LEN;
+
   if (this->param_.max_distance > 200.0f)
   {
     this->param_.max_distance = 200.0f;
@@ -176,10 +180,15 @@ inline double DecoderRSM1<T_PointCloud>::getLidarTime(const uint8_t* pkt)
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderRSM1<T_PointCloud>::processMsopPkt(const uint8_t* pkt,
+inline RSDecoderResult DecoderRSM1<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size,
                                                                  typename T_PointCloud::VectorT& pointcloud_vec,
                                                                  int& height)
 {
+  if (size != this->msop_pkt_len_)
+  {
+    return WRONG_PKT_LENGTH;
+  }
+
   int azimuth = 0;
   RSDecoderResult ret = decodeMsopPkt(pkt, pointcloud_vec, height, azimuth);
   this->pkt_count_++;

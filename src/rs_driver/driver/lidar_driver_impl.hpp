@@ -272,8 +272,9 @@ inline bool LidarDriverImpl<T_PointCloud>::decodeMsopScan(const ScanMsg& scan_ms
   {
     typename T_PointCloud::VectorT pointcloud_one_packet;
 
+    const PacketMsg& pkt = scan_msg.packets[i];
     RSDecoderResult ret =
-        lidar_decoder_ptr_->processMsopPkt(scan_msg.packets[i].packet.data(), pointcloud_one_packet, height);
+        lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), pkt.packet.size(), pointcloud_one_packet, height);
     switch (ret)
     {
       case RSDecoderResult::DECODE_OK:
@@ -309,7 +310,7 @@ inline bool LidarDriverImpl<T_PointCloud>::decodeMsopScan(const ScanMsg& scan_ms
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::decodeDifopPkt(const PacketMsg& pkt)
 {
-  lidar_decoder_ptr_->processDifopPkt(pkt.packet.data());
+  lidar_decoder_ptr_->processDifopPkt(pkt.packet.data(), pkt.packet.size());
   difop_flag_ = true;
 }
 
@@ -406,7 +407,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
       continue;
 
     int height = 1;
-    int ret = lidar_decoder_ptr_->processMsopPkt(pkt->data(), point_cloud_.points, height);
+    int ret = lidar_decoder_ptr_->processMsopPkt(pkt->data(), pkt->len(), point_cloud_.points, height);
 
 #ifdef ENABLE_PUBLISH_RAW_MSG
     PacketMsg msg;
@@ -448,7 +449,10 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     }
     else if (ret < 0)
     {
-      reportError(Error(ERRCODE_WRONGPKTHEADER));
+      if (ret == WRONG_PKT_LENGTH)
+        reportError(Error(ERRCODE_WRONGPKTLENGTH));
+      else
+        reportError(Error(ERRCODE_WRONGPKTHEADER));
     }
 
     packetPut(pkt);
@@ -473,7 +477,7 @@ inline void LidarDriverImpl<T_PointCloud>::processDifop()
     if (pkt.get() == NULL)
       continue;
 
-    lidar_decoder_ptr_->processDifopPkt(pkt->data());
+    lidar_decoder_ptr_->processDifopPkt(pkt->data(), pkt->len());
     difop_flag_ = true;
 
 #ifdef ENABLE_PUBLISH_RAW_MSG

@@ -77,8 +77,9 @@ enum RSDecoderResult
   DECODE_OK = 0,
   FRAME_SPLIT = 1,
   WRONG_PKT_HEADER = -1,
-  PKT_NULL = -2,
-  DISCARD_PKT = -3
+  WRONG_PKT_LENGTH = -2,
+  PKT_NULL = -3,
+  DISCARD_PKT = -4
 };
 
 #pragma pack(push, 1)
@@ -278,9 +279,9 @@ public:
   DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
   virtual ~DecoderBase() = default;
-  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& point_cloud_vec,
-                                         int& height);
-  virtual RSDecoderResult processDifopPkt(const uint8_t* pkt);
+  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size,
+                                         typename T_PointCloud::VectorT& point_cloud_vec, int& height);
+  virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size);
   virtual void loadAngleFile(const std::string& angle_path);
   virtual void regRecvCallback(const std::function<void(const CameraTrigger&)>& callback);  ///< Camera trigger
   virtual double getLidarTemperature();
@@ -314,6 +315,8 @@ private:
 protected:
   const LidarConstantParameter lidar_const_param_;
   RSDecoderParam param_;
+  uint32_t msop_pkt_len_;
+  uint32_t difop_pkt_len_;
   RSEchoMode echo_mode_;
   unsigned int pkts_per_frame_;
   unsigned int pkt_count_;
@@ -350,6 +353,8 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
                                               const LidarConstantParameter& lidar_const_param)
   : lidar_const_param_(lidar_const_param)
   , param_(param)
+  , msop_pkt_len_(MECH_PKT_LEN)
+  , difop_pkt_len_(MECH_PKT_LEN)
   , echo_mode_(ECHO_SINGLE)
   , pkts_per_frame_(lidar_const_param.PKT_RATE / 10)
   , pkt_count_(0)
@@ -439,17 +444,23 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderBase<T_PointCloud>::processDifopPkt(const uint8_t* pkt)
+inline RSDecoderResult DecoderBase<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
 {
   if (pkt == NULL)
   {
     return PKT_NULL;
   }
+
+  if (size != this->difop_pkt_len_)
+  {
+    return WRONG_PKT_LENGTH;
+  }
+
   return decodeDifopPkt(pkt);
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderBase<T_PointCloud>::processMsopPkt(const uint8_t* pkt,
+inline RSDecoderResult DecoderBase<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size,
                                                                  typename T_PointCloud::VectorT& point_cloud_vec,
                                                                  int& height)
 {
@@ -457,6 +468,12 @@ inline RSDecoderResult DecoderBase<T_PointCloud>::processMsopPkt(const uint8_t* 
   {
     return PKT_NULL;
   }
+
+  if (size != this->msop_pkt_len_)
+  {
+    return WRONG_PKT_LENGTH;
+  }
+
   int azimuth = 0;
   RSDecoderResult ret = decodeMsopPkt(pkt, point_cloud_vec, height, azimuth);
   if (ret != RSDecoderResult::DECODE_OK)
