@@ -260,8 +260,7 @@ template <typename T_PointCloud>
 inline bool LidarDriverImpl<T_PointCloud>::decodeMsopScan(const ScanMsg& scan_msg, 
     T_PointCloud& point_cloud_msg)
 {
-#if 0
-  if (!difop_flag_ && driver_param_.wait_for_difop)
+  if (driver_param_.wait_for_difop && !difop_flag_)
   {
     ndifop_count_++;
     if (ndifop_count_ > 20)
@@ -272,7 +271,6 @@ inline bool LidarDriverImpl<T_PointCloud>::decodeMsopScan(const ScanMsg& scan_ms
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     return false;
   }
-#endif
 
   std::vector<typename T_PointCloud::VectorT> pointcloud_one_frame;
   pointcloud_one_frame.resize(scan_msg.packets.size());
@@ -397,8 +395,7 @@ inline void LidarDriverImpl<T_PointCloud>::difopCallback(std::shared_ptr<Packet>
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::processMsop()
 {
-#if 0
-  if (!difop_flag_ && driver_param_.wait_for_difop)
+  while (!to_exit_msop_handle_ && driver_param_.wait_for_difop && !difop_flag_)
   {
     ndifop_count_++;
     if (ndifop_count_ > 120)
@@ -408,10 +405,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     msop_pkt_queue_.clear();
-    msop_pkt_queue_.is_task_finished_.store(true);
-    return;
   }
-#endif
 
   while (!to_exit_msop_handle_)
   {

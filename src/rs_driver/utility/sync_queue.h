@@ -85,6 +85,13 @@ public:
     return value;
   }
 
+  inline void clear()
+  {
+    std::queue<T> empty;
+    std::lock_guard<std::mutex> lg(mtx_);
+    swap(empty, queue_);
+  }
+
 private:
   std::queue<T> queue_;
   std::mutex mtx_;
