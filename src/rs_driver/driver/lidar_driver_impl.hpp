@@ -410,7 +410,8 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     int ret = lidar_decoder_ptr_->processMsopPkt(pkt->data(), pkt->len(), point_cloud_.points, height);
 
 #ifdef ENABLE_PUBLISH_RAW_MSG
-    PacketMsg msg;
+    PacketMsg msg(pkt->len());
+    memcpy (msg.packet.data(), pkt->data(), pkt->len());
     scan_ptr_.packets.emplace_back(msg);
 #endif
 
@@ -442,7 +443,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
 #ifdef ENABLE_PUBLISH_RAW_MSG
       setScanMsgHeader(scan_ptr_);
       runCallBack(scan_ptr_);
-      scan_ptr_.packets.reset(0);
+      scan_ptr_.packets.resize(0);
 #endif
 
       point_cloud_.points.resize(0);
@@ -481,7 +482,9 @@ inline void LidarDriverImpl<T_PointCloud>::processDifop()
     difop_flag_ = true;
 
 #ifdef ENABLE_PUBLISH_RAW_MSG
-    runCallBack(*pkt);
+    PacketMsg msg(pkt->len());
+    memcpy (msg.packet.data(), pkt->data(), pkt->len());
+    runCallBack(msg);
 #endif
 
     packetPut(pkt);

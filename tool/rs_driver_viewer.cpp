@@ -33,6 +33,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include "rs_driver/api/lidar_driver.h"
+
+typedef pcl::PointXYZI PointT;
+
+template <typename T_Point>
+class PointCloudT : public pcl::PointCloud<T_Point>
+{
+public:
+  typedef T_Point PointT;
+  typedef typename pcl::PointCloud<T_Point>::VectorType VectorT;
+
+  double timestamp = 0.0;
+  std::string frame_id = "";  ///< Point cloud frame id
+  uint32_t seq = 0;           ///< Sequence number of message
+};
+
+typedef PointCloudT<PointT> PointCloudMsg;
+
 using namespace robosense::lidar;
 using namespace pcl::visualization;
 std::shared_ptr<PCLVisualizer> pcl_viewer;
@@ -173,16 +190,20 @@ void printParam(const RSDriverParam& param)
  *              When the point cloud message is ready, driver can send out messages through this function.
  * @param msg  The lidar point cloud message.
  */
-void pointCloudCallback(const PointCloudMsg<pcl::PointXYZI>& msg)
+void pointCloudCallback(const PointCloudMsg& msg)
 {
+  std::cout << "ponits:" << msg.points.size() << std::endl;
+
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the message and process it in another thread is recommended*/
   pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl_pointcloud->points.assign(msg.point_cloud_ptr->begin(), msg.point_cloud_ptr->end());
+  pcl_pointcloud->points.assign(msg.points.begin(), msg.points.end());
   pcl_pointcloud->height = msg.height;
   pcl_pointcloud->width = msg.width;
   pcl_pointcloud->is_dense = false;
+
   PointCloudColorHandlerGenericField<pcl::PointXYZI> point_color_handle(pcl_pointcloud, "intensity");
+
   {
     const std::lock_guard<std::mutex> lock(mex_viewer);
     pcl_viewer->updatePointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
@@ -224,10 +245,11 @@ int main(int argc, char* argv[])
   pcl_viewer->addPointCloud<pcl::PointXYZI>(pcl_pointcloud, "rslidar");
   pcl_viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 2, "rslidar");
 
-  LidarDriver<pcl::PointXYZI> driver;  ///< Declare the driver object
   RSDriverParam param;                 ///< Create a parameter object
   parseParam(argc, argv, param);
   printParam(param);
+
+  LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
   driver.regRecvCallback(pointCloudCallback);      ///< Register the point cloud callback function into the driver
   if (!driver.init(param))                         ///< Call the init function and pass the parameter
