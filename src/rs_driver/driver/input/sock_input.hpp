@@ -55,7 +55,7 @@ public:
 private:
   inline void recvPacket();
   inline void higherThreadPrioty(std::thread::native_handle_type handle);
-  inline int createSocket(uint16_t port, const std::string& ip);
+  inline int createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp);
 
 private:
   int fds_[2];
@@ -84,13 +84,13 @@ inline bool SockInput::init()
 
   int msop_fd = -1, difop_fd = -1;
 
-  msop_fd = createSocket(input_param_.msop_port, input_param_.multi_cast_address);
+  msop_fd = createSocket(input_param_.msop_port, input_param_.host_address, input_param_.multi_cast_address);
   if (msop_fd < 0)
     goto failMsop;
 
   if ((input_param_.difop_port != 0) && (input_param_.difop_port != input_param_.msop_port))
   {
-    difop_fd = createSocket(input_param_.difop_port, input_param_.multi_cast_address);
+    difop_fd = createSocket(input_param_.difop_port, input_param_.host_address, input_param_.multi_cast_address);
     if (difop_fd < 0)
       goto failDifop;
   }
@@ -131,7 +131,7 @@ inline SockInput::~SockInput()
     close(fds_[1]);
 }
 
-inline int SockInput::createSocket(uint16_t port, const std::string& ip)
+inline int SockInput::createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp)
 {
   int fd;
   int flags;
@@ -150,6 +150,11 @@ inline int SockInput::createSocket(uint16_t port, const std::string& ip)
   my_addr.sin_port = htons(port);
   my_addr.sin_addr.s_addr = INADDR_ANY;
 
+  if (hostIp != "0.0.0.0")
+  {
+    inet_aton(hostIp.c_str(), &(my_addr.sin_addr));
+  }
+
   ret = bind(fd, (struct sockaddr*)&my_addr, sizeof(my_addr));
   if (ret < 0)
   {
@@ -157,10 +162,10 @@ inline int SockInput::createSocket(uint16_t port, const std::string& ip)
     goto failBind;
   }
 
-  if (ip != "0.0.0.0")
+  if (grpIp != "0.0.0.0")
   {
     struct ip_mreq group;
-    inet_pton(AF_INET, ip.c_str(), &group.imr_multiaddr.s_addr);
+    inet_pton(AF_INET, grpIp.c_str(), &group.imr_multiaddr.s_addr);
     group.imr_interface.s_addr = INADDR_ANY;
 
     ret = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &group, sizeof(group));
