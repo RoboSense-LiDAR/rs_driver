@@ -246,6 +246,7 @@ inline RSDecoderResult DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* p
     for (size_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
       typename T_PointCloud::PointT point;
+      bool pointValid = false;
       float distance = RS_SWAP_SHORT(blk.channel[channel_idx].distance) * this->lidar_const_param_.DIS_RESOLUTION;
       if (distance <= this->param_.max_distance && distance >= this->param_.min_distance)
       {
@@ -260,17 +261,23 @@ inline RSDecoderResult DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* p
         setY(point, y);
         setZ(point, z);
         setIntensity(point, intensity);
+        pointValid = true;
       }
-      else
+      else if (!this->param_.is_dense)
       {
         setX(point, NAN);
         setY(point, NAN);
         setZ(point, NAN);
         setIntensity(point, 0);
+        pointValid = true;
       }
-      setTimestamp(point, point_time);
-      setRing(point, channel_idx + 1);
-      vec.emplace_back(std::move(point));
+
+      if (pointValid)
+      {
+        setTimestamp(point, point_time);
+        setRing(point, channel_idx + 1);
+        vec.emplace_back(std::move(point));
+      }
     }
   }
   unsigned int pkt_cnt = RS_SWAP_SHORT(mpkt_ptr->header.pkt_cnt);

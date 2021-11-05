@@ -184,7 +184,9 @@ inline RSDecoderResult DecoderRS128<T_PointCloud>::decodeMsopPkt(const uint8_t* 
                        this->lidar_const_param_.DIS_RESOLUTION;
       int angle_horiz = static_cast<int>(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
       int angle_vert = ((this->vert_angle_list_[channel_idx]) + RS_ONE_ROUND) % RS_ONE_ROUND;
+
       typename T_PointCloud::PointT point;
+      bool pointValid = false;
       if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
           ((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
            (!this->angle_flag_ &&
@@ -201,17 +203,23 @@ inline RSDecoderResult DecoderRS128<T_PointCloud>::decodeMsopPkt(const uint8_t* 
         setY(point, y);
         setZ(point, z);
         setIntensity(point, intensity);
+        pointValid = true;
       }
-      else
+      else if (!this->param_.is_dense)
       {
         setX(point, NAN);
         setY(point, NAN);
         setZ(point, NAN);
         setIntensity(point, 0);
+        pointValid = true;
       }
-      setRing(point, this->beam_ring_table_[channel_idx]);
-      setTimestamp(point, block_timestamp);
-      vec.emplace_back(std::move(point));
+
+      if (pointValid)
+      {
+        setRing(point, this->beam_ring_table_[channel_idx]);
+        setTimestamp(point, block_timestamp);
+        vec.emplace_back(std::move(point));
+      }
     }
   }
   return RSDecoderResult::DECODE_OK;

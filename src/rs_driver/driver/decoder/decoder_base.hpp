@@ -287,6 +287,8 @@ public:
   virtual double getLidarTemperature();
   virtual double getLidarTime(const uint8_t* pkt) = 0;
 
+  unsigned int blocksPerPacket();
+
 protected:
   virtual float computeTemperature(const uint16_t& temp_raw);
   virtual float computeTemperature(const uint8_t& temp_low, const uint8_t& temp_high);
@@ -526,6 +528,12 @@ template <typename T_PointCloud>
 inline void DecoderBase<T_PointCloud>::regRecvCallback(const std::function<void(const CameraTrigger&)>& callback)
 {
   camera_trigger_cb_vec_.emplace_back(callback);
+}
+
+template <typename T_PointCloud>
+unsigned int DecoderBase<T_PointCloud>::blocksPerPacket()
+{
+  return this->lidar_const_param_.BLOCKS_PER_PKT;
 }
 
 template <typename T_PointCloud>

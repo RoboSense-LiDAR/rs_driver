@@ -388,6 +388,8 @@ inline void LidarDriverImpl<T_PointCloud>::difopCallback(std::shared_ptr<Packet>
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::processMsop()
 {
+  unsigned int width = 0;
+
   while (!to_exit_msop_handle_ && driver_param_.wait_for_difop && !difop_flag_)
   {
     ndifop_count_++;
@@ -415,38 +417,45 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     scan_ptr_.packets.emplace_back(msg);
 #endif
 
-    if (ret == FRAME_SPLIT)
+    if (ret >= 0)
     {
-      T_PointCloud& msg = point_cloud_;
-      msg.height = height;
-      msg.width = msg.points.size() / msg.height;
-      setPointCloudHeader(msg);
+      width += lidar_decoder_ptr_->blocksPerPacket();
 
-      if (driver_param_.decoder_param.use_lidar_clock == true)
+      if (ret == FRAME_SPLIT)
       {
-        msg.timestamp = lidar_decoder_ptr_->getLidarTime(pkt->data());
-      }
-      else
-      {
-        msg.timestamp = getTime();
-      }
+        T_PointCloud& msg = point_cloud_;
+        msg.height = height;
+        msg.width = width;
 
-      if (msg.points.size() == 0)
-      {
-        reportError(Error(ERRCODE_ZEROPOINTS));
-      }
-      else
-      {
-        runCallBack(msg);
-      }
+        setPointCloudHeader(msg);
+
+        if (driver_param_.decoder_param.use_lidar_clock == true)
+        {
+          msg.timestamp = lidar_decoder_ptr_->getLidarTime(pkt->data());
+        }
+        else
+        {
+          msg.timestamp = getTime();
+        }
+
+        if (msg.points.size() == 0)
+        {
+          reportError(Error(ERRCODE_ZEROPOINTS));
+        }
+        else
+        {
+          runCallBack(msg);
+        }
 
 #ifdef ENABLE_PUBLISH_RAW_MSG
-      setScanMsgHeader(scan_ptr_);
-      runCallBack(scan_ptr_);
-      scan_ptr_.packets.resize(0);
+        setScanMsgHeader(scan_ptr_);
+        runCallBack(scan_ptr_);
+        scan_ptr_.packets.resize(0);
 #endif
 
-      point_cloud_.points.resize(0);
+        point_cloud_.points.resize(0);
+        width = 0;
+      }
     }
     else if (ret < 0)
     {
