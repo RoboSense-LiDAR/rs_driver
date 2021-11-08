@@ -79,7 +79,7 @@ private:
   void reportError(const Error& error);
   void processMsop();
   void processDifop();
-  void setPointCloudHeader(T_PointCloud& msg);
+  void setPointCloudHeader(T_PointCloud& msg, int height);
 
 private:
   RSDriverParam driver_param_;
@@ -295,9 +295,7 @@ inline bool LidarDriverImpl<T_PointCloud>::decodeMsopScan(const ScanMsg& scan_ms
   {
     point_cloud_msg.points.insert(point_cloud_msg.points.end(), iter.begin(), iter.end());
   }
-  point_cloud_msg.height = height;
-  point_cloud_msg.width = point_cloud_msg.points.size() / point_cloud_msg.height;
-  setPointCloudHeader(point_cloud_msg);
+  setPointCloudHeader(point_cloud_msg, height);
   point_cloud_msg.timestamp = scan_msg.timestamp;
   if (point_cloud_msg.points.size() == 0)
   {
@@ -388,8 +386,6 @@ inline void LidarDriverImpl<T_PointCloud>::difopCallback(std::shared_ptr<Packet>
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::processMsop()
 {
-  unsigned int width = 0;
-
   while (!to_exit_msop_handle_ && driver_param_.wait_for_difop && !difop_flag_)
   {
     ndifop_count_++;
@@ -419,16 +415,10 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
 
     if (ret >= 0)
     {
-      width += lidar_decoder_ptr_->blocksPerPacket();
-
       if (ret == FRAME_SPLIT)
       {
         T_PointCloud& msg = point_cloud_;
-        msg.height = height;
-        msg.width = width;
-
-        setPointCloudHeader(msg);
-
+        setPointCloudHeader(msg, height);
         if (driver_param_.decoder_param.use_lidar_clock == true)
         {
           msg.timestamp = lidar_decoder_ptr_->getLidarTime(pkt->data());
@@ -454,7 +444,6 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
 #endif
 
         point_cloud_.points.resize(0);
-        width = 0;
       }
     }
     else if (ret < 0)
@@ -513,11 +502,21 @@ inline void LidarDriverImpl<T_PointCloud>::setScanMsgHeader(ScanMsg& msg)
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::setPointCloudHeader(T_PointCloud& msg)
+inline void LidarDriverImpl<T_PointCloud>::setPointCloudHeader(T_PointCloud& msg, int height)
 {
   msg.seq = point_cloud_seq_++;
   msg.frame_id = driver_param_.frame_id;
-  msg.is_dense = false;
+  msg.is_dense = driver_param_.decoder_param.is_dense;
+  if (msg.is_dense)
+  {
+    msg.height = 1;
+    msg.width = msg.points.size();
+  }
+  else
+  {
+    msg.height = height;
+    msg.width = msg.points.size() / msg.height;
+  }
 }
 
 }  // namespace lidar
