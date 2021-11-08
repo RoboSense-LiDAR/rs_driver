@@ -257,7 +257,7 @@ inline bool Input::setSocket(const std::string& pkt_type)
   {
     try
     {
-      msop_sock_ptr_.reset(new udp::socket(msop_io_service_, udp::endpoint(udp::v4(), input_param_.msop_port)));
+      msop_sock_ptr_.reset(new udp::socket(msop_io_service_, udp::endpoint(address::from_string(input_param_.host_address).to_v4(), input_param_.msop_port)));
       msop_deadline_.reset(new deadline_timer(msop_io_service_));
     }
     catch (...)
@@ -278,7 +278,7 @@ inline bool Input::setSocket(const std::string& pkt_type)
   {
     try
     {
-      difop_sock_ptr_.reset(new udp::socket(difop_io_service_, udp::endpoint(udp::v4(), input_param_.difop_port)));
+      difop_sock_ptr_.reset(new udp::socket(difop_io_service_, udp::endpoint(address::from_string(input_param_.host_address).to_v4(), input_param_.difop_port)));
       difop_deadline_.reset(new deadline_timer(difop_io_service_));
     }
     catch (...)

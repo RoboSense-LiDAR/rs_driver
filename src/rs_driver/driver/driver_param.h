@@ -129,6 +129,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
 {
   std::string device_ip = "192.168.1.200";     ///< Ip of LiDAR
   std::string multi_cast_address = "0.0.0.0";  ///< Address of multicast
+  std::string host_address = "0.0.0.0";        ///< Address of host
   uint16_t msop_port = 6699;                   ///< Msop packet port number
   uint16_t difop_port = 7788;                  ///< Difop packet port number
   bool read_pcap = false;          ///< true: The driver will process the pcap through pcap_path. false: The driver will
