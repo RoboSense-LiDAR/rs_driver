@@ -82,6 +82,9 @@ private:
 
 inline bool PcapInput::init()
 {
+  if (init_flag_)
+    return true;
+
   char errbuf[PCAP_ERRBUF_SIZE];
   pcap_ = pcap_open_offline(input_param_.pcap_path.c_str(), errbuf);
   if (pcap_ == NULL)
@@ -104,6 +107,9 @@ inline bool PcapInput::init()
 
 inline bool PcapInput::start()
 {
+  if (start_flag_)
+    return true;
+
   if (!init_flag_)
   {
     excb_(Error(ERRCODE_STARTBEFOREINIT));
@@ -112,6 +118,7 @@ inline bool PcapInput::start()
 
   recv_thread_ = std::thread(std::bind(&PcapInput::recvPacket, this));
 
+  start_flag_ = true;
   return true;
 }
 

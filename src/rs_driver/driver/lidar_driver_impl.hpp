@@ -119,14 +119,6 @@ template <typename T_PointCloud>
 inline LidarDriverImpl<T_PointCloud>::~LidarDriverImpl()
 {
   stop();
-
-  input_ptr_.reset();
-
-  to_exit_msop_handle_ = true;
-  msop_handle_thread_.join();
-
-  to_exit_difop_handle_ = true;
-  difop_handle_thread_.join();
 }
 
 template <typename T_PointCloud>
@@ -202,12 +194,15 @@ inline void LidarDriverImpl<T_PointCloud>::stop()
   if (input_ptr_ != nullptr)
     input_ptr_->stop();
 
-  to_exit_msop_handle_ = true;
-  to_exit_difop_handle_ = true;
-  msop_handle_thread_.join();
-  difop_handle_thread_.join();
+  if (start_flag_)
+  {
+    to_exit_msop_handle_ = true;
+    to_exit_difop_handle_ = true;
+    msop_handle_thread_.join();
+    difop_handle_thread_.join();
 
-  start_flag_ = false;
+    start_flag_ = false;
+  }
 }
 
 template <typename T_PointCloud>

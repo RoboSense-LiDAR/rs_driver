@@ -98,10 +98,11 @@ protected:
   std::thread recv_thread_;
   bool to_exit_recv_;
   bool init_flag_;
+  bool start_flag_;
 };
 
 inline Input::Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
-  : input_param_(input_param), excb_(excb), to_exit_recv_(false), init_flag_(false)
+  : input_param_(input_param), excb_(excb), to_exit_recv_(false), init_flag_(false), start_flag_(false)
 {
 }
 
@@ -116,8 +117,13 @@ inline void Input::regRecvCallback(const std::function<std::shared_ptr<Packet>(s
 
 inline void Input::stop()
 {
-  to_exit_recv_ = true;
-  recv_thread_.join();
+  if (start_flag_)
+  {
+    to_exit_recv_ = true;
+    recv_thread_.join();
+
+    start_flag_ = false;
+  }
 }
 
 inline void Input::pushPacket(std::shared_ptr<Packet> pkt)

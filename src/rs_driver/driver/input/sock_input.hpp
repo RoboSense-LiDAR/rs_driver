@@ -109,6 +109,9 @@ failMsop:
 
 inline bool SockInput::start()
 {
+  if (start_flag_)
+    return true;
+
   if (!init_flag_)
   {
     excb_(Error(ERRCODE_STARTBEFOREINIT));
@@ -119,6 +122,7 @@ inline bool SockInput::start()
 
   higherThreadPrioty(recv_thread_.native_handle());
 
+  start_flag_ = true;
   return true;
 }
 
