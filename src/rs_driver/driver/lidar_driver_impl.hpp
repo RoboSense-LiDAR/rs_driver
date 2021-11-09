@@ -452,6 +452,8 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
         reportError(Error(ERRCODE_WRONGPKTLENGTH));
       else
         reportError(Error(ERRCODE_WRONGPKTHEADER));
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(300));
     }
 
     packetPut(pkt);
