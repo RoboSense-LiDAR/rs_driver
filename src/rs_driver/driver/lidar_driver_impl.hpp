@@ -173,13 +173,15 @@ inline void LidarDriverImpl<T_PointCloud>::initDecoderOnly(const RSDriverParam& 
 template <typename T_PointCloud>
 inline bool LidarDriverImpl<T_PointCloud>::start()
 {
-  if (!init_flag_)
-    return false;
-
   if (start_flag_)
     return true;
 
+  if (!init_flag_)
+    return false;
+
+  to_exit_msop_handle_ = false;
   msop_handle_thread_ = std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processMsop, this));
+  to_exit_difop_handle_ = false;
   difop_handle_thread_ = std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processDifop, this));
 
   input_ptr_->start();

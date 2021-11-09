@@ -116,6 +116,7 @@ inline bool PcapInput::start()
     return false;
   }
 
+  to_exit_recv_ = false;
   recv_thread_ = std::thread(std::bind(&PcapInput::recvPacket, this));
 
   start_flag_ = true;
