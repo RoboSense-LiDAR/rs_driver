@@ -67,7 +67,8 @@ enum ErrCode
   ERRCODE_WRONGPKTHEADER = 0x51,   ///< Packet header is wrong
   ERRCODE_WRONGPKTLENGTH = 0x52,   ///< Packet length is wrong
   ERRCODE_PKTNULL = 0x53,          ///< Input packet is null
-  ERRCODE_PKTBUFOVERFLOW = 0x54    ///< Packet buffer is over flow
+  ERRCODE_PKTBUFOVERFLOW = 0x54,   ///< Packet buffer is over flow
+  ERRCODE_POINTCLOUDNULL = 0x55    ///< PointCloud buffer is invalid
 };
 
 struct Error
@@ -125,6 +126,8 @@ struct Error
         return "ERRCODE_PKTNULL";
       case ERRCODE_PKTBUFOVERFLOW:
         return "ERRCODE_PKTBUFOVERFLOW";
+      case ERRCODE_POINTCLOUDNULL:
+        return "ERRCODE_POINTCLOUDNULL";
       default:
         return "ERRCODE_SUCCESS";
     }

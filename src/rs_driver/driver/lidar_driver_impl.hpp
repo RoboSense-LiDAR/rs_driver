@@ -68,7 +68,6 @@ public:
 
 private:
   void runCallBack(std::shared_ptr<T_PointCloud> msg);
-
   void runCallBack(const ScanMsg& msg);
   void runCallBack(const PacketMsg& msg);
   void setScanMsgHeader(ScanMsg& msg);
@@ -78,6 +77,7 @@ private:
   void msopCallback(std::shared_ptr<Packet> msg);
   void difopCallback(std::shared_ptr<Packet> msg);
   void reportError(const Error& error);
+  std::shared_ptr<T_PointCloud> getPointCloud();
   void processMsop();
   void processDifop();
   void setPointCloudHeader(T_PointCloud& msg, int height);
@@ -388,6 +388,27 @@ inline void LidarDriverImpl<T_PointCloud>::difopCallback(std::shared_ptr<Packet>
 }
 
 template <typename T_PointCloud>
+inline std::shared_ptr<T_PointCloud> LidarDriverImpl<T_PointCloud>::getPointCloud()
+{
+  std::shared_ptr<T_PointCloud> pc;
+
+  while (1)
+  {
+    if (point_cloud_cb_get_ != nullptr)
+      pc = point_cloud_cb_get_();
+
+    if (pc)
+    {
+      pc->points.resize(0);
+      return pc;
+    }
+
+    reportError(Error(ERRCODE_POINTCLOUDNULL));
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  };
+}
+
+template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::processMsop()
 {
   while (!to_exit_msop_handle_ && driver_param_.wait_for_difop && !difop_flag_)
@@ -402,8 +423,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     msop_pkt_queue_.clear();
   }
 
-  point_cloud_ = point_cloud_cb_get_();
-  point_cloud_->points.resize(0);
+  point_cloud_ = getPointCloud();
 
   while (!to_exit_msop_handle_)
   {
@@ -450,8 +470,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
         scan_ptr_.packets.resize(0);
 #endif
 
-        point_cloud_ = point_cloud_cb_get_();
-        point_cloud_->points.resize(0);
+        point_cloud_ = getPointCloud();
       }
     }
     else if (ret < 0)
