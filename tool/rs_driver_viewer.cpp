@@ -49,6 +49,7 @@ public:
 };
 
 typedef PointCloudT<PointT> PointCloudMsg;
+std::shared_ptr<PointCloudMsg> g_pointcloud;
 
 using namespace robosense::lidar;
 using namespace pcl::visualization;
@@ -185,22 +186,26 @@ void printParam(const RSDriverParam& param)
   RS_INFOL << "yaw: ";
   RS_INFO << std::fixed << param.decoder_param.transform_param.yaw << RS_REND;
 }
+
+std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
+{
+  return g_pointcloud;
+}
+
 /**
  * @brief The point cloud callback function. This function will be registered to lidar driver.
  *              When the point cloud message is ready, driver can send out messages through this function.
  * @param msg  The lidar point cloud message.
  */
-void pointCloudCallback(const PointCloudMsg& msg)
+void pointCloudPutCallback(std::shared_ptr<PointCloudMsg> msg)
 {
-  std::cout << "ponits:" << msg.points.size() << std::endl;
-
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the message and process it in another thread is recommended*/
   pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl_pointcloud->points.assign(msg.points.begin(), msg.points.end());
-  pcl_pointcloud->height = msg.height;
-  pcl_pointcloud->width = msg.width;
-  pcl_pointcloud->is_dense = false;
+  pcl_pointcloud->points.assign(msg->points.begin(), msg->points.end());
+  pcl_pointcloud->height = msg->height;
+  pcl_pointcloud->width = msg->width;
+  pcl_pointcloud->is_dense = msg->is_dense;
 
   PointCloudColorHandlerGenericField<pcl::PointXYZI> point_color_handle(pcl_pointcloud, "intensity");
 
@@ -237,6 +242,9 @@ int main(int argc, char* argv[])
     printHelpMenu();
     return 0;
   }
+
+  g_pointcloud = std::make_shared<PointCloudMsg>();
+
   pcl_viewer = std::make_shared<PCLVisualizer>("RSPointCloudViewer");
 
   pcl_viewer->setBackgroundColor(0.0, 0.0, 0.0);
@@ -251,7 +259,7 @@ int main(int argc, char* argv[])
 
   LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
-  driver.regRecvCallback(pointCloudCallback);      ///< Register the point cloud callback function into the driver
+  driver.regRecvCallback(pointCloudPutCallback, pointCloudGetCallback);      ///< Register the point cloud callback function into the driver
   if (!driver.init(param))                         ///< Call the init function and pass the parameter
   {
     RS_ERROR << "Driver Initialize Error..." << RS_REND;

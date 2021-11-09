@@ -44,16 +44,23 @@ typedef PointCloudT<PointT> PointCloudMsg;
 
 using namespace robosense::lidar;
 
+std::shared_ptr<PointCloudMsg> g_pointcloud;
+
+std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
+{
+  return g_pointcloud;
+}
+
 /**
  * @brief The point cloud callback function. This function will be registered to lidar driver.
  *              When the point cloud message is ready, driver can send out messages through this function.
  * @param msg  The lidar point cloud message.
  */
-void pointCloudCallback(const PointCloudMsg& msg)
+void pointCloudPutCallback(std::shared_ptr<PointCloudMsg> msg)
 {
   /* Note: Please do not put time-consuming operations in the callback function! */
   /* Make a copy of the message and process it in another thread is recommended*/
-  RS_MSG << "msg: " << msg.seq << " point cloud size: " << msg.points.size() << RS_REND;
+  RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
 }
 
 /**
@@ -74,7 +81,7 @@ int main(int argc, char* argv[])
            << RSLIDAR_VERSION_PATCH << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
-  LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
+  g_pointcloud = std::make_shared<PointCloudMsg>();
 
   RSDriverParam param;                                         ///< Create a parameter object
   param.input_param.read_pcap = true;                          ///< Set read_pcap to true
@@ -85,8 +92,9 @@ int main(int argc, char* argv[])
 
   param.print();
 
+  LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
+  driver.regRecvCallback(pointCloudPutCallback, pointCloudGetCallback); ///< Register the point cloud callback function into the driver
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
-  driver.regRecvCallback(pointCloudCallback);      ///< Register the point cloud callback function into the driver
   if (!driver.init(param))                         ///< Call the init function and pass the parameter
   {
     RS_ERROR << "Driver Initialize Error..." << RS_REND;
