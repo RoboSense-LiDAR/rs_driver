@@ -6,7 +6,7 @@ if(WIN32)
   cmake_policy(SET CMP0074 NEW)
 endif(WIN32)
 
-project(rs_driver VERSION 1.3.0)
+project(rs_driver VERSION 1.4.0)
 
 #=============================
 #  Compile Demos&Tools
