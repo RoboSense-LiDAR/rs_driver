@@ -148,18 +148,15 @@ inline int SockInput::createSocket(uint16_t port, const std::string& hostIp, con
     goto failSocket;
   }
 
-  struct sockaddr_in my_addr;
-  memset((char*)&my_addr, 0, sizeof(my_addr));
-  my_addr.sin_family = AF_INET;
-  my_addr.sin_port = htons(port);
-  my_addr.sin_addr.s_addr = INADDR_ANY;
+  struct sockaddr_in host_addr;
+  memset(&host_addr, 0, sizeof(host_addr));
+  host_addr.sin_family = AF_INET;
+  host_addr.sin_port = htons(port);
+  host_addr.sin_addr.s_addr = INADDR_ANY;
+  if (hostIp != "0.0.0.0" && grpIp == "0.0.0.0")
+    inet_pton(AF_INET, hostIp.c_str(), &(host_addr.sin_addr));
 
-  if (hostIp != "0.0.0.0")
-  {
-    inet_aton(hostIp.c_str(), &(my_addr.sin_addr));
-  }
-
-  ret = bind(fd, (struct sockaddr*)&my_addr, sizeof(my_addr));
+  ret = bind(fd, (struct sockaddr*)&host_addr, sizeof(host_addr));
   if (ret < 0)
   {
     std::cerr << "bind: " << std::strerror(errno) << std::endl;
@@ -168,11 +165,11 @@ inline int SockInput::createSocket(uint16_t port, const std::string& hostIp, con
 
   if (grpIp != "0.0.0.0")
   {
-    struct ip_mreq group;
-    inet_pton(AF_INET, grpIp.c_str(), &group.imr_multiaddr.s_addr);
-    group.imr_interface.s_addr = INADDR_ANY;
-
-    ret = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &group, sizeof(group));
+    struct ip_mreqn ipm;
+    memset(&ipm, 0, sizeof(ipm));
+    inet_pton(AF_INET, grpIp.c_str(), &(ipm.imr_multiaddr));
+    inet_pton(AF_INET, hostIp.c_str(), &(ipm.imr_address));
+    ret = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ipm, sizeof(ipm));
     if (ret < 0)
     {
       std::cerr << "setsockopt: " << std::strerror(errno) << std::endl;
