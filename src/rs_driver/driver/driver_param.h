@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
+#include <map>
 #include <string>
 #include <rs_driver/common/common_header.h>
 namespace robosense

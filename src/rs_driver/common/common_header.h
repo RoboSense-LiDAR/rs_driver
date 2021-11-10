@@ -58,9 +58,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <type_traits>
 #include <numeric>
-#include <boost/bind.hpp>
-#include <boost/asio.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <rs_driver/macro/version.h>
 /*Linux*/
 #ifdef __linux__

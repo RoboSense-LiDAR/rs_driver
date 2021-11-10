@@ -33,6 +33,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "input.hpp"
+#include <unistd.h>
+#include <fcntl.h>
 
 namespace robosense
 {

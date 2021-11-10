@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
-cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0048 NEW) # CMake 3.6 required
 
 if(WIN32)
-  cmake_policy(SET CMP0074 NEW)
+  cmake_policy(SET CMP0074 NEW) # CMake 3.12 required
 endif(WIN32)
 
 project(rs_driver VERSION 1.4.0)
@@ -11,11 +11,11 @@ project(rs_driver VERSION 1.4.0)
 #=============================
 #  Compile Demos&Tools
 #=============================
-option(COMPILE_DEMOS "Build rs_driver demos" ON)
+option(COMPILE_DEMOS "Build rs_driver demos" OFF)
 option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
 
 #=============================
-#  Compile Demos&Tools
+#  Compile Features
 #=============================
 option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
 option(ENABLE_PUBLISH_RAW_MSG "Publish raw messages" OFF)
@@ -48,20 +48,22 @@ if(MSVC)
   add_compile_definitions(_DISABLE_EXTENDED_ALIGNED_STORAGE) # to disable a msvc error
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:100000000")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  if(MINGW)
-    set(COMPILER "MINGW Compiler")
-  elseif(UNIX)
+
+  if(UNIX)
     set(COMPILER "UNIX GNU Compiler")
+  elseif(MINGW)
+    set(COMPILER "MINGW Compiler")
   else()
     message(FATAL_ERROR "Unsupported compiler.")
   endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
+
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 endif()
 
 message(=============================================================)
-message("-- Cmake run for ${COMPILER}")
+message("-- CMake run for ${COMPILER}")
 message(=============================================================)
 
 #========================
@@ -72,24 +74,6 @@ set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}/include)
 set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 set(DRIVER_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
 set(DRIVER_CMAKE_ROOT ${CMAKE_CURRENT_LIST_DIR}/cmake)
-
-#========================
-#  Boost
-#========================
-if(WIN32)
-  if(CMAKE_SIZEOF_VOID_P EQUAL 8) # 64-bit
-    set(Boost_ARCHITECTURE "-x64")
-  elseif(CMAKE_SIZEOF_VOID_P EQUAL 4) # 32-bit
-    set(Boost_ARCHITECTURE "-x32")
-  endif()
-  set(Boost_USE_STATIC_LIBS ON)
-  set(Boost_USE_MULTITHREADED ON)
-  set(Boost_USE_STATIC_RUNTIME OFF)
-endif(WIN32)
-
-find_package(Boost COMPONENTS system date_time regex REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
-list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
 
 # fix pthread missing on ubuntu18.04 or ubuntu20.04
 if(WIN32)
@@ -109,7 +93,6 @@ else()
   list(APPEND EXTERNAL_LIBS pcap)
 endif(WIN32)
 
-
 #========================
 #  Eigen
 #========================
@@ -122,6 +105,9 @@ if(${ENABLE_TRANSFORM})
   message(=============================================================)
 endif(${ENABLE_TRANSFORM})
 
+#========================
+#  Build Features
+#========================
 if(${ENABLE_HIGH_PRIORITY_THREAD})
   add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
 endif(${ENABLE_HIGH_PRIORITY_THREAD})
@@ -130,11 +116,9 @@ if(${ENABLE_PUBLISH_RAW_MSG})
   add_definitions("-DENABLE_PUBLISH_RAW_MSG")
 endif(${ENABLE_PUBLISH_RAW_MSG})
 
-option(ENABLE_PUBLISH_CAM_MSG "Publish camera trigger messages" OFF)
 if(${ENABLE_PUBLISH_CAM_MSG})
   add_definitions("-DENABLE_PUBLISH_CAM_MSG")
 endif(${ENABLE_PUBLISH_CAM_MSG})
-
 
 #========================
 #  Build Demos
@@ -152,17 +136,20 @@ endif(${COMPILE_TOOLS})
 #========================  
 configure_file(
   ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake.in
-  ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake @ONLY
+  ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake 
+  @ONLY
 )
 
 configure_file(
   ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake.in
-  ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake @ONLY
+  ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake 
+  @ONLY
 )
 
 configure_file (
   ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.h.in
-  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.h @ONLY
+  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.h 
+  @ONLY
 )
 
 if(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
