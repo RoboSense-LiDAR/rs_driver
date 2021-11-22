@@ -426,18 +426,6 @@ inline std::shared_ptr<T_PointCloud> LidarDriverImpl<T_PointCloud>::getPointClou
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::processMsop()
 {
-  while (!to_exit_msop_handle_ && driver_param_.wait_for_difop && !difop_flag_)
-  {
-    ndifop_count_++;
-    if (ndifop_count_ > 120)
-    {
-      reportError(Error(ERRCODE_NODIFOPRECV));
-      ndifop_count_ = 0;
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    msop_pkt_queue_.clear();
-  }
-
   point_cloud_ = getPointCloud();
 
   while (!to_exit_msop_handle_)
@@ -445,6 +433,19 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     std::shared_ptr<Packet> pkt = msop_pkt_queue_.popWait(1000);
     if (pkt.get() == NULL)
       continue;
+
+    if (!difop_flag_ && driver_param_.wait_for_difop)
+    {
+      ndifop_count_++;
+      if (ndifop_count_ > 240)
+      {
+        reportError(Error(ERRCODE_NODIFOPRECV));
+        ndifop_count_ = 0;
+      }
+
+      packetPut(pkt);
+      continue;
+    }
 
     int height = 1;
     int ret = lidar_decoder_ptr_->processMsopPkt(pkt->data(), pkt->len(), point_cloud_->points, height);
