@@ -147,16 +147,6 @@ public:
   }
 
   /**
-   * @brief Get the current lidar temperature
-   * @param input_temperature The variable to store lidar temperature
-   * @return if get temperature successfully, return true; else return false
-   */
-  inline bool getLidarTemperature(double& input_temperature)
-  {
-    return driver_ptr_->getLidarTemperature(input_temperature);
-  }
-
-  /**
    * @brief Decode lidar scan messages to point cloud
    * @note This function will only work after decodeDifopPkt is called unless wait_for_difop is set to false
    * @param pkt_scan_msg The lidar scan message
@@ -175,6 +165,16 @@ public:
   inline void decodeDifopPkt(const PacketMsg& pkt_msg)
   {
     driver_ptr_->decodeDifopPkt(pkt_msg);
+  }
+
+  /**
+   * @brief Get the current lidar temperature
+   * @param input_temperature The variable to store lidar temperature
+   * @return if get temperature successfully, return true; else return false
+   */
+  inline bool getLidarTemperature(double& input_temperature)
+  {
+    return driver_ptr_->getLidarTemperature(input_temperature);
   }
 
 private:
