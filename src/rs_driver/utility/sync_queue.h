@@ -40,7 +40,7 @@ template <typename T>
 class SyncQueue
 {
 public:
-  inline void push(const T& value)
+  inline size_t push(const T& value)
   {
     std::lock_guard<std::mutex> lg(mtx_);
 
@@ -50,6 +50,8 @@ public:
 
     if (empty)
       cv_.notify_one();
+
+    return queue_.size();
   }
 
   inline T pop()

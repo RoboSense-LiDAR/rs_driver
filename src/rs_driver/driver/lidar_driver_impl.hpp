@@ -378,7 +378,13 @@ inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Packet> pkt
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::msopCallback(std::shared_ptr<Packet> pkt)
 {
-  msop_pkt_queue_.push(pkt);
+  static const int PACKET_POOL_MAX = 1024;
+  size_t sz = msop_pkt_queue_.push(pkt);
+  if (sz > PACKET_POOL_MAX)
+  {
+    reportError(Error(ERRCODE_PKTBUFOVERFLOW));
+    msop_pkt_queue_.clear();
+  }
 }
 
 template <typename T_PointCloud>
