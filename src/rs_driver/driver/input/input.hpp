@@ -32,35 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <rs_driver/common/common_header.h>
-#include <rs_driver/common/error_code.h>
 #include <rs_driver/driver/driver_param.h>
 #include <rs_driver/msg/packet.h>
-
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <memory>
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <pcap.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <array>
-#include <cmath>
 #include <cstring>
-#include <algorithm>
-#include <functional>
-#include <iterator>
-#include <vector>
-#include <iostream>
-#include <chrono>
+#include <thread>
 
 #define MAX_PKT_LEN 1500
 #define ETH_HDR_LEN 42

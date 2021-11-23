@@ -31,8 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
-#include <rs_driver/common/common_header.h>
 #include <rs_driver/msg/packet_msg.h>
+#include <string>
+
 namespace robosense
 {
 namespace lidar

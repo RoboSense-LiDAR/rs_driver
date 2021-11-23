@@ -44,6 +44,12 @@ template <typename T_PointCloud>
 class LidarDriver
 {
 public:
+
+  static std::string getVersion()
+  {
+    return LidarDriverImpl<T_PointCloud>::getVersion();
+  }
+
   /**
    * @brief Constructor, instanciate the driver pointer
    */
@@ -67,16 +73,6 @@ public:
   inline bool init(const RSDriverParam& param)
   {
     return driver_ptr_->init(param);
-  }
-
-  /**
-   * @brief The initialization function which only initialize decoder(not include input module). If lidar packets are
-   * from ROS or other ways excluding online lidar and pcap, call this function to initialize instead of calling init()
-   * @param param The custom struct RSDriverParam
-   */
-  inline void initDecoderOnly(const RSDriverParam& param)
-  {
-    driver_ptr_->initDecoderOnly(param);
   }
 
   /**
@@ -128,34 +124,12 @@ public:
   }
 
   /**
-   * @brief Register the camera trigger message callback function to driver. When trigger message is ready, this
-   * function will be called
-   * @param callback The callback function
-   */
-  inline void regRecvCallback(const std::function<void(const CameraTrigger&)>& callback)
-  {
-    driver_ptr_->regRecvCallback(callback);
-  }
-
-  /**
    * @brief Register the exception message callback function to driver. When error occurs, this function will be called
    * @param callback The callback function
    */
   inline void regExceptionCallback(const std::function<void(const Error&)>& callback)
   {
     driver_ptr_->regExceptionCallback(callback);
-  }
-
-  /**
-   * @brief Decode lidar scan messages to point cloud
-   * @note This function will only work after decodeDifopPkt is called unless wait_for_difop is set to false
-   * @param pkt_scan_msg The lidar scan message
-   * @param point_cloud_msg The output point cloud message
-   * @return if decode successfully, return true; else return false
-   */
-  inline bool decodeMsopScan(const ScanMsg& pkt_scan_msg, T_PointCloud& point_msg)
-  {
-    return driver_ptr_->decodeMsopScan(pkt_scan_msg, point_msg);
   }
 
   /**

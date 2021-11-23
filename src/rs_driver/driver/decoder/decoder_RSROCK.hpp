@@ -100,7 +100,7 @@ inline DecoderRSROCK<T_PointCloud>::DecoderRSROCK(const RSDecoderParam& param,
                                                   const LidarConstantParameter& lidar_const_param)
   : DecoderBase<T_PointCloud>(param, lidar_const_param)
 {
-  this->msop_pkt_len_ = 1236;  // TODO
+  this->msop_pkt_len_ = ROCK_MSOP_LEN;
 
   this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
   this->hori_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
@@ -148,7 +148,6 @@ inline RSDecoderResult DecoderRSROCK<T_PointCloud>::decodeMsopPkt(const uint8_t*
   azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].channels[0].azimuth);
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   double block_timestamp = this->get_point_time_func_(pkt);
-  this->check_camera_trigger_func_(azimuth, pkt);
   float azi_diff = 0;
   for (size_t blk_idx = 0; blk_idx < this->lidar_const_param_.BLOCKS_PER_PKT; blk_idx++)
   {

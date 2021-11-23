@@ -32,7 +32,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "input.hpp"
+#include <rs_driver/driver/input/input.hpp>
+
+#ifdef __linux__
+
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#elif _WIN32
+
+#include <winsock2.h>
+#include <windows.h>
+
+#endif
+
 #include <unistd.h>
 #include <fcntl.h>
 

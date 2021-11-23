@@ -83,9 +83,9 @@ class DecoderRS16 : public DecoderBase<T_PointCloud>
 {
 public:
   DecoderRS16(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
-  RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
-  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& vec, int& height, int& azimuth);
-  double getLidarTime(const uint8_t* pkt);
+  virtual RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
+  virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& vec, int& height, int& azimuth);
+  virtual double getLidarTime(const uint8_t* pkt);
 };
 
 template <typename T_PointCloud>
@@ -125,7 +125,6 @@ inline RSDecoderResult DecoderRS16<T_PointCloud>::decodeMsopPkt(const uint8_t* p
   azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
   double block_timestamp = this->get_point_time_func_(pkt);
-  this->check_camera_trigger_func_(azimuth, pkt);
   float azi_diff = 0;
   for (size_t blk_idx = 0; blk_idx < this->lidar_const_param_.BLOCKS_PER_PKT; blk_idx++)
   {

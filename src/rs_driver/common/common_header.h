@@ -31,50 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
-#ifndef _USE_MATH_DEFINES
-#define _USE_MATH_DEFINES
-#endif
-/*Common*/
-#include <cstdint>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <ctime>
-#include <cmath>
-#include <memory>
-#include <array>
-#include <algorithm>
-#include <functional>
-#include <iterator>
-#include <chrono>
-#include <queue>
-#include <thread>
-#include <atomic>
-#include <condition_variable>
-#include <future>
-#include <stdexcept>
-#include <mutex>
-#include <type_traits>
-#include <numeric>
-#include <rs_driver/macro/version.h>
-/*Linux*/
-#ifdef __linux__
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#elif _WIN32
-#include <winsock2.h>
-#include <windows.h>
-#endif
 
-/*Eigen*/
-#ifdef ENABLE_TRANSFORM
-#include <Eigen/Dense>
-#endif
+#include <iostream>
 
 #if defined(_WIN32)
 #include <io.h>
@@ -86,16 +44,9 @@ inline void setConsoleColor(WORD c)
 }
 #endif
 
-/*Pcap*/
-#include <pcap.h>
-
 /*Camera*/
 typedef std::pair<std::string, double> CameraTrigger;
 
-/*Packet Length*/
-const size_t MECH_PKT_LEN = 1248;
-const size_t MEMS_MSOP_LEN = 1210;
-const size_t MEMS_DIFOP_LEN = 256;
 /*Output style*/
 #ifndef RS_INFOL
 #if defined(_WIN32)

@@ -125,16 +125,20 @@ inline RSDecoderResult DecoderRS128<T_PointCloud>::decodeMsopPkt(const uint8_t* 
   this->protocol_ver_ = RS_SWAP_SHORT(mpkt_ptr->header.protocol_version);
   azimuth = RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth);
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
+
   double block_timestamp = this->get_point_time_func_(pkt);
-  this->check_camera_trigger_func_(azimuth, pkt);
   float azi_diff = 0;
+
   for (size_t blk_idx = 0; blk_idx < this->lidar_const_param_.BLOCKS_PER_PKT; blk_idx++)
   {
     if (mpkt_ptr->blocks[blk_idx].id != this->lidar_const_param_.BLOCK_ID)
     {
       break;
     }
+
     int cur_azi = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
+
+#if 0
     if (this->echo_mode_ == ECHO_DUAL)
     {
       azi_diff = static_cast<float>(
@@ -158,28 +162,32 @@ inline RSDecoderResult DecoderRS128<T_PointCloud>::decodeMsopPkt(const uint8_t* 
       }
     }
     else
+#endif
     {
       if (blk_idx == 0)
       {
-        azi_diff = static_cast<float>((RS_ONE_ROUND + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth) - cur_azi) %
-                                      RS_ONE_ROUND);
+        azi_diff = static_cast<float>((RS_ONE_ROUND + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth) - cur_azi) % RS_ONE_ROUND);
       }
       else
       {
-        azi_diff = static_cast<float>((RS_ONE_ROUND + cur_azi - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) %
-                                      RS_ONE_ROUND);
+        azi_diff = static_cast<float>((RS_ONE_ROUND + cur_azi - RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx - 1].azimuth)) % RS_ONE_ROUND);
+
         block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_time_jump_diff_) :
                                              (block_timestamp + this->time_duration_between_blocks_);
       }
     }
+
     azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
+
     for (size_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
       int dsr_temp = (channel_idx / 4) % 16;
       float azi_channel_ori = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) +
                               (azi_diff * static_cast<float>(dsr_temp) * this->lidar_const_param_.DSR_TOFFSET *
                                this->lidar_const_param_.FIRING_FREQUENCY);
+
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
+
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) *
                        this->lidar_const_param_.DIS_RESOLUTION;
       int angle_horiz = static_cast<int>(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;

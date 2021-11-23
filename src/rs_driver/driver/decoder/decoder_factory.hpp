@@ -30,16 +30,17 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
-#include <rs_driver/driver/decoder/decoder_RS16.hpp>
 #include <rs_driver/driver/decoder/decoder_RS32.hpp>
+#if 0
+#include <rs_driver/driver/decoder/decoder_RS16.hpp>
 #include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
 #include <rs_driver/driver/decoder/decoder_RSROCK.hpp>
-#include <rs_driver/driver/input/input.hpp>
-#include <rs_driver/msg/packet.h>
+#endif
+
 namespace robosense
 {
 namespace lidar
@@ -53,14 +54,16 @@ public:
   static std::shared_ptr<DecoderBase<T_PointCloud>> createDecoder(const RSDriverParam& param);
 
 private:
-  static const LidarConstantParameter getRS16ConstantParam();
   static const LidarConstantParameter getRS32ConstantParam();
+#if 0
+  static const LidarConstantParameter getRS16ConstantParam();
   static const LidarConstantParameter getRSBPConstantParam();
   static const LidarConstantParameter getRS80ConstantParam();
   static const LidarConstantParameter getRS128ConstantParam();
   static const LidarConstantParameter getRSM1ConstantParam();
   static const LidarConstantParameter getRSHELIOSConstantParam();
   static const LidarConstantParameter getRSROCKConstantParam();
+#endif
 };
 
 template <typename T_PointCloud>
@@ -70,12 +73,15 @@ DecoderFactory<T_PointCloud>::createDecoder(const RSDriverParam& param)
   std::shared_ptr<DecoderBase<T_PointCloud>> ret_ptr;
   switch (param.lidar_type)
   {
+#if 0
     case LidarType::RS16:
       ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param.decoder_param, getRS16ConstantParam());
       break;
+#endif
     case LidarType::RS32:
       ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param.decoder_param, getRS32ConstantParam());
       break;
+#if 0
     case LidarType::RSBP:
       ret_ptr = std::make_shared<DecoderRSBP<T_PointCloud>>(param.decoder_param, getRSBPConstantParam());
       break;
@@ -94,6 +100,7 @@ DecoderFactory<T_PointCloud>::createDecoder(const RSDriverParam& param)
     case LidarType::RSROCK:
       ret_ptr = std::make_shared<DecoderRSROCK<T_PointCloud>>(param.decoder_param, getRSROCKConstantParam());
       break;
+#endif
     default:
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
       exit(-1);
@@ -102,6 +109,7 @@ DecoderFactory<T_PointCloud>::createDecoder(const RSDriverParam& param)
   return ret_ptr;
 }
 
+#if 0
 template <typename T_PointCloud>
 inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS16ConstantParam()
 {
@@ -121,6 +129,7 @@ inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS16Constan
   ret_param.RZ = 0;
   return ret_param;
 }
+#endif
 
 template <typename T_PointCloud>
 inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS32ConstantParam()
@@ -142,6 +151,7 @@ inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS32Constan
   return ret_param;
 }
 
+#if 0
 template <typename T_PointCloud>
 inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRSBPConstantParam()
 {
@@ -255,6 +265,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSROCKConstantPa
   ret_param.RZ = 0.0;
   return ret_param;
 }
+#endif
 
 }  // namespace lidar
 }  // namespace robosense

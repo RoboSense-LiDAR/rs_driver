@@ -11,8 +11,9 @@ project(rs_driver VERSION 1.4.1)
 #=============================
 #  Compile Demos&Tools
 #=============================
-option(COMPILE_DEMOS "Build rs_driver demos" OFF)
+option(COMPILE_DEMOS "Build rs_driver demos" ON)
 option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
+option(COMPILE_TESTS "Build rs_driver unit tests" ON)
 
 #=============================
 #  Compile Features
@@ -130,6 +131,10 @@ endif(${COMPILE_DEMOS})
 if(${COMPILE_TOOLS})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tool)
 endif(${COMPILE_TOOLS})
+
+if(${COMPILE_TESTS})
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/test)
+endif(${COMPILE_TESTS})
 
 #========================
 #  Cmake
