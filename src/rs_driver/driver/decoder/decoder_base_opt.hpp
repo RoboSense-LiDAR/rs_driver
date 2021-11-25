@@ -473,14 +473,14 @@ public:
     return user_chans_[chan];
   }
 
-  void horizAdjust(uint16_t chan, int32_t& horiz)
+  int32_t horizAdjust(uint16_t chan, int32_t horiz)
   {
-    horiz += horiz_angles_[chan];
+    return (horiz + horiz_angles_[chan]);
   }
 
-  void vertAdjust(uint16_t chan, int32_t& vert)
+  int32_t vertAdjust(uint16_t chan, int32_t vert)
   {
-    vert += vert_angles_[chan];
+    return (vert + vert_angles_[chan]);
   }
 
   void narrow ()

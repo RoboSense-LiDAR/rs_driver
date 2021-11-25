@@ -59,8 +59,11 @@ namespace robosense
 namespace lidar
 {
 
+#if 0
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
+#endif
+
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
 
 /*Packet Length*/
@@ -212,7 +215,7 @@ protected:
 
   RSEchoMode echo_mode_;
 
-  unsigned int pkts_per_frame_;
+  //unsigned int pkts_per_frame_;
   unsigned int pkt_count_;
   unsigned int trigger_index_;
   unsigned int prev_angle_diff_;
@@ -228,7 +231,8 @@ protected:
   bool difop_flag_;
   float fov_time_jump_diff_;
   float time_duration_between_blocks_;
-  float azi_diff_between_block_theoretical_;
+  //float azi_diff_between_block_theoretical_;
+  uint16_t azi_diff_between_block_theoretical_;
 
   std::vector<int> vert_angle_list_;
   std::vector<int> hori_angle_list_;
@@ -255,7 +259,7 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
   , msop_pkt_len_(MECH_PKT_LEN)
   , difop_pkt_len_(MECH_PKT_LEN)
   , echo_mode_(ECHO_SINGLE)
-  , pkts_per_frame_(lidar_const_param.PKT_RATE / 10)
+  //, pkts_per_frame_(lidar_const_param.PKT_RATE / 10)
   , pkt_count_(0)
   , trigger_index_(0)
   , prev_angle_diff_(RS_ONE_ROUND)
@@ -415,6 +419,9 @@ template <typename T_PointCloud>
 template <typename T_Difop>
 inline void DecoderBase<T_PointCloud>::decodeDifopCommon(const uint8_t* pkt, const LidarType& type)
 {
+  static const uint16_t BLOCKS_PER_FRAME = 1800;
+  static const uint16_t BLOCKS_PER_PKT = 12;
+
   const T_Difop* dpkt_ptr = reinterpret_cast<const T_Difop*>(pkt);
 
 #if 0
@@ -428,19 +435,26 @@ inline void DecoderBase<T_PointCloud>::decodeDifopCommon(const uint8_t* pkt, con
     this->rpm_ = 600;
   }
 
-  this->time_duration_between_blocks_ = 
-    (60 / static_cast<float>(this->rpm_)) / ((this->lidar_const_param_.PKT_RATE * 60 / this->rpm_) * this->lidar_const_param_.BLOCKS_PER_PKT);
+#if 0
+  this->time_duration_between_blocks_ = (60 / static_cast<float>(this->rpm_)) / ((this->lidar_const_param_.PKT_RATE * 60 / this->rpm_) * this->lidar_const_param_.BLOCKS_PER_PKT);
+  this->time_duration_between_blocks_ = 1 / (this->lidar_const_param_.PKT_RATE * this->lidar_const_param_.BLOCKS_PER_PKT);
+#endif
+  this->time_duration_between_blocks_ = 60 / (this->rpm * BLOCKS_PER_FRAME);
 
   int fov_start_angle = RS_SWAP_SHORT(dpkt_ptr->fov.start_angle);
   int fov_end_angle = RS_SWAP_SHORT(dpkt_ptr->fov.end_angle);
+
   int fov_range = (fov_start_angle < fov_end_angle) ? (fov_end_angle - fov_start_angle) :
                                                       (RS_ONE_ROUND - fov_start_angle + fov_end_angle);
+#if 0
   int blocks_per_round =
       (this->lidar_const_param_.PKT_RATE / (this->rpm_ / 60)) * this->lidar_const_param_.BLOCKS_PER_PKT;
+#endif
 
-  this->fov_time_jump_diff_ =
-      this->time_duration_between_blocks_ * (fov_range / (RS_ONE_ROUND / static_cast<float>(blocks_per_round)));
+  this->fov_time_jump_diff_ = this->time_duration_between_blocks_ * (fov_range / (RS_ONE_ROUND / BLOCKS_PER_FRAME));
 
+
+#if 0
   if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
   {
     this->pkts_per_frame_ = ceil(2 * this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
@@ -449,10 +463,14 @@ inline void DecoderBase<T_PointCloud>::decodeDifopCommon(const uint8_t* pkt, con
   {
     this->pkts_per_frame_ = ceil(this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
   }
+#endif
 
+  this->azi_diff_between_block_theoretical_ = RS_ONE_ROUND / BLOCKS_PER_FRAME;
+
+#if 0
   this->azi_diff_between_block_theoretical_ =
-      (RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_PKT) /
-      static_cast<float>(this->pkts_per_frame_);  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
+      (RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_PKT) / static_cast<float>(this->pkts_per_frame_);  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
+#endif
 }
 
 #if 0
