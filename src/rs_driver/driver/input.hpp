@@ -257,7 +257,15 @@ inline bool Input::setSocket(const std::string& pkt_type)
   {
     try
     {
-      msop_sock_ptr_.reset(new udp::socket(msop_io_service_, udp::endpoint(address::from_string(input_param_.host_address).to_v4(), input_param_.msop_port)));
+      if (input_param_.multi_cast_address == "0.0.0.0" && input_param_.host_address != "0.0.0.0")
+      {
+        msop_sock_ptr_.reset(new udp::socket(msop_io_service_, udp::endpoint(address::from_string(input_param_.host_address).to_v4(), input_param_.msop_port)));
+      }
+      else
+      {
+        msop_sock_ptr_.reset(new udp::socket(msop_io_service_, udp::endpoint(udp::v4(), input_param_.msop_port)));
+      }
+
       msop_deadline_.reset(new deadline_timer(msop_io_service_));
     }
     catch (...)
@@ -267,9 +275,8 @@ inline bool Input::setSocket(const std::string& pkt_type)
     }
     if (input_param_.multi_cast_address != "0.0.0.0")
     {
-      msop_sock_ptr_->set_option(
-          boost::asio::ip::multicast::join_group(address::from_string(input_param_.multi_cast_address).to_v4(),
-                                                 udp::endpoint(udp::v4(), input_param_.msop_port).address().to_v4()));
+      msop_sock_ptr_->set_option(boost::asio::ip::multicast::join_group(address::from_string(input_param_.multi_cast_address).to_v4(),
+                                                 address::from_string(input_param_.host_address).to_v4()));
     }
     msop_deadline_->expires_at(boost::posix_time::pos_infin);
     checkMsopDeadline();
@@ -366,7 +373,7 @@ inline void Input::getDifopPacket()
       } while (ec == boost::asio::error::would_block);
       if (ec)
       {
-        excb_(Error(ERRCODE_DIFOPTIMEOUT));
+        //excb_(Error(ERRCODE_DIFOPTIMEOUT));
         continue;
       }
       if (ret < difop_pkt_length_)
