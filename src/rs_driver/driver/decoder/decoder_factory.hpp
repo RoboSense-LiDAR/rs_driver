@@ -238,6 +238,7 @@ inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRSHELIOSCon
   ret_param.BLOCK_ID = 0xEEFF;
   ret_param.PKT_RATE = 1500;
   ret_param.BLOCKS_PER_PKT = 12;
+  ret_param.BLOCKS_PER_FRAME = 1800;
   ret_param.CHANNELS_PER_BLOCK = 32;
   ret_param.LASER_NUM = 32;
   ret_param.DSR_TOFFSET = 1.0;

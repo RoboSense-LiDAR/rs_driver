@@ -59,11 +59,6 @@ namespace robosense
 namespace lidar
 {
 
-#if 0
-#define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
-#define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
-#endif
-
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
 
 /*Packet Length*/
@@ -105,11 +100,6 @@ public:
 
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size) = 0;
-
-#if 0
-  virtual double getLidarTime(const uint8_t* pkt) = 0;
-#endif
-
   virtual ~DecoderBase() = default;
 
   uint16_t height()
@@ -161,28 +151,11 @@ public:
 protected:
 
 #if 0
-  int azimuthCalibration(const float& azimuth, const int& channel);
-#endif
-
-#if 0
   RSEchoMode getEchoMode(const LidarType& type, const uint8_t& return_mode);
 #endif
 
-#if 0
-  template <typename T_Msop>
-  double calculateTimeUTC(const uint8_t* pkt, const LidarType& type);
-  template <typename T_Msop>
-  double calculateTimeYMD(const uint8_t* pkt);
-#endif
-
   template <typename T_Difop>
-  void decodeDifopCommon(const uint8_t* pkt, const LidarType& type);
-
-#if 0
-  template <typename T_Difop>
-  void decodeDifopCalibration(const uint8_t* pkt, const LidarType& type);
-  void sortBeamTable();
-#endif
+  void decodeDifopCommon(const T_Difop& pkt);
 
 #if 0
   void transformPoint(float& x, float& y, float& z);
@@ -190,10 +163,6 @@ protected:
 
   float checkCosTable(const int& angle);
   float checkSinTable(const int& angle);
-
-#if 0
-  std::vector<float> initTrigonometricLookupTable(const std::function<double(const double)>& func);
-#endif
 
 private:
   DecoderBase(const DecoderBase&) = delete;
@@ -238,11 +207,13 @@ protected:
   std::vector<int> hori_angle_list_;
   std::vector<uint16_t> beam_ring_table_;
 
-#if 0
-  std::function<double(const uint8_t*)> get_point_time_func_;
-#endif
   int lidar_alph0_;  // atan2(Ry, Rx) * 180 / M_PI * 100
   float lidar_Rxy_;  // sqrt(Rx*Rx + Ry*Ry)
+
+  ChanAngles chan_angles_;
+  DistanceBlock distance_block_;
+  ScanBlock scan_block_;
+  Trigon trigon_;
 
 private:
   std::vector<float> cos_lookup_table_;
@@ -274,6 +245,8 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
   , fov_time_jump_diff_(0)
   , time_duration_between_blocks_(0)
   , azi_diff_between_block_theoretical_(20)
+  , distance_block_(0.4f, 200.0f, param.min_distance, param.max_distance)
+  , scan_block_(param.start_angle * 100, param.end_angle)
 {
   if (cut_angle_ > RS_ONE_ROUND)
   {
@@ -293,57 +266,12 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
     this->angle_flag_ = false;
   }
 
-#if 0
-  // even though T_Point does not have timestamp, it gives the timestamp
-  /* Point time function*/
-  // typedef typename T_PointCloud::PointT T_Point;
-  // if (RS_HAS_MEMBER(T_Point, timestamp))  ///< return the timestamp of the first block in one packet
-  // {
-  if (this->param_.use_lidar_clock)
-  {
-    get_point_time_func_ = [this](const uint8_t* pkt) { return getLidarTime(pkt); };
-  }
-  else
-  {
-    get_point_time_func_ = [this](const uint8_t* pkt) {
-      double ret_time = getTime() - (this->lidar_const_param_.BLOCKS_PER_PKT - 1) * this->time_duration_between_blocks_;
-      return ret_time;
-    };
-  }
-// }
-// else
-// {
-//   get_point_time_func_ = [this](const uint8_t* pkt) { return 0; };
-// }
-
-  /* Cos & Sin look-up table*/
-  cos_lookup_table_ = initTrigonometricLookupTable([](const double rad) -> double { return std::cos(rad); });
-  sin_lookup_table_ = initTrigonometricLookupTable([](const double rad) -> double { return std::sin(rad); });
-#endif
-
-
   /*  Calulate the lidar_alph0 and lidar_Rxy */
   lidar_alph0_ = std::atan2(lidar_const_param_.RY, lidar_const_param_.RX) * 180 / M_PI * 100;
   lidar_Rxy_ = std::sqrt(lidar_const_param_.RX * lidar_const_param_.RX + lidar_const_param_.RY * lidar_const_param_.RY);
 }
 
 #if 0
-template <typename T_PointCloud>
-inline RSDecoderResult DecoderBase<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
-{
-  if (pkt == NULL)
-  {
-    return PKT_NULL;
-  }
-
-  if (size != this->difop_pkt_len_)
-  {
-    return WRONG_PKT_LENGTH;
-  }
-
-  return decodeDifopPkt(pkt);
-}
-
 template <typename T_PointCloud>
 inline RSDecoderResult DecoderBase<T_PointCloud>::processMsopPkt(
     const uint8_t* pkt, size_t size)
@@ -407,163 +335,47 @@ inline void DecoderBase<T_PointCloud>::loadAngleFile(const std::string& angle_pa
 {
 }
 
-#if 0
-template <typename T_PointCloud>
-inline int DecoderBase<T_PointCloud>::azimuthCalibration(const float& azimuth, const int& channel)
-{
-  return (static_cast<int>(azimuth) + this->hori_angle_list_[channel] + RS_ONE_ROUND) % RS_ONE_ROUND;
-}
-#endif
-
 template <typename T_PointCloud>
 template <typename T_Difop>
-inline void DecoderBase<T_PointCloud>::decodeDifopCommon(const uint8_t* pkt, const LidarType& type)
+inline void DecoderBase<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
 {
-  static const uint16_t BLOCKS_PER_FRAME = 1800;
-  static const uint16_t BLOCKS_PER_PKT = 12;
+  // return mode
+  switch (pkt.return_mode)
+  {
+    case 0x00:
+      this->echo_mode_ = RSEchoMode::ECHO_DUAL;
+    default:
+      this->echo_mode_ = RSEchoMode::ECHO_SINGLE;
+  }
 
-  const T_Difop* dpkt_ptr = reinterpret_cast<const T_Difop*>(pkt);
-
-#if 0
-  this->echo_mode_ = this->getEchoMode(type, dpkt_ptr->return_mode);
-#endif
-
-  this->rpm_ = RS_SWAP_SHORT(dpkt_ptr->rpm);
+  // rpm
+  this->rpm_ = ntohs(pkt.rpm);
   if (this->rpm_ == 0)
   {
     RS_WARNING << "LiDAR RPM is 0" << RS_REND;
     this->rpm_ = 600;
   }
 
-#if 0
-  this->time_duration_between_blocks_ = (60 / static_cast<float>(this->rpm_)) / ((this->lidar_const_param_.PKT_RATE * 60 / this->rpm_) * this->lidar_const_param_.BLOCKS_PER_PKT);
-  this->time_duration_between_blocks_ = 1 / (this->lidar_const_param_.PKT_RATE * this->lidar_const_param_.BLOCKS_PER_PKT);
-#endif
-  this->time_duration_between_blocks_ = 60 / (this->rpm * BLOCKS_PER_FRAME);
+  // block duration - azimuth
+  this->azi_diff_between_block_theoretical_ = 
+    RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_FRAME;
 
-  int fov_start_angle = RS_SWAP_SHORT(dpkt_ptr->fov.start_angle);
-  int fov_end_angle = RS_SWAP_SHORT(dpkt_ptr->fov.end_angle);
+  // block duration - timestamp
+  this->time_duration_between_blocks_ = 
+    60 / (this->rpm_ * this->lidar_const_param_.BLOCKS_PER_FRAME);
+
+  // blind block duration
+  int fov_start_angle = ntohs(pkt.fov.start_angle);
+  int fov_end_angle = ntohs(pkt.fov.end_angle);
 
   int fov_range = (fov_start_angle < fov_end_angle) ? (fov_end_angle - fov_start_angle) :
-                                                      (RS_ONE_ROUND - fov_start_angle + fov_end_angle);
-#if 0
-  int blocks_per_round =
-      (this->lidar_const_param_.PKT_RATE / (this->rpm_ / 60)) * this->lidar_const_param_.BLOCKS_PER_PKT;
-#endif
+    (RS_ONE_ROUND - fov_start_angle + fov_end_angle);
 
-  this->fov_time_jump_diff_ = this->time_duration_between_blocks_ * (fov_range / (RS_ONE_ROUND / BLOCKS_PER_FRAME));
-
-
-#if 0
-  if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
-  {
-    this->pkts_per_frame_ = ceil(2 * this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
-  }
-  else
-  {
-    this->pkts_per_frame_ = ceil(this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
-  }
-#endif
-
-  this->azi_diff_between_block_theoretical_ = RS_ONE_ROUND / BLOCKS_PER_FRAME;
-
-#if 0
-  this->azi_diff_between_block_theoretical_ =
-      (RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_PKT) / static_cast<float>(this->pkts_per_frame_);  ///< ((rpm/60)*360)/pkts_rate/blocks_per_pkt
-#endif
+  this->fov_time_jump_diff_ = this->time_duration_between_blocks_ * 
+    (fov_range / (RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_FRAME));
 }
 
 #if 0
-template <typename T_PointCloud>
-template <typename T_Difop>
-inline void DecoderBase<T_PointCloud>::decodeDifopCalibration(const uint8_t* pkt, const LidarType& type)
-{
-  const T_Difop* dpkt_ptr = reinterpret_cast<const T_Difop*>(pkt);
-
-  const uint8_t* p_ver_cali = reinterpret_cast<const uint8_t*>(dpkt_ptr->ver_angle_cali);
-
-  if ((p_ver_cali[0] == 0x00 || p_ver_cali[0] == 0xFF) && 
-      (p_ver_cali[1] == 0x00 || p_ver_cali[1] == 0xFF) &&
-      (p_ver_cali[2] == 0x00 || p_ver_cali[2] == 0xFF) && 
-      (p_ver_cali[3] == 0x00 || p_ver_cali[3] == 0xFF))
-  {
-    return;
-  }
-
-  int neg = 1;
-  for (size_t i = 0; i < this->lidar_const_param_.LASER_NUM; i++)
-  {
-    /* vert angle calibration data */
-    neg = static_cast<int>(dpkt_ptr->ver_angle_cali[i].sign) == 0 ? 1 : -1;
-    this->vert_angle_list_[i] = static_cast<int>(RS_SWAP_SHORT(dpkt_ptr->ver_angle_cali[i].value)) * neg;
-
-    /* horizon angle calibration data */
-    neg = static_cast<int>(dpkt_ptr->hori_angle_cali[i].sign) == 0 ? 1 : -1;
-    this->hori_angle_list_[i] = static_cast<int>(RS_SWAP_SHORT(dpkt_ptr->hori_angle_cali[i].value)) * neg;
-
-    if (type == LidarType::RS32)
-    {
-      this->vert_angle_list_[i] *= 0.1f;
-      this->hori_angle_list_[i] *= 0.1f;
-    }
-  }
-
-  this->sortBeamTable();
-
-  this->difop_flag_ = true;
-}
-#endif
-
-#if 0
-template <typename T_PointCloud>
-template <typename T_Msop>
-inline double DecoderBase<T_PointCloud>::calculateTimeUTC(const uint8_t* pkt, const LidarType& type)
-{
-  const T_Msop* mpkt_ptr = reinterpret_cast<const T_Msop*>(pkt);
-  union u_ts
-  {
-    uint8_t data[8];
-    uint64_t ts;
-  } timestamp;
-  timestamp.data[7] = 0;
-  timestamp.data[6] = 0;
-  timestamp.data[5] = mpkt_ptr->header.timestamp.sec[0];
-  timestamp.data[4] = mpkt_ptr->header.timestamp.sec[1];
-  timestamp.data[3] = mpkt_ptr->header.timestamp.sec[2];
-  timestamp.data[2] = mpkt_ptr->header.timestamp.sec[3];
-  timestamp.data[1] = mpkt_ptr->header.timestamp.sec[4];
-  timestamp.data[0] = mpkt_ptr->header.timestamp.sec[5];
-
-  if ((type == LidarType::RS80 || type == LidarType::RS128) && this->protocol_ver_ == PROTOCOL_VER_0)
-  {
-    return static_cast<double>(timestamp.ts) +
-           (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.us))) / NANO;
-  }
-
-  return static_cast<double>(timestamp.ts) + (static_cast<double>(RS_SWAP_LONG(mpkt_ptr->header.timestamp.us))) / MICRO;
-}
-
-template <typename T_PointCloud>
-template <typename T_Msop>
-inline double DecoderBase<T_PointCloud>::calculateTimeYMD(const uint8_t* pkt)
-{
-#ifdef _MSC_VER
-  long timezone = 0;
-  _get_timezone(&timezone);
-#endif
-  const T_Msop* mpkt_ptr = reinterpret_cast<const T_Msop*>(pkt);
-  std::tm stm;
-  memset(&stm, 0, sizeof(stm));
-  stm.tm_year = mpkt_ptr->header.timestamp.year + 100;
-  stm.tm_mon = mpkt_ptr->header.timestamp.month - 1;
-  stm.tm_mday = mpkt_ptr->header.timestamp.day;
-  stm.tm_hour = mpkt_ptr->header.timestamp.hour;
-  stm.tm_min = mpkt_ptr->header.timestamp.minute;
-  stm.tm_sec = mpkt_ptr->header.timestamp.second;
-  return std::mktime(&stm) + static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.ms)) / 1000.0 +
-         static_cast<double>(RS_SWAP_SHORT(mpkt_ptr->header.timestamp.us)) / 1000000.0 - static_cast<double>(timezone);
-}
-
 template <typename T_PointCloud>
 inline void DecoderBase<T_PointCloud>::transformPoint(float& x, float& y, float& z)
 {
@@ -580,22 +392,6 @@ inline void DecoderBase<T_PointCloud>::transformPoint(float& x, float& y, float&
   y = target_rotate(1);
   z = target_rotate(2);
 #endif
-}
-#endif
-
-#if 0
-template <typename T_PointCloud>
-inline void DecoderBase<T_PointCloud>::sortBeamTable()
-{
-  std::vector<size_t> sorted_idx(this->lidar_const_param_.LASER_NUM);
-  std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
-  std::sort(sorted_idx.begin(), sorted_idx.end(), [this](std::size_t i1, std::size_t i2) -> bool {
-    return this->vert_angle_list_[i1] < this->vert_angle_list_[i2];
-  });
-  for (size_t i = 0; i < this->lidar_const_param_.LASER_NUM; i++)
-  {
-    this->beam_ring_table_[sorted_idx[i]] = i;
-  }
 }
 #endif
 
@@ -654,22 +450,6 @@ inline float DecoderBase<T_PointCloud>::checkSinTable(const int& angle)
 {
   return sin_lookup_table_[angle + RS_ONE_ROUND];
 }
-
-#if 0
-template <typename T_PointCloud>
-inline std::vector<float>
-DecoderBase<T_PointCloud>::initTrigonometricLookupTable(const std::function<double(const double)>& func)
-{
-  std::vector<float> temp_table = std::vector<float>(2 * RS_ONE_ROUND, 0.0);
-
-  for (int i = 0; i < 2 * RS_ONE_ROUND; i++)
-  {
-    const double rad = RS_TO_RADS(static_cast<double>(i - RS_ONE_ROUND) * RS_ANGLE_RESOLUTION);
-    temp_table[i] = (float)func(rad);
-  }
-  return temp_table;
-}
-#endif
 
 }  // namespace lidar
 }  // namespace robosense

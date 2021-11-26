@@ -89,51 +89,16 @@ public:
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size);
   virtual ~DecoderRS32() = default;
 
-#if 0
-  virtual double getLidarTime(const uint8_t* pkt);
-#endif
-
   explicit DecoderRS32(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
 
-  ChanAngles chan_angles_;
-  DistanceBlock distance_block_;
-  ScanBlock scan_block_;
-  Trigon trigon_;
 };
 
 template <typename T_PointCloud>
 inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
                                               const LidarConstantParameter& lidar_const_param)
-  : DecoderBase<T_PointCloud>(param, lidar_const_param), 
-  distance_block_(0.4f, 200.0f, param.min_distance, param.max_distance),
-  scan_block_(param.start_angle * 100, param.end_angle)
-  
+  : DecoderBase<T_PointCloud>(param, lidar_const_param)
 {
-#if 0
-  this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
-  this->hori_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
-  this->beam_ring_table_.resize(this->lidar_const_param_.LASER_NUM);
-#endif
-
-#if 0
-  if (this->param_.max_distance > 200.0f)
-  {
-    this->param_.max_distance = 200.0f;
-  }
-  if (this->param_.min_distance < 0.4f || this->param_.min_distance > this->param_.max_distance)
-  {
-    this->param_.min_distance = 0.4f;
-  }
-#endif
 }
-
-#if 0
-template <typename T_PointCloud>
-inline double DecoderRS32<T_PointCloud>::getLidarTime(const uint8_t* pkt)
-{
-  return this->template calculateTimeYMD<RS32MsopPkt>(pkt);
-}
-#endif
 
 template <typename T_PointCloud>
 inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* packet, size_t size)
@@ -151,15 +116,16 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
 
   this->current_temperature_ = calcTemp(&(pkt.header.temp));
 
-#if 0
-  this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_raw);
-#endif
-
-#if 0
-  double block_timestamp = this->get_point_time_func_(pkt);
-#else
   double block_timestamp = 0;
-#endif
+  //uint64_t ts = 0;
+  if (this->param_.use_lidar_clock)
+  {
+    block_timestamp = calcTimeYMD(&pkt.header.timestamp);
+  }
+  else
+  {
+    block_timestamp = calcTimeHost();
+  }
 
   float azi_diff = 0;
   for (size_t blk_idx = 0; blk_idx < BLOCKS_PER_PKT; blk_idx++)
@@ -170,13 +136,6 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
     {
       break;
     }
-#if 0
-    if (pkt.blocks[blk_idx].id != this->lidar_const_param_.BLOCK_ID)
-    {
-      break;
-    }
-    int cur_azi = RS_SWAP_SHORT(pkt.blocks[blk_idx].azimuth);
-#endif
 
     uint16_t cur_azi = ntohs(block.azimuth);
 
@@ -224,54 +183,37 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
 
     for (uint16_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
+      static const float delta_ts[] = { 0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
+                                       23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
+                                        1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
+                                       24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08};
+      static const float delta_block = 55.52;
+
       const RSChannel& channel = pkt.blocks[blk_idx].channels[channel_idx];
+
+      double chan_ts = block_timestamp + delta_ts[channel_idx];
+      float azi_channel_ori = cur_azi + azi_diff * delta_ts[channel_idx] / delta_block;
 
       float distance = ntohs(channel.distance) * this->lidar_const_param_.DIS_RESOLUTION;
 
-      float azi_channel_ori = cur_azi + 
-        azi_diff * this->lidar_const_param_.FIRING_FREQUENCY * this->lidar_const_param_.DSR_TOFFSET * 
-        static_cast<float>(2 * (channel_idx % 16) + (channel_idx / 16));
+      uint16_t azi_channel_final = this->chan_angles_.horizAdjust(channel_idx, (int32_t)azi_channel_ori);
 
-#if 0
-
-      int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
-#else
-      uint16_t azi_channel_final = 
-        chan_angles_.horizAdjust(channel_idx, (int32_t)azi_channel_ori);
-#endif
-
-      uint16_t angle_horiz = static_cast<uint16_t>(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
-      uint16_t angle_vert = ((this->vert_angle_list_[channel_idx]) + RS_ONE_ROUND) % RS_ONE_ROUND;
+      uint16_t angle_horiz = azi_channel_ori;
+      uint16_t angle_vert = this->chan_angles_.vertAdjust(channel_idx);
 
       typename T_PointCloud::PointT point;
       bool pointValid = false;
 
-#if 0
-      if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
-          ((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
-           (!this->angle_flag_ &&
-            ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
-#endif
+#define SIN(angle) this->trigon_.sin(angle)
+#define COS(angle) this->trigon_.cos(angle)
 
-#define SIN(angle) trigon_.sin(angle)
-#define COS(angle) trigon_.cos(angle)
-
-        if (distance_block_.in(distance) && scan_block_.in(azi_channel_final))
+        if (this->distance_block_.in(distance) && this->scan_block_.in(azi_channel_final))
       {
         float x =  distance * COS(angle_vert) * COS(azi_channel_final) + this->lidar_const_param_.RX * COS(angle_horiz);
         float y = -distance * COS(angle_vert) * SIN(azi_channel_final) - this->lidar_const_param_.RX * SIN(angle_horiz);
         float z =  distance * SIN(angle_vert) + this->lidar_const_param_.RZ;
-
-#if 0
-        float x =  distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) + this->lidar_const_param_.RX * this->checkCosTable(angle_horiz);
-        float y = -distance * this->checkCosTable(angle_vert) * this->checkSinTable(azi_channel_final) - this->lidar_const_param_.RX * this->checkSinTable(angle_horiz);
-        float z =  distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
-#endif
-
         uint8_t intensity = channel.intensity;
-#if 0
-        this->transformPoint(x, y, z);
-#endif
+
         setX(point, x);
         setY(point, y);
         setZ(point, z);
@@ -290,7 +232,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
       if (pointValid)
       {
         setRing(point, this->beam_ring_table_[channel_idx]);
-        setTimestamp(point, block_timestamp);
+        setTimestamp(point, chan_ts);
         //vec.emplace_back(std::move(point));
       }
     }
@@ -299,22 +241,24 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
+inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t* packet, size_t size)
 {
-  const RS32DifopPkt* dpkt_ptr = reinterpret_cast<const RS32DifopPkt*>(pkt);
+  uint8_t id[] = {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55};
 
-  if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)
+  const RS32DifopPkt& pkt = *(const RS32DifopPkt*)(packet);
+
+  if (memcmp(id, &(pkt.id), sizeof(id)) != 0)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
 
-#if 0
-  this->template decodeDifopCommon<RS32DifopPkt>(pkt, LidarType::RS32);
+  this->template decodeDifopCommon<RS32DifopPkt>(pkt);
+
   if (!this->difop_flag_)
   {
-    this->template decodeDifopCalibration<RS32DifopPkt>(pkt, LidarType::RS32);
+    this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 32);
   }
-#endif
+
   return RSDecoderResult::DECODE_OK;
 }
 

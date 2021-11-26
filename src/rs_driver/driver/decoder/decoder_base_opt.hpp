@@ -51,16 +51,26 @@ namespace lidar
 #pragma pack(push, 1)
 typedef struct
 {
+  // identity
   uint64_t MSOP_ID;
   uint64_t DIFOP_ID;
   uint64_t BLOCK_ID;
-  uint32_t PKT_RATE;
+
+  // duration
+  uint32_t PKT_RATE; // to be deleted
   uint16_t BLOCKS_PER_PKT;
+  uint16_t BLOCKS_PER_FRAME;
   uint16_t CHANNELS_PER_BLOCK;
   uint16_t LASER_NUM;
-  float DSR_TOFFSET;
-  float FIRING_FREQUENCY;
+
+  // firing
+  float DSR_TOFFSET; // to be deleted
+  float FIRING_FREQUENCY; // to be deleted
+
+  // distance
   float DIS_RESOLUTION;
+
+  // lens center
   float RX;
   float RY;
   float RZ;
@@ -478,9 +488,9 @@ public:
     return (horiz + horiz_angles_[chan]);
   }
 
-  int32_t vertAdjust(uint16_t chan, int32_t vert)
+  int32_t vertAdjust(uint16_t chan)
   {
-    return (vert + vert_angles_[chan]);
+    return vert_angles_[chan];
   }
 
   void narrow ()
