@@ -85,8 +85,8 @@ class DecoderRS32 : public DecoderBase<T_PointCloud>
 {
 public:
 
-  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size);
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size);
+  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size);
   virtual ~DecoderRS32() = default;
 
   explicit DecoderRS32(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
@@ -98,6 +98,28 @@ inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
                                               const LidarConstantParameter& lidar_const_param)
   : DecoderBase<T_PointCloud>(param, lidar_const_param)
 {
+}
+
+template <typename T_PointCloud>
+inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t* packet, size_t size)
+{
+  uint8_t id[] = {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55};
+
+  const RS32DifopPkt& pkt = *(const RS32DifopPkt*)(packet);
+
+  if (memcmp(id, &(pkt.id), sizeof(id)) != 0)
+  {
+    return RSDecoderResult::WRONG_PKT_HEADER;
+  }
+
+  this->template decodeDifopCommon<RS32DifopPkt>(pkt);
+
+  if (!this->difop_flag_)
+  {
+    this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 32);
+  }
+
+  return RSDecoderResult::DECODE_OK;
 }
 
 template <typename T_PointCloud>
@@ -154,7 +176,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
           azi_diff = static_cast<float>(
               (RS_ONE_ROUND + cur_azi - RS_SWAP_SHORT(pkt.blocks[blk_idx - 2].azimuth)) % RS_ONE_ROUND);
           block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_time_jump_diff_) :
-                                               (block_timestamp + this->time_duration_between_blocks_);
+                                               (block_timestamp + this->block_duration_);
         }
       }
     }
@@ -175,7 +197,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
       if (blk_idx > 0)
       {
         block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_time_jump_diff_) :
-                                             (block_timestamp + this->time_duration_between_blocks_);
+                                             (block_timestamp + this->block_duration_);
       }
     }
 
@@ -191,7 +213,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
 
       const RSChannel& channel = pkt.blocks[blk_idx].channels[channel_idx];
 
-      double chan_ts = block_timestamp + delta_ts[channel_idx];
+      this->chan_ts_ = block_timestamp + delta_ts[channel_idx];
       float azi_channel_ori = cur_azi + azi_diff * delta_ts[channel_idx] / delta_block;
 
       float distance = ntohs(channel.distance) * this->lidar_const_param_.DIS_RESOLUTION;
@@ -231,32 +253,13 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
 
       if (pointValid)
       {
-        setRing(point, this->beam_ring_table_[channel_idx]);
-        setTimestamp(point, chan_ts);
-        //vec.emplace_back(std::move(point));
+        setRing(point, this->chan_angles_.toUserChan(channel_idx));
+        setTimestamp(point, this->chan_ts_);
+        this->point_cloud_->points.emplace_back(point);
       }
     }
-  }
-  return RSDecoderResult::DECODE_OK;
-}
 
-template <typename T_PointCloud>
-inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t* packet, size_t size)
-{
-  uint8_t id[] = {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55};
-
-  const RS32DifopPkt& pkt = *(const RS32DifopPkt*)(packet);
-
-  if (memcmp(id, &(pkt.id), sizeof(id)) != 0)
-  {
-    return RSDecoderResult::WRONG_PKT_HEADER;
-  }
-
-  this->template decodeDifopCommon<RS32DifopPkt>(pkt);
-
-  if (!this->difop_flag_)
-  {
-    this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 32);
+    this->toSplit();
   }
 
   return RSDecoderResult::DECODE_OK;

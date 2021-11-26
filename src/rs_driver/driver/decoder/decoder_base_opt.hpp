@@ -589,6 +589,8 @@ private:
   std::vector<uint16_t> user_chans_;
 };
 
+//#define RS_TO_RADS(x) ((x) * (M_PI) / 180)
+
 class Trigon
 {
 public:

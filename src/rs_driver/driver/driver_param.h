@@ -107,6 +107,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
   float cut_angle = 0.0f;              ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
   bool use_lidar_clock = false;        ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
   bool is_dense = false;               ///< true: discard NAN points; false: reserve NAN points
+  //std::string frame_id = "rslidar";  ///< The frame id of LiDAR message
   RSTransformParam transform_param;    ///< Used to transform points
   RSCameraTriggerParam trigger_param;  ///< Used to trigger camera
   void print() const
@@ -123,6 +124,8 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFOL << "split_frame_mode: " << split_frame_mode << RS_REND;
     RS_INFOL << "num_pkts_split: " << num_pkts_split << RS_REND;
     RS_INFOL << "cut_angle: " << cut_angle << RS_REND;
+    RS_INFOL << "is_dense: " << is_dense << RS_REND;
+   // RS_INFOL << "frame_id: " << frame_id << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 } RSDecoderParam;
@@ -163,7 +166,6 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
   RSInputParam input_param;          ///< Input parameter
   RSDecoderParam decoder_param;      ///< Decoder parameter
   std::string angle_path = "null";   ///< Path of angle calibration files(angle.csv).Only used for internal debugging.
-  std::string frame_id = "rslidar";  ///< The frame id of LiDAR message
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   bool wait_for_difop = true;              ///< true: start sending point cloud until receive difop packet
   bool saved_by_rows = false;  ///< true: the output point cloud will be saved by rows (default is saved by columns)
@@ -174,7 +176,6 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFOL << "             RoboSense Driver Parameters " << RS_REND;
     RS_INFOL << "angle_path: " << angle_path << RS_REND;
-    RS_INFOL << "frame_id: " << frame_id << RS_REND;
     RS_INFOL << "lidar_type: ";
     RS_INFO << lidarTypeToStr(lidar_type) << RS_REND;
     RS_INFOL << "------------------------------------------------------" << RS_REND;

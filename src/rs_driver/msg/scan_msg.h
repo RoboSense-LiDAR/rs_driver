@@ -46,7 +46,7 @@ struct __attribute__((aligned(16))) ScanMsg
 {
   double timestamp = 0.0;
   uint32_t seq = 0;
-  std::string frame_id = "";
+  //std::string frame_id = "";
   std::vector<PacketMsg> packets;  ///< A vector which store a scan of packets (the size of the vector is not fix)
 };
 }  // namespace lidar
