@@ -185,7 +185,11 @@ inline bool Input::init()
   }
   else
   {
-    if (!setSocket("msop") || !setSocket("difop"))
+    if (!setSocket("msop"))
+    {
+      return false;
+    }
+    if ((input_param_.difop_port > 0) && !setSocket("difop"))
     {
       return false;
     }
@@ -204,9 +208,13 @@ inline bool Input::start()
   if (!input_param_.read_pcap)
   {
     msop_thread_.start_.store(true);
-    difop_thread_.start_.store(true);
     msop_thread_.thread_.reset(new std::thread([this]() { getMsopPacket(); }));
-    difop_thread_.thread_.reset(new std::thread([this]() { getDifopPacket(); }));
+
+    if (input_param_.difop_port > 0)
+    {
+      difop_thread_.start_.store(true);
+      difop_thread_.thread_.reset(new std::thread([this]() { getDifopPacket(); }));
+    }
   }
   else
   {
@@ -390,7 +398,7 @@ inline void Input::getDifopPacket()
       } while (ec == boost::asio::error::would_block);
       if (ec)
       {
-        //excb_(Error(ERRCODE_DIFOPTIMEOUT));
+        excb_(Error(ERRCODE_DIFOPTIMEOUT));
         continue;
       }
       if (ret < difop_pkt_length_)
