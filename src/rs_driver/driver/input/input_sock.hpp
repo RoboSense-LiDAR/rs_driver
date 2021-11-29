@@ -56,10 +56,10 @@ namespace robosense
 {
 namespace lidar
 {
-class SockInput : public Input
+class InputSock : public Input
 {
 public:
-  SockInput(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
+  InputSock(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
     : Input(input_param, excb), sock_offset_(0)
   {
     if (input_param.use_someip)
@@ -68,7 +68,7 @@ public:
 
   virtual bool init();
   virtual bool start();
-  virtual ~SockInput();
+  virtual ~InputSock();
 
 private:
   inline void recvPacket();
@@ -80,7 +80,7 @@ private:
   size_t sock_offset_;
 };
 
-inline void SockInput::higherThreadPrioty(std::thread::native_handle_type handle)
+inline void InputSock::higherThreadPrioty(std::thread::native_handle_type handle)
 {
 #ifdef ENABLE_HIGH_PRIORITY_THREAD
   int policy;
@@ -95,7 +95,7 @@ inline void SockInput::higherThreadPrioty(std::thread::native_handle_type handle
 #endif
 }
 
-inline bool SockInput::init()
+inline bool InputSock::init()
 {
   if (init_flag_)
     return true;
@@ -125,7 +125,7 @@ failMsop:
   return false;
 }
 
-inline bool SockInput::start()
+inline bool InputSock::start()
 {
   if (start_flag_)
     return true;
@@ -136,7 +136,7 @@ inline bool SockInput::start()
     return false;
   }
 
-  recv_thread_ = std::thread(std::bind(&SockInput::recvPacket, this));
+  recv_thread_ = std::thread(std::bind(&InputSock::recvPacket, this));
 
   higherThreadPrioty(recv_thread_.native_handle());
 
@@ -144,7 +144,7 @@ inline bool SockInput::start()
   return true;
 }
 
-inline SockInput::~SockInput()
+inline InputSock::~InputSock()
 {
   stop();
 
@@ -153,7 +153,7 @@ inline SockInput::~SockInput()
     close(fds_[1]);
 }
 
-inline int SockInput::createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp)
+inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp)
 {
   int fd;
   int flags;
@@ -213,7 +213,7 @@ failSocket:
   return -1;
 }
 
-inline void SockInput::recvPacket()
+inline void InputSock::recvPacket()
 {
   fd_set rfds;
 

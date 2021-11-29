@@ -50,7 +50,7 @@ class DecoderFactory
 {
 public:
 
-  static std::shared_ptr<DecoderBase<T_PointCloud>> createDecoder(LidarType type, 
+  static std::shared_ptr<Decoder<T_PointCloud>> createDecoder(LidarType type, 
       const RSDecoderParam& param);
 
 private:
@@ -67,10 +67,10 @@ private:
 };
 
 template <typename T_PointCloud>
-inline std::shared_ptr<DecoderBase<T_PointCloud>>
+inline std::shared_ptr<Decoder<T_PointCloud>>
 DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam& param)
 {
-  std::shared_ptr<DecoderBase<T_PointCloud>> ret_ptr;
+  std::shared_ptr<Decoder<T_PointCloud>> ret_ptr;
 
   switch (type)
   {
@@ -105,11 +105,6 @@ DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam
     default:
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
       exit(-1);
-  }
-
-  if (param.config_from_file)
-  {
-    ret_ptr->loadAngleFile(param.angle_path);
   }
 
   return ret_ptr;

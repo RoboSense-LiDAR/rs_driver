@@ -86,21 +86,23 @@ enum RSDecoderResult
   WRONG_PKT_HEADER = -1,
   WRONG_PKT_LENGTH = -2,
   PKT_NULL = -3,
-  DISCARD_PKT = -4
+  DISCARD_PKT = -4,
+  DIFOP_NOT_READY = -5
 };
 
 template <typename T_PointCloud>
-class DecoderBase
+class Decoder
 {
 public:
 
-  virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size) = 0;
-  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size) = 0;
-  virtual RSDecoderResult TsMsopPkt(const uint8_t* pkt, size_t size) = 0;
-  virtual uint64_t usecToDelay() = 0;
-  virtual ~DecoderBase() = default;
+  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size);
 
-  explicit DecoderBase(const RSDecoderParam& param, 
+  virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size) = 0;
+  virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
+  virtual RSDecoderResult TsMsopPkt(const uint8_t* pkt, size_t size) = 0;
+  virtual ~Decoder() = default;
+
+  explicit Decoder(const RSDecoderParam& param, 
       const LidarConstantParameter& lidar_const_param);
 
   void toSplit(uint16_t azimuth, double chan_ts);
@@ -144,6 +146,11 @@ public:
     return current_temperature_;
   }
 
+  uint64_t msecToDelay()
+  {
+    return msec_to_delay_;
+  }
+
   void loadAngleFile(const std::string& angle_path)
   {
   }
@@ -162,6 +169,7 @@ protected:
   const LidarConstantParameter lidar_const_param_;
   RSDecoderParam param_;
   uint16_t height_;
+  uint64_t msec_to_delay_;
   uint32_t msop_pkt_len_;
   uint32_t difop_pkt_len_;
 
@@ -180,7 +188,7 @@ protected:
   RSEchoMode echo_mode_;
   double current_temperature_;
 
-  bool difop_flag_;
+  bool difop_ready_;
   int last_azimuth_;
   unsigned int pkt_count_;
 
@@ -194,7 +202,7 @@ protected:
 };
 
 template <typename T_PointCloud>
-inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
+inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
                                               const LidarConstantParameter& lidar_const_param)
   : lidar_const_param_(lidar_const_param)
   , param_(param)
@@ -212,7 +220,7 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
   , rpm_(600)
   , echo_mode_(ECHO_SINGLE)
   , current_temperature_(0)
-  , difop_flag_(false)
+  , difop_ready_(false)
   , last_azimuth_(-36001)
   , pkt_count_(0)
   , point_cloud_seq_(0)
@@ -220,10 +228,26 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
   /*  Calulate the lidar_alph0 and lidar_Rxy */
   lidar_alph0_ = std::atan2(lidar_const_param_.RY, lidar_const_param_.RX) * 180 / M_PI * 100;
   lidar_Rxy_ = std::sqrt(lidar_const_param_.RX * lidar_const_param_.RX + lidar_const_param_.RY * lidar_const_param_.RY);
+
+  if (param.config_from_file)
+  {
+    loadAngleFile(param.angle_path);
+  }
 }
 
 template <typename T_PointCloud>
-inline void DecoderBase<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
+RSDecoderResult Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
+{
+  if (param_.wait_for_difop && !difop_ready_)
+  {
+    return RSDecoderResult::DIFOP_NOT_READY;
+  }
+
+  return decodeMsopPkt(pkt, size);
+}
+
+template <typename T_PointCloud>
+inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
 {
   bool split = false;
 
@@ -295,7 +319,7 @@ inline void DecoderBase<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
 
 template <typename T_PointCloud>
 template <typename T_Difop>
-inline void DecoderBase<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
+inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
 {
   // return mode
   switch (pkt.return_mode)
@@ -342,7 +366,7 @@ inline void DecoderBase<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
 
 #if 0
 template <typename T_PointCloud>
-inline RSEchoMode DecoderBase<T_PointCloud>::getEchoMode(const LidarType& type, const uint8_t& return_mode)
+inline RSEchoMode Decoder<T_PointCloud>::getEchoMode(const LidarType& type, const uint8_t& return_mode)
 {
   switch (type)
   {

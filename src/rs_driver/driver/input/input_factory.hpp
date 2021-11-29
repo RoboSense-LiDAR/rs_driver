@@ -31,8 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #include <rs_driver/driver/input/input.hpp>
-#include <rs_driver/driver/input/sock_input.hpp>
-#include <rs_driver/driver/input/pcap_input.hpp>
+#include <rs_driver/driver/input/input_sock.hpp>
+#include <rs_driver/driver/input/input_pcap.hpp>
+#include <rs_driver/driver/input/input_raw.hpp>
 
 namespace robosense
 {
@@ -88,11 +89,13 @@ class InputFactory
 {
 public:
   static std::shared_ptr<Input> createInput(InputType type, 
-      const RSInputParam& param, const std::function<void(const Error&)>& excb);
+      const RSInputParam& param, const std::function<void(const Error&)>& excb,
+      uint64_t msec_to_delay);
 };
 
 inline std::shared_ptr<Input> InputFactory::createInput(InputType type, 
-    const RSInputParam& param, const std::function<void(const Error&)>& excb)
+    const RSInputParam& param, 
+    const std::function<void(const Error&)>& excb, uint64_t msec_to_delay)
 {
   std::shared_ptr<Input> input;
 
@@ -100,16 +103,15 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type,
   {
     case InputType::ONLINE_LIDAR:
       {
-        input = std::make_shared<SockInput>(param, excb);
+        input = std::make_shared<InputSock>(param, excb);
       }
     case InputType::PCAP_FILE:
       {
-        //long long msec = msecToDelay(driver_param.lidar_type, input_param.pcap_rate);
-        long long msec = 0;//msecToDelay(driver_param.lidar_type, input_param.pcap_rate);
-        input = std::make_shared<PcapInput>(param, excb, msec);
+        input = std::make_shared<InputPcap>(param, excb, msec_to_delay);
       }
     case InputType::RAW_PACKET:
       {
+        input = std::make_shared<InputRaw>(param, excb);
       }
     default:
       break;

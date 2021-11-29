@@ -118,6 +118,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
   uint32_t num_pkts_split = 1;         ///< Number of packets in one frame, only be used when split_frame_mode=3
   float cut_angle = 0.0f;              ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
 
+  bool wait_for_difop = true;        ///< true: start sending point cloud until receive difop packet
   bool use_lidar_clock = false;        ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
   bool is_dense = false;               ///< true: discard NAN points; false: reserve NAN points
 #if 0
@@ -138,6 +139,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFOL << "min_distance: " << min_distance << RS_REND;
     RS_INFOL << "start_angle: " << start_angle << RS_REND;
     RS_INFOL << "end_angle: " << end_angle << RS_REND;
+    RS_INFOL << "wait_for_difop: " << wait_for_difop << RS_REND;
     RS_INFOL << "use_lidar_clock: " << use_lidar_clock << RS_REND;
     RS_INFOL << "split_frame_mode: " << split_frame_mode << RS_REND;
     RS_INFOL << "num_pkts_split: " << num_pkts_split << RS_REND;
@@ -181,7 +183,6 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
   InputType input_type = InputType::ONLINE_LIDAR; ///< Input type
   RSInputParam input_param;          ///< Input parameter
   RSDecoderParam decoder_param;      ///< Decoder parameter
-  bool wait_for_difop = true;        ///< true: start sending point cloud until receive difop packet
 
   void print() const
   {

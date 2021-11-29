@@ -32,74 +32,42 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <rs_driver/driver/driver_param.h>
-#include <rs_driver/msg/packet.h>
-#include <cstring>
-#include <thread>
-
-#define MAX_PKT_LEN 1500
-#define ETH_HDR_LEN 42
-#define VLAN_LEN 4
-#define SOME_IP_LEN 16
+#include <rs_driver/driver/input/input.hpp>
 
 namespace robosense
 {
 namespace lidar
 {
-class Input
+class InputRaw : public Input
 {
 public:
-  Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb);
 
-  inline void regRecvCallback(const std::function<std::shared_ptr<Packet>(size_t)>& cb_get,
-                    const std::function<void(std::shared_ptr<Packet>)>& cb_put);
+  virtual bool init(){return true;}
+  virtual bool start(){return true;};
+  virtual void stop(){}
+  virtual ~InputRaw(){}
 
-  virtual bool init() = 0;
-  virtual bool start() = 0;
-  virtual void stop();
-  virtual ~Input()
+  void recvPacket(std::shared_ptr<Packet> pkt);
+
+  InputRaw(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
+    : Input(input_param, excb), pcap_offset_(ETH_HDR_LEN), difop_filter_valid_(false)
   {
   }
 
-protected:
-  inline void pushPacket(std::shared_ptr<Packet> pkt);
-
-  RSInputParam input_param_;
-  std::function<std::shared_ptr<Packet>(size_t size)> cb_get_;
-  std::function<void(std::shared_ptr<Packet>)> cb_put_;
-  std::function<void(const Error&)> excb_;
-  std::thread recv_thread_;
-  bool to_exit_recv_;
-  bool init_flag_;
-  bool start_flag_;
+private:
+  pcap_t* pcap_;
+  size_t pcap_offset_;
+  std::string msop_filter_str_;
+  std::string difop_filter_str_;
+  bpf_program msop_filter_;
+  bpf_program difop_filter_;
+  bool difop_filter_valid_;
+  long long msec_to_delay_;
 };
 
-inline Input::Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
-  : input_param_(input_param), excb_(excb), to_exit_recv_(false), init_flag_(false), start_flag_(false)
+inline void InputRaw::recvPacket(std::shared_ptr<Packet> pkt)
 {
-}
-
-inline void Input::regRecvCallback(const std::function<std::shared_ptr<Packet>(size_t)>& cb_get,
-                                   const std::function<void(std::shared_ptr<Packet>)>& cb_put)
-{
-  cb_get_ = cb_get;
-  cb_put_ = cb_put;
-}
-
-inline void Input::stop()
-{
-  if (start_flag_)
-  {
-    to_exit_recv_ = true;
-    recv_thread_.join();
-
-    start_flag_ = false;
-  }
-}
-
-inline void Input::pushPacket(std::shared_ptr<Packet> pkt)
-{
-  cb_put_(pkt);
+  pushPacket(pkt);
 }
 
 }  // namespace lidar

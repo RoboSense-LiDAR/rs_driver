@@ -30,7 +30,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
-#include <rs_driver/driver/decoder/decoder_base.hpp>
+#include <rs_driver/driver/decoder/decoder.hpp>
 
 namespace robosense
 {
@@ -81,12 +81,12 @@ typedef struct
 #pragma pack(pop)
 
 template <typename T_PointCloud>
-class DecoderRS32 : public DecoderBase<T_PointCloud>
+class DecoderRS32 : public Decoder<T_PointCloud>
 {
 public:
 
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size);
-  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size);
+  virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, size_t size);
   virtual RSDecoderResult TsMsopPkt(const uint8_t* pkt, size_t size);
   virtual uint64_t usecToDelay() 
   {return 0;}
@@ -99,7 +99,7 @@ public:
 template <typename T_PointCloud>
 inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
                                               const LidarConstantParameter& lidar_const_param)
-  : DecoderBase<T_PointCloud>(param, lidar_const_param)
+  : Decoder<T_PointCloud>(param, lidar_const_param)
 {
 }
 
@@ -117,7 +117,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t*
 
   this->template decodeDifopCommon<RS32DifopPkt>(pkt);
 
-  if (!this->difop_flag_)
+  if (!this->difop_ready_)
   {
     this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 32);
   }
@@ -126,7 +126,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t*
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* packet, size_t size)
+inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
 {
   uint8_t id[] = {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0};
   uint8_t block_id[] = {0xFF, 0xEE};

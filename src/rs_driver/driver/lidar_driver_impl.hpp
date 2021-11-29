@@ -65,9 +65,6 @@ public:
       const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get);
   void regRecvCallback(const std::function<void(const PacketMsg&)>& callback);
   void regExceptionCallback(const std::function<void(const Error&)>& callback);
-#if 0
-  bool decodeMsopScan(const ScanMsg& scan_msg, T_PointCloud& point_cloud_msg);
-#endif
   void decodePacket(const PacketMsg& msg);
   bool getLidarTemperature(double& input_temperature);
 
@@ -77,8 +74,6 @@ private:
   void runCallBack(std::shared_ptr<Packet>& pkt);
   void reportError(const Error& error);
 
-  void msopCallback(std::shared_ptr<Packet> msg);
-  void difopCallback(std::shared_ptr<Packet> msg);
   std::shared_ptr<Packet> packetGet(size_t size);
   void packetPut(std::shared_ptr<Packet> pkt);
 
@@ -90,8 +85,10 @@ private:
   std::function<void(const PacketMsg&)> pkt_cb_;
   std::function<void(const Error&)> err_cb_;
 
+  std::shared_ptr<Decoder<T_PointCloud>> lidar_decoder_ptr_;
+
   std::shared_ptr<Input> input_ptr_;
-  std::shared_ptr<DecoderBase<T_PointCloud>> lidar_decoder_ptr_;
+  std::function<void(std::shared_ptr<Packet>)> feed_pkt_cb_;
   SyncQueue<std::shared_ptr<Packet>> free_pkt_queue_;
   SyncQueue<std::shared_ptr<Packet>> msop_pkt_queue_;
   SyncQueue<std::shared_ptr<Packet>> difop_pkt_queue_;
@@ -141,10 +138,9 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
     (param.lidar_type, param.decoder_param);
 
   input_ptr_ = InputFactory::createInput(
-      param.input_type, param.input_param, std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1));
+      param.input_type, param.input_param, std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1), 0);
   input_ptr_->regRecvCallback(std::bind(&LidarDriverImpl<T_PointCloud>::packetGet, this, std::placeholders::_1),
-                              std::bind(&LidarDriverImpl<T_PointCloud>::msopCallback, this, std::placeholders::_1),
-                              std::bind(&LidarDriverImpl<T_PointCloud>::difopCallback, this, std::placeholders::_1));
+                              std::bind(&LidarDriverImpl<T_PointCloud>::packetPut, this, std::placeholders::_1));
 
   if (!input_ptr_->init())
   {
@@ -287,25 +283,26 @@ inline std::shared_ptr<Packet> LidarDriverImpl<T_PointCloud>::packetGet(size_t s
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Packet> pkt)
 {
-  free_pkt_queue_.push(pkt);
-}
+  SyncQueue<std::shared_ptr<Packet>>* queue; 
 
-template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::msopCallback(std::shared_ptr<Packet> pkt)
-{
+  uint8_t* id = pkt->data();
+  if (*id == 0x55)
+  {
+    queue = &msop_pkt_queue_;
+  }
+  else if (*id == 0xA5)
+  {
+    queue = &difop_pkt_queue_;
+  }
+
   static const int PACKET_POOL_MAX = 1024;
-  size_t sz = msop_pkt_queue_.push(pkt);
+
+  size_t sz = queue->push(pkt);
   if (sz > PACKET_POOL_MAX)
   {
     reportError(Error(ERRCODE_PKTBUFOVERFLOW));
-    msop_pkt_queue_.clear();
+    queue->clear();
   }
-}
-
-template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::difopCallback(std::shared_ptr<Packet> pkt)
-{
-  difop_pkt_queue_.push(pkt);
 }
 
 template <typename T_PointCloud>
@@ -329,7 +326,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
         ndifop_count_ = 0;
       }
 
-      packetPut(pkt);
+      free_pkt_queue_.push(pkt);
       continue;
     }
 
@@ -385,7 +382,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
       std::this_thread::sleep_for(std::chrono::milliseconds(300));
     }
 
-    packetPut(pkt);
+    free_pkt_queue_.push(pkt);
   }
 #endif
 }
@@ -404,7 +401,7 @@ inline void LidarDriverImpl<T_PointCloud>::processDifop()
 
     runCallBack(pkt);
 
-    packetPut(pkt);
+    free_pkt_queue_.push(pkt);
   }
 }
 

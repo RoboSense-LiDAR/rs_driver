@@ -42,10 +42,10 @@ namespace robosense
 {
 namespace lidar
 {
-class PcapInput : public Input
+class InputPcap : public Input
 {
 public:
-  PcapInput(const RSInputParam& input_param, const std::function<void(const Error&)>& excb, long long msec_to_delay)
+  InputPcap(const RSInputParam& input_param, const std::function<void(const Error&)>& excb, long long msec_to_delay)
     : Input(input_param, excb), pcap_offset_(ETH_HDR_LEN), difop_filter_valid_(false), msec_to_delay_(msec_to_delay)
   {
     if (input_param.use_vlan)
@@ -69,7 +69,7 @@ public:
 
   virtual bool init();
   virtual bool start();
-  virtual ~PcapInput();
+  virtual ~InputPcap();
 
 private:
   void recvPacket();
@@ -85,7 +85,7 @@ private:
   long long msec_to_delay_;
 };
 
-inline bool PcapInput::init()
+inline bool InputPcap::init()
 {
   if (init_flag_)
     return true;
@@ -110,7 +110,7 @@ inline bool PcapInput::init()
   return true;
 }
 
-inline bool PcapInput::start()
+inline bool InputPcap::start()
 {
   if (start_flag_)
     return true;
@@ -122,13 +122,13 @@ inline bool PcapInput::start()
   }
 
   to_exit_recv_ = false;
-  recv_thread_ = std::thread(std::bind(&PcapInput::recvPacket, this));
+  recv_thread_ = std::thread(std::bind(&InputPcap::recvPacket, this));
 
   start_flag_ = true;
   return true;
 }
 
-inline PcapInput::~PcapInput()
+inline InputPcap::~InputPcap()
 {
   stop();
 
@@ -136,7 +136,7 @@ inline PcapInput::~PcapInput()
     pcap_close(pcap_);
 }
 
-inline void PcapInput::recvPacket()
+inline void InputPcap::recvPacket()
 {
   while (!to_exit_recv_)
   {
