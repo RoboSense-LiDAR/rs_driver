@@ -641,5 +641,34 @@ private:
   std::vector<float> coss_;
 };
 
+class SplitAngle
+{
+public:
+  SplitAngle (uint16_t split_angle)
+   : split_angle_(split_angle),
+     prev_angle_(split_angle)
+  {
+  }
+
+  bool toSplit(uint16_t angle)
+  {
+    if (angle < prev_angle_)
+      prev_angle_ -= 36000;
+
+    bool v = ((prev_angle_ < split_angle_) && (split_angle_ <= angle));
+    prev_angle_ = angle;
+    return v;
+  }
+
+  uint16_t value()
+  {
+    return split_angle_;
+  }
+
+private:
+    uint16_t split_angle_;
+    int16_t prev_angle_;
+};
+
 }  // namespace lidar
 }  // namespace robosense

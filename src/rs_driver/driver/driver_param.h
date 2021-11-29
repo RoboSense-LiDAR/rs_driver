@@ -50,6 +50,13 @@ enum LidarType  ///< LiDAR type
   RSM1 = 10
 };
 
+enum InputType
+{
+  ONLINE_LIDAR = 1,
+  PCAP_FILE,
+  RAW_PACKET
+};
+
 enum SplitFrameMode
 {
   SPLIT_BY_ANGLE = 1,
@@ -57,6 +64,7 @@ enum SplitFrameMode
   SPLIT_BY_CUSTOM_PKTS
 };
 
+#if 0
 typedef struct RSCameraTriggerParam  ///< Camera trigger parameters
 {
   std::map<double, std::string> trigger_map;  ///< Map stored the trigger angle and camera frame id
@@ -93,29 +101,39 @@ typedef struct RSTransformParam  ///< The Point transform parameter
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 } RSTransformParam;
+#endif
 
 typedef struct RSDecoderParam  ///< LiDAR decoder parameter
 {
+  bool config_from_file = false;
+  std::string angle_path = "";   ///< Path of angle calibration files(angle.csv). Only used for internal debugging.
   float max_distance = 200.0f;                                       ///< Max distance of point cloud range
   float min_distance = 0.2f;                                         ///< Minimum distance of point cloud range
   float start_angle = 0.0f;                                          ///< Start angle of point cloud
   float end_angle = 360.0f;                                          ///< End angle of point cloud
+
   SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;  ///< 1: Split frames by cut_angle;
                                                                      ///< 2: Split frames by fixed number of packets;
-  ///< 3: Split frames by custom number of packets (num_pkts_split)
+                                                                     ///< 3: Split frames by custom number of packets (num_pkts_split)
   uint32_t num_pkts_split = 1;         ///< Number of packets in one frame, only be used when split_frame_mode=3
   float cut_angle = 0.0f;              ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
+
   bool use_lidar_clock = false;        ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
   bool is_dense = false;               ///< true: discard NAN points; false: reserve NAN points
-  //std::string frame_id = "rslidar";  ///< The frame id of LiDAR message
+#if 0
   RSTransformParam transform_param;    ///< Used to transform points
   RSCameraTriggerParam trigger_param;  ///< Used to trigger camera
+#endif
+
   void print() const
   {
+#if 0
     transform_param.print();
     trigger_param.print();
+#endif
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFO << "             RoboSense Decoder Parameters " << RS_REND;
+    RS_INFOL << "angle_path: " << angle_path << RS_REND;
     RS_INFOL << "max_distance: " << max_distance << RS_REND;
     RS_INFOL << "min_distance: " << min_distance << RS_REND;
     RS_INFOL << "start_angle: " << start_angle << RS_REND;
@@ -125,23 +143,20 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFOL << "num_pkts_split: " << num_pkts_split << RS_REND;
     RS_INFOL << "cut_angle: " << cut_angle << RS_REND;
     RS_INFOL << "is_dense: " << is_dense << RS_REND;
-   // RS_INFOL << "frame_id: " << frame_id << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
+
 } RSDecoderParam;
 
 typedef struct RSInputParam  ///< The LiDAR input parameter
 {
-  std::string device_ip = "192.168.1.200";     ///< Ip of LiDAR
-  std::string multi_cast_address = "0.0.0.0";  ///< Address of multicast
-  std::string host_address = "0.0.0.0";        ///< Address of host
   uint16_t msop_port = 6699;                   ///< Msop packet port number
   uint16_t difop_port = 7788;                  ///< Difop packet port number
-  bool read_pcap = false;          ///< true: The driver will process the pcap through pcap_path. false: The driver will
-                                   ///< Get data from online LiDAR
-  double pcap_rate = 1;            ///< Rate to read the pcap file
-  bool pcap_repeat = true;         ///< true: The pcap bag will repeat play
+  std::string host_address = "0.0.0.0";        ///< Address of host
+  std::string multi_cast_address = "0.0.0.0";  ///< Address of multicast
   std::string pcap_path = "null";  ///< Absolute path of pcap file
+  bool pcap_repeat = true;         ///< true: The pcap bag will repeat play
+  double pcap_rate = 1;            ///< Rate to read the pcap file
   bool use_vlan = false;           ///< Vlan on-off
   bool use_someip = false;         ///< Someip on-off
   void print() const
@@ -152,7 +167,6 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "host_address: " << host_address << RS_REND;
     RS_INFOL << "msop_port: " << msop_port << RS_REND;
     RS_INFOL << "difop_port: " << difop_port << RS_REND;
-    RS_INFOL << "read_pcap: " << read_pcap << RS_REND;
     RS_INFOL << "pcap_repeat: " << pcap_repeat << RS_REND;
     RS_INFOL << "pcap_path: " << pcap_path << RS_REND;
     RS_INFOL << "use_vlan: " << use_vlan << RS_REND;
@@ -163,23 +177,23 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
 
 typedef struct RSDriverParam  ///< The LiDAR driver parameter
 {
+  LidarType lidar_type = LidarType::RS16;  ///< Lidar type
+  InputType input_type = InputType::ONLINE_LIDAR; ///< Input type
   RSInputParam input_param;          ///< Input parameter
   RSDecoderParam decoder_param;      ///< Decoder parameter
-  std::string angle_path = "null";   ///< Path of angle calibration files(angle.csv).Only used for internal debugging.
-  LidarType lidar_type = LidarType::RS16;  ///< Lidar type
-  bool wait_for_difop = true;              ///< true: start sending point cloud until receive difop packet
-  bool saved_by_rows = false;  ///< true: the output point cloud will be saved by rows (default is saved by columns)
+  bool wait_for_difop = true;        ///< true: start sending point cloud until receive difop packet
+
   void print() const
   {
     input_param.print();
     decoder_param.print();
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFOL << "             RoboSense Driver Parameters " << RS_REND;
-    RS_INFOL << "angle_path: " << angle_path << RS_REND;
-    RS_INFOL << "lidar_type: ";
-    RS_INFO << lidarTypeToStr(lidar_type) << RS_REND;
+    RS_INFOL << "lidar_type: " << lidarTypeToStr(lidar_type) << RS_REND;
+    RS_INFOL << "input type: " << (int)input_type << RS_REND;
     RS_INFOL << "------------------------------------------------------" << RS_REND;
   }
+
   static std::string lidarTypeToStr(const LidarType& type)
   {
     std::string str = "";
@@ -256,6 +270,8 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
       exit(-1);
     }
   }
+
 } RSDriverParam;
+
 }  // namespace lidar
 }  // namespace robosense

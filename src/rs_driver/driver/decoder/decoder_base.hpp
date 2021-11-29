@@ -96,21 +96,20 @@ public:
 
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size) = 0;
+  virtual RSDecoderResult TsMsopPkt(const uint8_t* pkt, size_t size) = 0;
+  virtual uint64_t usecToDelay() = 0;
   virtual ~DecoderBase() = default;
 
   explicit DecoderBase(const RSDecoderParam& param, 
       const LidarConstantParameter& lidar_const_param);
 
-  void toSplit();
+  void toSplit(uint16_t azimuth, double chan_ts);
 
   void regRecvCallback(const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put, 
       const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get)
   {
     point_cloud_cb_put_ = cb_put;
-    if (cb_get != nullptr) 
-    {
-      point_cloud_cb_get_ = cb_get;
-    }
+    point_cloud_cb_get_ = cb_get;
   }
 
   std::shared_ptr<T_PointCloud> getPointCloud()
@@ -170,7 +169,7 @@ protected:
   DistanceBlock distance_block_;
   ChanAngles chan_angles_;
   ScanBlock scan_block_;
-  int split_angle_;
+  SplitAngle split_angle_;
   float block_duration_;
   uint16_t azi_diff_between_block_theoretical_;
   float fov_time_jump_diff_;
@@ -184,7 +183,6 @@ protected:
   bool difop_flag_;
   int last_azimuth_;
   unsigned int pkt_count_;
-  double chan_ts_;
 
   int lidar_alph0_;  // atan2(Ry, Rx) * 180 / M_PI * 100
   float lidar_Rxy_;  // sqrt(Rx*Rx + Ry*Ry)
@@ -219,20 +217,17 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
   , pkt_count_(0)
   , point_cloud_seq_(0)
 {
-  if (split_angle_ > RS_ONE_ROUND)
-  {
-    split_angle_ = 0;
-  }
-
   /*  Calulate the lidar_alph0 and lidar_Rxy */
   lidar_alph0_ = std::atan2(lidar_const_param_.RY, lidar_const_param_.RX) * 180 / M_PI * 100;
   lidar_Rxy_ = std::sqrt(lidar_const_param_.RX * lidar_const_param_.RX + lidar_const_param_.RY * lidar_const_param_.RY);
 }
 
 template <typename T_PointCloud>
-inline void DecoderBase<T_PointCloud>::toSplit()
+inline void DecoderBase<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
 {
   bool split = false;
+
+  split = split_angle_.toSplit(azimuth);
 
 #if 1
 #if 0
@@ -271,7 +266,7 @@ inline void DecoderBase<T_PointCloud>::toSplit()
     T_PointCloud& msg = *point_cloud_;
 
     msg.seq = point_cloud_seq_++;
-    msg.timestamp = chan_ts_;
+    msg.timestamp = chan_ts;
     //msg.frame_id = param_.frame_id;
     msg.is_dense = param_.is_dense;
     if (msg.is_dense)

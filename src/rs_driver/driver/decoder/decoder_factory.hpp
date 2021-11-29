@@ -49,9 +49,9 @@ template <typename T_PointCloud>
 class DecoderFactory
 {
 public:
-  DecoderFactory() = default;
-  ~DecoderFactory() = default;
-  static std::shared_ptr<DecoderBase<T_PointCloud>> createDecoder(const RSDriverParam& param);
+
+  static std::shared_ptr<DecoderBase<T_PointCloud>> createDecoder(LidarType type, 
+      const RSDecoderParam& param);
 
 private:
   static const LidarConstantParameter getRS32ConstantParam();
@@ -68,10 +68,11 @@ private:
 
 template <typename T_PointCloud>
 inline std::shared_ptr<DecoderBase<T_PointCloud>>
-DecoderFactory<T_PointCloud>::createDecoder(const RSDriverParam& param)
+DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam& param)
 {
   std::shared_ptr<DecoderBase<T_PointCloud>> ret_ptr;
-  switch (param.lidar_type)
+
+  switch (type)
   {
 #if 0
     case LidarType::RS16:
@@ -79,7 +80,7 @@ DecoderFactory<T_PointCloud>::createDecoder(const RSDriverParam& param)
       break;
 #endif
     case LidarType::RS32:
-      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param.decoder_param, getRS32ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param, getRS32ConstantParam());
       break;
 #if 0
     case LidarType::RSBP:
@@ -105,7 +106,12 @@ DecoderFactory<T_PointCloud>::createDecoder(const RSDriverParam& param)
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
       exit(-1);
   }
-  ret_ptr->loadAngleFile(param.angle_path);
+
+  if (param.config_from_file)
+  {
+    ret_ptr->loadAngleFile(param.angle_path);
+  }
+
   return ret_ptr;
 }
 

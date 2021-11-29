@@ -38,6 +38,7 @@ namespace robosense
 {
 namespace lidar
 {
+#if 0
 inline long long msecToDelay(LidarType type, double replay_rate)
 {
   constexpr double RS16_PCAP_SLEEP_DURATION = 1200;     ///< us
@@ -81,28 +82,37 @@ inline long long msecToDelay(LidarType type, double replay_rate)
 
   return static_cast<long long>(duration / replay_rate);
 }
+#endif
 
 class InputFactory
 {
 public:
-  static std::shared_ptr<Input> createInput(const RSDriverParam& driver_param,
-                                            const std::function<void(const Error&)>& excb);
+  static std::shared_ptr<Input> createInput(InputType type, 
+      const RSInputParam& param, const std::function<void(const Error&)>& excb);
 };
 
-inline std::shared_ptr<Input> InputFactory::createInput(const RSDriverParam& driver_param,
-                                                        const std::function<void(const Error&)>& excb)
+inline std::shared_ptr<Input> InputFactory::createInput(InputType type, 
+    const RSInputParam& param, const std::function<void(const Error&)>& excb)
 {
-  const RSInputParam& input_param = driver_param.input_param;
   std::shared_ptr<Input> input;
 
-  if (input_param.read_pcap)
+  switch(type)
   {
-    long long msec = msecToDelay(driver_param.lidar_type, input_param.pcap_rate);
-    input = std::make_shared<PcapInput>(input_param, excb, msec);
-  }
-  else
-  {
-    input = std::make_shared<SockInput>(input_param, excb);
+    case InputType::ONLINE_LIDAR:
+      {
+        input = std::make_shared<SockInput>(param, excb);
+      }
+    case InputType::PCAP_FILE:
+      {
+        //long long msec = msecToDelay(driver_param.lidar_type, input_param.pcap_rate);
+        long long msec = 0;//msecToDelay(driver_param.lidar_type, input_param.pcap_rate);
+        input = std::make_shared<PcapInput>(param, excb, msec);
+      }
+    case InputType::RAW_PACKET:
+      {
+      }
+    default:
+      break;
   }
 
   return input;

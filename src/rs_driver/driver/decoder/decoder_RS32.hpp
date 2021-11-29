@@ -87,6 +87,9 @@ public:
 
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size);
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size);
+  virtual RSDecoderResult TsMsopPkt(const uint8_t* pkt, size_t size);
+  virtual uint64_t usecToDelay() 
+  {return 0;}
   virtual ~DecoderRS32() = default;
 
   explicit DecoderRS32(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
@@ -139,6 +142,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
   this->current_temperature_ = calcTemp(&(pkt.header.temp));
 
   double block_timestamp = 0;
+  double chan_ts = block_timestamp;
   //uint64_t ts = 0;
   if (this->param_.use_lidar_clock)
   {
@@ -213,7 +217,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
 
       const RSChannel& channel = pkt.blocks[blk_idx].channels[channel_idx];
 
-      this->chan_ts_ = block_timestamp + delta_ts[channel_idx];
+      chan_ts = block_timestamp + delta_ts[channel_idx];
       float azi_channel_ori = cur_azi + azi_diff * delta_ts[channel_idx] / delta_block;
 
       float distance = ntohs(channel.distance) * this->lidar_const_param_.DIS_RESOLUTION;
@@ -254,14 +258,20 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processMsopPkt(const uint8_t* 
       if (pointValid)
       {
         setRing(point, this->chan_angles_.toUserChan(channel_idx));
-        setTimestamp(point, this->chan_ts_);
+        setTimestamp(point, chan_ts);
         this->point_cloud_->points.emplace_back(point);
       }
     }
 
-    this->toSplit();
+    this->toSplit(cur_azi, chan_ts);
   }
 
+  return RSDecoderResult::DECODE_OK;
+}
+
+template <typename T_PointCloud>
+inline RSDecoderResult DecoderRS32<T_PointCloud>::TsMsopPkt(const uint8_t* packet, size_t size)
+{
   return RSDecoderResult::DECODE_OK;
 }
 
