@@ -1,15 +1,22 @@
 
 #include <gtest/gtest.h>
 
-#include <rs_driver/msg/packet_msg.h>
+#include <rs_driver/msg/packet.h>
 
 using namespace robosense::lidar;
 
 TEST(TestPacket, ctor)
 {
-  PacketMsg msg(100);
-  ASSERT(msg.)
+  Packet pkt(100);
 
-  //ASSERT_EQ(calcTimeUTCWithMs(&ts), 0x010203040506 * 1000000 + 0x1122 * 1000 + 0x3344);
+  ASSERT_TRUE(pkt.buf() != NULL);
+  ASSERT_EQ(pkt.bufSize(), 100);
+
+  ASSERT_EQ(pkt.data(), pkt.buf());
+  ASSERT_EQ(pkt.dataSize(), 0);
+
+  pkt.setData(5, 10);
+  ASSERT_EQ(pkt.data(), pkt.buf()+5);
+  ASSERT_EQ(pkt.dataSize(), 10);
 }
 

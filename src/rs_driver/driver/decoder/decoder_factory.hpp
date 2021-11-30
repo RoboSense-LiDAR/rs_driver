@@ -52,18 +52,6 @@ public:
 
   static std::shared_ptr<Decoder<T_PointCloud>> createDecoder(LidarType type, 
       const RSDecoderParam& param);
-
-private:
-  static const LidarConstantParameter getRS32ConstantParam();
-#if 0
-  static const LidarConstantParameter getRS16ConstantParam();
-  static const LidarConstantParameter getRSBPConstantParam();
-  static const LidarConstantParameter getRS80ConstantParam();
-  static const LidarConstantParameter getRS128ConstantParam();
-  static const LidarConstantParameter getRSM1ConstantParam();
-  static const LidarConstantParameter getRSHELIOSConstantParam();
-  static const LidarConstantParameter getRSROCKConstantParam();
-#endif
 };
 
 template <typename T_PointCloud>
@@ -76,30 +64,30 @@ DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam
   {
 #if 0
     case LidarType::RS16:
-      ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param.decoder_param, getRS16ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param.decoder_param);
       break;
 #endif
     case LidarType::RS32:
-      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param, getRS32ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param);
       break;
 #if 0
     case LidarType::RSBP:
-      ret_ptr = std::make_shared<DecoderRSBP<T_PointCloud>>(param.decoder_param, getRSBPConstantParam());
+      ret_ptr = std::make_shared<DecoderRSBP<T_PointCloud>>(param.decoder_param);
       break;
     case LidarType::RS128:
-      ret_ptr = std::make_shared<DecoderRS128<T_PointCloud>>(param.decoder_param, getRS128ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS128<T_PointCloud>>(param.decoder_param);
       break;
     case LidarType::RS80:
-      ret_ptr = std::make_shared<DecoderRS80<T_PointCloud>>(param.decoder_param, getRS80ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS80<T_PointCloud>>(param.decoder_param);
       break;
     case LidarType::RSM1:
-      ret_ptr = std::make_shared<DecoderRSM1<T_PointCloud>>(param.decoder_param, getRSM1ConstantParam());
+      ret_ptr = std::make_shared<DecoderRSM1<T_PointCloud>>(param.decoder_param);
       break;
     case LidarType::RSHELIOS:
-      ret_ptr = std::make_shared<DecoderRSHELIOS<T_PointCloud>>(param.decoder_param, getRSHELIOSConstantParam());
+      ret_ptr = std::make_shared<DecoderRSHELIOS<T_PointCloud>>(param.decoder_param);
       break;
     case LidarType::RSROCK:
-      ret_ptr = std::make_shared<DecoderRSROCK<T_PointCloud>>(param.decoder_param, getRSROCKConstantParam());
+      ret_ptr = std::make_shared<DecoderRSROCK<T_PointCloud>>(param.decoder_param);
       break;
 #endif
     default:
@@ -130,7 +118,6 @@ inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS16Constan
   ret_param.RZ = 0;
   return ret_param;
 }
-#endif
 
 template <typename T_PointCloud>
 inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS32ConstantParam()
@@ -156,7 +143,6 @@ inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS32Constan
   return ret_param;
 }
 
-#if 0
 template <typename T_PointCloud>
 inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRSBPConstantParam()
 {

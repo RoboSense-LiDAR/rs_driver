@@ -88,18 +88,39 @@ public:
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size);
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, size_t size);
   virtual RSDecoderResult TsMsopPkt(const uint8_t* pkt, size_t size);
-  virtual uint64_t usecToDelay() 
-  {return 0;}
+  virtual uint64_t usecToDelay() {return 0;}
   virtual ~DecoderRS32() = default;
 
-  explicit DecoderRS32(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
+  explicit DecoderRS32(const RSDecoderParam& param);
+
+  static LidarConstParam getConstParam()
+  {
+    LidarConstParam param;
+    param.MSOP_ID = 0xA050A55A0A05AA55;
+    param.DIFOP_ID = 0x555511115A00FFA5;
+    param.BLOCK_ID = 0xEEFF;
+    param.PKT_RATE = 1500;
+    param.BLOCKS_PER_PKT = 12;
+
+    param.CHANNELS_PER_BLOCK = 32;
+    param.LASER_NUM = 32;
+
+    param.DSR_TOFFSET = 1.44;
+    param.FIRING_FREQUENCY = 0.018;
+    param.DIS_RESOLUTION = 0.005;
+
+    param.RX = 0.03997;
+    param.RY = -0.01087;
+    param.RZ = 0;
+
+    return param;
+  }
 
 };
 
 template <typename T_PointCloud>
-inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
-                                              const LidarConstantParameter& lidar_const_param)
-  : Decoder<T_PointCloud>(param, lidar_const_param)
+inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param)
+  : Decoder<T_PointCloud>(param, getConstParam())
 {
 }
 

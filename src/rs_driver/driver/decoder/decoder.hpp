@@ -38,12 +38,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/utility/time.h>
 
 #include <arpa/inet.h>
-#include <fstream>
-#include <cmath>
-#include <algorithm>
 #include <functional>
+#include <algorithm>
+#include <fstream>
 #include <chrono>
 #include <memory>
+#include <cmath>
 
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
@@ -92,6 +92,33 @@ enum RSDecoderResult
   DIFOP_NOT_READY = -5
 };
 
+typedef struct
+{
+  // identity
+  uint64_t MSOP_ID;
+  uint64_t DIFOP_ID;
+  uint64_t BLOCK_ID;
+
+  // duration
+  uint32_t PKT_RATE; // to be deleted
+  uint16_t BLOCKS_PER_PKT;
+  uint16_t BLOCKS_PER_FRAME;
+  uint16_t CHANNELS_PER_BLOCK;
+  uint16_t LASER_NUM;
+
+  // firing
+  float DSR_TOFFSET; // to be deleted
+  float FIRING_FREQUENCY; // to be deleted
+
+  // distance
+  float DIS_RESOLUTION;
+
+  // lens center
+  float RX;
+  float RY;
+  float RZ;
+} LidarConstParam;
+
 template <typename T_PointCloud>
 class Decoder
 {
@@ -130,7 +157,7 @@ public:
   }
 
   explicit Decoder(const RSDecoderParam& param, 
-      const LidarConstantParameter& lidar_const_param);
+      const LidarConstParam& lidar_const_param);
 
 protected:
 
@@ -143,7 +170,7 @@ protected:
 
 protected:
 
-  const LidarConstantParameter lidar_const_param_;
+  LidarConstParam lidar_const_param_;
   RSDecoderParam param_;
   uint16_t height_;
   uint64_t msec_to_delay_;
@@ -179,8 +206,8 @@ protected:
 };
 
 template <typename T_PointCloud>
-inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
-                                              const LidarConstantParameter& lidar_const_param)
+inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param, 
+    const LidarConstParam& lidar_const_param)
   : lidar_const_param_(lidar_const_param)
   , param_(param)
   , height_(0)
