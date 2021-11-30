@@ -104,21 +104,11 @@ public:
   }
 
   /**
-   * @brief Register the lidar scan message callback function to driver.When lidar scan message is ready, this function
-   * will be called
-   * @param callback The callback function
-   */
-  inline void regRecvCallback(const std::function<void(const ScanMsg&)>& callback)
-  {
-    driver_ptr_->regRecvCallback(callback);
-  }
-
-  /**
    * @brief Register the lidar difop packet message callback function to driver. When lidar difop packet message is
    * ready, this function will be called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<void(const PacketMsg&)>& callback)
+  inline void regRecvCallback(const std::function<void(const uint8_t*, size_t)>& callback)
   {
     driver_ptr_->regRecvCallback(callback);
   }
@@ -133,12 +123,12 @@ public:
   }
 
   /**
-   * @brief Decode lidar difop messages
-   * @param pkt_msg The lidar difop packet
+   * @brief Decode lidar msop/difop messages
+   * @param pkt_msg The lidar msop/difop packet
    */
-  inline void decodeDifopPkt(const PacketMsg& pkt_msg)
+  inline void decodePacket(const uint8_t* pkt, size_t size)
   {
-    driver_ptr_->decodeDifopPkt(pkt_msg);
+    driver_ptr_->decodePacket(pkt, size);
   }
 
   /**

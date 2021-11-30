@@ -32,8 +32,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
-#include <stdlib.h>
+#include <vector>
 
 namespace robosense
 {
@@ -42,41 +43,44 @@ namespace lidar
 class Packet
 {
 public:
-  Packet(size_t cap) : off_(0), len_(0)
+
+  Packet(size_t buf_size)
   {
-    buf_ = (uint8_t*)malloc(cap);
+    buf_.resize(buf_size);
+    buf_size_ = buf_size;
   }
 
-  void setData(size_t off, size_t len)
+  uint8_t* buf()
   {
-    off_ = off;
-    len_ = len;
+    return buf_.data();
   }
 
-  void resetData()
+  size_t bufSize() const
   {
-    setData(0, 0);
-  }
-
-  const uint8_t* data() const
-  {
-    return buf_ + off_;
+    return buf_size_;
   }
 
   uint8_t* data()
   {
-    return buf_ + off_;
+    return buf() + data_off_;
   }
 
-  size_t len() const
+  size_t dataSize() const
   {
-    return len_;
+    return data_size_;
+  }
+
+  void setData(size_t data_off, size_t data_size)
+  {
+    data_off_ = data_off;
+    data_size_ = data_size;
   }
 
 private:
-  uint8_t* buf_;
-  size_t off_;
-  size_t len_;
+  std::vector<uint8_t> buf_;
+  size_t buf_size_;
+  size_t data_off_;
+  size_t data_size_;
 };
 }  // namespace lidar
 }  // namespace robosense

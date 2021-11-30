@@ -245,8 +245,7 @@ inline void InputSock::recvPacket()
     if (FD_ISSET(fds_[0], &rfds))
     {
       std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
-      pkt->resetData();
-      ssize_t ret = recvfrom(fds_[0], pkt->data(), MAX_PKT_LEN, 0, NULL, NULL);
+      ssize_t ret = recvfrom(fds_[0], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
       if (ret <= 0)
       {
         std::cout << "recv failed" << std::endl;
@@ -259,8 +258,7 @@ inline void InputSock::recvPacket()
     else if (FD_ISSET(fds_[1], &rfds))
     {
       std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
-      pkt->resetData();
-      ssize_t ret = recvfrom(fds_[1], pkt->data(), MAX_PKT_LEN, 0, NULL, NULL);
+      ssize_t ret = recvfrom(fds_[1], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
       if (ret <= 0)
         break;
 

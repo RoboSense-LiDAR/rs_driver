@@ -47,7 +47,7 @@ public:
   virtual void stop(){}
   virtual ~InputRaw(){}
 
-  void recvPacket(std::shared_ptr<Packet> pkt);
+  void feedPacket(const uint8_t* data, size_t size);
 
   InputRaw(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
     : Input(input_param, excb), pcap_offset_(ETH_HDR_LEN), difop_filter_valid_(false)
@@ -65,8 +65,11 @@ private:
   long long msec_to_delay_;
 };
 
-inline void InputRaw::recvPacket(std::shared_ptr<Packet> pkt)
+inline void InputRaw::feedPacket(const uint8_t* data, size_t size)
 {
+  std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
+  memcpy(pkt->data(), data, size);
+  pkt->setData(0, size);
   pushPacket(pkt);
 }
 
