@@ -139,7 +139,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
 
-  this->current_temperature_ = calcTemp(&(pkt.header.temp));
+  this->temperature_ = calcTemp(&(pkt.header.temp));
 
   double block_timestamp = 0;
   double chan_ts = block_timestamp;

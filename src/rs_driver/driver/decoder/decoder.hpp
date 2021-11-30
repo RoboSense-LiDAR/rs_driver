@@ -49,9 +49,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
 #endif
 
+#if 0
 /*Eigen*/
 #ifdef ENABLE_TRANSFORM
 #include <Eigen/Dense>
+#endif
 #endif
 
 namespace robosense
@@ -96,45 +98,17 @@ class Decoder
 public:
 
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size);
-
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual RSDecoderResult TsMsopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual ~Decoder() = default;
 
-  explicit Decoder(const RSDecoderParam& param, 
-      const LidarConstantParameter& lidar_const_param);
-
   void toSplit(uint16_t azimuth, double chan_ts);
 
   void regRecvCallback(const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put, 
-      const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get)
-  {
-    point_cloud_cb_put_ = cb_put;
-    point_cloud_cb_get_ = cb_get;
-  }
+      const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get);
 
-  std::shared_ptr<T_PointCloud> getPointCloud()
-  {
-    std::shared_ptr<T_PointCloud> pc;
-
-    while (1)
-    {
-      if (point_cloud_cb_get_ != nullptr)
-        pc = point_cloud_cb_get_();
-
-      if (pc)
-      {
-        pc->points.resize(0);
-        return pc;
-      }
-
-#if 0
-      reportError(Error(ERRCODE_POINTCLOUDNULL));
-      std::this_thread::sleep_for(std::chrono::milliseconds(300));
-#endif
-    };
-  }
+  std::shared_ptr<T_PointCloud> getPointCloud();
 
   uint16_t height()
   {
@@ -143,7 +117,7 @@ public:
 
   double getLidarTemperature()
   {
-    return current_temperature_;
+    return temperature_;
   }
 
   uint64_t msecToDelay()
@@ -154,6 +128,9 @@ public:
   void loadAngleFile(const std::string& angle_path)
   {
   }
+
+  explicit Decoder(const RSDecoderParam& param, 
+      const LidarConstantParameter& lidar_const_param);
 
 protected:
 
@@ -186,7 +163,7 @@ protected:
   unsigned int protocol_ver_;
   unsigned int rpm_;
   RSEchoMode echo_mode_;
-  double current_temperature_;
+  double temperature_;
 
   bool difop_ready_;
   int last_azimuth_;
@@ -219,7 +196,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , protocol_ver_(0)
   , rpm_(600)
   , echo_mode_(ECHO_SINGLE)
-  , current_temperature_(0)
+  , temperature_(0)
   , difop_ready_(false)
   , last_azimuth_(-36001)
   , pkt_count_(0)
@@ -233,6 +210,38 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   {
     loadAngleFile(param.angle_path);
   }
+}
+
+template <typename T_PointCloud>
+void Decoder<T_PointCloud>::regRecvCallback(
+    const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put, 
+    const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get)
+{
+  point_cloud_cb_put_ = cb_put;
+  point_cloud_cb_get_ = cb_get;
+}
+
+template <typename T_PointCloud>
+std::shared_ptr<T_PointCloud> Decoder<T_PointCloud>::getPointCloud()
+{
+  std::shared_ptr<T_PointCloud> pc;
+
+  while (1)
+  {
+    if (point_cloud_cb_get_ != nullptr)
+      pc = point_cloud_cb_get_();
+
+    if (pc)
+    {
+      pc->points.resize(0);
+      return pc;
+    }
+
+#if 0
+    reportError(Error(ERRCODE_POINTCLOUDNULL));
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+#endif
+  };
 }
 
 template <typename T_PointCloud>
