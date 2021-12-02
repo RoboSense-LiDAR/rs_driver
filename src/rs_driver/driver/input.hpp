@@ -96,6 +96,7 @@ private:
   Thread pcap_thread_;
   int vlan_offset_;
   int someip_offset_;
+  int custom_proto_offset_;
   int pcap_offset_;
   boost::asio::io_service msop_io_service_;
   boost::asio::io_service difop_io_service_;
@@ -112,6 +113,7 @@ inline Input::Input(const LidarType& type, const RSInputParam& input_param,
   , pcap_(nullptr)
   , vlan_offset_(0)
   , someip_offset_(0)
+  , custom_proto_offset_(0)
   , pcap_offset_(42)
 {
   last_packet_time_ = std::chrono::system_clock::now();
@@ -138,6 +140,10 @@ inline Input::Input(const LidarType& type, const RSInputParam& input_param,
   if (input_param_.use_someip)
   {
     someip_offset_ = 16;
+  }
+  if (input_param_.use_custom_proto)
+  {
+    custom_proto_offset_ = 8;
   }
 }
 
@@ -180,7 +186,7 @@ inline bool Input::init()
       difop_filter << "udp dst port " << input_param_.difop_port;
       pcap_compile(pcap_, &pcap_msop_filter_, msop_filter.str().c_str(), 1, 0xFFFFFFFF);
       pcap_compile(pcap_, &pcap_difop_filter_, difop_filter.str().c_str(), 1, 0xFFFFFFFF);
-      pcap_offset_ += vlan_offset_ + someip_offset_;
+      pcap_offset_ += vlan_offset_ + someip_offset_ + custom_proto_offset_;
     }
   }
   else
@@ -332,14 +338,14 @@ inline bool Input::setSocket(const std::string& pkt_type)
 
 inline void Input::getMsopPacket()
 {
-  char* precv_buffer = (char*)malloc(msop_pkt_length_ + someip_offset_);
+  char* precv_buffer = (char*)malloc(msop_pkt_length_ + someip_offset_ + custom_proto_offset_);
   while (msop_thread_.start_.load())
   {
     msop_deadline_->expires_from_now(boost::posix_time::seconds(1));
     boost::system::error_code ec = boost::asio::error::would_block;
     std::size_t ret = 0;
 
-    msop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, msop_pkt_length_ + someip_offset_),
+    msop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, msop_pkt_length_ + someip_offset_ + custom_proto_offset_),
                                   boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
     do
     {
@@ -352,10 +358,10 @@ inline void Input::getMsopPacket()
     }
 
     // use_someip, the msop and difop port are the same.
-    if (input_param_.use_someip && ret == difop_pkt_length_ + someip_offset_)
+    if ((input_param_.use_someip || input_param_.use_custom_proto) && ret == (difop_pkt_length_ + someip_offset_ + custom_proto_offset_))
     {
       PacketMsg msg(difop_pkt_length_);
-      memcpy(msg.packet.data(), precv_buffer + someip_offset_, difop_pkt_length_);
+      memcpy(msg.packet.data(), precv_buffer + someip_offset_ + custom_proto_offset_, difop_pkt_length_);
       for (auto& iter : difop_cb_)
       {
         iter(msg);
@@ -363,14 +369,14 @@ inline void Input::getMsopPacket()
       continue;
     }
 
-    if (ret < msop_pkt_length_ + someip_offset_)
+    if (ret < (msop_pkt_length_ + someip_offset_ + custom_proto_offset_))
     {
       excb_(Error(ERRCODE_MSOPINCOMPLETE));
       continue;
     }
 
     PacketMsg msg(msop_pkt_length_);
-    memcpy(msg.packet.data(), precv_buffer + someip_offset_, msop_pkt_length_);
+    memcpy(msg.packet.data(), precv_buffer + someip_offset_ + custom_proto_offset_, msop_pkt_length_);
     for (auto& iter : msop_cb_)
     {
       iter(msg);
@@ -381,7 +387,7 @@ inline void Input::getMsopPacket()
 
 inline void Input::getDifopPacket()
 {
-  if (!input_param_.use_someip)
+  if (!(input_param_.use_someip || input_param_.use_custom_proto))
   {
     char* precv_buffer = (char*)malloc(difop_pkt_length_);
     while (difop_thread_.start_.load())
@@ -436,7 +442,7 @@ inline void Input::getPcapPacket()
             iter(msg);
           }
         }
-        else if (input_param_.use_someip && header->len == difop_pkt_length_ + pcap_offset_)  // the someip case
+        else if ((input_param_.use_someip || input_param_.use_custom_proto) && (header->len == difop_pkt_length_ + pcap_offset_))  // the someip case
         {
           PacketMsg msg(difop_pkt_length_);
           memcpy(msg.packet.data(), pkt_data + pcap_offset_, difop_pkt_length_);

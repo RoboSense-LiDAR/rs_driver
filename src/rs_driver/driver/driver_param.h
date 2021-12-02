@@ -139,6 +139,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   std::string pcap_path = "null";  ///< Absolute path of pcap file
   bool use_vlan = false;           ///< Vlan on-off
   bool use_someip = false;         ///< Someip on-off
+  bool use_custom_proto = false;   ///< Customer Protocol on-off
   void print() const
   {
     RS_INFO << "------------------------------------------------------" << RS_REND;
