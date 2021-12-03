@@ -49,13 +49,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
 #endif
 
-#if 0
-/*Eigen*/
-#ifdef ENABLE_TRANSFORM
-#include <Eigen/Dense>
-#endif
-#endif
-
 namespace robosense
 {
 namespace lidar
@@ -67,9 +60,6 @@ const size_t MEMS_MSOP_LEN = 1210;
 const size_t MEMS_DIFOP_LEN = 256;
 const size_t ROCK_MSOP_LEN = 1236;
 
-constexpr float RS_ANGLE_RESOLUTION = 0.01;
-constexpr float MICRO = 1000000.0;
-constexpr float NANO = 1000000000.0;
 constexpr int RS_ONE_ROUND = 36000;
 constexpr uint16_t PROTOCOL_VER_0 = 0x00;
 
@@ -127,7 +117,6 @@ public:
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size);
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
-  virtual RSDecoderResult TsMsopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual ~Decoder() = default;
 
   void toSplit(uint16_t azimuth, double chan_ts);
@@ -137,15 +126,19 @@ public:
 
   std::shared_ptr<T_PointCloud> getPointCloud();
 
+  void putPointCloud(std::shared_ptr<T_PointCloud> msg, double chan_ts);
+
+#if 0
   uint16_t height()
   {
     return height_;
   }
 
-  double getLidarTemperature()
+  double getTemperature()
   {
     return temperature_;
   }
+#endif
 
   uint64_t msecToDelay()
   {
@@ -157,13 +150,10 @@ public:
   }
 
   explicit Decoder(const RSDecoderParam& param, 
+      const std::function<void(const Error&)>& excb,
       const LidarConstParam& lidar_const_param);
 
 protected:
-
-#if 0
-  RSEchoMode getEchoMode(const LidarType& type, const uint8_t& return_mode);
-#endif
 
   template <typename T_Difop>
   void decodeDifopCommon(const T_Difop& pkt);
@@ -172,6 +162,7 @@ protected:
 
   LidarConstParam lidar_const_param_;
   RSDecoderParam param_;
+  std::function<void(const Error&)> excb_;
   uint16_t height_;
   uint64_t msec_to_delay_;
   uint32_t msop_pkt_len_;
@@ -207,15 +198,17 @@ protected:
 
 template <typename T_PointCloud>
 inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param, 
+    const std::function<void(const Error&)>& excb,
     const LidarConstParam& lidar_const_param)
   : lidar_const_param_(lidar_const_param)
   , param_(param)
+  , excb_(excb)
   , height_(0)
   , msop_pkt_len_(MECH_PKT_LEN)
   , difop_pkt_len_(MECH_PKT_LEN)
   , distance_block_(0.4f, 200.0f, param.min_distance, param.max_distance)
   , scan_block_(param.start_angle * 100, param.end_angle * 100)
-  , split_angle_(param.cut_angle * 100)
+  , split_angle_(param.split_angle * 100)
   , block_duration_(0)
   , azi_diff_between_block_theoretical_(20)
   , fov_time_jump_diff_(0)
@@ -264,11 +257,76 @@ std::shared_ptr<T_PointCloud> Decoder<T_PointCloud>::getPointCloud()
       return pc;
     }
 
-#if 0
-    reportError(Error(ERRCODE_POINTCLOUDNULL));
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-#endif
+    excb_(Error(ERRCODE_POINTCLOUDNULL));
+    //std::this_thread::sleep_for(std::chrono::milliseconds(300));
   };
+}
+
+template <typename T_PointCloud>
+inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
+{
+  bool split = false;
+
+  switch (param_.split_frame_mode)
+  {
+    case SplitFrameMode::SPLIT_BY_ANGLE:
+      split = split_angle_.toSplit(azimuth);
+      break;
+
+    case SplitFrameMode::SPLIT_BY_FIXED_PKTS:
+
+      if (this->pkt_count_ >= this->pkts_per_frame_)
+      {
+        this->pkt_count_ = 0;
+        split = true;
+      }
+
+      break;
+    case SplitFrameMode::SPLIT_BY_CUSTOM_PKTS:
+
+      if (this->pkt_count_ >= this->param_.num_pkts_split)
+      {
+        this->pkt_count_ = 0;
+        split = true;
+      }
+
+      break;
+
+    default:
+      break;
+  }
+
+  if (split)
+  {
+    putPointCloud(point_cloud_, chan_ts);
+  }
+}
+
+template <typename T_PointCloud>
+void Decoder<T_PointCloud>::putPointCloud(std::shared_ptr<T_PointCloud> msg, double chan_ts)
+{
+    msg->seq = point_cloud_seq_++;
+    msg->timestamp = chan_ts;
+    msg->is_dense = param_.dense_points;
+    if (msg->is_dense)
+    {
+      msg->height = 1;
+      msg->width = msg->points.size();
+    }
+    else
+    {
+      msg->height = height_;
+      msg->width = msg->points.size() / msg->height;
+    }
+
+    if (msg->points.size() == 0)
+    {
+      excb_(Error(ERRCODE_ZEROPOINTS));
+    }
+    else
+    {
+      point_cloud_cb_put_(msg);
+    }
 }
 
 template <typename T_PointCloud>
@@ -280,77 +338,6 @@ RSDecoderResult Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t
   }
 
   return decodeMsopPkt(pkt, size);
-}
-
-template <typename T_PointCloud>
-inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
-{
-  bool split = false;
-
-  split = split_angle_.toSplit(azimuth);
-
-#if 1
-#if 0
-  if (azimuth < this->last_azimuth_)
-  {
-    this->last_azimuth_ -= RS_ONE_ROUND;
-  }
-
-  if ((this->last_azimuth_ != -36001) && 
-      (this->last_azimuth_ < this->cut_angle_) && (azimuth >= this->cut_angle_))
-  {
-    this->last_azimuth_ = azimuth;
-    this->pkt_count_ = 0;
-    return FRAME_SPLIT;
-  }
-
-  this->last_azimuth_ = azimuth;
-#endif
-
-#else
-  if (this->pkt_count_ >= this->pkts_per_frame_)
-  {
-    this->pkt_count_ = 0;
-    split = true;
-  }
-
-  if (this->pkt_count_ >= this->param_.num_pkts_split)
-  {
-    this->pkt_count_ = 0;
-    split = true;
-  }
-#endif
-
-  if (split)
-  {
-    T_PointCloud& msg = *point_cloud_;
-
-    msg.seq = point_cloud_seq_++;
-    msg.timestamp = chan_ts;
-    //msg.frame_id = param_.frame_id;
-    msg.is_dense = param_.is_dense;
-    if (msg.is_dense)
-    {
-      msg.height = 1;
-      msg.width = msg.points.size();
-    }
-    else
-    {
-      msg.height = height_;
-      msg.width = msg.points.size() / msg.height;
-    }
-
-    if (msg.points.size() == 0)
-    {
-#if 0
-      reportError(Error(ERRCODE_ZEROPOINTS));
-#endif
-    }
-    else
-    {
-      point_cloud_cb_put_(point_cloud_);
-    }
-  }
 }
 
 template <typename T_PointCloud>

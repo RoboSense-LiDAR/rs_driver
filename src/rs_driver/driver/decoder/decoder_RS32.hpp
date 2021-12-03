@@ -87,11 +87,11 @@ public:
 
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size);
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, size_t size);
-  virtual RSDecoderResult TsMsopPkt(const uint8_t* pkt, size_t size);
   virtual uint64_t usecToDelay() {return 0;}
   virtual ~DecoderRS32() = default;
 
-  explicit DecoderRS32(const RSDecoderParam& param);
+  explicit DecoderRS32(const RSDecoderParam& param,
+      const std::function<void(const Error&)>& excb);
 
   static LidarConstParam getConstParam()
   {
@@ -119,8 +119,9 @@ public:
 };
 
 template <typename T_PointCloud>
-inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param)
-  : Decoder<T_PointCloud>(param, getConstParam())
+inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
+      const std::function<void(const Error&)>& excb)
+  : Decoder<T_PointCloud>(param, excb, getConstParam())
 {
 }
 
@@ -185,6 +186,8 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
     }
 
     uint16_t cur_azi = ntohs(block.azimuth);
+
+    this->toSplit(cur_azi, chan_ts);
 
 #if 0
     if (this->echo_mode_ == ECHO_DUAL)
@@ -267,7 +270,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
         setIntensity(point, intensity);
         pointValid = true;
       }
-      else if (!this->param_.is_dense)
+      else if (!this->param_.dense_points)
       {
         setX(point, NAN);
         setY(point, NAN);
@@ -284,15 +287,8 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
       }
     }
 
-    this->toSplit(cur_azi, chan_ts);
   }
 
-  return RSDecoderResult::DECODE_OK;
-}
-
-template <typename T_PointCloud>
-inline RSDecoderResult DecoderRS32<T_PointCloud>::TsMsopPkt(const uint8_t* packet, size_t size)
-{
   return RSDecoderResult::DECODE_OK;
 }
 

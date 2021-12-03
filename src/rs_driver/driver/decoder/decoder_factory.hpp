@@ -51,12 +51,13 @@ class DecoderFactory
 public:
 
   static std::shared_ptr<Decoder<T_PointCloud>> createDecoder(LidarType type, 
-      const RSDecoderParam& param);
+      const RSDecoderParam& param, const std::function<void(const Error&)>& excb);
 };
 
 template <typename T_PointCloud>
 inline std::shared_ptr<Decoder<T_PointCloud>>
-DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam& param)
+DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam& param,
+    const std::function<void(const Error&)>& excb)
 {
   std::shared_ptr<Decoder<T_PointCloud>> ret_ptr;
 
@@ -68,7 +69,7 @@ DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam
       break;
 #endif
     case LidarType::RS32:
-      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param);
+      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param, excb);
       break;
 #if 0
     case LidarType::RSBP:

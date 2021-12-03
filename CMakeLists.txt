@@ -26,7 +26,9 @@ option(ENABLE_TRANSFORM "Enable transform functions" OFF)
 #========================
 #  Project setup
 #========================
-set(CMAKE_BUILD_TYPE Release)
+if (CMAKE_BUILD_TYPE STREQUAL "")
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
 #========================
 #  Platform cross setup

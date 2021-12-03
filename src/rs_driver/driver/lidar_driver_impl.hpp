@@ -130,7 +130,7 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   }
 
   lidar_decoder_ptr_ = DecoderFactory<T_PointCloud>::createDecoder
-    (param.lidar_type, param.decoder_param);
+    (param.lidar_type, param.decoder_param, std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1));
 
   input_ptr_ = InputFactory::createInput(
       param.input_type, param.input_param, std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1), 0);

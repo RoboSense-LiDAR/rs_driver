@@ -107,20 +107,18 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
 {
   bool config_from_file = false;
   std::string angle_path = "";   ///< Path of angle calibration files(angle.csv). Only used for internal debugging.
-  float max_distance = 200.0f;                                       ///< Max distance of point cloud range
   float min_distance = 0.2f;                                         ///< Minimum distance of point cloud range
+  float max_distance = 200.0f;                                       ///< Max distance of point cloud range
   float start_angle = 0.0f;                                          ///< Start angle of point cloud
   float end_angle = 360.0f;                                          ///< End angle of point cloud
-
   SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;  ///< 1: Split frames by cut_angle;
                                                                      ///< 2: Split frames by fixed number of packets;
                                                                      ///< 3: Split frames by custom number of packets (num_pkts_split)
-  uint32_t num_pkts_split = 1;         ///< Number of packets in one frame, only be used when split_frame_mode=3
-  float cut_angle = 0.0f;              ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
-
-  bool wait_for_difop = true;        ///< true: start sending point cloud until receive difop packet
-  bool use_lidar_clock = false;        ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
-  bool is_dense = false;               ///< true: discard NAN points; false: reserve NAN points
+  float split_angle = 0.0f;        ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
+  uint32_t num_pkts_split = 1;     ///< Number of packets in one frame, only be used when split_frame_mode=3
+  bool wait_for_difop = true;      ///< true: start sending point cloud until receive difop packet
+  bool use_lidar_clock = false;    ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
+  bool dense_points = false;  ///< true: discard NAN points; false: reserve NAN points
 #if 0
   RSTransformParam transform_param;    ///< Used to transform points
   RSCameraTriggerParam trigger_param;  ///< Used to trigger camera
@@ -142,9 +140,9 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFOL << "wait_for_difop: " << wait_for_difop << RS_REND;
     RS_INFOL << "use_lidar_clock: " << use_lidar_clock << RS_REND;
     RS_INFOL << "split_frame_mode: " << split_frame_mode << RS_REND;
+    RS_INFOL << "split_angle: " << split_angle << RS_REND;
     RS_INFOL << "num_pkts_split: " << num_pkts_split << RS_REND;
-    RS_INFOL << "cut_angle: " << cut_angle << RS_REND;
-    RS_INFOL << "is_dense: " << is_dense << RS_REND;
+    RS_INFOL << "dense_points: " << dense_points << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 
