@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/input/input.hpp>
 
 #include <sstream>
-
 #include <pcap.h>
 
 namespace robosense

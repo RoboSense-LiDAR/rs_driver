@@ -128,7 +128,7 @@ inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
 template <typename T_PointCloud>
 inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t* packet, size_t size)
 {
-  uint8_t id[] = {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55};
+  static uint8_t id[] = {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55};
 
   const RS32DifopPkt& pkt = *(const RS32DifopPkt*)(packet);
 
@@ -150,8 +150,8 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t*
 template <typename T_PointCloud>
 inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
 {
-  uint8_t id[] = {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0};
-  uint8_t block_id[] = {0xFF, 0xEE};
+  static uint8_t id[] = {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0};
+  static uint8_t block_id[] = {0xFF, 0xEE};
   static const size_t BLOCKS_PER_PKT = 12;
 
   const RS32MsopPkt& pkt = *(const RS32MsopPkt*)(packet);
@@ -204,7 +204,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
           azi_diff = static_cast<float>(
               (RS_ONE_ROUND + cur_azi - RS_SWAP_SHORT(pkt.blocks[blk_idx - 2].azimuth)) % RS_ONE_ROUND);
           block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_time_jump_diff_) :
-                                               (block_timestamp + this->block_duration_);
+                                               (block_timestamp + this->block_ts_diff_);
         }
       }
     }
@@ -224,12 +224,12 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
 
       if (blk_idx > 0)
       {
-        block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_time_jump_diff_) :
-                                             (block_timestamp + this->block_duration_);
+        block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_blind_ts_diff_) :
+                                             (block_timestamp + this->block_ts_diff_);
       }
     }
 
-    azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff; 
+    azi_diff = (azi_diff > 100) ? this->block_azi_diff_ : azi_diff; 
 
     for (uint16_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {

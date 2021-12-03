@@ -60,8 +60,8 @@ enum InputType
 enum SplitFrameMode
 {
   SPLIT_BY_ANGLE = 1,
-  SPLIT_BY_FIXED_PKTS,
-  SPLIT_BY_CUSTOM_PKTS
+  SPLIT_BY_FIXED_BLKS,
+  SPLIT_BY_CUSTOM_BLKS
 };
 
 #if 0
@@ -115,7 +115,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
                                                                      ///< 2: Split frames by fixed number of packets;
                                                                      ///< 3: Split frames by custom number of packets (num_pkts_split)
   float split_angle = 0.0f;        ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
-  uint32_t num_pkts_split = 1;     ///< Number of packets in one frame, only be used when split_frame_mode=3
+  uint32_t num_blks_split = 1;     ///< Number of packets in one frame, only be used when split_frame_mode=3
   bool wait_for_difop = true;      ///< true: start sending point cloud until receive difop packet
   bool use_lidar_clock = false;    ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
   bool dense_points = false;  ///< true: discard NAN points; false: reserve NAN points
@@ -141,7 +141,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFOL << "use_lidar_clock: " << use_lidar_clock << RS_REND;
     RS_INFOL << "split_frame_mode: " << split_frame_mode << RS_REND;
     RS_INFOL << "split_angle: " << split_angle << RS_REND;
-    RS_INFOL << "num_pkts_split: " << num_pkts_split << RS_REND;
+    RS_INFOL << "num_blks_split: " << num_blks_split << RS_REND;
     RS_INFOL << "dense_points: " << dense_points << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }

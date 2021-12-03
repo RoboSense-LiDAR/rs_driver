@@ -34,8 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rs_driver/driver/driver_param.h>
 #include <rs_driver/msg/packet.h>
-#include <cstring>
+
 #include <thread>
+#include <cstring>
 
 #define MAX_PKT_LEN 1500
 #define ETH_HDR_LEN 42

@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/utility/time.h>
 
 #include <arpa/inet.h>
+
 #include <functional>
 #include <algorithm>
 #include <fstream>
@@ -119,8 +120,6 @@ public:
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual ~Decoder() = default;
 
-  void toSplit(uint16_t azimuth, double chan_ts);
-
   void regRecvCallback(const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put, 
       const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get);
 
@@ -128,21 +127,14 @@ public:
 
   void putPointCloud(std::shared_ptr<T_PointCloud> msg, double chan_ts);
 
-#if 0
-  uint16_t height()
-  {
-    return height_;
-  }
-
-  double getTemperature()
+  float getTemperature()
   {
     return temperature_;
   }
-#endif
 
-  uint64_t msecToDelay()
+  uint64_t packetDiff()
   {
-    return msec_to_delay_;
+    return 0;
   }
 
   void loadAngleFile(const std::string& angle_path)
@@ -155,6 +147,8 @@ public:
 
 protected:
 
+  void toSplit(uint16_t azimuth, double chan_ts);
+
   template <typename T_Difop>
   void decodeDifopCommon(const T_Difop& pkt);
 
@@ -163,29 +157,28 @@ protected:
   LidarConstParam lidar_const_param_;
   RSDecoderParam param_;
   std::function<void(const Error&)> excb_;
-  uint16_t height_;
-  uint64_t msec_to_delay_;
-  uint32_t msop_pkt_len_;
-  uint32_t difop_pkt_len_;
+  uint16_t height_; // to be deleted
+  uint32_t msop_pkt_len_; // to be moved
+  uint32_t difop_pkt_len_; // to be moved
 
   Trigon trigon_;
-  DistanceBlock distance_block_;
   ChanAngles chan_angles_;
+  DistanceBlock distance_block_;
   ScanBlock scan_block_;
   SplitAngle split_angle_;
-  float block_duration_;
-  uint16_t azi_diff_between_block_theoretical_;
-  float fov_time_jump_diff_;
-  uint32_t pkts_per_frame_;
+
+  float block_ts_diff_;
+  uint16_t block_azi_diff_;
+  float fov_blind_ts_diff_;
 
   unsigned int protocol_ver_;
-  unsigned int rpm_;
+  //unsigned int rpm_;
+  uint16_t rps_;
   RSEchoMode echo_mode_;
-  double temperature_;
+  float temperature_;
 
   bool difop_ready_;
-  int last_azimuth_;
-  unsigned int pkt_count_;
+  uint16_t num_blks_;
 
   int lidar_alph0_;  // atan2(Ry, Rx) * 180 / M_PI * 100
   float lidar_Rxy_;  // sqrt(Rx*Rx + Ry*Ry)
@@ -209,17 +202,15 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , distance_block_(0.4f, 200.0f, param.min_distance, param.max_distance)
   , scan_block_(param.start_angle * 100, param.end_angle * 100)
   , split_angle_(param.split_angle * 100)
-  , block_duration_(0)
-  , azi_diff_between_block_theoretical_(20)
-  , fov_time_jump_diff_(0)
-  , pkts_per_frame_(0)
+  , block_ts_diff_(0)
+  , block_azi_diff_(20)
+  , fov_blind_ts_diff_(0)
   , protocol_ver_(0)
-  , rpm_(600)
+  , rps_(10)
   , echo_mode_(ECHO_SINGLE)
-  , temperature_(0)
+  , temperature_(0.0)
   , difop_ready_(false)
-  , last_azimuth_(-36001)
-  , pkt_count_(0)
+  , num_blks_(0)
   , point_cloud_seq_(0)
 {
   /*  Calulate the lidar_alph0 and lidar_Rxy */
@@ -273,23 +264,22 @@ inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
       split = split_angle_.toSplit(azimuth);
       break;
 
-    case SplitFrameMode::SPLIT_BY_FIXED_PKTS:
+    case SplitFrameMode::SPLIT_BY_FIXED_BLKS: 
 
-      if (this->pkt_count_ >= this->pkts_per_frame_)
+      if (this->num_blks_ >= lidar_const_param_.BLOCKS_PER_FRAME)
       {
-        this->pkt_count_ = 0;
+        this->num_blks_ = 0;
         split = true;
       }
-
       break;
-    case SplitFrameMode::SPLIT_BY_CUSTOM_PKTS:
 
-      if (this->pkt_count_ >= this->param_.num_pkts_split)
+    case SplitFrameMode::SPLIT_BY_CUSTOM_BLKS:
+
+      if (this->num_blks_ >= this->param_.num_blks_split)
       {
-        this->pkt_count_ = 0;
+        this->num_blks_ = 0;
         split = true;
       }
-
       break;
 
     default:
@@ -353,38 +343,30 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
       this->echo_mode_ = RSEchoMode::ECHO_SINGLE;
   }
 
-  pkts_per_frame_ = 
-    this->lidar_const_param_.BLOCKS_PER_FRAME / this->lidar_const_param_.BLOCKS_PER_PKT;
-  if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
+  // rounds per second
+  this->rps_ = ntohs(pkt.rpm) / 60;
+  if (this->rps_ == 0)
   {
-    pkts_per_frame_ *= 2;
+    RS_WARNING << "LiDAR RPM is 0. Use default value 600." << RS_REND;
+    this->rps_ = 10;
   }
 
-  // rpm
-  this->rpm_ = ntohs(pkt.rpm);
-  if (this->rpm_ == 0)
-  {
-    RS_WARNING << "LiDAR RPM is 0" << RS_REND;
-    this->rpm_ = 600;
-  }
+  // block diff of azimuth
+  this->block_azi_diff_ = RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_FRAME;
 
-  // block duration - azimuth
-  this->azi_diff_between_block_theoretical_ = 
-    RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_FRAME;
+  // block diff of timestamp
+  this->block_ts_diff_ = 1 / (this->rps_ * this->lidar_const_param_.BLOCKS_PER_FRAME);
 
-  // block duration - timestamp
-  this->block_duration_ = 
-    60 / (this->rpm_ * this->lidar_const_param_.BLOCKS_PER_FRAME);
+  // fov related
+  uint16_t fov_start_angle = ntohs(pkt.fov.start_angle);
+  uint16_t fov_end_angle = ntohs(pkt.fov.end_angle);
 
-  // blind block duration
-  int fov_start_angle = ntohs(pkt.fov.start_angle);
-  int fov_end_angle = ntohs(pkt.fov.end_angle);
+  uint16_t fov_range = (fov_start_angle < fov_end_angle) ? 
+    (fov_end_angle - fov_start_angle) : (fov_end_angle + RS_ONE_ROUND - fov_start_angle);
+  uint16_t fov_blind_range = RS_ONE_ROUND - fov_range;
 
-  int fov_range = (fov_start_angle < fov_end_angle) ? (fov_end_angle - fov_start_angle) :
-    (RS_ONE_ROUND - fov_start_angle + fov_end_angle);
-
-  this->fov_time_jump_diff_ = this->block_duration_ * 
-    (fov_range / (RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_FRAME));
+  // fov blind diff of timestamp
+  this->fov_blind_ts_diff_ = this->block_ts_diff_ * (fov_blind_range / this->block_azi_diff_);
 }
 
 #if 0

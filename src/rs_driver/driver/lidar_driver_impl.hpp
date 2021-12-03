@@ -66,7 +66,7 @@ public:
   void regRecvCallback(const std::function<void(const uint8_t*, size_t)>& callback);
   void regExceptionCallback(const std::function<void(const Error&)>& callback);
   void decodePacket(const uint8_t* pkt, size_t size);
-  bool getLidarTemperature(double& input_temperature);
+  bool getTemperature(float& temp);
 
 private:
 
@@ -197,8 +197,10 @@ template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::regRecvCallback(const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put,
     const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get)
 {
-
-  lidar_decoder_ptr_->regRecvCallback(cb_put, cb_get);
+  if (lidar_decoder_ptr_ != nullptr)
+  {
+    lidar_decoder_ptr_->regRecvCallback(cb_put, cb_get);
+  }
 }
 
 template <typename T_PointCloud>
@@ -220,11 +222,11 @@ inline void LidarDriverImpl<T_PointCloud>::decodePacket(const uint8_t* pkt, size
 }
 
 template <typename T_PointCloud>
-inline bool LidarDriverImpl<T_PointCloud>::getLidarTemperature(double& input_temperature)
+inline bool LidarDriverImpl<T_PointCloud>::getTemperature(float& temp)
 {
   if (lidar_decoder_ptr_ != nullptr)
   {
-    input_temperature = lidar_decoder_ptr_->getLidarTemperature();
+    temp = lidar_decoder_ptr_->getTemperature();
     return true;
   }
   return false;
