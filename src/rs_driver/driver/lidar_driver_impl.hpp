@@ -75,15 +75,18 @@ private:
 
   std::shared_ptr<Packet> packetGet(size_t size);
   void packetPut(std::shared_ptr<Packet> pkt);
+  std::shared_ptr<T_PointCloud> getPointCloud();
 
   void processMsop();
   void processDifop();
 
 private:
   RSDriverParam driver_param_;
+  std::function<std::shared_ptr<T_PointCloud>(void)> point_cloud_cb_get_;
+  std::function<void(std::shared_ptr<T_PointCloud>)> point_cloud_cb_put_;
   std::function<void(const uint8_t*, size_t)> pkt_cb_;
-  std::function<void(const Error&)> err_cb_;
   std::function<void(const uint8_t*, size_t)> feed_pkt_cb_;
+  std::function<void(const Error&)> err_cb_;
   std::shared_ptr<Decoder<T_PointCloud>> lidar_decoder_ptr_;
   std::shared_ptr<Input> input_ptr_;
   SyncQueue<std::shared_ptr<Packet>> free_pkt_queue_;
@@ -129,11 +132,18 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
     return true;
   }
 
-  lidar_decoder_ptr_ = DecoderFactory<T_PointCloud>::createDecoder
-    (param.lidar_type, param.decoder_param, std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1));
+  lidar_decoder_ptr_ = DecoderFactory<T_PointCloud>::createDecoder(
+      param.lidar_type, param.decoder_param, 
+      std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1));
 
-  input_ptr_ = InputFactory::createInput(
-      param.input_type, param.input_param, std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1), 0);
+  lidar_decoder_ptr_->regRecvCallback(
+      std::bind(&LidarDriverImpl<T_PointCloud>::getPointCloud, this), point_cloud_cb_put_);
+
+  uint64_t packet_diff = lidar_decoder_ptr_->getPacketDiff();
+
+  input_ptr_ = InputFactory::createInput(param.input_type, param.input_param, 
+      std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1), packet_diff);
+
   input_ptr_->regRecvCallback(std::bind(&LidarDriverImpl<T_PointCloud>::packetGet, this, std::placeholders::_1),
                               std::bind(&LidarDriverImpl<T_PointCloud>::packetPut, this, std::placeholders::_1));
 
@@ -194,13 +204,29 @@ inline void LidarDriverImpl<T_PointCloud>::stop()
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::regRecvCallback(const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put,
+std::shared_ptr<T_PointCloud> LidarDriverImpl<T_PointCloud>::getPointCloud()
+{
+  while (1)
+  {
+    std::shared_ptr<T_PointCloud> pc = point_cloud_cb_get_();
+    if (pc)
+    {
+      pc->points.resize(0);
+      return pc;
+    }
+
+    reportError(Error(ERRCODE_POINTCLOUDNULL));
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  };
+}
+
+template <typename T_PointCloud>
+inline void LidarDriverImpl<T_PointCloud>::regRecvCallback(
+    const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put,
     const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get)
 {
-  if (lidar_decoder_ptr_ != nullptr)
-  {
-    lidar_decoder_ptr_->regRecvCallback(cb_put, cb_get);
-  }
+  point_cloud_cb_get_ = cb_get;
+  point_cloud_cb_put_ = cb_put;
 }
 
 template <typename T_PointCloud>

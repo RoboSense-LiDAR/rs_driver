@@ -39,51 +39,6 @@ namespace robosense
 {
 namespace lidar
 {
-#if 0
-inline long long msecToDelay(LidarType type, double replay_rate)
-{
-  constexpr double RS16_PCAP_SLEEP_DURATION = 1200;     ///< us
-  constexpr double RS32_PCAP_SLEEP_DURATION = 530;      ///< us
-  constexpr double RSBP_PCAP_SLEEP_DURATION = 530;      ///< us
-  constexpr double RS128_PCAP_SLEEP_DURATION = 100;     ///< us
-  constexpr double RS80_PCAP_SLEEP_DURATION = 135;      ///< us
-  constexpr double RSM1_PCAP_SLEEP_DURATION = 90;       ///< us
-  constexpr double RSHELIOS_PCAP_SLEEP_DURATION = 530;  ///< us
-  constexpr double RSROCK_PCAP_SLEEP_DURATION = 530;    ///< us TODO
-
-  double duration;
-  switch (type)
-  {
-    case LidarType::RS16:
-      duration = RS16_PCAP_SLEEP_DURATION;
-      break;
-    case LidarType::RS32:
-      duration = RS32_PCAP_SLEEP_DURATION;
-      break;
-    case LidarType::RSBP:
-      duration = RSBP_PCAP_SLEEP_DURATION;
-      break;
-    case LidarType::RS128:
-      duration = RS128_PCAP_SLEEP_DURATION;
-      break;
-    case LidarType::RS80:
-      duration = RS80_PCAP_SLEEP_DURATION;
-      break;
-    case LidarType::RSM1:
-      duration = RSM1_PCAP_SLEEP_DURATION;
-      break;
-    case LidarType::RSHELIOS:
-      duration = RSHELIOS_PCAP_SLEEP_DURATION;
-      break;
-    case LidarType::RSROCK:
-    default:
-      duration = RSROCK_PCAP_SLEEP_DURATION;
-      break;
-  }
-
-  return static_cast<long long>(duration / replay_rate);
-}
-#endif
 
 class InputFactory
 {

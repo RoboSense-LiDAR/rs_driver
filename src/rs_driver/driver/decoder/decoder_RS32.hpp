@@ -93,20 +93,15 @@ public:
   explicit DecoderRS32(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb);
 
-  static LidarConstParam getConstParam()
+  static RSDecoderConstParam getConstParam()
   {
-    LidarConstParam param;
+    RSDecoderConstParam param;
     param.MSOP_ID = 0xA050A55A0A05AA55;
     param.DIFOP_ID = 0x555511115A00FFA5;
     param.BLOCK_ID = 0xEEFF;
-    param.PKT_RATE = 1500;
+    param.BLOCKS_PER_FRAME = 0;
     param.BLOCKS_PER_PKT = 12;
-
     param.CHANNELS_PER_BLOCK = 32;
-    param.LASER_NUM = 32;
-
-    param.DSR_TOFFSET = 1.44;
-    param.FIRING_FREQUENCY = 0.018;
     param.DIS_RESOLUTION = 0.005;
 
     param.RX = 0.03997;
@@ -114,6 +109,19 @@ public:
     param.RZ = 0;
 
     return param;
+  }
+
+  RSEchoMode getEchoMode(uint8_t mode)
+  {
+    switch (mode)
+    {
+      case 0x00:
+        return RSEchoMode::ECHO_DUAL;
+      case 0x01:
+      case 0x02:
+      default:
+        return RSEchoMode::ECHO_SINGLE;
+    }
   }
 
 };
@@ -136,6 +144,8 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t*
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+
+  this->echo_mode_ = getEchoMode (pkt.return_mode);
 
   this->template decodeDifopCommon<RS32DifopPkt>(pkt);
 
@@ -231,7 +241,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
 
     azi_diff = (azi_diff > 100) ? this->block_azi_diff_ : azi_diff; 
 
-    for (uint16_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
+    for (uint16_t channel_idx = 0; channel_idx < this->const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
       static const float delta_ts[] = { 0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
                                        23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
@@ -244,7 +254,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
       chan_ts = block_timestamp + delta_ts[channel_idx];
       float azi_channel_ori = cur_azi + azi_diff * delta_ts[channel_idx] / delta_block;
 
-      float distance = ntohs(channel.distance) * this->lidar_const_param_.DIS_RESOLUTION;
+      float distance = ntohs(channel.distance) * this->const_param_.DIS_RESOLUTION;
 
       uint16_t azi_channel_final = this->chan_angles_.horizAdjust(channel_idx, (int32_t)azi_channel_ori);
 
@@ -259,9 +269,9 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
 
         if (this->distance_block_.in(distance) && this->scan_block_.in(azi_channel_final))
       {
-        float x =  distance * COS(angle_vert) * COS(azi_channel_final) + this->lidar_const_param_.RX * COS(angle_horiz);
-        float y = -distance * COS(angle_vert) * SIN(azi_channel_final) - this->lidar_const_param_.RX * SIN(angle_horiz);
-        float z =  distance * SIN(angle_vert) + this->lidar_const_param_.RZ;
+        float x =  distance * COS(angle_vert) * COS(azi_channel_final) + this->const_param_.RX * COS(angle_horiz);
+        float y = -distance * COS(angle_vert) * SIN(azi_channel_final) - this->const_param_.RX * SIN(angle_horiz);
+        float z =  distance * SIN(angle_vert) + this->const_param_.RZ;
         uint8_t intensity = channel.intensity;
 
         setX(point, x);

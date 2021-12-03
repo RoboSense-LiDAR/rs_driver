@@ -91,15 +91,10 @@ typedef struct
   uint64_t BLOCK_ID;
 
   // duration
-  uint32_t PKT_RATE; // to be deleted
-  uint16_t BLOCKS_PER_PKT;
   uint16_t BLOCKS_PER_FRAME;
+  uint16_t BLOCKS_PER_PKT;
   uint16_t CHANNELS_PER_BLOCK;
-  uint16_t LASER_NUM;
-
-  // firing
-  float DSR_TOFFSET; // to be deleted
-  float FIRING_FREQUENCY; // to be deleted
+  //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
 
   // distance
   float DIS_RESOLUTION;
@@ -108,7 +103,7 @@ typedef struct
   float RX;
   float RY;
   float RZ;
-} LidarConstParam;
+} RSDecoderConstParam;
 
 template <typename T_PointCloud>
 class Decoder
@@ -120,21 +115,26 @@ public:
   virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual ~Decoder() = default;
 
-  void regRecvCallback(const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put, 
-      const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get);
-
-  std::shared_ptr<T_PointCloud> getPointCloud();
-
-  void putPointCloud(std::shared_ptr<T_PointCloud> msg, double chan_ts);
+  void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
+      const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put);
 
   float getTemperature()
   {
     return temperature_;
   }
 
-  uint64_t packetDiff()
+  uint64_t getPacketDiff()
   {
-    return 0;
+    // Actual value of rps and echo_mode is unavailable,
+    // so use default value, rps = 10, echo_mode_ = ECHO_SINGLE.
+    // Instead, use RSInputParam.pcap_rate to change the playback speed.
+    uint64_t diff = block_ts_diff_ * const_param_.BLOCKS_PER_PKT;
+    if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
+    {
+      diff /= 2;
+    }
+
+    return diff;
   }
 
   void loadAngleFile(const std::string& angle_path)
@@ -143,18 +143,19 @@ public:
 
   explicit Decoder(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb,
-      const LidarConstParam& lidar_const_param);
+      const RSDecoderConstParam& lidar_const_param);
 
 protected:
 
   void toSplit(uint16_t azimuth, double chan_ts);
+  void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
 
   template <typename T_Difop>
   void decodeDifopCommon(const T_Difop& pkt);
 
 protected:
 
-  LidarConstParam lidar_const_param_;
+  RSDecoderConstParam const_param_;
   RSDecoderParam param_;
   std::function<void(const Error&)> excb_;
   uint16_t height_; // to be deleted
@@ -172,7 +173,6 @@ protected:
   float fov_blind_ts_diff_;
 
   unsigned int protocol_ver_;
-  //unsigned int rpm_;
   uint16_t rps_;
   RSEchoMode echo_mode_;
   float temperature_;
@@ -192,8 +192,8 @@ protected:
 template <typename T_PointCloud>
 inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param, 
     const std::function<void(const Error&)>& excb,
-    const LidarConstParam& lidar_const_param)
-  : lidar_const_param_(lidar_const_param)
+    const RSDecoderConstParam& lidar_const_param)
+  : const_param_(lidar_const_param)
   , param_(param)
   , excb_(excb)
   , height_(0)
@@ -214,43 +214,24 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , point_cloud_seq_(0)
 {
   /*  Calulate the lidar_alph0 and lidar_Rxy */
-  lidar_alph0_ = std::atan2(lidar_const_param_.RY, lidar_const_param_.RX) * 180 / M_PI * 100;
-  lidar_Rxy_ = std::sqrt(lidar_const_param_.RX * lidar_const_param_.RX + lidar_const_param_.RY * lidar_const_param_.RY);
+  lidar_alph0_ = std::atan2(const_param_.RY, const_param_.RX) * 180 / M_PI * 100;
+  lidar_Rxy_ = std::sqrt(const_param_.RX * const_param_.RX + const_param_.RY * const_param_.RY);
 
   if (param.config_from_file)
   {
     loadAngleFile(param.angle_path);
   }
+
+  point_cloud_ = point_cloud_cb_get_();
 }
 
 template <typename T_PointCloud>
 void Decoder<T_PointCloud>::regRecvCallback(
-    const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put, 
-    const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get)
+    const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
+    const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put) 
 {
-  point_cloud_cb_put_ = cb_put;
   point_cloud_cb_get_ = cb_get;
-}
-
-template <typename T_PointCloud>
-std::shared_ptr<T_PointCloud> Decoder<T_PointCloud>::getPointCloud()
-{
-  std::shared_ptr<T_PointCloud> pc;
-
-  while (1)
-  {
-    if (point_cloud_cb_get_ != nullptr)
-      pc = point_cloud_cb_get_();
-
-    if (pc)
-    {
-      pc->points.resize(0);
-      return pc;
-    }
-
-    excb_(Error(ERRCODE_POINTCLOUDNULL));
-    //std::this_thread::sleep_for(std::chrono::milliseconds(300));
-  };
+  point_cloud_cb_put_ = cb_put;
 }
 
 template <typename T_PointCloud>
@@ -266,7 +247,7 @@ inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
 
     case SplitFrameMode::SPLIT_BY_FIXED_BLKS: 
 
-      if (this->num_blks_ >= lidar_const_param_.BLOCKS_PER_FRAME)
+      if (this->num_blks_ >= const_param_.BLOCKS_PER_FRAME)
       {
         this->num_blks_ = 0;
         split = true;
@@ -288,12 +269,21 @@ inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
 
   if (split)
   {
-    putPointCloud(point_cloud_, chan_ts);
+    if (point_cloud_->points.size() > 0)
+    {
+      setPointCloudHeader(point_cloud_, chan_ts);
+      point_cloud_cb_put_(point_cloud_);
+      point_cloud_ = point_cloud_cb_get_();
+    }
+    else
+    {
+      excb_(Error(ERRCODE_ZEROPOINTS));
+    }
   }
 }
 
 template <typename T_PointCloud>
-void Decoder<T_PointCloud>::putPointCloud(std::shared_ptr<T_PointCloud> msg, double chan_ts)
+void Decoder<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts)
 {
     msg->seq = point_cloud_seq_++;
     msg->timestamp = chan_ts;
@@ -307,15 +297,6 @@ void Decoder<T_PointCloud>::putPointCloud(std::shared_ptr<T_PointCloud> msg, dou
     {
       msg->height = height_;
       msg->width = msg->points.size() / msg->height;
-    }
-
-    if (msg->points.size() == 0)
-    {
-      excb_(Error(ERRCODE_ZEROPOINTS));
-    }
-    else
-    {
-      point_cloud_cb_put_(msg);
     }
 }
 
@@ -334,15 +315,6 @@ template <typename T_PointCloud>
 template <typename T_Difop>
 inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
 {
-  // return mode
-  switch (pkt.return_mode)
-  {
-    case 0x00:
-      this->echo_mode_ = RSEchoMode::ECHO_DUAL;
-    default:
-      this->echo_mode_ = RSEchoMode::ECHO_SINGLE;
-  }
-
   // rounds per second
   this->rps_ = ntohs(pkt.rpm) / 60;
   if (this->rps_ == 0)
@@ -352,10 +324,10 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   }
 
   // block diff of azimuth
-  this->block_azi_diff_ = RS_ONE_ROUND / this->lidar_const_param_.BLOCKS_PER_FRAME;
+  this->block_azi_diff_ = RS_ONE_ROUND / this->const_param_.BLOCKS_PER_FRAME;
 
   // block diff of timestamp
-  this->block_ts_diff_ = 1 / (this->rps_ * this->lidar_const_param_.BLOCKS_PER_FRAME);
+  this->block_ts_diff_ = 1 / (this->rps_ * this->const_param_.BLOCKS_PER_FRAME);
 
   // fov related
   uint16_t fov_start_angle = ntohs(pkt.fov.start_angle);
