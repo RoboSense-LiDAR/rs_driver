@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
   param.print();
 
   LidarDriver<PointCloudMsg> driver;
-  driver.regRecvCallback(pointCloudPutCallback, nullptr/*pointCloudGetCallback*/); ///< Register the point cloud callback function into the driver
+  driver.regRecvCallback(pointCloudGetCallback, pointCloudPutCallback); ///< Register the point cloud callback function into the driver
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
   if (!driver.init(param))                         ///< Call the init function and pass the parameter
   {

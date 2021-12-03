@@ -19,9 +19,7 @@ option(COMPILE_TESTS "Build rs_driver unit tests" ON)
 #  Compile Features
 #=============================
 option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
-option(ENABLE_PUBLISH_RAW_MSG "Publish raw messages" OFF)
-option(ENABLE_PUBLISH_CAM_MSG "Publish camera trigger messages" OFF)
-option(ENABLE_TRANSFORM "Enable transform functions" OFF)
+option(ENABLE_POINT_CLOUD_POOL "Enable user point cloud pool" ON)
 
 #========================
 #  Project setup
@@ -115,13 +113,9 @@ if(${ENABLE_HIGH_PRIORITY_THREAD})
   add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
 endif(${ENABLE_HIGH_PRIORITY_THREAD})
 
-if(${ENABLE_PUBLISH_RAW_MSG})
-  add_definitions("-DENABLE_PUBLISH_RAW_MSG")
-endif(${ENABLE_PUBLISH_RAW_MSG})
-
-if(${ENABLE_PUBLISH_CAM_MSG})
-  add_definitions("-DENABLE_PUBLISH_CAM_MSG")
-endif(${ENABLE_PUBLISH_CAM_MSG})
+if(${ENABLE_POINT_CLOUD_POOL})
+  add_definitions("-DENABLE_POINT_CLOUD_POOL")
+endif(${ENABLE_POINT_CLOUD_POOL})
 
 #========================
 #  Build Demos

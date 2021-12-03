@@ -53,14 +53,8 @@ public:
   /**
    * @brief Constructor, instanciate the driver pointer
    */
-  LidarDriver() : driver_ptr_(std::make_shared<LidarDriverImpl<T_PointCloud>>())
-  {
-  }
-
-  /**
-   * @brief Deconstructor, stop all threads
-   */
-  ~LidarDriver()
+  LidarDriver() 
+    : driver_ptr_(std::make_shared<LidarDriverImpl<T_PointCloud>>())
   {
   }
 
@@ -92,15 +86,39 @@ public:
     driver_ptr_->stop();
   }
 
+#ifdef ENABLE_POINT_CLOUD_POOL
   /**
    * @brief Register the lidar point cloud callback function to driver. When point cloud is ready, this function will be
    * called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put,
-      const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get = nullptr)
+  inline void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
+      const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put)
   {
-    driver_ptr_->regRecvCallback(cb_put, cb_get);
+    driver_ptr_->regRecvCallback(cb_get, cb_put);
+  }
+
+#else
+
+  /**
+   * @brief Register the lidar point cloud callback function to driver. When point cloud is ready, this function will be
+   * called
+   * @param callback The callback function
+   */
+  inline void regRecvCallback(const std::function<void(const T_PointCloud&)>& cb_put)
+  {
+    driver_ptr_->regRecvCallback(cb_put);
+  }
+
+#endif
+
+  /**
+   * @brief Register the exception message callback function to driver. When error occurs, this function will be called
+   * @param callback The callback function
+   */
+  inline void regExceptionCallback(const std::function<void(const Error&)>& callback)
+  {
+    driver_ptr_->regExceptionCallback(callback);
   }
 
   /**
@@ -111,15 +129,6 @@ public:
   inline void regRecvCallback(const std::function<void(const uint8_t*, size_t)>& callback)
   {
     driver_ptr_->regRecvCallback(callback);
-  }
-
-  /**
-   * @brief Register the exception message callback function to driver. When error occurs, this function will be called
-   * @param callback The callback function
-   */
-  inline void regExceptionCallback(const std::function<void(const Error&)>& callback)
-  {
-    driver_ptr_->regExceptionCallback(callback);
   }
 
   /**
