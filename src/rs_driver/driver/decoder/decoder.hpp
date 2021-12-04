@@ -86,12 +86,11 @@ enum RSDecoderResult
 typedef struct
 {
   // identity
-  uint64_t MSOP_ID;
-  uint64_t DIFOP_ID;
-  uint64_t BLOCK_ID;
+  uint8_t MSOP_ID[8];
+  uint8_t DIFOP_ID[8];
+  uint8_t BLOCK_ID[2];
 
   // duration
-  uint16_t BLOCKS_PER_FRAME;
   uint16_t BLOCKS_PER_PKT;
   uint16_t CHANNELS_PER_BLOCK;
   //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
@@ -99,10 +98,15 @@ typedef struct
   // distance
   float DIS_RESOLUTION;
 
+  // firing_ts/block_chan_ts
+  float CHAN_TS[128];
+  float BLOCK_TS;
+
   // lens center
   float RX;
   float RY;
   float RZ;
+
 } RSDecoderConstParam;
 
 template <typename T_PointCloud>
@@ -125,16 +129,9 @@ public:
 
   uint64_t getPacketDiff()
   {
-    // Actual value of rps and echo_mode is unavailable,
-    // so use default value, rps = 10, echo_mode_ = ECHO_SINGLE.
-    // Instead, use RSInputParam.pcap_rate to change the playback speed.
-    uint64_t diff = block_ts_diff_ * const_param_.BLOCKS_PER_PKT;
-    if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
-    {
-      diff /= 2;
-    }
-
-    return diff;
+    // Assume echo_mode is ECHO_SINGLE. 
+    // If it is ECHO_DUAL, use RSInputParam.pcap_rate = 2 to change the playback speed.
+    return this->const_param_.BLOCK_TS * const_param_.BLOCKS_PER_PKT;
   }
 
   void loadAngleFile(const std::string& angle_path)
@@ -163,12 +160,14 @@ protected:
   uint32_t difop_pkt_len_; // to be moved
 
   Trigon trigon_;
+#define SIN(angle) this->trigon_.sin(angle)
+#define COS(angle) this->trigon_.cos(angle)
   ChanAngles chan_angles_;
   DistanceBlock distance_block_;
   ScanBlock scan_block_;
   SplitAngle split_angle_;
 
-  float block_ts_diff_;
+  uint16_t blks_per_frame_;
   uint16_t block_azi_diff_;
   float fov_blind_ts_diff_;
 
@@ -202,7 +201,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , distance_block_(0.4f, 200.0f, param.min_distance, param.max_distance)
   , scan_block_(param.start_angle * 100, param.end_angle * 100)
   , split_angle_(param.split_angle * 100)
-  , block_ts_diff_(0)
+  , blks_per_frame_(1/(10*lidar_const_param.BLOCK_TS))
   , block_azi_diff_(20)
   , fov_blind_ts_diff_(0)
   , protocol_ver_(0)
@@ -247,7 +246,7 @@ inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
 
     case SplitFrameMode::SPLIT_BY_FIXED_BLKS: 
 
-      if (this->num_blks_ >= const_param_.BLOCKS_PER_FRAME)
+      if (this->num_blks_ >= this->blks_per_frame_)
       {
         this->num_blks_ = 0;
         split = true;
@@ -323,11 +322,11 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
     this->rps_ = 10;
   }
 
-  // block diff of azimuth
-  this->block_azi_diff_ = RS_ONE_ROUND / this->const_param_.BLOCKS_PER_FRAME;
+  // blocks per frame
+  blks_per_frame_ = 1 / (this->rps_ * this->const_param_.BLOCK_TS);
 
-  // block diff of timestamp
-  this->block_ts_diff_ = 1 / (this->rps_ * this->const_param_.BLOCKS_PER_FRAME);
+  // block diff of azimuth
+  this->block_azi_diff_ = RS_ONE_ROUND * this->rps_ * this->const_param_.BLOCK_TS;
 
   // fov related
   uint16_t fov_start_angle = ntohs(pkt.fov.start_angle);
@@ -338,7 +337,7 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   uint16_t fov_blind_range = RS_ONE_ROUND - fov_range;
 
   // fov blind diff of timestamp
-  this->fov_blind_ts_diff_ = this->block_ts_diff_ * (fov_blind_range / this->block_azi_diff_);
+  this->fov_blind_ts_diff_ = fov_blind_range / (RS_ONE_ROUND * this->rps_);
 }
 
 #if 0

@@ -95,18 +95,27 @@ public:
 
   static RSDecoderConstParam getConstParam()
   {
-    RSDecoderConstParam param;
-    param.MSOP_ID = 0xA050A55A0A05AA55;
-    param.DIFOP_ID = 0x555511115A00FFA5;
-    param.BLOCK_ID = 0xEEFF;
-    param.BLOCKS_PER_FRAME = 0;
-    param.BLOCKS_PER_PKT = 12;
-    param.CHANNELS_PER_BLOCK = 32;
-    param.DIS_RESOLUTION = 0.005;
+    RSDecoderConstParam param = 
+    {
+      {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
+      , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+      , {0xFF, 0xEE} // block id
+      , 12 // blocks per packet
+      , 32 // channels per block
+      , 0.005 // distance resolution
 
-    param.RX = 0.03997;
-    param.RY = -0.01087;
-    param.RZ = 0;
+      // firing_ts
+      , { 0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
+        23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
+        1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
+        24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08}
+      , 55.52
+
+        // lens center
+      , 0.03997 // RX
+      , -0.01087 // RY
+      , 0 // RZ
+    };
 
     return param;
   }
@@ -136,11 +145,9 @@ inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
 template <typename T_PointCloud>
 inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t* packet, size_t size)
 {
-  static uint8_t id[] = {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55};
-
   const RS32DifopPkt& pkt = *(const RS32DifopPkt*)(packet);
 
-  if (memcmp(id, &(pkt.id), sizeof(id)) != 0)
+  if (memcmp(this->const_param_.DIFOP_ID, &(pkt.id), 8) != 0)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
@@ -156,6 +163,84 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t*
 
   return RSDecoderResult::DECODE_OK;
 }
+
+#if 0
+template <typename T_Packet>
+class PacketTraverser
+{
+public:
+
+  PacketTraverser(uint64_t pkt_ts)
+    : bi_(0), ci_(0)
+  {
+    ts_ = pkt_ts;
+    azi_ = pkt_.blocks[0].azimuth;
+  }
+
+  void toNext()
+  {
+    static const float delta_ts[] = 
+    { 0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
+      23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
+      1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
+      24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08
+    };
+
+    static const float delta_block = 55.52;
+
+    ci++;
+    if (ci_ < CHAN_PER_BLOCK)
+    {
+      ts_ += delta_ts[ci_] - delta_ts[ci_-1];
+      azi_ += azi_diff * delta_ts[ci] / delta_block;
+    }
+    else
+    {
+      bi_ ++;
+      ci_ = 0;
+
+      blk_ts_ += block_diff
+      ts_ += delta_block - delta_ts[CHAN_PER_BLOCK-1];
+      azi_ = pkt_.blocks[bi_].azimuth;
+    }
+  }
+
+  bool isLast()
+  {
+    return (bi_ >= BLOCKS_PER_PACKET);
+  }
+
+  void getPos(size_t& blk, size_t& chan)
+  {
+    blk = blk_;
+    chan = chan_;
+  }
+
+  uint16_t azi()
+  {
+    return azi_;
+  }
+
+  uint64_t ts()
+  {
+    return ts_;
+  }
+
+private:
+
+  void calc()
+  {
+  }
+
+  Packet pkt_;
+  size_t bi_;
+  size_t ci_;
+  uint64_t blk_ts_;
+  uint16_t blk_azi_;
+  uint64_t chan_ts_;
+  uint16_t chan_azi_;
+};
+#endif
 
 template <typename T_PointCloud>
 inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
@@ -173,31 +258,30 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
 
   this->temperature_ = calcTemp(&(pkt.header.temp));
 
-  double block_timestamp = 0;
-  double chan_ts = block_timestamp;
-  //uint64_t ts = 0;
+  double chan_ts;
+  double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    block_timestamp = calcTimeYMD(&pkt.header.timestamp);
+    pkt_ts = calcTimeYMD(&pkt.header.timestamp);
   }
   else
   {
-    block_timestamp = calcTimeHost();
+    pkt_ts = calcTimeHost();
   }
 
-  float azi_diff = 0;
+  double block_ts = pkt_ts;
+  uint16_t azi_diff = 0;
   for (size_t blk_idx = 0; blk_idx < BLOCKS_PER_PKT; blk_idx++)
   {
     const RS32MsopBlock& block = pkt.blocks[blk_idx];
-
     if (memcmp(&(block.id), block_id, sizeof(block_id)))
     {
       break;
     }
 
-    uint16_t cur_azi = ntohs(block.azimuth);
+    uint16_t block_azi = ntohs(block.azimuth);
 
-    this->toSplit(cur_azi, chan_ts);
+    this->toSplit(block_azi, chan_ts);
 
 #if 0
     if (this->echo_mode_ == ECHO_DUAL)
@@ -207,14 +291,14 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
         if (blk_idx == 0)
         {
           azi_diff = static_cast<float>(
-              (RS_ONE_ROUND + RS_SWAP_SHORT(pkt.blocks[blk_idx + 2].azimuth) - cur_azi) % RS_ONE_ROUND);
+              (RS_ONE_ROUND + RS_SWAP_SHORT(pkt.blocks[blk_idx + 2].azimuth) - block_azi) % RS_ONE_ROUND);
         }
         else
         {
           azi_diff = static_cast<float>(
-              (RS_ONE_ROUND + cur_azi - RS_SWAP_SHORT(pkt.blocks[blk_idx - 2].azimuth)) % RS_ONE_ROUND);
-          block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_time_jump_diff_) :
-                                               (block_timestamp + this->block_ts_diff_);
+              (RS_ONE_ROUND + block_azi - RS_SWAP_SHORT(pkt.blocks[blk_idx - 2].azimuth)) % RS_ONE_ROUND);
+          block_ts = (azi_diff > 100) ? (block_ts + this->fov_time_jump_diff_) :
+            (block_ts + this->block_ts_diff_);
         }
       }
     }
@@ -223,80 +307,78 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
     {
       if (blk_idx < (BLOCKS_PER_PKT - 1))
       {
-        azi_diff = static_cast<float>((RS_ONE_ROUND + ntohs(pkt.blocks[blk_idx + 1].azimuth) - cur_azi) %
-                                      RS_ONE_ROUND);
+        azi_diff = static_cast<float>((RS_ONE_ROUND + ntohs(pkt.blocks[blk_idx + 1].azimuth) - block_azi) %
+            RS_ONE_ROUND);
       }
       else
       {
-        azi_diff = static_cast<float>((RS_ONE_ROUND + cur_azi - ntohs(pkt.blocks[blk_idx - 1].azimuth)) %
-                                      RS_ONE_ROUND);
+        azi_diff = static_cast<float>((RS_ONE_ROUND + block_azi - ntohs(pkt.blocks[blk_idx - 1].azimuth)) %
+            RS_ONE_ROUND);
       }
 
       if (blk_idx > 0)
       {
-        block_timestamp = (azi_diff > 100) ? (block_timestamp + this->fov_blind_ts_diff_) :
-                                             (block_timestamp + this->block_ts_diff_);
+        block_ts = (azi_diff > 100) ? (block_ts + this->fov_blind_ts_diff_) :
+          (block_ts + this->const_param_.BLOCK_TS);
       }
     }
 
-    azi_diff = (azi_diff > 100) ? this->block_azi_diff_ : azi_diff; 
+    //azi_diff = (azi_diff > 100) ? this->block_azi_diff_ : azi_diff; 
 
-    for (uint16_t channel_idx = 0; channel_idx < this->const_param_.CHANNELS_PER_BLOCK; channel_idx++)
+    for (uint16_t chan_idx = 0; chan_idx < this->const_param_.CHANNELS_PER_BLOCK; chan_idx++)
     {
-      static const float delta_ts[] = { 0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
-                                       23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
-                                        1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
-                                       24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08};
+      static const float delta_ts[] = 
+      { 0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
+        23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
+        1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
+        24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08
+      };
+
       static const float delta_block = 55.52;
 
-      const RSChannel& channel = pkt.blocks[blk_idx].channels[channel_idx];
+      const RSChannel& chan = block.channels[chan_idx];
 
-      chan_ts = block_timestamp + delta_ts[channel_idx];
-      float azi_channel_ori = cur_azi + azi_diff * delta_ts[channel_idx] / delta_block;
+      chan_ts = block_ts + delta_ts[chan_idx];
 
-      float distance = ntohs(channel.distance) * this->const_param_.DIS_RESOLUTION;
+      float chan_ori_azi = block_azi + azi_diff * (delta_ts[chan_idx] / delta_block);
 
-      uint16_t azi_channel_final = this->chan_angles_.horizAdjust(channel_idx, (int32_t)azi_channel_ori);
+      float distance = ntohs(chan.distance) * this->const_param_.DIS_RESOLUTION;
 
-      uint16_t angle_horiz = azi_channel_ori;
-      uint16_t angle_vert = this->chan_angles_.vertAdjust(channel_idx);
+      uint16_t azi_channel_final = this->chan_angles_.horizAdjust(chan_idx, (int32_t)chan_ori_azi);
 
-      typename T_PointCloud::PointT point;
-      bool pointValid = false;
+      uint16_t angle_horiz = chan_ori_azi;
+      uint16_t angle_vert = this->chan_angles_.vertAdjust(chan_idx);
 
-#define SIN(angle) this->trigon_.sin(angle)
-#define COS(angle) this->trigon_.cos(angle)
-
-        if (this->distance_block_.in(distance) && this->scan_block_.in(azi_channel_final))
+      if (this->distance_block_.in(distance) && this->scan_block_.in(azi_channel_final))
       {
         float x =  distance * COS(angle_vert) * COS(azi_channel_final) + this->const_param_.RX * COS(angle_horiz);
         float y = -distance * COS(angle_vert) * SIN(azi_channel_final) - this->const_param_.RX * SIN(angle_horiz);
         float z =  distance * SIN(angle_vert) + this->const_param_.RZ;
-        uint8_t intensity = channel.intensity;
 
+        uint8_t intensity = chan.intensity;
+
+        typename T_PointCloud::PointT point;
         setX(point, x);
         setY(point, y);
         setZ(point, z);
         setIntensity(point, intensity);
-        pointValid = true;
+
+        setRing(point, this->chan_angles_.toUserChan(chan_idx));
+        setTimestamp(point, chan_ts);
+        this->point_cloud_->points.emplace_back(point);
       }
       else if (!this->param_.dense_points)
       {
+        typename T_PointCloud::PointT point;
         setX(point, NAN);
         setY(point, NAN);
         setZ(point, NAN);
         setIntensity(point, 0);
-        pointValid = true;
-      }
-
-      if (pointValid)
-      {
-        setRing(point, this->chan_angles_.toUserChan(channel_idx));
+        setRing(point, this->chan_angles_.toUserChan(chan_idx));
         setTimestamp(point, chan_ts);
         this->point_cloud_->points.emplace_back(point);
       }
     }
-
   }
 
   return RSDecoderResult::DECODE_OK;
