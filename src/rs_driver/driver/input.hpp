@@ -387,17 +387,17 @@ inline void Input::getMsopPacket()
 
 inline void Input::getDifopPacket()
 {
-  if (!(input_param_.use_someip || input_param_.use_custom_proto))
+  if (!input_param_.use_someip)
   {
-    char* precv_buffer = (char*)malloc(difop_pkt_length_);
+    char* precv_buffer = (char*)malloc(difop_pkt_length_ + custom_proto_offset_);
     while (difop_thread_.start_.load())
     {
-      difop_deadline_->expires_from_now(boost::posix_time::seconds(2));
+      difop_deadline_->expires_from_now(boost::posix_time::seconds(5));
       boost::system::error_code ec = boost::asio::error::would_block;
       std::size_t ret = 0;
 
-      difop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, difop_pkt_length_),
-                                     boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
+      difop_sock_ptr_->async_receive(boost::asio::buffer(precv_buffer, difop_pkt_length_ + custom_proto_offset_),
+          boost::bind(&Input::handleReceive, _1, _2, &ec, &ret));
       do
       {
         difop_io_service_.run_one();
@@ -407,13 +407,13 @@ inline void Input::getDifopPacket()
         excb_(Error(ERRCODE_DIFOPTIMEOUT));
         continue;
       }
-      if (ret < difop_pkt_length_)
+      if (ret < (difop_pkt_length_ + custom_proto_offset_))
       {
         excb_(Error(ERRCODE_DIFOPINCOMPLETE));
         continue;
       }
       PacketMsg msg(difop_pkt_length_);
-      memcpy(msg.packet.data(), precv_buffer, difop_pkt_length_);
+      memcpy(msg.packet.data(), precv_buffer + custom_proto_offset_, difop_pkt_length_);
       for (auto& iter : difop_cb_)
       {
         iter(msg);
