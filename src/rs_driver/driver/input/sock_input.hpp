@@ -167,10 +167,16 @@ inline int SockInput::createSocket(uint16_t port, const std::string& hostIp, con
 
   if (grpIp != "0.0.0.0")
   {
+#if 0
     struct ip_mreqn ipm;
     memset(&ipm, 0, sizeof(ipm));
     inet_pton(AF_INET, grpIp.c_str(), &(ipm.imr_multiaddr));
     inet_pton(AF_INET, hostIp.c_str(), &(ipm.imr_address));
+#else
+    struct ip_mreq ipm;
+    inet_pton(AF_INET, grpIp.c_str(), &(ipm.imr_multiaddr));
+    inet_pton(AF_INET, hostIp.c_str(), &(ipm.imr_interface));
+#endif
     ret = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ipm, sizeof(ipm));
     if (ret < 0)
     {
