@@ -61,70 +61,63 @@ TEST(TestDualPacketTraverser, toNext)
 
   // blk 0, chan 0
   ASSERT_FALSE(traverser.isLast());
-  traverser.getPos(blk, chan);
+  ASSERT_TRUE(traverser.get(blk, chan, azi, ts));
   ASSERT_EQ(blk, 0);
   ASSERT_EQ(chan, 0);
-  ASSERT_TRUE(traverser.getValue(azi, ts));
   ASSERT_EQ(azi, 1);
   ASSERT_EQ(ts, 0.25);
 
   // blk 0, chan 1
   traverser.toNext();
   ASSERT_FALSE(traverser.isLast());
-  traverser.getPos(blk, chan);
+  ASSERT_TRUE(traverser.get(blk, chan, azi, ts));
   ASSERT_EQ(blk, 0);
   ASSERT_EQ(chan, 1);
-  ASSERT_TRUE(traverser.getValue(azi, ts));
   ASSERT_EQ(azi, 11);
   ASSERT_EQ(ts, 0.50);
 
   // blk 1, chan 0. 2nd return
   traverser.toNext();
   ASSERT_FALSE(traverser.isLast());
-  traverser.getPos(blk, chan);
+  ASSERT_TRUE(traverser.get(blk, chan, azi, ts));
   ASSERT_EQ(blk, 1);
   ASSERT_EQ(chan, 0);
-  ASSERT_TRUE(traverser.getValue(azi, ts));
   ASSERT_EQ(azi, 1);
   ASSERT_EQ(ts, 0.25);
 
   // blk 1, chan 1. 2nd return
   traverser.toNext();
   ASSERT_FALSE(traverser.isLast());
-  traverser.getPos(blk, chan);
+  ASSERT_TRUE(traverser.get(blk, chan, azi, ts));
   ASSERT_EQ(blk, 1);
   ASSERT_EQ(chan, 1);
-  ASSERT_TRUE(traverser.getValue(azi, ts));
   ASSERT_EQ(azi, 11);
   ASSERT_EQ(ts, 0.50);
 
   // blk 2, chan 0
   traverser.toNext();
   ASSERT_FALSE(traverser.isLast());
-  traverser.getPos(blk, chan);
+  ASSERT_TRUE(traverser.get(blk, chan, azi, ts));
   ASSERT_EQ(blk, 2);
   ASSERT_EQ(chan, 0);
-  ASSERT_TRUE(traverser.getValue(azi, ts));
   ASSERT_EQ(azi, 21);
   ASSERT_EQ(ts, 0.75);
 
   // blk 2, chan 1
   traverser.toNext();
   ASSERT_FALSE(traverser.isLast());
-  traverser.getPos(blk, chan);
+  ASSERT_TRUE(traverser.get(blk, chan, azi, ts));
   ASSERT_EQ(blk, 2);
   ASSERT_EQ(chan, 1);
-  ASSERT_TRUE(traverser.getValue(azi, ts));
   ASSERT_EQ(azi, 36);
   ASSERT_EQ(ts, 1.0);
 
   // blk 3, chan 0. 2nd return.
   traverser.toNext();
   ASSERT_FALSE(traverser.isLast());
-  traverser.getPos(blk, chan);
+  ASSERT_TRUE(traverser.get(blk, chan, azi, ts));
   ASSERT_EQ(blk, 3);
   ASSERT_EQ(chan, 0);
-  ASSERT_TRUE(traverser.getValue(azi, ts));
   ASSERT_EQ(azi, 21);
   ASSERT_EQ(ts, 0.75);
 
@@ -135,20 +128,18 @@ TEST(TestDualPacketTraverser, toNext)
   // blk 4, chan 0. 
   traverser.toNext();
   ASSERT_FALSE(traverser.isLast());
-  traverser.getPos(blk, chan);
+  ASSERT_TRUE(traverser.get(blk, chan, azi, ts));
   ASSERT_EQ(blk, 4);
   ASSERT_EQ(chan, 0);
-  ASSERT_TRUE(traverser.getValue(azi, ts));
   ASSERT_EQ(azi, 51);
   ASSERT_EQ(ts, 1.25);
 
   // blk 4, chan 1. 
   traverser.toNext();
   ASSERT_FALSE(traverser.isLast());
-  traverser.getPos(blk, chan);
+  ASSERT_TRUE(traverser.get(blk, chan, azi, ts));
   ASSERT_EQ(blk, 4);
   ASSERT_EQ(chan, 1);
-  ASSERT_TRUE(traverser.getValue(azi, ts));
   ASSERT_EQ(azi, 66);
   ASSERT_EQ(ts, 1.5);
 }

@@ -193,16 +193,14 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
   for (; !traverser.isLast(); traverser.toNext())
   {
     uint16_t blk, chan;
-    traverser.getPos (blk, chan);
+    int16_t angle_horiz;
+    double chan_ts;
+    traverser.get (blk, chan, angle_horiz, chan_ts);
 
     const RSChannel& channel = pkt.blocks[blk].channels[chan];
     float distance = ntohs(channel.distance) * this->const_param_.DIS_RESOLUTION;
     uint8_t intensity = channel.intensity;
     int16_t angle_vert = this->chan_angles_.vertAdjust(chan);
-
-    int16_t angle_horiz;
-    double chan_ts;
-    traverser.getValue (angle_horiz, chan_ts);
     int16_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
 
     if (this->distance_block_.in(distance) && this->scan_block_.in(angle_horiz_final))

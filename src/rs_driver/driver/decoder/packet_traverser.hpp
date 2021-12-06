@@ -38,17 +38,17 @@ namespace lidar
 {
 
 template <typename T_Packet>
-class SingleReturnPacketTraverser
+class PacketTraverser
 {
 public:
 
-  SingleReturnPacketTraverser(const RSDecoderConstParam const_param, const T_Packet& pkt, double pkt_ts)
+  virtual void toNextBlock() = 0;
+
+  PacketTraverser(const RSDecoderConstParam const_param, const T_Packet& pkt, double pkt_ts)
     : const_param_(const_param), pkt_(pkt), bi_(0), ci_(0)
   {
-    // calc initial values
     blk_ts_ = pkt_ts; 
     blk_azi_ = pkt_.blocks[bi_].azimuth;
-    blk_azi_diff_ = pkt.blocks[bi_+1].azimuth - pkt.blocks[bi_].azimuth;
   }
 
   void toNext()
@@ -59,16 +59,7 @@ public:
       ci_ = 0;
       bi_++;
 
-      // calc next values
-      if (bi_ < const_param_.BLOCKS_PER_PKT)
-      {
-        blk_ts_ += const_param_.BLOCK_DURATION;
-        blk_azi_ = pkt_.blocks[bi_].azimuth;
-        if (bi_ < (const_param_.BLOCKS_PER_PKT - 1))
-        {
-          blk_azi_diff_ = pkt_.blocks[bi_+1].azimuth - pkt_.blocks[bi_].azimuth;
-        }
-      }
+      toNextBlock();
     }
   }
 
@@ -77,24 +68,20 @@ public:
     return (bi_ >= const_param_.BLOCKS_PER_PKT);
   }
 
-  bool getValue(int16_t& azi, double& ts)
+  bool get(uint16_t& blk, uint16_t& chan, int16_t& azi, double& ts)
   {
     if (bi_ >= const_param_.BLOCKS_PER_PKT)
       return false;
 
+    blk = bi_;
+    chan = ci_;
+
     ts = blk_ts_ + const_param_.CHAN_TSS[ci_];
-    azi = blk_azi_ + 
-      blk_azi_diff_ * (const_param_.CHAN_TSS[ci_] / const_param_.BLOCK_DURATION);
+    azi = blk_azi_ + blk_azi_diff_ * (const_param_.CHAN_TSS[ci_] / const_param_.BLOCK_DURATION);
     return true;
   }
 
-  void getPos(uint16_t& blk, uint16_t& chan)
-  {
-    blk = bi_;
-    chan = ci_;
-  }
-
-private:
+protected:
 
   const RSDecoderConstParam const_param_;
   const T_Packet& pkt_;
@@ -106,73 +93,61 @@ private:
 };
 
 template <typename T_Packet>
-class DualReturnPacketTraverser
+class SingleReturnPacketTraverser : public PacketTraverser<T_Packet>
 {
 public:
 
-  DualReturnPacketTraverser(const RSDecoderConstParam const_param, const T_Packet& pkt, double pkt_ts)
-    : const_param_(const_param), pkt_(pkt), bi_(0), ci_(0)
+  SingleReturnPacketTraverser(const RSDecoderConstParam const_param, 
+      const T_Packet& pkt, double pkt_ts)
+    : PacketTraverser<T_Packet>(const_param, pkt, pkt_ts)
   {
-    // calc initial values
-    blk_ts_ = pkt_ts; 
-
-    blk_azi_ = pkt_.blocks[bi_].azimuth;
-    blk_azi_diff_ = pkt.blocks[bi_+2].azimuth - pkt.blocks[bi_].azimuth;
+    this->blk_azi_diff_ = 
+      this->pkt_.blocks[this->bi_+1].azimuth - this->pkt_.blocks[this->bi_].azimuth;
   }
 
-  void toNext()
+  virtual void toNextBlock()
   {
-    ci_++;
-    if (ci_ >= const_param_.CHANNELS_PER_BLOCK)
+    if (this->bi_ < this->const_param_.BLOCKS_PER_PKT)
     {
-      ci_ = 0;
-      bi_++;
-
-      // calc next values
-      if ((bi_ < const_param_.BLOCKS_PER_PKT) && (bi_ % 2 == 0))
+      this->blk_ts_ += this->const_param_.BLOCK_DURATION;
+      this->blk_azi_ = this->pkt_.blocks[this->bi_].azimuth;
+      if (this->bi_ < (this->const_param_.BLOCKS_PER_PKT - 1))
       {
-        blk_ts_ += const_param_.BLOCK_DURATION;
-
-        blk_azi_ = pkt_.blocks[bi_].azimuth;
-        if (bi_ < (const_param_.BLOCKS_PER_PKT-2))
-        {
-          blk_azi_diff_ = pkt_.blocks[bi_+2].azimuth - pkt_.blocks[bi_].azimuth;
-        }
+        this->blk_azi_diff_ = 
+          this->pkt_.blocks[this->bi_+1].azimuth - this->pkt_.blocks[this->bi_].azimuth;
       }
     }
   }
+};
 
-  bool isLast()
+template <typename T_Packet>
+class DualReturnPacketTraverser : public PacketTraverser<T_Packet>
+
+{
+public:
+
+  DualReturnPacketTraverser(const RSDecoderConstParam const_param, 
+      const T_Packet& pkt, double pkt_ts)
+    : PacketTraverser<T_Packet>(const_param, pkt, pkt_ts)
   {
-    return (bi_ >= const_param_.BLOCKS_PER_PKT);
+    this->blk_azi_diff_ = 
+      this->pkt_.blocks[this->bi_+2].azimuth - this->pkt_.blocks[this->bi_].azimuth;
   }
 
-  bool getValue(int16_t& azi, double& ts)
+  virtual void toNextBlock()
   {
-    if (bi_ >= const_param_.BLOCKS_PER_PKT)
-      return false;
+    if ((this->bi_ < this->const_param_.BLOCKS_PER_PKT) && (this->bi_ % 2 == 0))
+    {
+      this->blk_ts_ += this->const_param_.BLOCK_DURATION;
 
-    ts = blk_ts_ + const_param_.CHAN_TSS[ci_];
-    azi = blk_azi_ + 
-      blk_azi_diff_ * (const_param_.CHAN_TSS[ci_] / const_param_.BLOCK_DURATION);
-    return true;
+      this->blk_azi_ = this->pkt_.blocks[this->bi_].azimuth;
+      if (this->bi_ < (this->const_param_.BLOCKS_PER_PKT-2))
+      {
+        this->blk_azi_diff_ = 
+          this->pkt_.blocks[this->bi_+2].azimuth - this->pkt_.blocks[this->bi_].azimuth;
+      }
+    }
   }
-
-  void getPos(uint16_t& blk, uint16_t& chan)
-  {
-    blk = bi_;
-    chan = ci_;
-  }
-
-private:
-
-  const RSDecoderConstParam const_param_;
-  const T_Packet& pkt_;
-  uint16_t bi_;
-  uint16_t ci_;
-  double blk_ts_;
-  int16_t blk_azi_diff_;
-  int16_t blk_azi_;
 };
 
 }  // namespace lidar
