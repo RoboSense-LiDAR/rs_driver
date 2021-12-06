@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #include <rs_driver/driver/decoder/decoder.hpp>
+#include <rs_driver/driver/decoder/packet_traverser.hpp>
 
 namespace robosense
 {
@@ -55,7 +56,8 @@ typedef struct
 
 typedef struct
 {
-  uint64_t id;
+  uint8_t id[8];
+  //uint64_t id;
   uint16_t rpm;
   RSEthNet eth;
   RSFOV fov;
@@ -147,7 +149,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t*
 {
   const RS32DifopPkt& pkt = *(const RS32DifopPkt*)(packet);
 
-  if (memcmp(this->const_param_.DIFOP_ID, &(pkt.id), 8) != 0)
+  if (memcmp(this->const_param_.DIFOP_ID, pkt.id, 8) != 0)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
@@ -164,101 +166,18 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t*
   return RSDecoderResult::DECODE_OK;
 }
 
-#if 0
-template <typename T_Packet>
-class PacketTraverser
-{
-public:
-
-  PacketTraverser(uint64_t pkt_ts)
-    : bi_(0), ci_(0)
-  {
-    ts_ = pkt_ts;
-    azi_ = pkt_.blocks[0].azimuth;
-  }
-
-  void toNext()
-  {
-    static const float delta_ts[] = 
-    { 0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
-      23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
-      1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
-      24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08
-    };
-
-    static const float delta_block = 55.52;
-
-    ci++;
-    if (ci_ < CHAN_PER_BLOCK)
-    {
-      ts_ += delta_ts[ci_] - delta_ts[ci_-1];
-      azi_ += azi_diff * delta_ts[ci] / delta_block;
-    }
-    else
-    {
-      bi_ ++;
-      ci_ = 0;
-
-      blk_ts_ += block_diff
-      ts_ += delta_block - delta_ts[CHAN_PER_BLOCK-1];
-      azi_ = pkt_.blocks[bi_].azimuth;
-    }
-  }
-
-  bool isLast()
-  {
-    return (bi_ >= BLOCKS_PER_PACKET);
-  }
-
-  void getPos(size_t& blk, size_t& chan)
-  {
-    blk = blk_;
-    chan = chan_;
-  }
-
-  uint16_t azi()
-  {
-    return azi_;
-  }
-
-  uint64_t ts()
-  {
-    return ts_;
-  }
-
-private:
-
-  void calc()
-  {
-  }
-
-  Packet pkt_;
-  size_t bi_;
-  size_t ci_;
-  uint64_t blk_ts_;
-  uint16_t blk_azi_;
-  uint64_t chan_ts_;
-  uint16_t chan_azi_;
-};
-#endif
-
 template <typename T_PointCloud>
 inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
 {
-  static uint8_t id[] = {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0};
-  static uint8_t block_id[] = {0xFF, 0xEE};
-  static const size_t BLOCKS_PER_PKT = 12;
-
   const RS32MsopPkt& pkt = *(const RS32MsopPkt*)(packet);
 
-  if (memcpy((uint8_t*)&(pkt.header.id), id, sizeof(id)) != 0)
+  if (memcmp(this->const_param_.MSOP_ID, pkt.header.id, 8) != 0)
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
 
   this->temperature_ = calcTemp(&(pkt.header.temp));
 
-  double chan_ts;
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
@@ -269,6 +188,53 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
     pkt_ts = calcTimeHost();
   }
 
+  SingleReturnPacketTraverser<RS32MsopPkt> traverser(this->const_param_, pkt, pkt_ts);
+  
+  for (; !traverser.isLast(); traverser.toNext())
+  {
+    uint16_t blk, chan;
+    traverser.getPos (blk, chan);
+
+    const RSChannel& channel = pkt.blocks[blk].channels[chan];
+    float distance = ntohs(channel.distance) * this->const_param_.DIS_RESOLUTION;
+    uint8_t intensity = channel.intensity;
+    int16_t angle_vert = this->chan_angles_.vertAdjust(chan);
+
+    int16_t angle_horiz;
+    double chan_ts;
+    traverser.getValue (angle_horiz, chan_ts);
+    int16_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
+
+    if (this->distance_block_.in(distance) && this->scan_block_.in(angle_horiz_final))
+    {
+      float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->const_param_.RX * COS(angle_horiz);
+      float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->const_param_.RX * SIN(angle_horiz);
+      float z =  distance * SIN(angle_vert) + this->const_param_.RZ;
+
+      typename T_PointCloud::PointT point;
+      setX(point, x);
+      setY(point, y);
+      setZ(point, z);
+      setIntensity(point, intensity);
+
+      setRing(point, this->chan_angles_.toUserChan(chan));
+      setTimestamp(point, chan_ts);
+      this->point_cloud_->points.emplace_back(point);
+    }
+    else if (!this->param_.dense_points)
+    {
+      typename T_PointCloud::PointT point;
+      setX(point, NAN);
+      setY(point, NAN);
+      setZ(point, NAN);
+      setIntensity(point, 0);
+      setRing(point, this->chan_angles_.toUserChan(chan));
+      setTimestamp(point, chan_ts);
+      this->point_cloud_->points.emplace_back(point);
+    }
+  }
+
+#if 0
   double block_ts = pkt_ts;
   uint16_t azi_diff = 0;
   for (size_t blk_idx = 0; blk_idx < BLOCKS_PER_PKT; blk_idx++)
@@ -319,7 +285,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
       if (blk_idx > 0)
       {
         block_ts = (azi_diff > 100) ? (block_ts + this->fov_blind_ts_diff_) :
-          (block_ts + this->const_param_.BLOCK_TS);
+          (block_ts + this->const_param_.BLOCK_DURATION);
       }
     }
 
@@ -380,6 +346,7 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
       }
     }
   }
+#endif
 
   return RSDecoderResult::DECODE_OK;
 }
