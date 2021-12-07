@@ -86,9 +86,6 @@ inline void setConsoleColor(WORD c)
 }
 #endif
 
-/*Pcap*/
-#include <pcap.h>
-
 /*Camera*/
 typedef std::pair<std::string, double> CameraTrigger;
 
