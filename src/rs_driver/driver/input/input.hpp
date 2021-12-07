@@ -75,8 +75,10 @@ protected:
   bool start_flag_;
 };
 
-inline Input::Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
-  : input_param_(input_param), excb_(excb), to_exit_recv_(false), init_flag_(false), start_flag_(false)
+inline Input::Input(const RSInputParam& input_param, 
+    const std::function<void(const Error&)>& excb)
+  : input_param_(input_param), excb_(excb), to_exit_recv_(false), 
+  init_flag_(false), start_flag_(false)
 {
 }
 

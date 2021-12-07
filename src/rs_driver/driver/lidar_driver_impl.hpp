@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/msg/packet.h>
 #include <rs_driver/msg/packet_msg.h>
 #include <rs_driver/msg/scan_msg.h>
-#include <rs_driver/utility/time.h>
+#include <rs_driver/utility/dbg.h>
 #include <rs_driver/common/error_code.h>
 #include <rs_driver/utility/sync_queue.h>
 #include <rs_driver/driver/input/input_factory.hpp>
@@ -120,8 +120,7 @@ private:
   uint32_t ndifop_count_;
 };
 
-template <typename T_PointCloud>
-inline std::string LidarDriverImpl<T_PointCloud>::getVersion()
+inline std::string getDriverVersion()
 {
   std::stringstream stream;
   stream << RSLIDAR_VERSION_MAJOR << "."
@@ -165,7 +164,8 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   uint64_t packet_diff = lidar_decoder_ptr_->getPacketDiff();
 
   input_ptr_ = InputFactory::createInput(param.input_type, param.input_param, 
-      std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1), packet_diff);
+      std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1), 
+      packet_diff);
 
   input_ptr_->regRecvCallback(std::bind(&LidarDriverImpl<T_PointCloud>::packetGet, this, std::placeholders::_1),
                               std::bind(&LidarDriverImpl<T_PointCloud>::packetPut, this, std::placeholders::_1));
@@ -321,6 +321,8 @@ template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Packet> pkt)
 {
   SyncQueue<std::shared_ptr<Packet>>* queue; 
+
+  hexdump (pkt->data(), 16, "pkt");
 
   uint8_t* id = pkt->data();
   if (*id == 0x55)

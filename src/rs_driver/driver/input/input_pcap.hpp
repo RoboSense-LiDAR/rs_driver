@@ -44,8 +44,10 @@ namespace lidar
 class InputPcap : public Input
 {
 public:
-  InputPcap(const RSInputParam& input_param, const std::function<void(const Error&)>& excb, long long msec_to_delay)
-    : Input(input_param, excb), pcap_offset_(ETH_HDR_LEN), difop_filter_valid_(false), msec_to_delay_(msec_to_delay)
+  InputPcap(const RSInputParam& input_param, 
+      const std::function<void(const Error&)>& excb, long long msec_to_delay)
+    : Input(input_param, excb), pcap_offset_(ETH_HDR_LEN), 
+    difop_filter_valid_(false), msec_to_delay_(msec_to_delay)
   {
     if (input_param.use_vlan)
       pcap_offset_ += VLAN_LEN;

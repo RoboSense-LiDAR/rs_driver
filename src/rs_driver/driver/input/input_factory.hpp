@@ -49,8 +49,8 @@ public:
 };
 
 inline std::shared_ptr<Input> InputFactory::createInput(InputType type, 
-    const RSInputParam& param, 
-    const std::function<void(const Error&)>& excb, uint64_t msec_to_delay)
+    const RSInputParam& param, const std::function<void(const Error&)>& excb, 
+    uint64_t msec_to_delay)
 {
   std::shared_ptr<Input> input;
 
@@ -60,14 +60,20 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type,
       {
         input = std::make_shared<InputSock>(param, excb);
       }
+      break;
+
     case InputType::PCAP_FILE:
       {
         input = std::make_shared<InputPcap>(param, excb, msec_to_delay);
       }
+      break;
+
     case InputType::RAW_PACKET:
       {
         input = std::make_shared<InputRaw>(param, excb);
       }
+      break;
+
     default:
       break;
   }

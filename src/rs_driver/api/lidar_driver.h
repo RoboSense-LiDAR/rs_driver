@@ -37,6 +37,9 @@ namespace robosense
 {
 namespace lidar
 {
+
+std::string getDriverVersion();
+
 /**
  * @brief This is the RoboSense LiDAR driver interface class
  */
@@ -44,11 +47,6 @@ template <typename T_PointCloud>
 class LidarDriver
 {
 public:
-
-  static std::string getVersion()
-  {
-    return LidarDriverImpl<T_PointCloud>::getVersion();
-  }
 
   /**
    * @brief Constructor, instanciate the driver pointer

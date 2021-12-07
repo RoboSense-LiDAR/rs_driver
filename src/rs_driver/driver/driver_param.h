@@ -50,12 +50,111 @@ enum LidarType  ///< LiDAR type
   RSM1 = 10
 };
 
+inline std::string lidarTypeToStr(const LidarType& type)
+{
+  std::string str = "";
+  switch (type)
+  {
+    case LidarType::RS16:
+      str = "RS16";
+      break;
+    case LidarType::RS32:
+      str = "RS32";
+      break;
+    case LidarType::RSBP:
+      str = "RSBP";
+      break;
+    case LidarType::RS128:
+      str = "RS128";
+      break;
+    case LidarType::RS80:
+      str = "RS80";
+      break;
+    case LidarType::RSM1:
+      str = "RSM1";
+      break;
+    case LidarType::RSHELIOS:
+      str = "RSHELIOS";
+      break;
+    case LidarType::RSROCK:
+      str = "RSROCK";
+      break;
+    default:
+      str = "ERROR";
+      RS_ERROR << "RS_ERROR" << RS_REND;
+  }
+  return str;
+}
+
+inline LidarType strToLidarType(const std::string& type)
+{
+  if (type == "RS16")
+  {
+    return lidar::LidarType::RS16;
+  }
+  else if (type == "RS32")
+  {
+    return lidar::LidarType::RS32;
+  }
+  else if (type == "RSBP")
+  {
+    return lidar::LidarType::RSBP;
+  }
+  else if (type == "RS128")
+  {
+    return lidar::LidarType::RS128;
+  }
+  else if (type == "RS80")
+  {
+    return lidar::LidarType::RS80;
+  }
+  else if (type == "RSM1")
+  {
+    return lidar::LidarType::RSM1;
+  }
+  else if (type == "RSHELIOS")
+  {
+    return lidar::LidarType::RSHELIOS;
+  }
+  else if (type == "RSROCK")
+  {
+    return lidar::LidarType::RSROCK;
+  }
+  else
+  {
+    RS_ERROR << "Wrong lidar type: " << type << RS_REND;
+    RS_ERROR << "Please setup the correct type: RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS" << RS_REND;
+    exit(-1);
+  }
+}
+
 enum InputType
 {
   ONLINE_LIDAR = 1,
   PCAP_FILE,
   RAW_PACKET
 };
+
+inline std::string inputTypeToStr(const InputType& type)
+{
+  std::string str = "";
+  switch (type)
+  {
+    case InputType::ONLINE_LIDAR:
+      str = "ONLINE_LIDAR";
+      break;
+    case InputType::PCAP_FILE:
+      str = "PCAP_FILE";
+      break;
+    case InputType::RAW_PACKET:
+      str = "RAW_PACKET";
+      break;
+    default:
+      str = "ERROR";
+      RS_ERROR << "RS_ERROR" << RS_REND;
+  }
+  return str;
+}
 
 enum SplitFrameMode
 {
@@ -189,7 +288,7 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFOL << "             RoboSense Driver Parameters " << RS_REND;
     RS_INFOL << "lidar_type: " << lidarTypeToStr(lidar_type) << RS_REND;
-    RS_INFOL << "input type: " << (int)input_type << RS_REND;
+    RS_INFOL << "input type: " << inputTypeToStr(input_type) << RS_REND;
     RS_INFOL << "------------------------------------------------------" << RS_REND;
   }
 

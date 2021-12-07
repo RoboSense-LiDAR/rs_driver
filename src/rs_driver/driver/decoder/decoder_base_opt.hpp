@@ -84,29 +84,27 @@ typedef struct
 typedef struct
 {
   uint8_t tt[2];
-} RsTemp;
+} RsTemprature;
 
 typedef struct
 {
   uint8_t id[8];
-//  uint64_t id;
   uint8_t reserved_1[12];
   RSTimestampYMD timestamp;
   uint8_t lidar_type;
   uint8_t reserved_2[7];
-  RsTemp temp;
+  RsTemprature temp;
   //uint16_t temp_raw;
   uint8_t reserved_3[2];
-} RSMsopHeader;
+} RSMsopHeaderV1;
 
 typedef struct
 {
   uint8_t id[4];
-//  uint32_t id;
   uint16_t protocol_version;
   uint8_t reserved_1;
   uint8_t wave_mode;
-  RsTemp temp;
+  RsTemprature temp;
 #if 0
   uint8_t temp_low;
   uint8_t temp_high;
@@ -115,7 +113,7 @@ typedef struct
   uint8_t reserved_2[10];
   uint8_t lidar_type;
   uint8_t reserved_3[49];
-} RSMsopHeaderNew;
+} RSMsopHeaderV2;
 
 typedef struct
 {
@@ -342,7 +340,7 @@ inline uint64_t calcTimeHost(void)
 
 #define RS_TEMP_RESOLUTION 0.0625f
 
-inline int16_t calcTemp(const RsTemp* tmp)
+inline int16_t calcTemp(const RsTemprature* tmp)
 {
   // | lsb | padding | neg | msb |
   // |  5  |    3    |  1  |  7  | (in bits)

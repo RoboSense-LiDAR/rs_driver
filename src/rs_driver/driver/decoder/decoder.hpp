@@ -221,8 +221,6 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   {
     loadAngleFile(param.angle_path);
   }
-
-  point_cloud_ = point_cloud_cb_get_();
 }
 
 template <typename T_PointCloud>
@@ -232,6 +230,8 @@ void Decoder<T_PointCloud>::regRecvCallback(
 {
   point_cloud_cb_get_ = cb_get;
   point_cloud_cb_put_ = cb_put;
+
+  point_cloud_ = point_cloud_cb_get_();
 }
 
 template <typename T_PointCloud>

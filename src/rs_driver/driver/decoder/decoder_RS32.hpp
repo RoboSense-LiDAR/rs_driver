@@ -41,14 +41,14 @@ namespace lidar
 #pragma pack(push, 1)
 typedef struct
 {
-  uint16_t id;
+  uint8_t id[2];
   uint16_t azimuth;
   RSChannel channels[32];
 } RS32MsopBlock;
 
 typedef struct
 {
-  RSMsopHeader header;
+  RSMsopHeaderV1 header;
   RS32MsopBlock blocks[12];
   unsigned int index;
   uint16_t tail;
@@ -57,7 +57,6 @@ typedef struct
 typedef struct
 {
   uint8_t id[8];
-  //uint64_t id;
   uint16_t rpm;
   RSEthNet eth;
   RSFOV fov;
@@ -197,7 +196,14 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
     double chan_ts;
     traverser.get (blk, chan, angle_horiz, chan_ts);
 
-    const RSChannel& channel = pkt.blocks[blk].channels[chan];
+    const RS32MsopBlock& block = pkt.blocks[blk];
+    const RSChannel& channel = block.channels[chan];
+
+    if (memcmp(this->const_param_.BLOCK_ID, block.id, 2) != 0)
+    {
+      return RSDecoderResult::WRONG_PKT_HEADER;
+    }
+
     float distance = ntohs(channel.distance) * this->const_param_.DIS_RESOLUTION;
     uint8_t intensity = channel.intensity;
     int16_t angle_vert = this->chan_angles_.vertAdjust(chan);
@@ -231,120 +237,6 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
       this->point_cloud_->points.emplace_back(point);
     }
   }
-
-#if 0
-  double block_ts = pkt_ts;
-  uint16_t azi_diff = 0;
-  for (size_t blk_idx = 0; blk_idx < BLOCKS_PER_PKT; blk_idx++)
-  {
-    const RS32MsopBlock& block = pkt.blocks[blk_idx];
-    if (memcmp(&(block.id), block_id, sizeof(block_id)))
-    {
-      break;
-    }
-
-    uint16_t block_azi = ntohs(block.azimuth);
-
-    this->toSplit(block_azi, chan_ts);
-
-#if 0
-    if (this->echo_mode_ == ECHO_DUAL)
-    {
-      if (blk_idx % 2 == 0)
-      {
-        if (blk_idx == 0)
-        {
-          azi_diff = static_cast<float>(
-              (RS_ONE_ROUND + RS_SWAP_SHORT(pkt.blocks[blk_idx + 2].azimuth) - block_azi) % RS_ONE_ROUND);
-        }
-        else
-        {
-          azi_diff = static_cast<float>(
-              (RS_ONE_ROUND + block_azi - RS_SWAP_SHORT(pkt.blocks[blk_idx - 2].azimuth)) % RS_ONE_ROUND);
-          block_ts = (azi_diff > 100) ? (block_ts + this->fov_time_jump_diff_) :
-            (block_ts + this->block_ts_diff_);
-        }
-      }
-    }
-    else
-#endif
-    {
-      if (blk_idx < (BLOCKS_PER_PKT - 1))
-      {
-        azi_diff = static_cast<float>((RS_ONE_ROUND + ntohs(pkt.blocks[blk_idx + 1].azimuth) - block_azi) %
-            RS_ONE_ROUND);
-      }
-      else
-      {
-        azi_diff = static_cast<float>((RS_ONE_ROUND + block_azi - ntohs(pkt.blocks[blk_idx - 1].azimuth)) %
-            RS_ONE_ROUND);
-      }
-
-      if (blk_idx > 0)
-      {
-        block_ts = (azi_diff > 100) ? (block_ts + this->fov_blind_ts_diff_) :
-          (block_ts + this->const_param_.BLOCK_DURATION);
-      }
-    }
-
-    //azi_diff = (azi_diff > 100) ? this->block_azi_diff_ : azi_diff; 
-
-    for (uint16_t chan_idx = 0; chan_idx < this->const_param_.CHANNELS_PER_BLOCK; chan_idx++)
-    {
-      static const float delta_ts[] = 
-      { 0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
-        23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
-        1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
-        24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08
-      };
-
-      static const float delta_block = 55.52;
-
-      const RSChannel& chan = block.channels[chan_idx];
-
-      chan_ts = block_ts + delta_ts[chan_idx];
-
-      float chan_ori_azi = block_azi + azi_diff * (delta_ts[chan_idx] / delta_block);
-
-      float distance = ntohs(chan.distance) * this->const_param_.DIS_RESOLUTION;
-
-      uint16_t azi_channel_final = this->chan_angles_.horizAdjust(chan_idx, (int32_t)chan_ori_azi);
-
-      uint16_t angle_horiz = chan_ori_azi;
-      uint16_t angle_vert = this->chan_angles_.vertAdjust(chan_idx);
-
-      if (this->distance_block_.in(distance) && this->scan_block_.in(azi_channel_final))
-      {
-        float x =  distance * COS(angle_vert) * COS(azi_channel_final) + this->const_param_.RX * COS(angle_horiz);
-        float y = -distance * COS(angle_vert) * SIN(azi_channel_final) - this->const_param_.RX * SIN(angle_horiz);
-        float z =  distance * SIN(angle_vert) + this->const_param_.RZ;
-
-        uint8_t intensity = chan.intensity;
-
-        typename T_PointCloud::PointT point;
-        setX(point, x);
-        setY(point, y);
-        setZ(point, z);
-        setIntensity(point, intensity);
-
-        setRing(point, this->chan_angles_.toUserChan(chan_idx));
-        setTimestamp(point, chan_ts);
-        this->point_cloud_->points.emplace_back(point);
-      }
-      else if (!this->param_.dense_points)
-      {
-        typename T_PointCloud::PointT point;
-        setX(point, NAN);
-        setY(point, NAN);
-        setZ(point, NAN);
-        setIntensity(point, 0);
-        setRing(point, this->chan_angles_.toUserChan(chan_idx));
-        setTimestamp(point, chan_ts);
-        this->point_cloud_->points.emplace_back(point);
-      }
-    }
-  }
-#endif
 
   return RSDecoderResult::DECODE_OK;
 }
