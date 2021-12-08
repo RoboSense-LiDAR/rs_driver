@@ -310,7 +310,7 @@ private:
   std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func);
 
 protected:
-  const LidarConstantParameter lidar_const_param_;
+  LidarConstantParameter lidar_const_param_;
   RSDecoderParam param_;
   RSEchoMode echo_mode_;
   unsigned int pkts_per_frame_;
@@ -844,6 +844,7 @@ inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const
   switch (type)
   {
     case LidarType::RS128:
+    case LidarType::RS128_40:
     case LidarType::RS80:
     case LidarType::RSHELIOS:
       switch (return_mode)
