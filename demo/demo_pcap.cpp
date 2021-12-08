@@ -35,9 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PCL_POINTCLOUD
 
 #ifdef PCL_POINTCLOUD
-#include "pcl_point_cloud_msg.h"
+#include <rs_driver/msg/pcl_point_cloud_msg.h>
 #else
-#include "point_cloud_msg.h"
+#include <rs_driver/msg/point_cloud_msg.h>
 #endif
 
 typedef PointCloudT<PointT> PointCloudMsg;
@@ -93,7 +93,8 @@ int main(int argc, char* argv[])
   param.print();
 
   LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
-  driver.regRecvCallback(pointCloudPutCallback, pointCloudGetCallback); ///< Register the point cloud callback function into the driver
+  driver.regRecvCallback(pointCloudPutCallback,
+                         pointCloudGetCallback);   ///< Register the point cloud callback function into the driver
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
   if (!driver.init(param))                         ///< Call the init function and pass the parameter
   {
