@@ -163,8 +163,10 @@ inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pk
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) *
         this->lidar_const_param_.DIS_RESOLUTION;
-      int angle_horiz = static_cast<int>(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
+      //int angle_horiz = static_cast<int>(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
+      int angle_horiz_x = static_cast<int>(azi_channel_ori - this->lidar_alph0_ + RS_ONE_ROUND) % RS_ONE_ROUND;
       int angle_vert = ((this->vert_angle_list_[channel_idx]) + RS_ONE_ROUND) % RS_ONE_ROUND;
+
       T_Point point;
       if ((distance <= this->param_.max_distance && distance >= this->param_.min_distance) &&
           ((this->angle_flag_ && azi_channel_final >= this->start_angle_ && azi_channel_final <= this->end_angle_) ||
@@ -173,9 +175,11 @@ inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pk
       {
 #if 1
         float x = distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) +
-          this->lidar_Rxy_ * this->checkCosTable(angle_horiz - this->lidar_alph0_);
+          this->lidar_Rxy_ * this->checkCosTable(angle_horiz_x);
+
         float y = -distance * this->checkCosTable(angle_vert) * this->checkSinTable(azi_channel_final) -
-          this->lidar_Rxy_ * this->checkSinTable(angle_horiz - this->lidar_alph0_);
+          this->lidar_Rxy_ * this->checkSinTable(angle_horiz_x);
+
         float z = distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
 #else
         float x = distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) +
