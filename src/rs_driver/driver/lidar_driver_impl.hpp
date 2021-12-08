@@ -322,11 +322,11 @@ inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Packet> pkt
 {
   SyncQueue<std::shared_ptr<Packet>>* queue; 
 
-  hexdump (pkt->data(), 16, "pkt");
 
   uint8_t* id = pkt->data();
   if (*id == 0x55)
   {
+    return;
     queue = &msop_pkt_queue_;
   }
   else if (*id == 0xA5)

@@ -27,7 +27,11 @@ TEST(TestDualPacketTraverser, toNext)
 {
   RSDecoderConstParam const_param = 
   {
-    {0x00} // msop id
+    0
+    , 0
+    , 0
+    , 0
+    , {0x00} // msop id
     , {0x00} // difop id
     , {0x00} // block id
     , 6 // blocks per packet

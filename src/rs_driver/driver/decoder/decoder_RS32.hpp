@@ -86,8 +86,8 @@ class DecoderRS32 : public Decoder<T_PointCloud>
 {
 public:
 
-  virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size);
-  virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, size_t size);
+  virtual void processDifopPkt(const uint8_t* pkt, size_t size);
+  virtual void decodeMsopPkt(const uint8_t* pkt, size_t size);
   virtual uint64_t usecToDelay() {return 0;}
   virtual ~DecoderRS32() = default;
 
@@ -98,7 +98,11 @@ public:
   {
     RSDecoderConstParam param = 
     {
-      {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
+        1248 
+      , 1248
+      , 8
+      , 8
+      , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
       , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
       , {0xFF, 0xEE} // block id
       , 12 // blocks per packet
@@ -144,13 +148,20 @@ inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t* packet, size_t size)
 {
   const RS32DifopPkt& pkt = *(const RS32DifopPkt*)(packet);
 
+  hexdump (packet, size, "difop");
+
+  if (size != this->const_param_.DIFOP_LEN)
+  {
+     this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
+  }
+
   if (memcmp(this->const_param_.DIFOP_ID, pkt.id, 8) != 0)
   {
-    return RSDecoderResult::WRONG_PKT_HEADER;
+      this->excb_(Error(ERRCODE_WRONGPKTHEADER));
   }
 
   this->echo_mode_ = getEchoMode (pkt.return_mode);
@@ -161,19 +172,12 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t*
   {
     this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 32);
   }
-
-  return RSDecoderResult::DECODE_OK;
 }
 
 template <typename T_PointCloud>
-inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
 {
   const RS32MsopPkt& pkt = *(const RS32MsopPkt*)(packet);
-
-  if (memcmp(this->const_param_.MSOP_ID, pkt.header.id, 8) != 0)
-  {
-    return RSDecoderResult::WRONG_PKT_HEADER;
-  }
 
   this->temperature_ = calcTemp(&(pkt.header.temp));
 
@@ -201,7 +205,8 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 2) != 0)
     {
-      return RSDecoderResult::WRONG_PKT_HEADER;
+      this->excb_(Error(ERRCODE_WRONGPKTHEADER));
+      //return RSDecoderResult::WRONG_PKT_HEADER;
     }
 
     float distance = ntohs(channel.distance) * this->const_param_.DIS_RESOLUTION;
@@ -237,8 +242,6 @@ inline RSDecoderResult DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* p
       this->point_cloud_->points.emplace_back(point);
     }
   }
-
-  return RSDecoderResult::DECODE_OK;
 }
 
 }  // namespace lidar

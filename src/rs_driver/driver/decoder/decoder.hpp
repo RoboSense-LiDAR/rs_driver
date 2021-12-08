@@ -56,11 +56,12 @@ namespace robosense
 namespace lidar
 {
 
-/*Packet Length*/
+#if 0
 const size_t MECH_PKT_LEN = 1248;
 const size_t MEMS_MSOP_LEN = 1210;
 const size_t MEMS_DIFOP_LEN = 256;
 const size_t ROCK_MSOP_LEN = 1236;
+#endif
 
 constexpr int RS_ONE_ROUND = 36000;
 constexpr uint16_t PROTOCOL_VER_0 = 0x00;
@@ -86,7 +87,12 @@ enum RSDecoderResult
 
 typedef struct
 {
+  uint16_t MSOP_LEN;
+  uint16_t DIFOP_LEN;
+
   // identity
+  uint8_t MSOP_ID_LEN;
+  uint8_t DIFOP_ID_LEN;
   uint8_t MSOP_ID[8];
   uint8_t DIFOP_ID[8];
   uint8_t BLOCK_ID[2];
@@ -115,9 +121,9 @@ class Decoder
 {
 public:
 
-  virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, size_t size);
-  virtual RSDecoderResult processDifopPkt(const uint8_t* pkt, size_t size) = 0;
-  virtual RSDecoderResult decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
+  virtual void processMsopPkt(const uint8_t* pkt, size_t size);
+  virtual void processDifopPkt(const uint8_t* pkt, size_t size) = 0;
+  virtual void decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual ~Decoder() = default;
 
   void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
@@ -157,8 +163,6 @@ protected:
   RSDecoderParam param_;
   std::function<void(const Error&)> excb_;
   uint16_t height_; // to be deleted
-  uint32_t msop_pkt_len_; // to be moved
-  uint32_t difop_pkt_len_; // to be moved
 
   Trigon trigon_;
 #define SIN(angle) this->trigon_.sin(angle)
@@ -197,8 +201,6 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , param_(param)
   , excb_(excb)
   , height_(0)
-  , msop_pkt_len_(MECH_PKT_LEN)
-  , difop_pkt_len_(MECH_PKT_LEN)
   , distance_block_(0.4f, 200.0f, param.min_distance, param.max_distance)
   , scan_block_(param.start_angle * 100, param.end_angle * 100)
   , split_angle_(param.split_angle * 100)
@@ -301,14 +303,30 @@ void Decoder<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointCloud> ms
 }
 
 template <typename T_PointCloud>
-RSDecoderResult Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
+void Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
 {
   if (param_.wait_for_difop && !difop_ready_)
   {
-    return RSDecoderResult::DIFOP_NOT_READY;
+     excb_(Error(ERRCODE_NODIFOPRECV));
   }
 
-  return decodeMsopPkt(pkt, size);
+  if (size != this->const_param_.MSOP_LEN)
+  {
+     this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
+  }
+
+  if (memcmp(pkt, this->const_param_.MSOP_ID, const_param_.MSOP_ID_LEN) != 0)
+  {
+    this->excb_(Error(ERRCODE_WRONGPKTHEADER));
+  }
+
+  decodeMsopPkt(pkt, size);
+}
+
+template <typename T_PointCloud>
+void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
+{
+  
 }
 
 template <typename T_PointCloud>
@@ -324,7 +342,7 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   }
 
   // blocks per frame
-  blks_per_frame_ = 1 / (this->rps_ * this->const_param_.BLOCK_DURATION);
+  this->blks_per_frame_ = 1 / (this->rps_ * this->const_param_.BLOCK_DURATION);
 
   // block diff of azimuth
   this->block_azi_diff_ = RS_ONE_ROUND * this->rps_ * this->const_param_.BLOCK_DURATION;
