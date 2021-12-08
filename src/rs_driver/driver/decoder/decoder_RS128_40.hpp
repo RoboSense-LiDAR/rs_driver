@@ -151,8 +151,7 @@ inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pk
       };
       static const float blk_ts = 50.984;
 
-      float azi_channel_ori = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) + 
-        azi_diff * tss[channel_idx] / blk_ts;
+      float azi_channel_ori = cur_azi + azi_diff * tss[channel_idx] / blk_ts;
 
 #if 0
       int dsr_temp = (channel_idx / 4) % 16;
