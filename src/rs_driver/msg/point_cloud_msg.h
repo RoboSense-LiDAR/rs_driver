@@ -32,7 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#if 1
+#include <vector>
+#include <string>
 
 struct PointXYZI
 {
@@ -41,10 +42,6 @@ struct PointXYZI
   float z;
   uint8_t intensity;
 };
-
-typedef PointXYZI PointT;
-
-#else
 
 struct PointXYZIRT
 {
@@ -55,10 +52,6 @@ struct PointXYZIRT
   uint16_t ring;
   double timestamp;
 };
-
-typedef PointXYZIRT PointT;
-
-#endif
 
 template <typename T_Point>
 class PointCloudT

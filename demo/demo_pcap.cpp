@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/msg/point_cloud_msg.h>
 #endif
 
+typedef PointXYZI PointT;
 typedef PointCloudT<PointT> PointCloudMsg;
 
 using namespace robosense::lidar;
