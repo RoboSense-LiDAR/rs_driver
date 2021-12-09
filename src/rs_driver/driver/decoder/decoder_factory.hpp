@@ -30,6 +30,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
+#pragma once
 #include <rs_driver/driver/decoder/decoder_RS16.hpp>
 #include <rs_driver/driver/decoder/decoder_RS32.hpp>
 #include <rs_driver/driver/decoder/decoder_RS80.hpp>
