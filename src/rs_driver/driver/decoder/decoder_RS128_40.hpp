@@ -72,6 +72,7 @@ inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pk
   this->current_temperature_ = this->computeTemperature(mpkt_ptr->header.temp_low, mpkt_ptr->header.temp_high);
 
   double block_timestamp = this->get_point_time_func_(pkt);
+
   float azi_diff = 0;
   for (uint16_t blk_idx = 0; blk_idx < this->lidar_const_param_.BLOCKS_PER_PKT; blk_idx++)
   {
@@ -81,12 +82,13 @@ inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pk
     }
 
     int cur_azi = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth);
-#if 0
+
     if (this->echo_mode_ == ECHO_DUAL)
     {
       azi_diff = static_cast<float>(
           (RS_ONE_ROUND + RS_SWAP_SHORT(mpkt_ptr->blocks[2].azimuth) - RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth)) %
           RS_ONE_ROUND);
+
       if (RS_SWAP_SHORT(mpkt_ptr->blocks[0].azimuth) == RS_SWAP_SHORT(mpkt_ptr->blocks[1].azimuth))  ///< AAB
       {
         if (blk_idx == 2)
@@ -105,9 +107,7 @@ inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pk
       }
     }
     else
-#endif
     {
-      //if (blk_idx == 0)
       if (blk_idx < (this->lidar_const_param_.BLOCKS_PER_PKT - 1))
       {
         azi_diff = static_cast<float>((RS_ONE_ROUND + RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx + 1].azimuth) - cur_azi) %
@@ -153,13 +153,6 @@ inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pk
 
       float azi_channel_ori = cur_azi + azi_diff * tss[channel_idx] / blk_ts;
 
-#if 0
-      int dsr_temp = (channel_idx / 4) % 16;
-      float azi_channel_ori = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].azimuth) +
-        (azi_diff * static_cast<float>(dsr_temp) * this->lidar_const_param_.DSR_TOFFSET *
-         this->lidar_const_param_.FIRING_FREQUENCY);
-#endif
-
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
       float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) *
         this->lidar_const_param_.DIS_RESOLUTION;
@@ -173,21 +166,11 @@ inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pk
            (!this->angle_flag_ &&
             ((azi_channel_final >= this->start_angle_) || (azi_channel_final <= this->end_angle_)))))
       {
-#if 1
         float x = distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) +
           this->lidar_Rxy_ * this->checkCosTable(angle_horiz_x);
-
         float y = -distance * this->checkCosTable(angle_vert) * this->checkSinTable(azi_channel_final) -
           this->lidar_Rxy_ * this->checkSinTable(angle_horiz_x);
-
         float z = distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
-#else
-        float x = distance * this->checkCosTable(angle_vert) * this->checkCosTable(azi_channel_final) +
-          this->lidar_const_param_.RX * this->checkCosTable(angle_horiz);
-        float y = -distance * this->checkCosTable(angle_vert) * this->checkSinTable(azi_channel_final) -
-          this->lidar_const_param_.RX * this->checkSinTable(angle_horiz);
-        float z = distance * this->checkSinTable(angle_vert) + this->lidar_const_param_.RZ;
-#endif
 
         uint8_t intensity = mpkt_ptr->blocks[blk_idx].channels[channel_idx].intensity;
         this->transformPoint(x, y, z);

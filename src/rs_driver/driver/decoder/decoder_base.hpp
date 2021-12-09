@@ -642,8 +642,10 @@ inline void DecoderBase<T_Point>::decodeDifopCommon(const uint8_t* pkt, const Li
                                                       (RS_ONE_ROUND - fov_start_angle + fov_end_angle);
   int blocks_per_round =
       (this->lidar_const_param_.PKT_RATE / (this->rpm_ / 60)) * this->lidar_const_param_.BLOCKS_PER_PKT;
+
   this->fov_time_jump_diff_ =
       this->time_duration_between_blocks_ * (fov_range / (RS_ONE_ROUND / static_cast<float>(blocks_per_round)));
+
   if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
   {
     this->pkts_per_frame_ = ceil(2 * this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
