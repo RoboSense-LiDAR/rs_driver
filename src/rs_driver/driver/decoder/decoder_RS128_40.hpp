@@ -149,7 +149,7 @@ inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pk
         44.704f, 44.704f, 44.704f, 44.704f, 46.128f, 46.128f, 46.128f, 46.128f, 
         47.548f, 47.548f, 47.548f, 47.548f, 49.068f, 49.068f, 49.068f, 49.068f
       };
-      static const float blk_ts = 50.984;
+      static const float blk_ts = 50.984f;
 
       float azi_channel_ori = cur_azi + azi_diff * tss[channel_idx] / blk_ts;
 
