@@ -851,6 +851,7 @@ inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const
         case 0x01:
         case 0x02:
         case 0x03:
+        case 0x04:
           return RSEchoMode::ECHO_SINGLE;
         default:
           return RSEchoMode::ECHO_DUAL;
