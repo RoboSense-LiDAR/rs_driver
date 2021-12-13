@@ -42,7 +42,7 @@ class PcapInput : public Input
 {
 public:
   PcapInput(const RSInputParam& input_param, const std::function<void(const Error&)>& excb, long long msec_to_delay)
-    : Input(input_param, excb), pcap_offset_(ETH_HDR_LEN), difop_filter_valid_(false), msec_to_delay_(msec_to_delay)
+    : Input(input_param, excb), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), difop_filter_valid_(false), msec_to_delay_(msec_to_delay)
   {
     if (input_param.use_vlan)
       pcap_offset_ += VLAN_LEN;
@@ -129,7 +129,9 @@ inline PcapInput::~PcapInput()
   stop();
 
   if (pcap_ != NULL)
+  {
     pcap_close(pcap_);
+  }
 }
 
 inline void PcapInput::recvPacket()
@@ -141,6 +143,8 @@ inline void PcapInput::recvPacket()
     int ret = pcap_next_ex(pcap_, &header, &pkt_data);
     if (ret < 0)  // reach file end.
     {
+      pcap_close(pcap_);
+
       if (input_param_.pcap_repeat)
       {
         excb_(Error(ERRCODE_PCAPREPEAT));
