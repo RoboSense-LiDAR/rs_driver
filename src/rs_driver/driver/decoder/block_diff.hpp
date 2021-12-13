@@ -37,25 +37,7 @@ namespace lidar
 {
 
 template <typename T_Packet>
-class BlockDiff
-{
-public:
-
-  virtual float ts(uint16_t blk) = 0;
-  virtual int16_t azimuth(uint16_t blk) = 0;
-
-  BlockDiff(const RSDecoderConstParam const_param, const T_Packet& pkt)
-    : const_param_(const_param), pkt_(pkt)
-  {
-  }
-
-protected:
-  const RSDecoderConstParam const_param_;
-  const T_Packet& pkt_;
-};
-
-template <typename T_Packet>
-class SingleReturnBlockDiff : public BlockDiff<T_Packet>
+class SingleReturnBlockDiff
 {
 public:
 
@@ -83,18 +65,22 @@ public:
   }
 
   SingleReturnBlockDiff(const RSDecoderConstParam const_param, const T_Packet& pkt)
-    : BlockDiff<T_Packet>(const_param, pkt)
+    : const_param_(const_param), pkt_(pkt)
   {
   }
+
+protected:
+  const RSDecoderConstParam const_param_;
+  const T_Packet& pkt_;
 };
 
 template <typename T_Packet>
-class DualReturnBlockDiff : public BlockDiff<T_Packet>
+class DualReturnBlockDiff
 
 {
 public:
 
-  virtual float ts(uint16_t blk)
+  float ts(uint16_t blk)
   {
     float ret = 0.0f;
 
@@ -106,7 +92,7 @@ public:
     return ret;
   }
 
-  virtual int16_t azimuth(uint16_t blk)
+  int16_t azimuth(uint16_t blk)
   {
     int16_t azi = 0;
 
@@ -123,9 +109,13 @@ public:
   }
 
   DualReturnBlockDiff(const RSDecoderConstParam const_param, const T_Packet& pkt)
-    : BlockDiff<T_Packet>(const_param, pkt)
+    : const_param_(const_param), pkt_(pkt)
   {
   }
+
+protected:
+  const RSDecoderConstParam const_param_;
+  const T_Packet& pkt_;
 };
 
 }  // namespace lidar
