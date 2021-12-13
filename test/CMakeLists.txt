@@ -13,8 +13,9 @@ add_executable(rs_driver_test
               sync_queue_test.cpp
               single_return_block_diff_test.cpp
               dual_return_block_diff_test.cpp
-              decoder_test.cpp
-              decoder_rs32_test.cpp)
+              decoder_opt_test.cpp
+              decoder_test.cpp)
+            #decoder_rs32_test.cpp)
               
 
 target_link_libraries(rs_driver_test

@@ -35,13 +35,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pcl/io/io.h>
 #include <pcl/point_types.h>
 
-#if 1
+typedef pcl::PointXYZI PointXYZI;
 
-typedef pcl::PointXYZI PointT;
-
-#else
-
-struct RsPointXYZIRT
+struct PointXYZIRT
 {
   PCL_ADD_POINT4D;
   uint8_t intensity;
@@ -50,12 +46,8 @@ struct RsPointXYZIRT
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN16;
 
-POINT_CLOUD_REGISTER_POINT_STRUCT(RsPointXYZIRT, (float, x, x)(float, y, y)(float, z, z)(uint8_t, intensity, intensity)(
-                                                     uint16_t, ring, ring)(double, timestamp, timestamp))
-
-typedef RsPointXYZIRT PointT;
-
-#endif
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRT, (float, x, x)(float, y, y)(float, z, z)
+    (uint8_t, intensity, intensity)(uint16_t, ring, ring)(double, timestamp, timestamp))
 
 template <typename T_Point>
 class PointCloudT : public pcl::PointCloud<T_Point>

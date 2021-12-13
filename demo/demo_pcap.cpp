@@ -35,11 +35,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PCL_POINTCLOUD
 
 #ifdef PCL_POINTCLOUD
-#include "pcl_point_cloud_msg.h"
+#include "rs_driver/msg/pcl_point_cloud_msg.h"
 #else
-#include "point_cloud_msg.h"
+#include "rs_driver/msg/point_cloud_msg.h"
 #endif
 
+typedef PointXYZI PointT;
 typedef PointCloudT<PointT> PointCloudMsg;
 
 using namespace robosense::lidar;
