@@ -75,16 +75,15 @@ void exceptionCallback(const Error& code)
 int main(int argc, char* argv[])
 {
   RS_TITLE << "------------------------------------------------------" << RS_REND;
-  RS_TITLE << "            RS_Driver Core Version: v" << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
-           << RSLIDAR_VERSION_PATCH << RS_REND;
+  RS_TITLE << "            RS_Driver Core Version: v" << getDriverVersion() << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
   RSDriverParam param;                  ///< Create a parameter object
   param.input_type = InputType::ONLINE_LIDAR;
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
-  param.lidar_type = LidarType::RSM1;   ///< Set the lidar type. Make sure this type is correct
-  param.decoder_param.wait_for_difop = true;          ///< true: start sending point cloud until receive difop packet
+  param.lidar_type = LidarType::RS32;   ///< Set the lidar type. Make sure this type is correct
+  param.decoder_param.wait_for_difop = false;          ///< true: start sending point cloud until receive difop packet
   param.print();
 
   LidarDriver<PointCloudMsg> driver;
