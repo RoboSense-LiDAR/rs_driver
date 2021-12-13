@@ -153,6 +153,11 @@ public:
       const std::function<void(const Error&)>& excb,
       const RSDecoderConstParam& lidar_const_param);
 
+  uint16_t rps()
+  {
+    return rps_;
+  }
+
 protected:
 
   void toSplit(uint16_t azimuth, double chan_ts);
@@ -356,6 +361,7 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
     RS_WARNING << "LiDAR RPM is 0. Use default value 600." << RS_REND;
     this->rps_ = 10;
   }
+
 
   // blocks per frame
   this->blks_per_frame_ = 1 / (this->rps_ * this->const_param_.BLOCK_DURATION);

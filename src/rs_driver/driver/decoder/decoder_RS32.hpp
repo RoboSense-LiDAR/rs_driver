@@ -30,6 +30,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
+#pragma once
 #include <rs_driver/driver/decoder/decoder.hpp>
 
 namespace robosense
@@ -100,10 +101,10 @@ protected:
   {
     RSDecoderConstParam param = 
     {
-        1248 
-      , 1248
-      , 8
-      , 8
+        1248 // msop len
+      , 1248 // difop len
+      , 8 // msop id len
+      , 8 // difop id len
       , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
       , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
       , {0xFF, 0xEE} // block id
