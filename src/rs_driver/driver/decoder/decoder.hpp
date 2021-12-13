@@ -122,9 +122,12 @@ class Decoder
 {
 public:
 
-  virtual void processMsopPkt(const uint8_t* pkt, size_t size);
-  virtual void processDifopPkt(const uint8_t* pkt, size_t size) = 0;
+  void processDifopPkt(const uint8_t* pkt, size_t size);
+  virtual void decodeDifopPkt(const uint8_t* pkt, size_t size) = 0;
+
+  void processMsopPkt(const uint8_t* pkt, size_t size);
   virtual void decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
+
   virtual ~Decoder() = default;
 
   void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
@@ -327,7 +330,19 @@ void Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
 template <typename T_PointCloud>
 void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
 {
-  
+  if (size != this->const_param_.DIFOP_LEN)
+  {
+     this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
+     return;
+  }
+
+  if (memcmp(pkt, this->const_param_.DIFOP_ID, const_param_.DIFOP_ID_LEN) != 0)
+  {
+    this->excb_(Error(ERRCODE_WRONGPKTHEADER));
+    return;
+  }
+
+  decodeDifopPkt(pkt, size);
 }
 
 template <typename T_PointCloud>
@@ -358,6 +373,12 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
 
   // fov blind diff of timestamp
   this->fov_blind_ts_diff_ = fov_blind_range / (RS_ONE_ROUND * this->rps_);
+
+  if (!this->difop_ready_)
+  {
+    this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 
+        this->const_param_.CHANNELS_PER_BLOCK);
+  }
 }
 
 #if 0

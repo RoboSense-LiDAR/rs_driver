@@ -85,17 +85,16 @@ class DecoderRS32 : public Decoder<T_PointCloud>
 {
 public:
 
-  virtual void processDifopPkt(const uint8_t* pkt, size_t size);
+  virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual void decodeMsopPkt(const uint8_t* pkt, size_t size);
-
-  template <typename T_BlockDiff>
-  void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 
   virtual uint64_t usecToDelay() {return 0;}
   virtual ~DecoderRS32() = default;
 
   explicit DecoderRS32(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb);
+
+protected:
 
   static RSDecoderConstParam getConstParam()
   {
@@ -141,6 +140,8 @@ public:
     }
   }
 
+  template <typename T_BlockDiff>
+  void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 };
 
 template <typename T_PointCloud>
@@ -151,30 +152,12 @@ inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
 }
 
 template <typename T_PointCloud>
-inline void DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRS32<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
   const RS32DifopPkt& pkt = *(const RS32DifopPkt*)(packet);
-
-  hexdump (packet, size, "difop");
-
-  if (size != this->const_param_.DIFOP_LEN)
-  {
-     this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
-  }
-
-  if (memcmp(this->const_param_.DIFOP_ID, pkt.id, 8) != 0)
-  {
-      this->excb_(Error(ERRCODE_WRONGPKTHEADER));
-  }
-
-  this->echo_mode_ = getEchoMode (pkt.return_mode);
-
   this->template decodeDifopCommon<RS32DifopPkt>(pkt);
 
-  if (!this->difop_ready_)
-  {
-    this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 32);
-  }
+  this->echo_mode_ = getEchoMode (pkt.return_mode);
 }
 
 template <typename T_PointCloud>

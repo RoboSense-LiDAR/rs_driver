@@ -75,4 +75,3 @@ public:
   uint32_t seq = 0;           ///< Sequence number of message
 
   VectorT points;
-};
