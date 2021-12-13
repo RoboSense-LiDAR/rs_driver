@@ -19,7 +19,6 @@ option(COMPILE_TESTS "Build rs_driver unit tests" ON)
 #  Compile Features
 #=============================
 option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
-option(ENABLE_POINT_CLOUD_POOL "Enable user point cloud pool" ON)
 
 #========================
 #  Project setup
@@ -112,10 +111,6 @@ endif(${ENABLE_TRANSFORM})
 if(${ENABLE_HIGH_PRIORITY_THREAD})
   add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
 endif(${ENABLE_HIGH_PRIORITY_THREAD})
-
-if(${ENABLE_POINT_CLOUD_POOL})
-  add_definitions("-DENABLE_POINT_CLOUD_POOL")
-endif(${ENABLE_POINT_CLOUD_POOL})
 
 #========================
 #  Build Demos

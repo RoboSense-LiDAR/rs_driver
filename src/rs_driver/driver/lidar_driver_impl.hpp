@@ -62,7 +62,6 @@ public:
   bool start();
   void stop();
 
-#ifdef ENABLE_POINT_CLOUD_POOL
   void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
       const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put)
   {
@@ -72,15 +71,6 @@ public:
 
   std::function<std::shared_ptr<T_PointCloud>(void)> point_cloud_cb_get_;
   std::function<void(std::shared_ptr<T_PointCloud>)> point_cloud_cb_put_;
-#else
-  void regRecvCallback(const std::function<void(const T_PointCloud&)>& cb_put)
-  {
-    point_cloud_cb_put_ = cb_put;
-  }
-
-  std::function<void(const T_PointCloud&)> point_cloud_cb_put_;
-  std::shared_ptr<T_PointCloud> point_cloud_;
-#endif
 
   void regRecvCallback(const std::function<void(const uint8_t*, size_t)>& callback);
   void regExceptionCallback(const std::function<void(const Error&)>& callback);
@@ -134,9 +124,6 @@ template <typename T_PointCloud>
 inline LidarDriverImpl<T_PointCloud>::LidarDriverImpl()
   : init_flag_(false), start_flag_(false), pkt_seq_(0), ndifop_count_(0)
 {
-#ifndef ENABLE_POINT_CLOUD_POOL
-  point_cloud_ = std::make_shared<T_PointCloud>();
-#endif
 }
 
 template <typename T_PointCloud>
@@ -243,12 +230,7 @@ std::shared_ptr<T_PointCloud> LidarDriverImpl<T_PointCloud>::getPointCloud()
 {
   while (1)
   {
-#ifdef ENABLE_POINT_CLOUD_POOL
     std::shared_ptr<T_PointCloud> pc = point_cloud_cb_get_();
-#else
-    std::shared_ptr<T_PointCloud> pc = point_cloud_;
-#endif
-
     if (pc)
     {
       pc->points.resize(0);
@@ -263,11 +245,7 @@ std::shared_ptr<T_PointCloud> LidarDriverImpl<T_PointCloud>::getPointCloud()
 template <typename T_PointCloud>
 void LidarDriverImpl<T_PointCloud>::putPointCloud(std::shared_ptr<T_PointCloud> pc)
 {
-#ifdef ENABLE_POINT_CLOUD_POOL
   point_cloud_cb_put_(pc);
-#else
-  point_cloud_cb_put_(*pc);
-#endif
 }
 
 template <typename T_PointCloud>
