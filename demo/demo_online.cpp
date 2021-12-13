@@ -45,11 +45,9 @@ typedef PointCloudT<PointT> PointCloudMsg;
 
 using namespace robosense::lidar;
 
-std::shared_ptr<PointCloudMsg> g_pointcloud;
-
 std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
 {
-  return g_pointcloud;
+  return std::make_shared<PointCloudMsg>();
 }
 
 /**
@@ -81,8 +79,6 @@ int main(int argc, char* argv[])
   RS_TITLE << "            RS_Driver Core Version: v" << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
            << RSLIDAR_VERSION_PATCH << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
-
-  g_pointcloud = std::make_shared<PointCloudMsg>();
 
   RSDriverParam param;                  ///< Create a parameter object
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
