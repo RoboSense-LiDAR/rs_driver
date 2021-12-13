@@ -472,6 +472,8 @@ inline void Input::getPcapPacket()
     }
     else
     {
+      pcap_close(pcap_);
+
       if (input_param_.pcap_repeat)
       {
         excb_(Error(ERRCODE_PCAPREPEAT));
