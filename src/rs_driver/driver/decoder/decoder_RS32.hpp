@@ -31,7 +31,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #include <rs_driver/driver/decoder/decoder.hpp>
-#include <rs_driver/driver/decoder/packet_traverser.hpp>
 
 namespace robosense
 {
@@ -88,6 +87,10 @@ public:
 
   virtual void processDifopPkt(const uint8_t* pkt, size_t size);
   virtual void decodeMsopPkt(const uint8_t* pkt, size_t size);
+
+  template <typename T_BlockDiff>
+  void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
+
   virtual uint64_t usecToDelay() {return 0;}
   virtual ~DecoderRS32() = default;
 
@@ -175,7 +178,21 @@ inline void DecoderRS32<T_PointCloud>::processDifopPkt(const uint8_t* packet, si
 }
 
 template <typename T_PointCloud>
-inline void DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
+{
+  if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
+  {
+    internDecodeMsopPkt<SingleReturnBlockDiff<RS32MsopPkt>>(pkt, size);
+  }
+  else
+  {
+    internDecodeMsopPkt<DualReturnBlockDiff<RS32MsopPkt>>(pkt, size);
+  }
+}
+
+template <typename T_PointCloud>
+template <typename T_BlockDiff>
+inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
   const RS32MsopPkt& pkt = *(const RS32MsopPkt*)(packet);
 
@@ -191,55 +208,65 @@ inline void DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
     pkt_ts = calcTimeHost();
   }
 
-  SingleReturnPacketTraverser<RS32MsopPkt> traverser(this->const_param_, pkt, pkt_ts);
-  
-  for (; !traverser.isLast(); traverser.toNext())
-  {
-    uint16_t blk, chan;
-    int16_t angle_horiz;
-    double chan_ts;
-    traverser.get (blk, chan, angle_horiz, chan_ts);
+  T_BlockDiff diff(this->const_param_, pkt);
 
+  double block_ts = pkt_ts;
+  for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
+  {
     const RS32MsopBlock& block = pkt.blocks[blk];
-    const RSChannel& channel = block.channels[chan];
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 2) != 0)
     {
       this->excb_(Error(ERRCODE_WRONGPKTHEADER));
-      //return RSDecoderResult::WRONG_PKT_HEADER;
+      break;
     }
 
-    float distance = ntohs(channel.distance) * this->const_param_.DIS_RESOLUTION;
-    uint8_t intensity = channel.intensity;
-    int16_t angle_vert = this->chan_angles_.vertAdjust(chan);
-    int16_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
+    block_ts += diff.ts(blk);
 
-    if (this->distance_block_.in(distance) && this->scan_block_.in(angle_horiz_final))
+    int block_az = ntohs(block.azimuth);
+    int16_t block_azi_diff = diff.azimuth(blk);
+
+    for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
-      float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->const_param_.RX * COS(angle_horiz);
-      float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->const_param_.RX * SIN(angle_horiz);
-      float z =  distance * SIN(angle_vert) + this->const_param_.RZ;
+      const RSChannel& channel = block.channels[chan];
 
-      typename T_PointCloud::PointT point;
-      setX(point, x);
-      setY(point, y);
-      setZ(point, z);
-      setIntensity(point, intensity);
+      float chan_ts = block_ts + this->const_param_.CHAN_TSS[chan];
+      int16_t angle_horiz = block_az + 
+        block_azi_diff * this->const_param_.CHAN_TSS[chan] / this->const_param_.BLOCK_DURATION;
 
-      setRing(point, this->chan_angles_.toUserChan(chan));
-      setTimestamp(point, chan_ts);
-      this->point_cloud_->points.emplace_back(point);
-    }
-    else if (!this->param_.dense_points)
-    {
-      typename T_PointCloud::PointT point;
-      setX(point, NAN);
-      setY(point, NAN);
-      setZ(point, NAN);
-      setIntensity(point, 0);
-      setRing(point, this->chan_angles_.toUserChan(chan));
-      setTimestamp(point, chan_ts);
-      this->point_cloud_->points.emplace_back(point);
+      int16_t angle_vert = this->chan_angles_.vertAdjust(chan);
+      int16_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
+
+      float distance = ntohs(channel.distance) * this->const_param_.DIS_RESOLUTION;
+      uint8_t intensity = channel.intensity;
+
+      if (this->distance_block_.in(distance) && this->scan_block_.in(angle_horiz_final))
+      {
+        float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->const_param_.RX * COS(angle_horiz);
+        float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->const_param_.RX * SIN(angle_horiz);
+        float z =  distance * SIN(angle_vert) + this->const_param_.RZ;
+
+        typename T_PointCloud::PointT point;
+        setX(point, x);
+        setY(point, y);
+        setZ(point, z);
+        setIntensity(point, intensity);
+
+        setRing(point, this->chan_angles_.toUserChan(chan));
+        setTimestamp(point, chan_ts);
+        this->point_cloud_->points.emplace_back(point);
+      }
+      else if (!this->param_.dense_points)
+      {
+        typename T_PointCloud::PointT point;
+        setX(point, NAN);
+        setY(point, NAN);
+        setZ(point, NAN);
+        setIntensity(point, 0);
+        setRing(point, this->chan_angles_.toUserChan(chan));
+        setTimestamp(point, chan_ts);
+        this->point_cloud_->points.emplace_back(point);
+      }
     }
   }
 }

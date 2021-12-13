@@ -32,8 +32,40 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+typedef struct
+{
+  uint16_t MSOP_LEN;
+  uint16_t DIFOP_LEN;
+
+  // identity
+  uint8_t MSOP_ID_LEN;
+  uint8_t DIFOP_ID_LEN;
+  uint8_t MSOP_ID[8];
+  uint8_t DIFOP_ID[8];
+  uint8_t BLOCK_ID[2];
+
+  // duration
+  uint16_t BLOCKS_PER_PKT;
+  uint16_t CHANNELS_PER_BLOCK;
+  //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
+
+  // distance resolution
+  float DIS_RESOLUTION;
+
+  // firing_ts / block_ts, chan_ts
+  float CHAN_TSS[128];
+  float BLOCK_DURATION;
+
+  // lens center
+  float RX;
+  float RY;
+  float RZ;
+
+} RSDecoderConstParam;
+
 #include <rs_driver/driver/decoder/set_member.hpp>
 #include <rs_driver/driver/decoder/decoder_base_opt.hpp>
+#include <rs_driver/driver/decoder/block_diff.hpp>
 #include <rs_driver/common/error_code.h>
 #include <rs_driver/driver/driver_param.h>
 #include <rs_driver/utility/time.h>
@@ -84,37 +116,6 @@ enum RSDecoderResult
   DISCARD_PKT = -4,
   DIFOP_NOT_READY = -5
 };
-
-typedef struct
-{
-  uint16_t MSOP_LEN;
-  uint16_t DIFOP_LEN;
-
-  // identity
-  uint8_t MSOP_ID_LEN;
-  uint8_t DIFOP_ID_LEN;
-  uint8_t MSOP_ID[8];
-  uint8_t DIFOP_ID[8];
-  uint8_t BLOCK_ID[2];
-
-  // duration
-  uint16_t BLOCKS_PER_PKT;
-  uint16_t CHANNELS_PER_BLOCK;
-  //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
-
-  // distance resolution
-  float DIS_RESOLUTION;
-
-  // firing_ts / block_ts, chan_ts
-  float CHAN_TSS[128];
-  float BLOCK_DURATION;
-
-  // lens center
-  float RX;
-  float RY;
-  float RZ;
-
-} RSDecoderConstParam;
 
 template <typename T_PointCloud>
 class Decoder
