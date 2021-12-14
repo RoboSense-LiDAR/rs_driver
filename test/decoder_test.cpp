@@ -122,11 +122,11 @@ TEST(TestDecoder, processDifopPkt)
       , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0xFF, 0xEE} // block id
-    , 0 // blocks per packet
+    , 1000 // blocks per packet
     , 2 // channels per block
   };
 
-  const_param.BLOCK_DURATION = 55.52 / 1000000;
+  const_param.BLOCK_DURATION = 55.52f / 1000000;
 
   RSDecoderParam param;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
@@ -142,6 +142,8 @@ TEST(TestDecoder, processDifopPkt)
     , 0x00, 0x00, 0x01 // horiz angles
     , 0x01, 0x00, 0x02
   };
+
+  ASSERT_LT(decoder.getPacketDiff() - 55.52/1000, 0.00001);
 
   errCode = ERRCODE_SUCCESS;
   decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
@@ -179,5 +181,12 @@ TEST(TestDecoder, processMsopPkt_fail)
   errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, sizeof(pkt));
   ASSERT_EQ(errCode, ERRCODE_WRONGPKTHEADER);
+
+  errCode = ERRCODE_SUCCESS;
+
+  uint8_t id[] = {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0};
+  memcpy (pkt.id, id, 8);
+  decoder.processMsopPkt((const uint8_t*)&pkt, sizeof(pkt));
+  ASSERT_EQ(errCode, ERRCODE_SUCCESS);
 }
 

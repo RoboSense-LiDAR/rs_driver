@@ -45,12 +45,12 @@ class InputFactory
 public:
   static std::shared_ptr<Input> createInput(InputType type, 
       const RSInputParam& param, const std::function<void(const Error&)>& excb,
-      uint64_t msec_to_delay);
+      double msec_to_delay);
 };
 
 inline std::shared_ptr<Input> InputFactory::createInput(InputType type, 
     const RSInputParam& param, const std::function<void(const Error&)>& excb, 
-    uint64_t msec_to_delay)
+    double msec_to_delay)
 {
   std::shared_ptr<Input> input;
 

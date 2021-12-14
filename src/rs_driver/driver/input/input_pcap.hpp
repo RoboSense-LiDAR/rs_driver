@@ -45,9 +45,9 @@ class InputPcap : public Input
 {
 public:
   InputPcap(const RSInputParam& input_param, 
-      const std::function<void(const Error&)>& excb, long long msec_to_delay)
+      const std::function<void(const Error&)>& excb, double msec_to_delay)
     : Input(input_param, excb), pcap_offset_(ETH_HDR_LEN), 
-    difop_filter_valid_(false), msec_to_delay_(msec_to_delay)
+    difop_filter_valid_(false), msec_to_delay_(msec_to_delay*1000)
   {
     if (input_param.use_vlan)
       pcap_offset_ += VLAN_LEN;
@@ -83,7 +83,7 @@ private:
   bpf_program msop_filter_;
   bpf_program difop_filter_;
   bool difop_filter_valid_;
-  long long msec_to_delay_;
+  uint64_t msec_to_delay_;
 };
 
 inline bool InputPcap::init()

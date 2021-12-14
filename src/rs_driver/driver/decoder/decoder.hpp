@@ -139,7 +139,7 @@ public:
     return temperature_;
   }
 
-  uint64_t getPacketDiff()
+  double getPacketDiff()
   {
     // Assume echo_mode is ECHO_SINGLE. 
     // If it is ECHO_DUAL, use RSInputParam.pcap_rate = 2 to change the playback speed.
@@ -292,19 +292,19 @@ inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
 template <typename T_PointCloud>
 void Decoder<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts)
 {
-    msg->seq = point_cloud_seq_++;
-    msg->timestamp = chan_ts;
-    msg->is_dense = param_.dense_points;
-    if (msg->is_dense)
-    {
-      msg->height = 1;
-      msg->width = msg->points.size();
-    }
-    else
-    {
-      msg->height = height_;
-      msg->width = msg->points.size() / msg->height;
-    }
+  msg->seq = point_cloud_seq_++;
+  msg->timestamp = chan_ts;
+  msg->is_dense = param_.dense_points;
+  if (msg->is_dense)
+  {
+    msg->height = 1;
+    msg->width = msg->points.size();
+  }
+  else
+  {
+    msg->height = height_;
+    msg->width = msg->points.size() / msg->height;
+  }
 }
 
 template <typename T_PointCloud>
