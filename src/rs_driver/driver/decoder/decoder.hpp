@@ -310,19 +310,22 @@ void Decoder<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointCloud> ms
 template <typename T_PointCloud>
 void Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
 {
+#if 0
   if (param_.wait_for_difop && !difop_ready_)
   {
      excb_(Error(ERRCODE_NODIFOPRECV));
   }
-
+#endif
   if (size != this->const_param_.MSOP_LEN)
   {
      this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
+     return;
   }
 
   if (memcmp(pkt, this->const_param_.MSOP_ID, const_param_.MSOP_ID_LEN) != 0)
   {
     this->excb_(Error(ERRCODE_WRONGPKTHEADER));
+    return;
   }
 
   decodeMsopPkt(pkt, size);

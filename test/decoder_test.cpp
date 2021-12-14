@@ -80,6 +80,37 @@ TEST(TestDecoder, processDifopPkt_fail)
   ASSERT_EQ(errCode, ERRCODE_WRONGPKTHEADER);
 }
 
+TEST(TestDecoder, processDifopPkt_invalid_rpm)
+{
+    RSDecoderConstParam const_param = 
+    {
+        sizeof(MyMsopPkt) // msop len
+      , sizeof(MyDifopPkt) // difop len
+      , 8 // msop id len
+      , 8 // difop id len
+      , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
+      , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+      , {0xFF, 0xEE} // block id
+      , 12 // blocks per packet
+      , 32 // channels per block
+    };
+
+  RSDecoderParam param;
+  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+
+  uint8_t pkt[] = 
+  {
+     0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // difop len
+    , 0x00, 0x00 // rpm = 0
+  };
+
+  errCode = ERRCODE_SUCCESS;
+  decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
+  ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+
+  ASSERT_EQ(decoder.rps_, 10);
+}
+
 TEST(TestDecoder, processDifopPkt)
 {
   RSDecoderConstParam const_param = 
@@ -102,7 +133,7 @@ TEST(TestDecoder, processDifopPkt)
 
   uint8_t pkt[] = 
   {
-    0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // msop len
+    0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // difop id
     , 0x02, 0x58 // rpm
     , 0x23, 0x28 // start angle = 9000
     , 0x46, 0x50 // end angle = 18000 
@@ -125,7 +156,7 @@ TEST(TestDecoder, processDifopPkt)
   ASSERT_EQ(decoder.chan_angles_.horiz_angles_[0], 1);
 }
 
-TEST(TestDecoder, processDifopPkt_invalid_rpm)
+TEST(TestDecoder, processMsopPkt_fail)
 {
     RSDecoderConstParam const_param = 
     {
@@ -135,26 +166,18 @@ TEST(TestDecoder, processDifopPkt_invalid_rpm)
       , 8 // difop id len
       , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
       , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-      , {0xFF, 0xEE} // block id
-      , 12 // blocks per packet
-      , 32 // channels per block
     };
 
   RSDecoderParam param;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
 
-  uint8_t pkt[] = 
-  {
-     0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // msop len
-    , 0x00, 0x00 // rpm = 0
-  };
+  MyMsopPkt pkt;
+  errCode = ERRCODE_SUCCESS;
+  decoder.processMsopPkt((const uint8_t*)&pkt, 2);
+  ASSERT_EQ(errCode, ERRCODE_WRONGPKTLENGTH);
 
   errCode = ERRCODE_SUCCESS;
-  decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
-  ASSERT_EQ(errCode, ERRCODE_SUCCESS);
-
-  ASSERT_EQ(decoder.rps_, 10);
+  decoder.processMsopPkt((const uint8_t*)&pkt, sizeof(pkt));
+  ASSERT_EQ(errCode, ERRCODE_WRONGPKTHEADER);
 }
-
-
 
