@@ -231,6 +231,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
 #endif
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFO << "             RoboSense Decoder Parameters " << RS_REND;
+    RS_INFOL << "config_from_file: " << config_from_file << RS_REND;
     RS_INFOL << "angle_path: " << angle_path << RS_REND;
     RS_INFOL << "max_distance: " << max_distance << RS_REND;
     RS_INFOL << "min_distance: " << min_distance << RS_REND;

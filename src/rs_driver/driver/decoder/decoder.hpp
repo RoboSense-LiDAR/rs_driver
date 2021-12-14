@@ -146,10 +146,6 @@ public:
     return this->const_param_.BLOCK_DURATION * const_param_.BLOCKS_PER_PKT;
   }
 
-  void loadAngleFile(const std::string& angle_path)
-  {
-  }
-
   explicit Decoder(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb,
       const RSDecoderConstParam& lidar_const_param);
@@ -226,7 +222,8 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
 
   if (param.config_from_file)
   {
-    loadAngleFile(param.angle_path);
+    int ret = chan_angles_.loadFromFile(param.angle_path);
+    this->difop_ready_ = (ret == 0);
   }
 }
 

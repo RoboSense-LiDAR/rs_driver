@@ -196,7 +196,7 @@ TEST(TestDecoder, processDifopPkt)
   ASSERT_EQ(decoder.chan_angles_.horiz_angles_[0], 1);
 }
 
-TEST(TestDecoder, processMsopPkt_fail)
+TEST(TestDecoder, processMsopPkt)
 {
     RSDecoderConstParam const_param = 
     {
@@ -241,5 +241,15 @@ TEST(TestDecoder, processMsopPkt_fail)
   errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, sizeof(pkt));
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+}
+
+TEST(TestDecoder, ctor)
+{
+  RSDecoderConstParam const_param;
+  RSDecoderParam param;
+  param.config_from_file = true;
+  param.angle_path = "../rs_driver/test/res/angle.csv";
+  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  ASSERT_TRUE(decoder.difop_ready_);
 }
 
