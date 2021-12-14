@@ -126,6 +126,7 @@ RSDecoderConstParam DecoderRS32<T_PointCloud>::getConstParam()
     , 0 // RZ
   };
 
+  float blk_ts = 55.52;
   float firing_tss[] = 
   {
     0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
@@ -133,8 +134,6 @@ RSDecoderConstParam DecoderRS32<T_PointCloud>::getConstParam()
     1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
     24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08
   };
-
-  float blk_ts = 55.52;
 
   param.BLOCK_DURATION = blk_ts / 1000000;
   for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)

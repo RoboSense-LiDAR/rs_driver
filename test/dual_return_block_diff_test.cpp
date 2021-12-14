@@ -44,9 +44,9 @@ TEST(TestDualPacketTraverser, toNext)
     , 0 // RZ
 
     // firing_ts
-    , {0.0} // chan_azis
-    , {0.0,  0.25} // chan_tss
     , 0.50 // block_duration
+    , {0.0,  0.25} // chan_tss
+    , {0.0} // chan_azis
   };
 
   MyPacket pkt = 

@@ -58,9 +58,9 @@ typedef struct
   float RZ;
 
   // firing_ts / block_ts, chan_ts
-  float CHAN_AZIS[128];
-  double CHAN_TSS[128];
   double BLOCK_DURATION;
+  double CHAN_TSS[128];
+  float CHAN_AZIS[128];
 
 } RSDecoderConstParam;
 
@@ -358,23 +358,23 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
     this->rps_ = 10;
   }
 
-
   // blocks per frame
   this->blks_per_frame_ = 1 / (this->rps_ * this->const_param_.BLOCK_DURATION);
 
   // block diff of azimuth
-  this->block_azi_diff_ = RS_ONE_ROUND * this->rps_ * this->const_param_.BLOCK_DURATION;
+  this->block_azi_diff_ = 
+    std::round(RS_ONE_ROUND * this->rps_ * this->const_param_.BLOCK_DURATION);
 
   // fov related
   uint16_t fov_start_angle = ntohs(pkt.fov.start_angle);
   uint16_t fov_end_angle = ntohs(pkt.fov.end_angle);
-
   uint16_t fov_range = (fov_start_angle < fov_end_angle) ? 
     (fov_end_angle - fov_start_angle) : (fov_end_angle + RS_ONE_ROUND - fov_start_angle);
   uint16_t fov_blind_range = RS_ONE_ROUND - fov_range;
 
   // fov blind diff of timestamp
-  this->fov_blind_ts_diff_ = fov_blind_range / (RS_ONE_ROUND * this->rps_);
+  this->fov_blind_ts_diff_ = 
+    (float)fov_blind_range / ((float)RS_ONE_ROUND * (float)this->rps_);
 
   if (!this->difop_ready_)
   {

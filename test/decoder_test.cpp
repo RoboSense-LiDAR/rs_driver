@@ -65,9 +65,6 @@ TEST(TestDecoder, processDifopPkt_fail)
       , 8 // difop id len
       , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
       , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-      , {0xFF, 0xEE} // block id
-      , 12 // blocks per packet
-      , 32 // channels per block
     };
 
   RSDecoderParam param;
@@ -85,26 +82,34 @@ TEST(TestDecoder, processDifopPkt_fail)
 
 TEST(TestDecoder, processDifopPkt)
 {
-    RSDecoderConstParam const_param = 
-    {
-        sizeof(MyMsopPkt) // msop len
+  RSDecoderConstParam const_param = 
+  {
+    sizeof(MyMsopPkt) // msop len
       , sizeof(MyDifopPkt) // difop len
       , 8 // msop id len
       , 8 // difop id len
       , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
-      , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-      , {0xFF, 0xEE} // block id
-      , 12 // blocks per packet
-      , 32 // channels per block
-    };
+    , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+    , {0xFF, 0xEE} // block id
+    , 0 // blocks per packet
+    , 2 // channels per block
+  };
+
+  const_param.BLOCK_DURATION = 55.52 / 1000000;
 
   RSDecoderParam param;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
 
   uint8_t pkt[] = 
   {
-     0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // msop len
+    0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // msop len
     , 0x02, 0x58 // rpm
+    , 0x23, 0x28 // start angle = 9000
+    , 0x46, 0x50 // end angle = 18000 
+    , 0x00, 0x00, 0x10 // vert angles
+    , 0x01, 0x00, 0x20
+    , 0x00, 0x00, 0x01 // horiz angles
+    , 0x01, 0x00, 0x02
   };
 
   errCode = ERRCODE_SUCCESS;
@@ -112,6 +117,12 @@ TEST(TestDecoder, processDifopPkt)
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
 
   ASSERT_EQ(decoder.rps_, 10);
+  ASSERT_EQ(decoder.blks_per_frame_, 1801);
+  ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075f);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 16);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_[0], 1);
 }
 
 TEST(TestDecoder, processDifopPkt_invalid_rpm)
@@ -135,7 +146,7 @@ TEST(TestDecoder, processDifopPkt_invalid_rpm)
   uint8_t pkt[] = 
   {
      0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // msop len
-    , 0x00, 0x00 // rpm
+    , 0x00, 0x00 // rpm = 0
   };
 
   errCode = ERRCODE_SUCCESS;
@@ -143,7 +154,6 @@ TEST(TestDecoder, processDifopPkt_invalid_rpm)
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
 
   ASSERT_EQ(decoder.rps_, 10);
-  //ASSERT_EQ(decoder.blk_per_frame, 10);
 }
 
 

@@ -555,7 +555,9 @@ public:
     return ((vert_angles.size() > 0) ? 0 : -1);
   }
 
+#ifndef UNIT_TEST
 private:
+#endif
   std::vector<int32_t> vert_angles_;
   std::vector<int32_t> horiz_angles_;
   std::vector<uint16_t> user_chans_;
