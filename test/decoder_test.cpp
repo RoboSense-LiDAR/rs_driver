@@ -7,7 +7,8 @@
 
 using namespace robosense::lidar;
 
-typedef PointCloudT<PointXYZIRT> PointCloud;
+typedef PointXYZI PointT;
+typedef PointCloudT<PointT> PointCloud;
 
 #pragma pack(push, 1)
 struct MyMsopPkt
@@ -243,7 +244,7 @@ TEST(TestDecoder, processMsopPkt)
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
 }
 
-TEST(TestDecoder, ctor)
+TEST(TestDecoder, angles_from_angle_file)
 {
   RSDecoderConstParam const_param;
   RSDecoderParam param;
@@ -251,5 +252,174 @@ TEST(TestDecoder, ctor)
   param.angle_path = "../rs_driver/test/res/angle.csv";
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
   ASSERT_TRUE(decoder.difop_ready_);
+}
+
+TEST(TestDecoder, setPointCloudHeader)
+{
+  RSDecoderConstParam const_param = {};
+  const_param.CHANNELS_PER_BLOCK = 2;
+  RSDecoderParam param;
+  param.dense_points = true;
+  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  ASSERT_EQ(decoder.point_cloud_seq_, 0);
+  ASSERT_TRUE(decoder.param_.dense_points);
+
+  std::shared_ptr<PointCloud> pt = std::make_shared<PointCloud>();
+  PointT point;
+  pt->points.emplace_back(point);
+  pt->points.emplace_back(point);
+
+  {
+    decoder.setPointCloudHeader(pt, 0.5f);
+    ASSERT_EQ(pt->seq, 0);
+    ASSERT_EQ(pt->timestamp, 0.5f);
+    ASSERT_TRUE(pt->is_dense);
+    ASSERT_EQ(pt->height, 1);
+    ASSERT_EQ(pt->width, 2);
+  }
+
+  decoder.param_.dense_points = false;
+
+  {
+    decoder.setPointCloudHeader(pt, 0.5f);
+    ASSERT_EQ(pt->seq, 1);
+    ASSERT_EQ(pt->timestamp, 0.5f);
+    ASSERT_FALSE(pt->is_dense);
+    ASSERT_EQ(pt->height, 2);
+    ASSERT_EQ(pt->width, 1);
+  }
+}
+
+std::shared_ptr<PointCloud> point_cloud_to_get;
+std::shared_ptr<PointCloud> getCallback(void)
+{
+  return point_cloud_to_get;
+}
+
+bool flag_point_cloud = false;
+std::shared_ptr<PointCloud> point_cloud_to_put;
+void putCallback(std::shared_ptr<PointCloud> pt)
+{
+  point_cloud_to_put = pt;
+  flag_point_cloud = true;
+}
+
+TEST(TestDecoder, split_by_angle)
+{
+  RSDecoderConstParam const_param;
+  const_param.CHANNELS_PER_BLOCK = 2;
+  RSDecoderParam param;
+  param.split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;
+  param.split_angle = 0.0f;
+  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  ASSERT_EQ(decoder.split_angle_.split_angle_, 0);
+
+  point_cloud_to_get = std::make_shared<PointCloud>();
+  decoder.regRecvCallback (getCallback, putCallback);
+
+  {
+    errCode = ERRCODE_SUCCESS;
+    flag_point_cloud = false;
+    decoder.toSplit (35999, 0);
+    ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+    ASSERT_FALSE(flag_point_cloud);
+
+    errCode = ERRCODE_SUCCESS;
+    decoder.toSplit (2, 0);
+    ASSERT_EQ(errCode, ERRCODE_ZEROPOINTS);
+  }
+
+  {
+    PointT point;
+    point_cloud_to_get->points.emplace_back(point);
+    point_cloud_to_get->points.emplace_back(point);
+
+    errCode = ERRCODE_SUCCESS;
+    flag_point_cloud = false;
+    decoder.toSplit (1, 0);
+    ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+    ASSERT_TRUE(flag_point_cloud);
+    ASSERT_TRUE(point_cloud_to_put.get() != NULL);
+    ASSERT_EQ(point_cloud_to_put->height, 2);
+    ASSERT_EQ(point_cloud_to_put->width, 1);
+  }
+}
+
+TEST(TestDecoder, split_by_fixed_pkts)
+{
+  RSDecoderConstParam const_param;
+  const_param.CHANNELS_PER_BLOCK = 2;
+  RSDecoderParam param;
+  param.split_frame_mode = SplitFrameMode::SPLIT_BY_FIXED_BLKS;
+  //param.num_blks_split = 2;
+  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  decoder.blks_per_frame_ = 2;
+  ASSERT_EQ(decoder.num_blks_, 0);
+
+  point_cloud_to_get = std::make_shared<PointCloud>();
+  decoder.regRecvCallback (getCallback, putCallback);
+
+  PointT point;
+  point_cloud_to_get->points.emplace_back(point);
+  point_cloud_to_get->points.emplace_back(point);
+
+  {
+    errCode = ERRCODE_SUCCESS;
+    flag_point_cloud = false;
+    decoder.toSplit (0, 0);
+    ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+    ASSERT_FALSE(flag_point_cloud);
+  }
+
+  {
+    errCode = ERRCODE_SUCCESS;
+    flag_point_cloud = false;
+    decoder.toSplit (0, 0);
+    ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+    ASSERT_TRUE(flag_point_cloud);
+
+    ASSERT_TRUE(point_cloud_to_put.get() != NULL);
+    ASSERT_EQ(point_cloud_to_put->height, 2);
+    ASSERT_EQ(point_cloud_to_put->width, 1);
+  }
+}
+
+TEST(TestDecoder, split_by_custom_blks)
+{
+  RSDecoderConstParam const_param;
+  const_param.CHANNELS_PER_BLOCK = 2;
+  RSDecoderParam param;
+  param.split_frame_mode = SplitFrameMode::SPLIT_BY_CUSTOM_BLKS;
+  param.num_blks_split = 2;
+  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  decoder.blks_per_frame_ = 2;
+  ASSERT_EQ(decoder.num_blks_, 0);
+
+  point_cloud_to_get = std::make_shared<PointCloud>();
+  decoder.regRecvCallback (getCallback, putCallback);
+
+  PointT point;
+  point_cloud_to_get->points.emplace_back(point);
+  point_cloud_to_get->points.emplace_back(point);
+
+  {
+    errCode = ERRCODE_SUCCESS;
+    flag_point_cloud = false;
+    decoder.toSplit (0, 0);
+    ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+    ASSERT_FALSE(flag_point_cloud);
+  }
+
+  {
+    errCode = ERRCODE_SUCCESS;
+    flag_point_cloud = false;
+    decoder.toSplit (0, 0);
+    ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+    ASSERT_TRUE(flag_point_cloud);
+
+    ASSERT_TRUE(point_cloud_to_put.get() != NULL);
+    ASSERT_EQ(point_cloud_to_put->height, 2);
+    ASSERT_EQ(point_cloud_to_put->width, 1);
+  }
 }
 

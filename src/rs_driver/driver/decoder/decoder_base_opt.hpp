@@ -639,9 +639,11 @@ public:
     return split_angle_;
   }
 
+#ifndef UNIT_TEST
 private:
+#endif
     uint16_t split_angle_;
-    int16_t prev_angle_;
+    int32_t prev_angle_;
 };
 
 }  // namespace lidar

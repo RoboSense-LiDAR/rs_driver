@@ -106,18 +106,6 @@ enum RSEchoMode
   ECHO_DUAL
 };
 
-/* Decode result definition */
-enum RSDecoderResult
-{
-  DECODE_OK = 0,
-  FRAME_SPLIT = 1,
-  WRONG_PKT_HEADER = -1,
-  WRONG_PKT_LENGTH = -2,
-  PKT_NULL = -3,
-  DISCARD_PKT = -4,
-  DIFOP_NOT_READY = -5
-};
-
 template <typename T_PointCloud>
 class Decoder
 {
@@ -163,11 +151,12 @@ protected:
   RSDecoderConstParam const_param_;
   RSDecoderParam param_;
   std::function<void(const Error&)> excb_;
-  uint16_t height_; // to be deleted
+  uint16_t height_;
 
   Trigon trigon_;
 #define SIN(angle) this->trigon_.sin(angle)
 #define COS(angle) this->trigon_.cos(angle)
+
   ChanAngles chan_angles_;
   DistanceBlock distance_block_;
   ScanBlock scan_block_;
@@ -197,15 +186,15 @@ protected:
 template <typename T_PointCloud>
 inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param, 
     const std::function<void(const Error&)>& excb,
-    const RSDecoderConstParam& lidar_const_param)
-  : const_param_(lidar_const_param)
+    const RSDecoderConstParam& const_param)
+  : const_param_(const_param)
   , param_(param)
   , excb_(excb)
-  , height_(0)
+  , height_(const_param.CHANNELS_PER_BLOCK)
   , distance_block_(0.4f, 200.0f, param.min_distance, param.max_distance)
   , scan_block_(param.start_angle * 100, param.end_angle * 100)
   , split_angle_(param.split_angle * 100)
-  , blks_per_frame_(1/(10*lidar_const_param.BLOCK_DURATION))
+  , blks_per_frame_(1/(10*const_param.BLOCK_DURATION))
   , block_azi_diff_(20)
   , fov_blind_ts_diff_(0)
   , protocol_ver_(0)
@@ -251,6 +240,7 @@ inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
 
     case SplitFrameMode::SPLIT_BY_FIXED_BLKS: 
 
+      this->num_blks_++;
       if (this->num_blks_ >= this->blks_per_frame_)
       {
         this->num_blks_ = 0;
@@ -260,6 +250,7 @@ inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
 
     case SplitFrameMode::SPLIT_BY_CUSTOM_BLKS:
 
+      this->num_blks_++;
       if (this->num_blks_ >= this->param_.num_blks_split)
       {
         this->num_blks_ = 0;
