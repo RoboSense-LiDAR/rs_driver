@@ -145,6 +145,11 @@ TEST(TestDecoder, processDifopPkt)
 
   ASSERT_LT(decoder.getPacketDiff() - 55.52/1000, 0.00001);
 
+  //
+  // angles from angle.csv
+  //
+
+  decoder.param_.config_from_file = true;
   errCode = ERRCODE_SUCCESS;
   decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
@@ -152,6 +157,39 @@ TEST(TestDecoder, processDifopPkt)
   ASSERT_EQ(decoder.rps_, 10);
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
   ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075f);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 0);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 0);
+
+  //
+  //angles from difop. no angles in difop
+  //
+
+  uint8_t pkt_no_angles[] = 
+  {
+    0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // difop id
+    , 0x02, 0x58 // rpm
+    , 0x23, 0x28 // start angle = 9000
+    , 0x46, 0x50 // end angle = 18000 
+    , 0xFF, 0xFF, 0xFF // vert angles
+    , 0xFF, 0xFF, 0xFF
+    , 0xFF, 0xFF, 0xFF // horiz angles
+    , 0xFF, 0xFF, 0xFF
+  };
+
+  decoder.param_.config_from_file = false;
+  errCode = ERRCODE_SUCCESS;
+  decoder.processDifopPkt(pkt_no_angles, sizeof(MyDifopPkt));
+  errCode = ERRCODE_SUCCESS;
+
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 0);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 0);
+
+  // angles from difop.
+  decoder.param_.config_from_file = false;
+  errCode = ERRCODE_SUCCESS;
+  decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
+  errCode = ERRCODE_SUCCESS;
+
   ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 16);
   ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
@@ -170,22 +208,37 @@ TEST(TestDecoder, processMsopPkt_fail)
       , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     };
 
+  MyMsopPkt pkt;
+
   RSDecoderParam param;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
 
-  MyMsopPkt pkt;
+  // wrong msop len
+  decoder.param_.wait_for_difop = true;
+  decoder.difop_ready_ = false;
+  errCode = ERRCODE_SUCCESS;
+  decoder.processMsopPkt((const uint8_t*)&pkt, 2);
+  ASSERT_EQ(errCode, ERRCODE_NODIFOPRECV);
+
+  decoder.param_.wait_for_difop = true;
+  decoder.difop_ready_ = true;
+
+  // wrong msop len
   errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, 2);
   ASSERT_EQ(errCode, ERRCODE_WRONGPKTLENGTH);
 
+  decoder.param_.wait_for_difop = false;
+
+  // wrong msop header
   errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, sizeof(pkt));
   ASSERT_EQ(errCode, ERRCODE_WRONGPKTHEADER);
 
-  errCode = ERRCODE_SUCCESS;
-
+  // valid msop
   uint8_t id[] = {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0};
   memcpy (pkt.id, id, 8);
+  errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, sizeof(pkt));
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
 }

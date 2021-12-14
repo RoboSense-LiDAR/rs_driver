@@ -310,12 +310,12 @@ void Decoder<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointCloud> ms
 template <typename T_PointCloud>
 void Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
 {
-#if 0
   if (param_.wait_for_difop && !difop_ready_)
   {
      excb_(Error(ERRCODE_NODIFOPRECV));
+     return;
   }
-#endif
+
   if (size != this->const_param_.MSOP_LEN)
   {
      this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
@@ -379,7 +379,7 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   this->fov_blind_ts_diff_ = 
     (float)fov_blind_range / ((float)RS_ONE_ROUND * (float)this->rps_);
 
-  if (!this->difop_ready_)
+  if (!this->param_.config_from_file && !this->difop_ready_)
   {
     this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 
         this->const_param_.CHANNELS_PER_BLOCK);

@@ -273,6 +273,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "use_someip: " << use_someip << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
+
 } RSInputParam;
 
 typedef struct RSDriverParam  ///< The LiDAR driver parameter
