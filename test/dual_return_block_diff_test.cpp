@@ -38,14 +38,15 @@ TEST(TestDualPacketTraverser, toNext)
     , 2 // channels per block
     , 0.25 // distance resolution
 
-    // firing_ts
-    , {0.0,  0.25} // chan_tss
-    , 0.50 // block_duration
-
     // lens center
     , 0 // RX
     , 0 // RY
     , 0 // RZ
+
+    // firing_ts
+    , {0.0} // chan_azis
+    , {0.0,  0.25} // chan_tss
+    , 0.50 // block_duration
   };
 
   MyPacket pkt = 

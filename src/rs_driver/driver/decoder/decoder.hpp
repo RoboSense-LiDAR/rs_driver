@@ -52,14 +52,15 @@ typedef struct
   // distance resolution
   float DIS_RESOLUTION;
 
-  // firing_ts / block_ts, chan_ts
-  float CHAN_TSS[128];
-  float BLOCK_DURATION;
-
   // lens center
   float RX;
   float RY;
   float RZ;
+
+  // firing_ts / block_ts, chan_ts
+  float CHAN_AZIS[128];
+  double CHAN_TSS[128];
+  double BLOCK_DURATION;
 
 } RSDecoderConstParam;
 
@@ -153,20 +154,15 @@ public:
       const std::function<void(const Error&)>& excb,
       const RSDecoderConstParam& lidar_const_param);
 
-  uint16_t rps()
-  {
-    return rps_;
-  }
-
+#ifndef UNIT_TEST
 protected:
+#endif
 
   void toSplit(uint16_t azimuth, double chan_ts);
   void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
 
   template <typename T_Difop>
   void decodeDifopCommon(const T_Difop& pkt);
-
-protected:
 
   RSDecoderConstParam const_param_;
   RSDecoderParam param_;

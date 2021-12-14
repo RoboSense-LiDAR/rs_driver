@@ -111,6 +111,40 @@ TEST(TestDecoder, processDifopPkt)
   decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
 
-  ASSERT_EQ(decoder.rps(), 10);
+  ASSERT_EQ(decoder.rps_, 10);
 }
+
+TEST(TestDecoder, processDifopPkt_invalid_rpm)
+{
+    RSDecoderConstParam const_param = 
+    {
+        sizeof(MyMsopPkt) // msop len
+      , sizeof(MyDifopPkt) // difop len
+      , 8 // msop id len
+      , 8 // difop id len
+      , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
+      , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+      , {0xFF, 0xEE} // block id
+      , 12 // blocks per packet
+      , 32 // channels per block
+    };
+
+  RSDecoderParam param;
+  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+
+  uint8_t pkt[] = 
+  {
+     0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // msop len
+    , 0x00, 0x00 // rpm
+  };
+
+  errCode = ERRCODE_SUCCESS;
+  decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
+  ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+
+  ASSERT_EQ(decoder.rps_, 10);
+  //ASSERT_EQ(decoder.blk_per_frame, 10);
+}
+
+
 

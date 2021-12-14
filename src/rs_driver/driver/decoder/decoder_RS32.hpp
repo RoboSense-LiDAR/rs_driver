@@ -92,58 +92,73 @@ public:
   virtual uint64_t usecToDelay() {return 0;}
   virtual ~DecoderRS32() = default;
 
-  explicit DecoderRS32(const RSDecoderParam& param,
+  explicit DecoderRS32(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb);
 
 protected:
 
-  static RSDecoderConstParam getConstParam()
-  {
-    RSDecoderConstParam param = 
-    {
-        1248 // msop len
-      , 1248 // difop len
-      , 8 // msop id len
-      , 8 // difop id len
-      , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
-      , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-      , {0xFF, 0xEE} // block id
-      , 12 // blocks per packet
-      , 32 // channels per block
-      , 0.005 // distance resolution
-
-      // firing_ts
-      , { 0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
-        23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
-        1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
-        24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08}
-      , 55.52
-
-        // lens center
-      , 0.03997 // RX
-      , -0.01087 // RY
-      , 0 // RZ
-    };
-
-    return param;
-  }
-
-  RSEchoMode getEchoMode(uint8_t mode)
-  {
-    switch (mode)
-    {
-      case 0x00:
-        return RSEchoMode::ECHO_DUAL;
-      case 0x01:
-      case 0x02:
-      default:
-        return RSEchoMode::ECHO_SINGLE;
-    }
-  }
+  static RSDecoderConstParam getConstParam();
+  RSEchoMode getEchoMode(uint8_t mode);
 
   template <typename T_BlockDiff>
   void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 };
+
+template <typename T_PointCloud>
+RSDecoderConstParam DecoderRS32<T_PointCloud>::getConstParam()
+{
+  RSDecoderConstParam param = 
+  {
+      1248 // msop len
+    , 1248 // difop len
+    , 8 // msop id len
+    , 8 // difop id len
+    , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
+    , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+    , {0xFF, 0xEE} // block id
+    , 12 // blocks per packet
+    , 32 // channels per block
+    , 0.005 // distance resolution
+
+    // lens center
+    , 0.03997 // RX
+    , -0.01087 // RY
+    , 0 // RZ
+  };
+
+  float firing_tss[] = 
+  {
+    0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
+    23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
+    1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
+    24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08
+  };
+
+  float blk_ts = 55.52;
+
+  param.BLOCK_DURATION = blk_ts / 1000000;
+  for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)
+  {
+    param.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
+    param.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
+  }
+
+  return param;
+}
+
+template <typename T_PointCloud>
+inline RSEchoMode DecoderRS32<T_PointCloud>::getEchoMode(uint8_t mode)
+{
+  switch (mode)
+  {
+    case 0x00:
+      return RSEchoMode::ECHO_DUAL;
+    case 0x01:
+    case 0x02:
+    default:
+      return RSEchoMode::ECHO_SINGLE;
+  }
+}
 
 template <typename T_PointCloud>
 inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,

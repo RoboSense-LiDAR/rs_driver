@@ -7,6 +7,8 @@ find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 include_directories(${DRIVER_INCLUDE_DIRS})
 
+add_definitions("-DUNIT_TEST")
+
 add_executable(rs_driver_test
               rs_driver_test.cpp
               packet_test.cpp
