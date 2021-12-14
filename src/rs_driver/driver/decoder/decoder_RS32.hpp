@@ -88,17 +88,17 @@ public:
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual void decodeMsopPkt(const uint8_t* pkt, size_t size);
-
-  virtual uint64_t usecToDelay() {return 0;}
   virtual ~DecoderRS32() = default;
 
   explicit DecoderRS32(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb);
 
+#ifndef UNIT_TEST
 protected:
+#endif
 
   static RSDecoderConstParam getConstParam();
-  RSEchoMode getEchoMode(uint8_t mode);
+  static RSEchoMode getEchoMode(uint8_t mode);
 
   template <typename T_BlockDiff>
   void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
@@ -146,7 +146,7 @@ RSDecoderConstParam DecoderRS32<T_PointCloud>::getConstParam()
 }
 
 template <typename T_PointCloud>
-inline RSEchoMode DecoderRS32<T_PointCloud>::getEchoMode(uint8_t mode)
+RSEchoMode DecoderRS32<T_PointCloud>::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {

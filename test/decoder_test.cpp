@@ -49,9 +49,9 @@ public:
 
 };
 
-ErrCode errCode = ERRCODE_SUCCESS;
+static ErrCode errCode = ERRCODE_SUCCESS;
 
-void errCallback(const Error& err)
+static void errCallback(const Error& err)
 {
   errCode = err.error_code;
 }
