@@ -568,7 +568,7 @@ private:
   std::vector<uint16_t> user_chans_;
 };
 
-#define DBG
+//#define DBG
 
 class Trigon
 {
@@ -626,7 +626,7 @@ public:
 
   void print()
   {
-    for (int32_t i = -9000; i < -8900; i++)
+    for (int32_t i = -10; i < 10; i++)
     {
       std::cout << 
 #ifdef DBG 
