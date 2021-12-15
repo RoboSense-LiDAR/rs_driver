@@ -437,7 +437,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     if (!difop_flag_ && driver_param_.wait_for_difop)
     {
       ndifop_count_++;
-      if (ndifop_count_ > 240)
+      if (ndifop_count_ > 1500)
       {
         reportError(Error(ERRCODE_NODIFOPRECV));
         ndifop_count_ = 0;
