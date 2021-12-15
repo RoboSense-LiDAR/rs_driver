@@ -338,8 +338,6 @@ inline uint64_t calcTimeHost(void)
   return t_us.count();
 }
 
-#define RS_TEMP_RESOLUTION 0.0625f
-
 inline int16_t calcTemp(const RsTemprature* tmp)
 {
   // | lsb | padding | neg | msb |
@@ -372,17 +370,9 @@ public:
       return (angle >= start_) && (angle < end_);
   }
 
-  uint16_t start()
-  {
-    return start_;
-  }
-
-  uint16_t end()
-  {
-    return end_;
-  }
-
+#ifndef UNIT_TEST
 private:
+#endif
   uint16_t start_;
   uint16_t end_;
   bool cross_zero_;
@@ -401,17 +391,9 @@ public:
     return ((min_ <= distance) && (distance <= max_));
   }
 
-  float min()
-  {
-    return min_;
-  }
-
-  float max()
-  {
-    return max_;
-  }
-
+#ifndef UNIT_TEST
 private:
+#endif
 
   float min_;
   float max_;
@@ -443,11 +425,6 @@ public:
 
     genUserChan(vert_angles_, user_chans_);
     return 0;
-  }
-
-  size_t chanSize()
-  {
-    return vert_angles_.size();
   }
 
   uint16_t toUserChan(uint16_t chan)
@@ -563,8 +540,6 @@ private:
   std::vector<uint16_t> user_chans_;
 };
 
-//#define RS_TO_RADS(x) ((x) * (M_PI) / 180)
-
 class Trigon
 {
 public:
@@ -632,11 +607,6 @@ public:
     bool v = ((prev_angle_ < split_angle_) && (split_angle_ <= angle));
     prev_angle_ = angle;
     return v;
-  }
-
-  uint16_t value()
-  {
-    return split_angle_;
   }
 
 #ifndef UNIT_TEST

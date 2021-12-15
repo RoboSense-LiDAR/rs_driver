@@ -43,8 +43,8 @@ TEST(TestParseTemp, calcTemp)
 TEST(TestScanBlock, ctor)
 {
   ScanBlock blk(10, 20);
-  ASSERT_EQ(blk.start(), 10);
-  ASSERT_EQ(blk.end(), 20);
+  ASSERT_EQ(blk.start_, 10);
+  ASSERT_EQ(blk.end_, 20);
 
   ASSERT_FALSE(blk.in(5));
   ASSERT_TRUE(blk.in(10));
@@ -56,8 +56,8 @@ TEST(TestScanBlock, ctor)
 TEST(TestScanBlock, ctorCrossZero)
 {
   ScanBlock blk(35000, 10);
-  ASSERT_EQ(blk.start(), 35000);
-  ASSERT_EQ(blk.end(), 10);
+  ASSERT_EQ(blk.start_, 35000);
+  ASSERT_EQ(blk.end_, 10);
 
   ASSERT_FALSE(blk.in(34999));
   ASSERT_TRUE(blk.in(35000));
@@ -69,15 +69,15 @@ TEST(TestScanBlock, ctorCrossZero)
 TEST(TestScanBlock, ctorBeyondRound)
 {
   ScanBlock blk(36100, 36200);
-  ASSERT_EQ(blk.start(), 100);
-  ASSERT_EQ(blk.end(), 200);
+  ASSERT_EQ(blk.start_, 100);
+  ASSERT_EQ(blk.end_, 200);
 }
 
 TEST(TestDistanceBlock, ctor)
 {
   DistanceBlock blk(0.5, 200, 0.75, 150);
-  ASSERT_EQ(blk.min(), 0.75);
-  ASSERT_EQ(blk.max(), 150);
+  ASSERT_EQ(blk.min_, 0.75);
+  ASSERT_EQ(blk.max_, 150);
 
   ASSERT_FALSE(blk.in(0.45));
   ASSERT_TRUE(blk.in(0.75));
@@ -89,8 +89,8 @@ TEST(TestDistanceBlock, ctor)
 TEST(TestDistanceBlock, ctorNoUseBlock)
 {
   DistanceBlock blk(0.5, 200, 0.0, 200.5);
-  ASSERT_EQ(blk.min(), 0.5);
-  ASSERT_EQ(blk.max(), 200);
+  ASSERT_EQ(blk.min_, 0.5);
+  ASSERT_EQ(blk.max_, 200);
 }
 
 TEST(TestChanAngles, genUserChan)
@@ -138,7 +138,7 @@ TEST(TestChanAngles, memberLoadFromFile)
   ChanAngles angles;
 
   ASSERT_EQ(angles.loadFromFile ("../rs_driver/test/res/angle.csv"), 0);
-  ASSERT_EQ(angles.chanSize(), 4);
+  ASSERT_EQ(angles.user_chans_.size(), 4);
   ASSERT_EQ(angles.toUserChan(0), 3);
   ASSERT_EQ(angles.toUserChan(1), 2);
   ASSERT_EQ(angles.toUserChan(2), 1);
@@ -185,6 +185,30 @@ TEST(TestChanAngles, loadFromDifop)
         horiz_angles), 0);
   ASSERT_EQ(vert_angles.size(), 4);
   ASSERT_EQ(horiz_angles.size(), 4);
+}
+
+TEST(TestChanAngles, memberLoadFromDifop)
+{
+  uint8_t vert_angle_arr[] = {0x00, 0x01, 0x02, 
+                              0x01, 0x03, 0x04,
+                              0x01, 0x05, 0x06,
+                              0x00, 0x07, 0x08};
+  uint8_t horiz_angle_arr[] = {0x00, 0x11, 0x22,
+                               0x01, 0x33, 0x44,
+                               0x00, 0x55, 0x66,
+                               0x01, 0x77, 0x88};
+
+  ChanAngles angles;
+  ASSERT_EQ(angles.loadFromDifop(
+        (const RSCalibrationAngle*)vert_angle_arr, 
+        (const RSCalibrationAngle*)horiz_angle_arr, 
+        4), 0);
+
+  ASSERT_EQ(angles.user_chans_.size(), 4);
+  ASSERT_EQ(angles.toUserChan(0), 2);
+  ASSERT_EQ(angles.toUserChan(1), 1);
+  ASSERT_EQ(angles.toUserChan(2), 0);
+  ASSERT_EQ(angles.toUserChan(3), 3);
 }
 
 TEST(TestTrigon, ctor)

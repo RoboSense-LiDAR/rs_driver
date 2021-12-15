@@ -44,17 +44,99 @@ TEST(TestDecoderRS32, decodeMsopPkt)
   RSDecoderParam param;
   DecoderRS32<PointCloud> decoder(param, errCallback);
 
-  RS32MsopPkt pkt = 
+  uint8_t pkt[] = 
   {
+    //
+    // header
+    //
     0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0, // msop id
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // reserved_1
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ts_YMD
+    0x15, 0x0a, 0x01, 0x01, 0x02, 0x03, 0x11, 0x22, 0x33, 0x44, // ts_YMD
     0x00, // lidar type
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // reserved_2
-    0x00, 0x00, // temprature
-    0x00, 0x00 // reserved_3
+    0x18, 0x01, // temprature
+    0x00, 0x00, // reserved_3
+
+    //
+    // block_01
+    //
+    0xFF, 0xEE, // block id
+    0x00, 0x00, // azimuth
+    0x00, 0x00, // chan_00, distance
+    0x00,       // chan_00, intensity
+    0x00, 0x00, // chan_01, distance
+    0x00,       // chan_01, intensity
+    0x00, 0x00, // chan_02, distance
+    0x00,       // chan_02, intensity
+    0x00, 0x00, // chan_03, distance
+    0x00,       // chan_03, intensity
+    0x00, 0x00, // chan_04, distance
+    0x00,       // chan_04, intensity
+    0x00, 0x00, // chan_05, distance
+    0x00,       // chan_05, intensity
+    0x00, 0x00, // chan_06, distance
+    0x00,       // chan_06, intensity
+    0x00, 0x00, // chan_07, distance
+    0x00,       // chan_07, intensity
+    0x00, 0x00, // chan_08, distance
+    0x00,       // chan_08, intensity
+    0x00, 0x00, // chan_09, distance
+    0x00,       // chan_09, intensity
+    0x00, 0x00, // chan_10, distance
+    0x00,       // chan_10, intensity
+    0x00, 0x00, // chan_11, distance
+    0x00,       // chan_11, intensity
+    0x00, 0x00, // chan_12, distance
+    0x00,       // chan_12, intensity
+    0x00, 0x00, // chan_13, distance
+    0x00,       // chan_13, intensity
+    0x00, 0x00, // chan_14, distance
+    0x00,       // chan_14, intensity
+    0x00, 0x00, // chan_15, distance
+    0x00,       // chan_15, intensity
+    0x00, 0x00, // chan_16, distance
+    0x00,       // chan_16, intensity
+    0x00, 0x00, // chan_17, distance
+    0x00,       // chan_17, intensity
+    0x00, 0x00, // chan_18, distance
+    0x00,       // chan_18, intensity
+    0x00, 0x00, // chan_19, distance
+    0x00,       // chan_19, intensity
+    0x00, 0x00, // chan_20, distance
+    0x00,       // chan_20, intensity
+    0x00, 0x00, // chan_21, distance
+    0x00,       // chan_21, intensity
+    0x00, 0x00, // chan_22, distance
+    0x00,       // chan_22, intensity
+    0x00, 0x00, // chan_23, distance
+    0x00,       // chan_23, intensity
+    0x00, 0x00, // chan_24, distance
+    0x00,       // chan_24, intensity
+    0x00, 0x00, // chan_25, distance
+    0x00,       // chan_25, intensity
+    0x00, 0x00, // chan_26, distance
+    0x00,       // chan_26, intensity
+    0x00, 0x00, // chan_27, distance
+    0x00,       // chan_27, intensity
+    0x00, 0x00, // chan_28, distance
+    0x00,       // chan_28, intensity
+    0x00, 0x00, // chan_29, distance
+    0x00,       // chan_29, intensity
+    0x00, 0x00, // chan_30, distance
+    0x00,       // chan_30, intensity
+    0x00, 0x00, // chan_31, distance
+    0x00,       // chan_31, intensity
+
+    //
+    // block_02
+    //
+    0x00, 0x00, // block id
   };
 
-  decoder.decodeMsopPkt((uint8_t*)&pkt, sizeof(pkt));
-  ASSERT_EQ(decoder.getTemperature(), 0);
+#if 0
+  decoder.param_.use_lidar_clock = true;
+  decoder.decodeMsopPkt(pkt, sizeof(pkt));
+  ASSERT_EQ(decoder.getTemperature(), 2.1875);
+  //ASSERT_EQ(decoder.getTemperature(), 2.1875);
+#endif
 }

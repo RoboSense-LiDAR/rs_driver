@@ -130,8 +130,6 @@ public:
 
   double getPacketDiff()
   {
-    // Assume echo_mode is ECHO_SINGLE. 
-    // If it is ECHO_DUAL, use RSInputParam.pcap_rate = 2 to change the playback speed.
     return this->const_param_.BLOCK_DURATION * const_param_.BLOCKS_PER_PKT;
   }
 

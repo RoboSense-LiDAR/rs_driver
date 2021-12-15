@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/driver/decoder/decoder.hpp>
+#include <rs_driver/utility/dbg.h>
 
 namespace robosense
 {
@@ -195,11 +196,12 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 {
   const RS32MsopPkt& pkt = *(const RS32MsopPkt*)(packet);
 
-  this->temperature_ = calcTemp(&(pkt.header.temp));
+  this->temperature_ = calcTemp(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
+    std::cout << "cal ymd" << std::endl;
     pkt_ts = calcTimeYMD(&pkt.header.timestamp);
   }
   else
@@ -212,6 +214,8 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   double block_ts = pkt_ts;
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
+    std::cout << "blk:" << blk << std::endl;
+
     const RS32MsopBlock& block = pkt.blocks[blk];
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 2) != 0)
@@ -220,24 +224,32 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       break;
     }
 
+    std::cout << "+ blk:" << blk << std::endl;
+
     block_ts += diff.ts(blk);
 
     int block_az = ntohs(block.azimuth);
     int16_t block_azi_diff = diff.azimuth(blk);
 
+
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
       const RSChannel& channel = block.channels[chan];
 
+      std::cout << "chan:" << chan << std::endl;
+
       float chan_ts = block_ts + this->const_param_.CHAN_TSS[chan];
       int16_t angle_horiz = block_az + 
         block_azi_diff * this->const_param_.CHAN_TSS[chan] / this->const_param_.BLOCK_DURATION;
+
+      std::cout << "+ chan:" << chan << std::endl;
 
       int16_t angle_vert = this->chan_angles_.vertAdjust(chan);
       int16_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
 
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
       uint8_t intensity = channel.intensity;
+
 
       if (this->distance_block_.in(distance) && this->scan_block_.in(angle_horiz_final))
       {
