@@ -50,7 +50,8 @@ typedef struct
   //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
 
   // distance resolution
-  float DIS_RESOLUTION;
+  float DISTANCE_RES;
+  float TEMPERATURE_RES;
 
   // lens center
   float RX;
@@ -136,7 +137,7 @@ public:
 
   explicit Decoder(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb,
-      const RSDecoderConstParam& lidar_const_param);
+      const RSDecoderConstParam& const_param);
 
 #ifndef UNIT_TEST
 protected:

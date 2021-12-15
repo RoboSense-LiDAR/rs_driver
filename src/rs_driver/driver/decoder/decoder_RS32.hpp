@@ -118,28 +118,29 @@ RSDecoderConstParam DecoderRS32<T_PointCloud>::getConstParam()
     , {0xFF, 0xEE} // block id
     , 12 // blocks per packet
     , 32 // channels per block
-    , 0.005 // distance resolution
+    , 0.005f // distance resolution
+    , 0.0625f // temperature resolution
 
     // lens center
-    , 0.03997 // RX
-    , -0.01087 // RY
-    , 0 // RZ
+    , 0.03997f // RX
+    , -0.01087f // RY
+    , 0.0f // RZ
   };
 
-  float blk_ts = 55.52;
+  float blk_ts = 55.52f;
   float firing_tss[] = 
   {
-    0.00,  2.88,  5.76,  8.64, 11.52, 14.40, 17.28, 20.16, 
-    23.04, 25.92, 28.80, 31.68, 34.56, 37.44, 40.32, 44.64,
-    1.44,  4.32,  7.20, 10.08, 12.96, 15.84, 18.72, 21.60,
-    24.48, 27.36, 30.24, 33.12, 36.00, 38.88, 41.76, 46.08
+    0.00f,  2.88f,  5.76f,  8.64f, 11.52f, 14.40f, 17.28f, 20.16f, 
+    23.04f, 25.92f, 28.80f, 31.68f, 34.56f, 37.44f, 40.32f, 44.64f,
+    1.44f,  4.32f,  7.20f, 10.08f, 12.96f, 15.84f, 18.72f, 21.60f,
+    24.48f, 27.36f, 30.24f, 33.12f, 36.00f, 38.88f, 41.76f, 46.08f
   };
 
   param.BLOCK_DURATION = blk_ts / 1000000;
   for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)
   {
-    param.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
     param.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
+    param.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
   }
 
   return param;
@@ -235,13 +236,15 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       int16_t angle_vert = this->chan_angles_.vertAdjust(chan);
       int16_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
 
-      float distance = ntohs(channel.distance) * this->const_param_.DIS_RESOLUTION;
+      float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
       uint8_t intensity = channel.intensity;
 
       if (this->distance_block_.in(distance) && this->scan_block_.in(angle_horiz_final))
       {
-        float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->const_param_.RX * COS(angle_horiz);
-        float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->const_param_.RX * SIN(angle_horiz);
+        float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + 
+          this->const_param_.RX * COS(angle_horiz);
+        float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - 
+          this->const_param_.RX * SIN(angle_horiz);
         float z =  distance * SIN(angle_vert) + this->const_param_.RZ;
 
         typename T_PointCloud::PointT point;

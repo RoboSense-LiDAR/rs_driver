@@ -37,6 +37,7 @@ TEST(TestDualPacketTraverser, toNext)
     , 6 // blocks per packet
     , 2 // channels per block
     , 0.25 // distance resolution
+    , 0.0 // temperature resolution
 
     // lens center
     , 0 // RX
