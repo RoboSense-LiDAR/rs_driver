@@ -158,8 +158,10 @@ TEST(TestDecoder, processDifopPkt)
   ASSERT_EQ(decoder.rps_, 10);
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
   ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075f);
-  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 0);
-  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 0);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 0);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_[0], 0);
 
   //
   //angles from difop. no angles in difop
@@ -182,8 +184,10 @@ TEST(TestDecoder, processDifopPkt)
   decoder.processDifopPkt(pkt_no_angles, sizeof(MyDifopPkt));
   errCode = ERRCODE_SUCCESS;
 
-  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 0);
-  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 0);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 0);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_[0], 0);
 
   // angles from difop.
   decoder.param_.config_from_file = false;
@@ -247,6 +251,7 @@ TEST(TestDecoder, processMsopPkt)
 TEST(TestDecoder, angles_from_angle_file)
 {
   RSDecoderConstParam const_param;
+  const_param.CHANNELS_PER_BLOCK = 4;
   RSDecoderParam param;
   param.config_from_file = true;
   param.angle_path = "../rs_driver/test/res/angle.csv";

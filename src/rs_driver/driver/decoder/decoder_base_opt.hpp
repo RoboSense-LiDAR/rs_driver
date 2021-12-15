@@ -403,26 +403,51 @@ private:
 class ChanAngles
 {
 public:
+
+  ChanAngles(uint16_t chan_num)
+    : chan_num_(chan_num)
+  {
+    vert_angles_.resize(chan_num_);
+    horiz_angles_.resize(chan_num_);
+    user_chans_.resize(chan_num_);
+  }
   
   int loadFromFile(const std::string& angle_path)
   {
-    int ret = loadFromFile (angle_path, vert_angles_, horiz_angles_);
+    std::vector<int32_t> vert_angles;
+    std::vector<int32_t> horiz_angles;
+    int ret = loadFromFile (angle_path, vert_angles, horiz_angles);
     if (ret < 0)
       return ret;
 
-    genUserChan(vert_angles_, user_chans_);
+    if (vert_angles.size() != chan_num_)
+    {
+      return -1;
+    }
 
+    vert_angles_.swap(vert_angles);
+    horiz_angles_.swap(horiz_angles);
+    genUserChan(vert_angles_, user_chans_);
     return 0;
   }
 
   int loadFromDifop(const RSCalibrationAngle vert_angle_arr[], 
       const RSCalibrationAngle horiz_angle_arr[], size_t size)
   {
+    std::vector<int32_t> vert_angles;
+    std::vector<int32_t> horiz_angles;
     int ret = 
-      loadFromDifop (vert_angle_arr, horiz_angle_arr, size, vert_angles_, horiz_angles_);
+      loadFromDifop (vert_angle_arr, horiz_angle_arr, size, vert_angles, horiz_angles);
     if (ret < 0)
       return ret;
 
+    if (vert_angles.size() != chan_num_)
+    {
+      return -1;
+    }
+
+    vert_angles_.swap(vert_angles);
+    horiz_angles_.swap(horiz_angles);
     genUserChan(vert_angles_, user_chans_);
     return 0;
   }
@@ -445,6 +470,10 @@ public:
   void narrow ()
   {
   }
+
+#ifndef UNIT_TEST
+private:
+#endif
 
   static
   void genUserChan(const std::vector<int32_t>& vert_angles, std::vector<uint16_t>& user_chans)
@@ -532,9 +561,7 @@ public:
     return ((vert_angles.size() > 0) ? 0 : -1);
   }
 
-#ifndef UNIT_TEST
-private:
-#endif
+  uint16_t chan_num_;
   std::vector<int32_t> vert_angles_;
   std::vector<int32_t> horiz_angles_;
   std::vector<uint16_t> user_chans_;

@@ -190,6 +190,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , param_(param)
   , excb_(excb)
   , height_(const_param.CHANNELS_PER_BLOCK)
+  , chan_angles_(const_param.CHANNELS_PER_BLOCK)
   , distance_block_(0.4f, 200.0f, param.min_distance, param.max_distance)
   , scan_block_(param.start_angle * 100, param.end_angle * 100)
   , split_angle_(param.split_angle * 100)
