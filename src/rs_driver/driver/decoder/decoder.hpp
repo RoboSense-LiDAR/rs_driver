@@ -50,6 +50,8 @@ typedef struct
   //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
 
   // distance resolution
+  float DISTANCE_MIN;
+  float DISTANCE_MAX;
   float DISTANCE_RES;
   float TEMPERATURE_RES;
 
@@ -191,7 +193,8 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , excb_(excb)
   , height_(const_param.CHANNELS_PER_BLOCK)
   , chan_angles_(const_param.CHANNELS_PER_BLOCK)
-  , distance_block_(0.4f, 200.0f, param.min_distance, param.max_distance)
+  , distance_block_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, 
+      param.min_distance, param.max_distance)
   , scan_block_(param.start_angle * 100, param.end_angle * 100)
   , split_angle_(param.split_angle * 100)
   , blks_per_frame_(1/(10*const_param.BLOCK_DURATION))

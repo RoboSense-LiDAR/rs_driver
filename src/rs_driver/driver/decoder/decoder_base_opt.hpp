@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <functional>
 #include <chrono>
+#include <mutex>
 
 namespace robosense
 {
@@ -567,54 +568,83 @@ private:
   std::vector<uint16_t> user_chans_;
 };
 
+#define DBG
+
 class Trigon
 {
 public:
 
+  static const int32_t MIN = -9000;
+  static const int32_t MAX = 45000;
+
   Trigon()
   {
-    static bool init_ = false;
+    int32_t range = MAX - MIN;
+#ifdef DBG
+    o_angles_ = (int32_t*)malloc(range * sizeof(int32_t));
+#endif
+    o_sins_ = (float*)malloc(range * sizeof(float));
+    o_coss_ = (float*)malloc(range * sizeof(float));
 
-    if (!init_)
+    for (int32_t i = MIN, j = 0; i < MAX; i++, j++)
     {
-      init_ = true;
+      double rads = static_cast<double>(i) * 0.01;
+      rads = rads * M_PI / 180;
 
-      uint16_t RS_ONE_ROUND = 36000;
-      float RS_ANGLE_RESOLUTION = 0.01; 
-
-      for (size_t i = 0; i < RS_ONE_ROUND; i++)
-      {
-        double rads = static_cast<double>(i) * RS_ANGLE_RESOLUTION;
-        rads = rads * M_PI / 180;
-
-        sins_.emplace_back((float)std::sin(rads));
-        coss_.emplace_back((float)std::cos(rads));
-      }
+#ifdef DBG
+      o_angles_[j] = i;
+#endif
+      o_sins_[j] = (float)std::sin(rads);
+      o_coss_[j] = (float)std::cos(rads);
     }
+
+#ifdef DBG
+    angles_ = o_angles_ - MIN;
+#endif
+    sins_ = o_sins_ - MIN;
+    coss_ = o_coss_ - MIN;
   }
 
-  void print()
+  ~Trigon()
   {
-      uint16_t RS_ONE_ROUND = 36000;
-      for (size_t i = 0; i < RS_ONE_ROUND; i++)
-      {
-        std::cout << i << "\t" << sins_[i] << "\t" << coss_[i] << std::endl;
-      }
+    free(o_coss_);
+    free(o_sins_);
+#ifdef DBG
+    free(o_angles_);
+#endif
   }
 
-  float cos(uint16_t angle)
-  {
-    return coss_[angle];
-  }
-
-  float sin(uint16_t angle)
+  float sin(int32_t angle)
   {
     return sins_[angle];
   }
 
+  float cos(int32_t angle)
+  {
+    return coss_[angle];
+  }
+
+  void print()
+  {
+    for (int32_t i = -9000; i < -8900; i++)
+    {
+      std::cout << 
+#ifdef DBG 
+        angles_[i] << "\t" << 
+#endif
+        sins_[i] << "\t" << coss_[i] << std::endl;
+    }
+  }
+
 private:
-  std::vector<float> sins_;
-  std::vector<float> coss_;
+#ifdef DBG 
+  int32_t* o_angles_;
+  int32_t* angles_;
+#endif
+  float* o_sins_;
+  float* o_coss_;
+  float* sins_;
+  float* coss_;
 };
 
 class SplitAngle

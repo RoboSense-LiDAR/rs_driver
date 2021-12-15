@@ -36,6 +36,8 @@ TEST(TestDualPacketTraverser, toNext)
     , {0x00} // block id
     , 6 // blocks per packet
     , 2 // channels per block
+    , 0.0f // distance min
+    , 0.0f // distance max
     , 0.25 // distance resolution
     , 0.0 // temperature resolution
 

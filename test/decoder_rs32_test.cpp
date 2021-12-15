@@ -41,9 +41,6 @@ TEST(TestDecoderRS32, decodeDifopPkt)
 
 TEST(TestDecoderRS32, decodeMsopPkt)
 {
-  RSDecoderParam param;
-  DecoderRS32<PointCloud> decoder(param, errCallback);
-
   uint8_t pkt[] = 
   {
     //
@@ -62,8 +59,8 @@ TEST(TestDecoderRS32, decodeMsopPkt)
     //
     0xFF, 0xEE, // block id
     0x00, 0x00, // azimuth
-    0x00, 0x00, // chan_00, distance
-    0x00,       // chan_00, intensity
+    0x03, 0xE8, // chan_00, distance
+    0x01,       // chan_00, intensity
     0x00, 0x00, // chan_01, distance
     0x00,       // chan_01, intensity
     0x00, 0x00, // chan_02, distance
@@ -133,10 +130,16 @@ TEST(TestDecoderRS32, decodeMsopPkt)
     0x00, 0x00, // block id
   };
 
-#if 0
+  RSDecoderParam param;
+  param.dense_points = false;
+  DecoderRS32<PointCloud> decoder(param, errCallback);
+  decoder.point_cloud_ = std::make_shared<PointCloud>();
+
   decoder.param_.use_lidar_clock = true;
   decoder.decodeMsopPkt(pkt, sizeof(pkt));
   ASSERT_EQ(decoder.getTemperature(), 2.1875);
-  //ASSERT_EQ(decoder.getTemperature(), 2.1875);
-#endif
+  ASSERT_EQ(decoder.point_cloud_->points.size(), 32);
+
+  PointT& point = decoder.point_cloud_->points[0];
+  ASSERT_EQ(point.intensity, 1);
 }
