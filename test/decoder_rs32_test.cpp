@@ -29,14 +29,28 @@ TEST(TestDecoderRS32, decodeDifopPkt)
 {
   RSDecoderParam param;
   DecoderRS32<PointCloud> decoder(param, errCallback);
+  ASSERT_EQ(decoder.blks_per_frame_, 1801);
+  ASSERT_EQ(decoder.split_blks_per_frame_, 1801);
 
   RS32DifopPkt pkt;
 
-  pkt.rpm = htons(1200);
+  // rpm = 600
+  pkt.rpm = htons(600);
   pkt.return_mode = 0; // dual return
   decoder.decodeDifopPkt((uint8_t*)&pkt, sizeof(pkt));
+  ASSERT_EQ(decoder.rps_, 10);
   ASSERT_EQ(decoder.echo_mode_, RSEchoMode::ECHO_DUAL);
+  ASSERT_EQ(decoder.blks_per_frame_, 1801);
+  ASSERT_EQ(decoder.split_blks_per_frame_, 3602);
+
+  // rpm = 1200
+  pkt.rpm = htons(1200);
+  pkt.return_mode = 1; // single return
+  decoder.decodeDifopPkt((uint8_t*)&pkt, sizeof(pkt));
   ASSERT_EQ(decoder.rps_, 20);
+  ASSERT_EQ(decoder.echo_mode_, RSEchoMode::ECHO_SINGLE);
+  ASSERT_EQ(decoder.blks_per_frame_, 900);
+  ASSERT_EQ(decoder.split_blks_per_frame_, 900);
 }
 
 TEST(TestDecoderRS32, decodeMsopPkt)

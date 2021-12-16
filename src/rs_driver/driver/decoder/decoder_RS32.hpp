@@ -173,18 +173,12 @@ inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
 template <typename T_PointCloud>
 inline void DecoderRS32<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
-//  hexdump (packet, size, "difop");
-
   const RS32DifopPkt& pkt = *(const RS32DifopPkt*)(packet);
   this->template decodeDifopCommon<RS32DifopPkt>(pkt);
 
   this->echo_mode_ = getEchoMode (pkt.return_mode);
-
-  this->print();
-  std::cout << "echo_mode:" << this->echo_mode_ 
-    << "," << offsetof(RS32DifopPkt, return_mode) << std::endl;
-
-  exit(-1);
+  this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
+    (this->blks_per_frame_ << 1) : this->blks_per_frame_;
 }
 
 template <typename T_PointCloud>

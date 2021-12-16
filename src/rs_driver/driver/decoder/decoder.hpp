@@ -175,6 +175,7 @@ protected:
   SplitAngle split_angle_;
 
   uint16_t blks_per_frame_;
+  uint16_t split_blks_per_frame_;
   uint16_t block_azi_diff_;
   float fov_blind_ts_diff_;
 
@@ -210,6 +211,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , scan_block_(param.start_angle * 100, param.end_angle * 100)
   , split_angle_(param.split_angle * 100)
   , blks_per_frame_(1/(10*const_param.BLOCK_DURATION))
+  , split_blks_per_frame_(blks_per_frame_)
   , block_azi_diff_(20)
   , fov_blind_ts_diff_(0)
   , protocol_ver_(0)
@@ -257,7 +259,7 @@ inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth)
     case SplitFrameMode::SPLIT_BY_FIXED_BLKS: 
 
       this->num_blks_++;
-      if (this->num_blks_ >= this->blks_per_frame_)
+      if (this->num_blks_ >= this->split_blks_per_frame_)
       {
         this->num_blks_ = 0;
         split = true;

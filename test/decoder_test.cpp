@@ -170,6 +170,7 @@ TEST(TestDecoder, processDifopPkt)
 
   ASSERT_EQ(decoder.rps_, 10);
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
+  ASSERT_EQ(decoder.split_blks_per_frame_, 1801);
   ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075f);
   ASSERT_FALSE(decoder.angles_ready_);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
@@ -362,7 +363,7 @@ TEST(TestDecoder, split_by_fixed_pkts)
   RSDecoderParam param;
   param.split_frame_mode = SplitFrameMode::SPLIT_BY_FIXED_BLKS;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
-  decoder.blks_per_frame_ = 2;
+  decoder.split_blks_per_frame_ = 2;
   ASSERT_EQ(decoder.num_blks_, 0);
 
   point_cloud_to_get = std::make_shared<PointCloud>();
