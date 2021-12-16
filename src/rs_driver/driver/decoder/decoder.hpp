@@ -61,6 +61,42 @@ enum RSEchoMode
   ECHO_DUAL
 };
 
+typedef struct
+{
+  uint16_t MSOP_LEN;
+  uint16_t DIFOP_LEN;
+
+  // identity
+  uint8_t MSOP_ID_LEN;
+  uint8_t DIFOP_ID_LEN;
+  uint8_t MSOP_ID[8];
+  uint8_t DIFOP_ID[8];
+  uint8_t BLOCK_ID[2];
+
+  // duration
+  uint16_t BLOCKS_PER_PKT;
+  uint16_t CHANNELS_PER_BLOCK;
+  //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
+
+  // distance resolution
+  float DISTANCE_MIN;
+  float DISTANCE_MAX;
+  float DISTANCE_RES;
+  float TEMPERATURE_RES;
+
+  // lens center
+  float RX;
+  float RY;
+  float RZ;
+
+  // firing_ts / block_ts, chan_ts
+  double BLOCK_DURATION;
+  double CHAN_TSS[128];
+  float CHAN_AZIS[128];
+
+} RSDecoderConstParam;
+
+
 #if 0
 const size_t MECH_PKT_LEN = 1248;
 const size_t MEMS_MSOP_LEN = 1210;

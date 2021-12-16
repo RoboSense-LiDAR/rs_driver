@@ -217,7 +217,7 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     pkt_ts = calcTimeHost();
   }
 
-  T_BlockDiff diff(this->const_param_, pkt);
+  T_BlockDiff diff(pkt, this->const_param_.BLOCKS_PER_PKT, this->const_param_.BLOCK_DURATION);
 
   double block_ts = pkt_ts;
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)

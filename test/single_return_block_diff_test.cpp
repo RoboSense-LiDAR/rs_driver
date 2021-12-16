@@ -59,7 +59,8 @@ TEST(TestSingleReturnBlockDiff, ctor)
     ,  51, 0x00, 0x00, 0x00, 0x00
   };
 
-  SingleReturnBlockDiff<MyPacket> diff(const_param, pkt);
+  SingleReturnBlockDiff<MyPacket> diff(pkt, 
+      const_param.BLOCKS_PER_PKT, const_param.BLOCK_DURATION);
 
   ASSERT_EQ(diff.ts(0), 0.0f);
   ASSERT_EQ(diff.ts(1), 0.5f);

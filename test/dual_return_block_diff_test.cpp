@@ -62,7 +62,8 @@ TEST(TestDualPacketTraverser, toNext)
       ,  51, 0x00, 0x00, 0x00, 0x00
   };
 
-  DualReturnBlockDiff<MyPacket> diff(const_param, pkt);
+  DualReturnBlockDiff<MyPacket> diff(pkt, 
+      const_param.BLOCKS_PER_PKT, const_param.BLOCK_DURATION);
 
   ASSERT_EQ(diff.ts(0), 0.0f);
   ASSERT_EQ(diff.ts(1), 0.0f);

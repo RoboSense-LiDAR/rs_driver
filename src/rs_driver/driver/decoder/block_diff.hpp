@@ -36,41 +36,6 @@ namespace robosense
 namespace lidar
 {
 
-typedef struct
-{
-  uint16_t MSOP_LEN;
-  uint16_t DIFOP_LEN;
-
-  // identity
-  uint8_t MSOP_ID_LEN;
-  uint8_t DIFOP_ID_LEN;
-  uint8_t MSOP_ID[8];
-  uint8_t DIFOP_ID[8];
-  uint8_t BLOCK_ID[2];
-
-  // duration
-  uint16_t BLOCKS_PER_PKT;
-  uint16_t CHANNELS_PER_BLOCK;
-  //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
-
-  // distance resolution
-  float DISTANCE_MIN;
-  float DISTANCE_MAX;
-  float DISTANCE_RES;
-  float TEMPERATURE_RES;
-
-  // lens center
-  float RX;
-  float RY;
-  float RZ;
-
-  // firing_ts / block_ts, chan_ts
-  double BLOCK_DURATION;
-  double CHAN_TSS[128];
-  float CHAN_AZIS[128];
-
-} RSDecoderConstParam;
-
 template <typename T_Packet>
 class SingleReturnBlockDiff
 {
@@ -81,7 +46,7 @@ public:
     float ret = 0.0f;
     if (blk > 0)
     {
-      ret = this->const_param_.BLOCK_DURATION;
+      ret = BLOCK_DURATION;
     }
 
     return ret;
@@ -91,7 +56,7 @@ public:
   {
     int32_t azi= 0;
 
-    if (blk < (this->const_param_.BLOCKS_PER_PKT - 1))
+    if (blk < (BLOCKS_PER_PKT - 1))
       azi = this->pkt_.blocks[blk+1].azimuth - this->pkt_.blocks[blk].azimuth;
     else
       azi = this->pkt_.blocks[blk].azimuth - this->pkt_.blocks[blk-1].azimuth;
@@ -99,14 +64,15 @@ public:
     return azi;
   }
 
-  SingleReturnBlockDiff(const RSDecoderConstParam const_param, const T_Packet& pkt)
-    : const_param_(const_param), pkt_(pkt)
+  SingleReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
+    : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration)
   {
   }
 
 protected:
-  const RSDecoderConstParam const_param_;
   const T_Packet& pkt_;
+  const uint16_t BLOCKS_PER_PKT;
+  const double BLOCK_DURATION;
 };
 
 template <typename T_Packet>
@@ -121,7 +87,7 @@ public:
 
     if ((blk % 2 == 0) && (blk != 0))
     {
-      ret = this->const_param_.BLOCK_DURATION;
+      ret = BLOCK_DURATION;
     }
 
     return ret;
@@ -131,7 +97,7 @@ public:
   {
     int32_t azi = 0;
 
-    if (blk >= (this->const_param_.BLOCKS_PER_PKT - 2))
+    if (blk >= (BLOCKS_PER_PKT - 2))
     {
       azi = this->pkt_.blocks[blk].azimuth - this->pkt_.blocks[blk-2].azimuth;
     }
@@ -143,14 +109,15 @@ public:
     return azi;
   }
 
-  DualReturnBlockDiff(const RSDecoderConstParam const_param, const T_Packet& pkt)
-    : const_param_(const_param), pkt_(pkt)
+  DualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
+    : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration)
   {
   }
 
 protected:
-  const RSDecoderConstParam const_param_;
   const T_Packet& pkt_;
+  const uint16_t BLOCKS_PER_PKT;
+  const double BLOCK_DURATION;
 };
 
 }  // namespace lidar
