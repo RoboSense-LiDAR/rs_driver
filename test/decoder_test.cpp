@@ -56,6 +56,17 @@ static void errCallback(const Error& err)
   errCode = err.error_code;
 }
 
+TEST(TestDecoder, angles_from_angle_file)
+{
+  RSDecoderConstParam const_param;
+  const_param.CHANNELS_PER_BLOCK = 4;
+  RSDecoderParam param;
+  param.config_from_file = true;
+  param.angle_path = "../rs_driver/test/res/angle.csv";
+  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  ASSERT_TRUE(decoder.angles_ready_);
+}
+
 TEST(TestDecoder, processDifopPkt_fail)
 {
     RSDecoderConstParam const_param = 
@@ -131,6 +142,7 @@ TEST(TestDecoder, processDifopPkt)
 
   RSDecoderParam param;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  ASSERT_FALSE(decoder.angles_ready_);
 
   uint8_t pkt[] = 
   {
@@ -151,6 +163,7 @@ TEST(TestDecoder, processDifopPkt)
   //
 
   decoder.param_.config_from_file = true;
+  decoder.param_.angle_path = "non_exist.csv";
   errCode = ERRCODE_SUCCESS;
   decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
@@ -158,6 +171,7 @@ TEST(TestDecoder, processDifopPkt)
   ASSERT_EQ(decoder.rps_, 10);
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
   ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075f);
+  ASSERT_FALSE(decoder.angles_ready_);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 0);
   ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
@@ -184,6 +198,7 @@ TEST(TestDecoder, processDifopPkt)
   decoder.processDifopPkt(pkt_no_angles, sizeof(MyDifopPkt));
   errCode = ERRCODE_SUCCESS;
 
+  ASSERT_FALSE(decoder.angles_ready_);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 0);
   ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
@@ -195,6 +210,7 @@ TEST(TestDecoder, processDifopPkt)
   decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
   errCode = ERRCODE_SUCCESS;
 
+  ASSERT_TRUE(decoder.angles_ready_);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 16);
   ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
@@ -220,13 +236,13 @@ TEST(TestDecoder, processMsopPkt)
 
   // wrong msop len
   decoder.param_.wait_for_difop = true;
-  decoder.difop_ready_ = false;
+  decoder.angles_ready_ = false;
   errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, 2);
   ASSERT_EQ(errCode, ERRCODE_NODIFOPRECV);
 
   decoder.param_.wait_for_difop = true;
-  decoder.difop_ready_ = true;
+  decoder.angles_ready_ = true;
 
   // wrong msop len
   errCode = ERRCODE_SUCCESS;
@@ -246,17 +262,6 @@ TEST(TestDecoder, processMsopPkt)
   errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, sizeof(pkt));
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
-}
-
-TEST(TestDecoder, angles_from_angle_file)
-{
-  RSDecoderConstParam const_param;
-  const_param.CHANNELS_PER_BLOCK = 4;
-  RSDecoderParam param;
-  param.config_from_file = true;
-  param.angle_path = "../rs_driver/test/res/angle.csv";
-  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
-  ASSERT_TRUE(decoder.difop_ready_);
 }
 
 TEST(TestDecoder, setPointCloudHeader)
@@ -325,12 +330,12 @@ TEST(TestDecoder, split_by_angle)
   {
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (35999, 0);
+    decoder.toSplit (35999);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_FALSE(flag_point_cloud);
 
     errCode = ERRCODE_SUCCESS;
-    decoder.toSplit (2, 0);
+    decoder.toSplit (2);
     ASSERT_EQ(errCode, ERRCODE_ZEROPOINTS);
   }
 
@@ -341,7 +346,7 @@ TEST(TestDecoder, split_by_angle)
 
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (1, 0);
+    decoder.toSplit (1);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_TRUE(flag_point_cloud);
     ASSERT_TRUE(point_cloud_to_put.get() != NULL);
@@ -356,7 +361,6 @@ TEST(TestDecoder, split_by_fixed_pkts)
   const_param.CHANNELS_PER_BLOCK = 2;
   RSDecoderParam param;
   param.split_frame_mode = SplitFrameMode::SPLIT_BY_FIXED_BLKS;
-  //param.num_blks_split = 2;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
   decoder.blks_per_frame_ = 2;
   ASSERT_EQ(decoder.num_blks_, 0);
@@ -371,7 +375,7 @@ TEST(TestDecoder, split_by_fixed_pkts)
   {
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (0, 0);
+    decoder.toSplit (0);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_FALSE(flag_point_cloud);
   }
@@ -379,7 +383,7 @@ TEST(TestDecoder, split_by_fixed_pkts)
   {
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (0, 0);
+    decoder.toSplit (0);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_TRUE(flag_point_cloud);
 
@@ -410,7 +414,7 @@ TEST(TestDecoder, split_by_custom_blks)
   {
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (0, 0);
+    decoder.toSplit (0);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_FALSE(flag_point_cloud);
   }
@@ -418,7 +422,7 @@ TEST(TestDecoder, split_by_custom_blks)
   {
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (0, 0);
+    decoder.toSplit (0);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_TRUE(flag_point_cloud);
 

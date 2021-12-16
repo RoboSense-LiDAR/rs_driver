@@ -33,7 +33,7 @@ TEST(TestDecoderRS32, decodeDifopPkt)
   RS32DifopPkt pkt;
 
   pkt.rpm = htons(1200);
-  pkt.return_mode = 0;
+  pkt.return_mode = 0; // dual return
   decoder.decodeDifopPkt((uint8_t*)&pkt, sizeof(pkt));
   ASSERT_EQ(decoder.echo_mode_, RSEchoMode::ECHO_DUAL);
   ASSERT_EQ(decoder.rps_, 20);

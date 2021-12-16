@@ -105,7 +105,7 @@ constexpr uint16_t PROTOCOL_VER_0 = 0x00;
 /* Echo mode definition */
 enum RSEchoMode
 {
-  ECHO_SINGLE,
+  ECHO_SINGLE = 0,
   ECHO_DUAL
 };
 
@@ -135,6 +135,17 @@ public:
     return this->const_param_.BLOCK_DURATION * const_param_.BLOCKS_PER_PKT;
   }
 
+  void print ()
+  {
+    std::cout << "blks_per_frame:\t" << this->blks_per_frame_ << std::endl
+              << "block_azi_diff:\t" << this->block_azi_diff_ << std::endl
+              << "fov_blind_ts_diff:\t" << this->fov_blind_ts_diff_ << std::endl
+              << "rps:\t" << this->rps_ << std::endl
+              << "echo_mode:\t" << this->echo_mode_ << std::endl
+              << "angle_from_file:\t" << this->param_.config_from_file << std::endl
+              << "angles_ready:\t" << this->angles_ready_ << std::endl;
+  }
+
   explicit Decoder(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb,
       const RSDecoderConstParam& const_param);
@@ -143,7 +154,7 @@ public:
 protected:
 #endif
 
-  void toSplit(uint16_t azimuth, double chan_ts);
+  void toSplit(uint16_t azimuth);
   void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
 
   template <typename T_Difop>
@@ -172,7 +183,8 @@ protected:
   RSEchoMode echo_mode_;
   float temperature_;
 
-  bool difop_ready_;
+  bool angles_ready_;
+  double prev_chan_ts_;
   uint16_t num_blks_;
 
   int lidar_alph0_;  // atan2(Ry, Rx) * 180 / M_PI * 100
@@ -204,7 +216,8 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , rps_(10)
   , echo_mode_(ECHO_SINGLE)
   , temperature_(0.0)
-  , difop_ready_(false)
+  , angles_ready_(false)
+  , prev_chan_ts_(0.0)
   , num_blks_(0)
   , point_cloud_seq_(0)
 {
@@ -215,7 +228,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   if (param.config_from_file)
   {
     int ret = chan_angles_.loadFromFile(param.angle_path);
-    this->difop_ready_ = (ret == 0);
+    this->angles_ready_ = (ret == 0);
   }
 }
 
@@ -231,7 +244,7 @@ void Decoder<T_PointCloud>::regRecvCallback(
 }
 
 template <typename T_PointCloud>
-inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
+inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth)
 {
   bool split = false;
 
@@ -269,7 +282,7 @@ inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth, double chan_ts)
   {
     if (point_cloud_->points.size() > 0)
     {
-      setPointCloudHeader(point_cloud_, chan_ts);
+      setPointCloudHeader(point_cloud_, prev_chan_ts_);
       point_cloud_cb_put_(point_cloud_);
       point_cloud_ = point_cloud_cb_get_();
     }
@@ -301,7 +314,7 @@ void Decoder<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointCloud> ms
 template <typename T_PointCloud>
 void Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
 {
-  if (param_.wait_for_difop && !difop_ready_)
+  if (param_.wait_for_difop && !angles_ready_)
   {
      excb_(Error(ERRCODE_NODIFOPRECV));
      return;
@@ -370,10 +383,11 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   this->fov_blind_ts_diff_ = 
     (float)fov_blind_range / ((float)RS_ONE_ROUND * (float)this->rps_);
 
-  if (!this->param_.config_from_file && !this->difop_ready_)
+  if (!this->param_.config_from_file && !this->angles_ready_)
   {
-    this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 
+    int ret = this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 
         this->const_param_.CHANNELS_PER_BLOCK);
+    this->angles_ready_ = (ret == 0);
   }
 }
 
