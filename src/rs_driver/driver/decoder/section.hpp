@@ -31,126 +31,57 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
+
 namespace robosense
 {
 namespace lidar
 {
 
-typedef struct
-{
-  uint16_t MSOP_LEN;
-  uint16_t DIFOP_LEN;
-
-  // identity
-  uint8_t MSOP_ID_LEN;
-  uint8_t DIFOP_ID_LEN;
-  uint8_t MSOP_ID[8];
-  uint8_t DIFOP_ID[8];
-  uint8_t BLOCK_ID[2];
-
-  // duration
-  uint16_t BLOCKS_PER_PKT;
-  uint16_t CHANNELS_PER_BLOCK;
-  //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
-
-  // distance resolution
-  float DISTANCE_MIN;
-  float DISTANCE_MAX;
-  float DISTANCE_RES;
-  float TEMPERATURE_RES;
-
-  // lens center
-  float RX;
-  float RY;
-  float RZ;
-
-  // firing_ts / block_ts, chan_ts
-  double BLOCK_DURATION;
-  double CHAN_TSS[128];
-  float CHAN_AZIS[128];
-
-} RSDecoderConstParam;
-
-template <typename T_Packet>
-class SingleReturnBlockDiff
+class AzimuthSection
 {
 public:
-
-  virtual float ts(uint16_t blk)
+  AzimuthSection(int32_t start, int32_t end)
   {
-    float ret = 0.0f;
-    if (blk > 0)
-    {
-      ret = this->const_param_.BLOCK_DURATION;
-    }
-
-    return ret;
+    start_ = start % 36000;
+    end_ = (end <= 36000) ? end : (end % 36000);
+    cross_zero_ = (start_ > end_);
   }
 
-  virtual int32_t azimuth(uint16_t blk)
+  bool in(int32_t angle)
   {
-    int32_t azi= 0;
-
-    if (blk < (this->const_param_.BLOCKS_PER_PKT - 1))
-      azi = this->pkt_.blocks[blk+1].azimuth - this->pkt_.blocks[blk].azimuth;
+    if (cross_zero_)
+      return (angle >= start_) || (angle < end_);
     else
-      azi = this->pkt_.blocks[blk].azimuth - this->pkt_.blocks[blk-1].azimuth;
-
-    return azi;
+      return (angle >= start_) && (angle < end_);
   }
 
-  SingleReturnBlockDiff(const RSDecoderConstParam const_param, const T_Packet& pkt)
-    : const_param_(const_param), pkt_(pkt)
-  {
-  }
-
-protected:
-  const RSDecoderConstParam const_param_;
-  const T_Packet& pkt_;
+#ifndef UNIT_TEST
+private:
+#endif
+  int32_t start_;
+  int32_t end_;
+  bool cross_zero_;
 };
 
-template <typename T_Packet>
-class DualReturnBlockDiff
-
+class DistanceSection
 {
 public:
-
-  float ts(uint16_t blk)
-  {
-    float ret = 0.0f;
-
-    if ((blk % 2 == 0) && (blk != 0))
-    {
-      ret = this->const_param_.BLOCK_DURATION;
-    }
-
-    return ret;
-  }
-
-  int32_t azimuth(uint16_t blk)
-  {
-    int32_t azi = 0;
-
-    if (blk >= (this->const_param_.BLOCKS_PER_PKT - 2))
-    {
-      azi = this->pkt_.blocks[blk].azimuth - this->pkt_.blocks[blk-2].azimuth;
-    }
-    else
-    {
-      azi = this->pkt_.blocks[blk+2].azimuth - this->pkt_.blocks[blk].azimuth;
-    }
-
-    return azi;
-  }
-
-  DualReturnBlockDiff(const RSDecoderConstParam const_param, const T_Packet& pkt)
-    : const_param_(const_param), pkt_(pkt)
+  DistanceSection (float min, float max, float usr_min, float usr_max)
+    : min_((usr_min > min) ? usr_min : min), max_((usr_max < max) ? usr_max : max)
   {
   }
 
-protected:
-  const RSDecoderConstParam const_param_;
-  const T_Packet& pkt_;
+  bool in(float distance)
+  {
+    return ((min_ <= distance) && (distance <= max_));
+  }
+
+#ifndef UNIT_TEST
+private:
+#endif
+
+  float min_;
+  float max_;
 };
 
 }  // namespace lidar

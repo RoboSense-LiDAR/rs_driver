@@ -32,61 +32,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-typedef struct
-{
-  uint16_t MSOP_LEN;
-  uint16_t DIFOP_LEN;
-
-  // identity
-  uint8_t MSOP_ID_LEN;
-  uint8_t DIFOP_ID_LEN;
-  uint8_t MSOP_ID[8];
-  uint8_t DIFOP_ID[8];
-  uint8_t BLOCK_ID[2];
-
-  // duration
-  uint16_t BLOCKS_PER_PKT;
-  uint16_t CHANNELS_PER_BLOCK;
-  //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
-
-  // distance resolution
-  float DISTANCE_MIN;
-  float DISTANCE_MAX;
-  float DISTANCE_RES;
-  float TEMPERATURE_RES;
-
-  // lens center
-  float RX;
-  float RY;
-  float RZ;
-
-  // firing_ts / block_ts, chan_ts
-  double BLOCK_DURATION;
-  double CHAN_TSS[128];
-  float CHAN_AZIS[128];
-
-} RSDecoderConstParam;
-
+#include <rs_driver/common/error_code.h>
+#include <rs_driver/driver/driver_param.h>
 #include <rs_driver/driver/decoder/member_checker.hpp>
 #include <rs_driver/driver/decoder/trigon.hpp>
 #include <rs_driver/driver/decoder/chan_angles.hpp>
-#include <rs_driver/driver/decoder/block_diff.hpp>
+#include <rs_driver/driver/decoder/section.hpp>
 #include <rs_driver/driver/decoder/decoder_base_opt.hpp>
-#include <rs_driver/common/error_code.h>
-#include <rs_driver/driver/driver_param.h>
-
-#include <arpa/inet.h>
-
-#include <functional>
-#include <algorithm>
-#include <fstream>
-#include <chrono>
-#include <memory>
+#include <rs_driver/driver/decoder/block_diff.hpp>
 
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
 #endif
 #include <cmath>
+#include <arpa/inet.h>
+#include <functional>
+#include <memory>
 
 namespace robosense
 {
@@ -107,53 +68,31 @@ const size_t MEMS_DIFOP_LEN = 256;
 const size_t ROCK_MSOP_LEN = 1236;
 #endif
 
-constexpr int RS_ONE_ROUND = 36000;
-constexpr uint16_t PROTOCOL_VER_0 = 0x00;
-
 template <typename T_PointCloud>
 class Decoder
 {
 public:
 
-  void processDifopPkt(const uint8_t* pkt, size_t size);
+  constexpr static int32_t RS_ONE_ROUND = 36000;
+  constexpr static uint16_t PROTOCOL_VER_0 = 0x00;
+
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size) = 0;
-
-  void processMsopPkt(const uint8_t* pkt, size_t size);
   virtual void decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
-
   virtual ~Decoder() = default;
-
-  void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
-      const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put);
-
-  float getTemperature()
-  {
-    return temperature_;
-  }
-
-  double getPacketDiff()
-  {
-    return this->const_param_.BLOCK_DURATION * const_param_.BLOCKS_PER_PKT;
-  }
-
-  void print ()
-  {
-    std::cout << "-----------------------------------------" << std::endl
-              << "rps:\t\t\t" << this->rps_ << std::endl
-              << "echo_mode:\t\t" << this->echo_mode_ << std::endl
-              << "blks_per_frame:\t\t" << this->blks_per_frame_ << std::endl
-              << "split_blks_per_frame:\t" << this->split_blks_per_frame_ << std::endl
-              << "block_azi_diff:\t\t" << this->block_azi_diff_ << std::endl
-              << "fov_blind_ts_diff:\t" << this->fov_blind_ts_diff_ << std::endl
-              << "angle_from_file:\t" << this->param_.config_from_file << std::endl
-              << "angles_ready:\t\t" << this->angles_ready_ << std::endl;
-
-    this->chan_angles_.print();
-  }
 
   explicit Decoder(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb,
       const RSDecoderConstParam& const_param);
+
+  void processDifopPkt(const uint8_t* pkt, size_t size);
+  void processMsopPkt(const uint8_t* pkt, size_t size);
+
+  void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
+      const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put);
+
+  float getTemperature();
+  double getPacketDiff();
+  void print();
 
 #ifndef UNIT_TEST
 protected:
@@ -165,41 +104,42 @@ protected:
   void toSplit(int32_t azimuth);
   void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
 
-  RSDecoderConstParam const_param_;
-  RSDecoderParam param_;
+  RSDecoderConstParam const_param_; // const param of lidar/decoder
+  RSDecoderParam param_; // user param of lidar/decoder
   std::function<void(const Error&)> excb_;
-  uint16_t height_;
+  uint16_t height_; 
 
   Trigon trigon_;
 #define SIN(angle) this->trigon_.sin(angle)
 #define COS(angle) this->trigon_.cos(angle)
 
-  ChanAngles chan_angles_;
-  DistanceBlock distance_block_;
-  ScanBlock scan_block_;
-  SplitAngle split_angle_;
+  ChanAngles chan_angles_; // vert_angles/horiz_angles adjustment
+  DistanceSection distance_section_; // valid distance section
+  AzimuthSection scan_section_; // valid azimuth section
+  SplitAngle split_angle_; // angle to split frame
 
-  uint16_t blks_per_frame_;
-  uint16_t split_blks_per_frame_;
-  uint16_t block_azi_diff_;
-  float fov_blind_ts_diff_;
+  uint16_t blks_per_frame_; // blocks per frame/round
+  uint16_t split_blks_per_frame_; // blocks in msop pkt per frame/round. 
+                                  // dependent on return mode.
+  uint16_t block_azi_diff_; // azimuth difference between adjacent blocks.
+  float fov_blind_ts_diff_; // timestamp difference across blind section(defined by fov)
 
-  unsigned int protocol_ver_;
-  uint16_t rps_;
-  RSEchoMode echo_mode_;
-  float temperature_;
+  unsigned int protocol_ver_; // protocol version of MSOP/DIFOP
+  uint16_t rps_; // rounds per second
+  RSEchoMode echo_mode_; // echo mode (defined by return mode)
+  float temperature_; // lidar temperature
 
-  bool angles_ready_;
-  double prev_chan_ts_;
-  uint16_t num_blks_;
+  bool angles_ready_; // is vert_angles/horiz_angles ready from csv file/difop packet?
+  double prev_chan_ts_; // previous channel/point timestamp
+  uint16_t num_blks_; // number of blocks in current point cloud
 
-  int lidar_alph0_;  // atan2(Ry, Rx) * 180 / M_PI * 100
-  float lidar_Rxy_;  // sqrt(Rx*Rx + Ry*Ry)
+  int lidar_alph0_;  // lens center related
+  float lidar_Rxy_;  // lens center related
 
   std::function<std::shared_ptr<T_PointCloud>(void)> point_cloud_cb_get_;
   std::function<void(std::shared_ptr<T_PointCloud>)> point_cloud_cb_put_;
-  std::shared_ptr<T_PointCloud> point_cloud_;
-  uint32_t point_cloud_seq_;
+  std::shared_ptr<T_PointCloud> point_cloud_; // curernt point cloud
+  uint32_t point_cloud_seq_; // sequence of point cloud
 };
 
 template <typename T_PointCloud>
@@ -211,9 +151,9 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , excb_(excb)
   , height_(const_param.CHANNELS_PER_BLOCK)
   , chan_angles_(const_param.CHANNELS_PER_BLOCK)
-  , distance_block_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, 
+  , distance_section_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, 
       param.min_distance, param.max_distance)
-  , scan_block_(param.start_angle * 100, param.end_angle * 100)
+  , scan_section_(param.start_angle * 100, param.end_angle * 100)
   , split_angle_(param.split_angle * 100)
   , blks_per_frame_(1/(10*const_param.BLOCK_DURATION))
   , split_blks_per_frame_(blks_per_frame_)
@@ -237,6 +177,34 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
     int ret = chan_angles_.loadFromFile(param.angle_path);
     this->angles_ready_ = (ret == 0);
   }
+}
+
+template <typename T_PointCloud>
+void Decoder<T_PointCloud>::print()
+{
+  std::cout << "-----------------------------------------" << std::endl
+    << "rps:\t\t\t" << this->rps_ << std::endl
+    << "echo_mode:\t\t" << this->echo_mode_ << std::endl
+    << "blks_per_frame:\t\t" << this->blks_per_frame_ << std::endl
+    << "split_blks_per_frame:\t" << this->split_blks_per_frame_ << std::endl
+    << "block_azi_diff:\t\t" << this->block_azi_diff_ << std::endl
+    << "fov_blind_ts_diff:\t" << this->fov_blind_ts_diff_ << std::endl
+    << "angle_from_file:\t" << this->param_.config_from_file << std::endl
+    << "angles_ready:\t\t" << this->angles_ready_ << std::endl;
+
+  this->chan_angles_.print();
+}
+
+template <typename T_PointCloud>
+float Decoder<T_PointCloud>::getTemperature()
+{
+  return temperature_;
+}
+
+template <typename T_PointCloud>
+double Decoder<T_PointCloud>::getPacketDiff()
+{
+  return this->const_param_.BLOCK_DURATION * const_param_.BLOCKS_PER_PKT;
 }
 
 template <typename T_PointCloud>

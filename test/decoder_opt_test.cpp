@@ -40,59 +40,6 @@ TEST(TestParseTemp, calcTemp)
   }
 }
 
-TEST(TestScanBlock, ctor)
-{
-  ScanBlock blk(10, 20);
-  ASSERT_EQ(blk.start_, 10);
-  ASSERT_EQ(blk.end_, 20);
-
-  ASSERT_FALSE(blk.in(5));
-  ASSERT_TRUE(blk.in(10));
-  ASSERT_TRUE(blk.in(15));
-  ASSERT_FALSE(blk.in(20));
-  ASSERT_FALSE(blk.in(25));
-}
-
-TEST(TestScanBlock, ctorCrossZero)
-{
-  ScanBlock blk(35000, 10);
-  ASSERT_EQ(blk.start_, 35000);
-  ASSERT_EQ(blk.end_, 10);
-
-  ASSERT_FALSE(blk.in(34999));
-  ASSERT_TRUE(blk.in(35000));
-  ASSERT_TRUE(blk.in(0));
-  ASSERT_FALSE(blk.in(10));
-  ASSERT_FALSE(blk.in(15));
-}
-
-TEST(TestScanBlock, ctorBeyondRound)
-{
-  ScanBlock blk(36100, 36200);
-  ASSERT_EQ(blk.start_, 100);
-  ASSERT_EQ(blk.end_, 200);
-}
-
-TEST(TestDistanceBlock, ctor)
-{
-  DistanceBlock blk(0.5, 200, 0.75, 150);
-  ASSERT_EQ(blk.min_, 0.75);
-  ASSERT_EQ(blk.max_, 150);
-
-  ASSERT_FALSE(blk.in(0.45));
-  ASSERT_TRUE(blk.in(0.75));
-  ASSERT_TRUE(blk.in(0.8));
-  ASSERT_TRUE(blk.in(150));
-  ASSERT_FALSE(blk.in(150.5));
-}
-
-TEST(TestDistanceBlock, ctorNoUseBlock)
-{
-  DistanceBlock blk(0.5, 200, 0.0, 200.5);
-  ASSERT_EQ(blk.min_, 0.5);
-  ASSERT_EQ(blk.max_, 200);
-}
-
 TEST(TestSplitAngle, toSplit)
 {
   {

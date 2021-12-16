@@ -189,7 +189,6 @@ inline void DecoderRS32<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
 template <typename T_PointCloud>
 inline void DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
 {
-  //return;
   if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
   {
     internDecodeMsopPkt<SingleReturnBlockDiff<RS32MsopPkt>>(pkt, size);
@@ -252,7 +251,7 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
       uint8_t intensity = channel.intensity;
 
-      if (this->distance_block_.in(distance) && this->scan_block_.in(angle_horiz_final))
+      if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
       {
         float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->const_param_.RX * COS(angle_horiz);
         float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->const_param_.RX * SIN(angle_horiz);

@@ -32,20 +32,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <rs_driver/driver/decoder/decoder_base_opt.hpp>
-
 #include <arpa/inet.h>
 #include <fstream>
 #include <cmath>
-#include <algorithm>
-#include <functional>
-#include <chrono>
-#include <mutex>
 
 namespace robosense
 {
 namespace lidar
 {
+
+#pragma pack(push, 1)
+typedef struct
+{
+  uint8_t sign;
+  uint16_t value;
+} RSCalibrationAngle;
+#pragma pack(pop)
 
 class ChanAngles
 {

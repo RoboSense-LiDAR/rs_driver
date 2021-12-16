@@ -224,11 +224,6 @@ typedef struct
   uint8_t reserved[22];
 } RSDiagnoV2;
 
-typedef struct
-{
-  uint8_t sign;
-  uint16_t value;
-} RSCalibrationAngle;
 
 typedef struct
 {
@@ -355,53 +350,6 @@ inline int16_t calcTemp(const RSTemprature* tmp)
 
   return t;
 }
-
-class ScanBlock
-{
-public:
-  ScanBlock(int32_t start, int32_t end)
-  {
-    start_ = start % 36000;
-    end_ = (end <= 36000) ? end : (end % 36000);
-    cross_zero_ = (start_ > end_);
-  }
-
-  bool in(int32_t angle)
-  {
-    if (cross_zero_)
-      return (angle >= start_) || (angle < end_);
-    else
-      return (angle >= start_) && (angle < end_);
-  }
-
-#ifndef UNIT_TEST
-private:
-#endif
-  int32_t start_;
-  int32_t end_;
-  bool cross_zero_;
-};
-
-class DistanceBlock
-{
-public:
-  DistanceBlock (float min, float max, float usr_min, float usr_max)
-    : min_((usr_min > min) ? usr_min : min), max_((usr_max < max) ? usr_max : max)
-  {
-  }
-
-  bool in(float distance)
-  {
-    return ((min_ <= distance) && (distance <= max_));
-  }
-
-#ifndef UNIT_TEST
-private:
-#endif
-
-  float min_;
-  float max_;
-};
 
 class SplitAngle
 {
