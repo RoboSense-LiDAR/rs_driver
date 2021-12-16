@@ -366,6 +366,12 @@ public:
       prev_angle_ -= 36000;
 
     bool v = ((prev_angle_ < split_angle_) && (split_angle_ <= angle));
+#if 0
+    if (v) 
+    {
+      std::cout << prev_angle_ << "\t" << angle << std::endl;
+    }
+#endif
     prev_angle_ = angle;
     return v;
   }
