@@ -52,9 +52,9 @@ public:
     return ret;
   }
 
-  virtual int16_t azimuth(uint16_t blk)
+  virtual int32_t azimuth(uint16_t blk)
   {
-    int16_t azi= 0;
+    int32_t azi= 0;
 
     if (blk < (this->const_param_.BLOCKS_PER_PKT - 1))
       azi = this->pkt_.blocks[blk+1].azimuth - this->pkt_.blocks[blk].azimuth;
@@ -92,9 +92,9 @@ public:
     return ret;
   }
 
-  int16_t azimuth(uint16_t blk)
+  int32_t azimuth(uint16_t blk)
   {
-    int16_t azi = 0;
+    int32_t azi = 0;
 
     if (blk >= (this->const_param_.BLOCKS_PER_PKT - 2))
     {

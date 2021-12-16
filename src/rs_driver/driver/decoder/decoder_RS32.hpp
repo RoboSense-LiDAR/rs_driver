@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/driver/decoder/decoder.hpp>
+#include <rs_driver/utility/dbg.h>
 
 namespace robosense
 {
@@ -178,11 +179,23 @@ inline void DecoderRS32<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
   this->echo_mode_ = getEchoMode (pkt.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
+
+//  this->print();
+
+  this->chan_angles_.narrow();
+
+  //hexdump (packet, size, "");
+
+  //std::cout << "off:" << offsetof(RS32DifopPkt, ver_angle_cali) << std::endl;
+
+ // this->print();
+  //exit(0);
 }
 
 template <typename T_PointCloud>
 inline void DecoderRS32<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
 {
+  //return;
   if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
   {
     internDecodeMsopPkt<SingleReturnBlockDiff<RS32MsopPkt>>(pkt, size);
@@ -225,18 +238,22 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     }
 
     block_ts += diff.ts(blk);
-    int block_az = ntohs(block.azimuth);
-    int16_t block_azi_diff = diff.azimuth(blk);
+    int32_t block_az = ntohs(block.azimuth);
+
+    this->toSplit(block_az);
+
+    int32_t block_azi_diff = diff.azimuth(blk);
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
-      const RSChannel& channel = block.channels[chan];
+      const RSChannel& channel = block.channels[chan]; 
 
       double chan_ts = block_ts + this->const_param_.CHAN_TSS[chan];
-      int16_t angle_horiz = block_az + block_azi_diff * this->const_param_.CHAN_AZIS[chan];
+      int32_t angle_horiz = block_az + 
+        (int32_t)((float)block_azi_diff * this->const_param_.CHAN_AZIS[chan]);
 
-      int16_t angle_vert = this->chan_angles_.vertAdjust(chan);
-      int16_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
+      int32_t angle_vert = this->chan_angles_.vertAdjust(chan);
+      int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
 
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
       uint8_t intensity = channel.intensity;

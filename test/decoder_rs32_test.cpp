@@ -44,8 +44,6 @@ TEST(TestDecoderRS32, decodeDifopPkt)
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
   ASSERT_EQ(decoder.split_blks_per_frame_, 3602);
 
-  decoder.print();
-
   // rpm = 1200
   pkt.rpm = htons(1200);
   pkt.return_mode = 1; // single return
@@ -54,8 +52,6 @@ TEST(TestDecoderRS32, decodeDifopPkt)
   ASSERT_EQ(decoder.echo_mode_, RSEchoMode::ECHO_SINGLE);
   ASSERT_EQ(decoder.blks_per_frame_, 900);
   ASSERT_EQ(decoder.split_blks_per_frame_, 900);
-  decoder.print();
-
 }
 
 TEST(TestDecoderRS32, decodeMsopPkt)

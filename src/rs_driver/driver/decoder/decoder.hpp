@@ -146,6 +146,8 @@ public:
               << "fov_blind_ts_diff:\t" << this->fov_blind_ts_diff_ << std::endl
               << "angle_from_file:\t" << this->param_.config_from_file << std::endl
               << "angles_ready:\t\t" << this->angles_ready_ << std::endl;
+
+    this->chan_angles_.print();
   }
 
   explicit Decoder(const RSDecoderParam& param, 
@@ -156,7 +158,7 @@ public:
 protected:
 #endif
 
-  void toSplit(uint16_t azimuth);
+  void toSplit(int32_t azimuth);
   void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
 
   template <typename T_Difop>
@@ -248,7 +250,7 @@ void Decoder<T_PointCloud>::regRecvCallback(
 }
 
 template <typename T_PointCloud>
-inline void Decoder<T_PointCloud>::toSplit(uint16_t azimuth)
+inline void Decoder<T_PointCloud>::toSplit(int32_t azimuth)
 {
   bool split = false;
 

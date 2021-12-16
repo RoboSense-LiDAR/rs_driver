@@ -468,8 +468,28 @@ public:
     return vert_angles_[chan];
   }
 
-  void narrow ()
+  void narrow()
   {
+    for (uint16_t chan = 0; chan < chan_num_; chan++)
+    {
+      vert_angles_[chan] = std::round(vert_angles_[chan] * 0.1f);
+      horiz_angles_[chan] = std::round(horiz_angles_[chan] * 0.1f);
+    }
+  }
+
+  void print()
+  {
+    std::cout << "---------------------" << std::endl
+              << "chan_num:" << chan_num_ << std::endl;
+
+    std::cout << "vert_angle\thoriz_angle\tuser_chan" << std::endl;
+
+    for (uint16_t chan = 0; chan < chan_num_; chan++)
+    {
+      std::cout << vert_angles_[chan] << "\t" 
+                << horiz_angles_[chan] << "\t" 
+                << user_chans_[chan] << std::endl;
+    }
   }
 
 #ifndef UNIT_TEST
@@ -550,13 +570,6 @@ private:
       if (horiz.sign != 0) v = -v;
       horiz_angles.emplace_back(v);
 
-#if 0
-      if (type == LidarType::RS32)
-      {
-        this->vert_angle_list_[i] *= 0.1f;
-        this->hori_angle_list_[i] *= 0.1f;
-      }
-#endif
     }
 
     return ((vert_angles.size() > 0) ? 0 : -1);
@@ -567,8 +580,6 @@ private:
   std::vector<int32_t> horiz_angles_;
   std::vector<uint16_t> user_chans_;
 };
-
-//#define DBG
 
 class Trigon
 {
@@ -616,11 +627,21 @@ public:
 
   float sin(int32_t angle)
   {
+#ifdef DBG
+    if (angle < MIN || angle >= MAX)
+      return 0.0f;
+#endif
+
     return sins_[angle];
   }
 
   float cos(int32_t angle)
   {
+#ifdef DBG
+    if (angle < MIN || angle >= MAX)
+      return 0.0f;
+#endif
+
     return coss_[angle];
   }
 
@@ -650,13 +671,13 @@ private:
 class SplitAngle
 {
 public:
-  SplitAngle (uint16_t split_angle)
+  SplitAngle (int32_t split_angle)
    : split_angle_(split_angle),
      prev_angle_(split_angle)
   {
   }
 
-  bool toSplit(uint16_t angle)
+  bool toSplit(int32_t angle)
   {
     if (angle < prev_angle_)
       prev_angle_ -= 36000;
@@ -669,7 +690,7 @@ public:
 #ifndef UNIT_TEST
 private:
 #endif
-    uint16_t split_angle_;
+    int32_t split_angle_;
     int32_t prev_angle_;
 };
 

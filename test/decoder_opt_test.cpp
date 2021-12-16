@@ -224,6 +224,30 @@ TEST(TestChanAngles, memberLoadFromDifop)
         (const RSCalibrationAngle*)horiz_angle_arr, 
         4), 0);
 
+  ASSERT_EQ(angles.vert_angles_.size(), 4);
+  ASSERT_EQ(angles.vert_angles_[0], 258);
+  ASSERT_EQ(angles.vert_angles_[1], -772);
+  ASSERT_EQ(angles.vert_angles_[2], -1286);
+  ASSERT_EQ(angles.vert_angles_[3], 1800);
+
+  ASSERT_EQ(angles.horiz_angles_[0], 4386);
+  ASSERT_EQ(angles.horiz_angles_[1], -13124);
+  ASSERT_EQ(angles.horiz_angles_[2], 21862);
+  ASSERT_EQ(angles.horiz_angles_[3], -30600);
+
+  angles.narrow();
+
+  ASSERT_EQ(angles.vert_angles_.size(), 4);
+  ASSERT_EQ(angles.vert_angles_[0], 26);
+  ASSERT_EQ(angles.vert_angles_[1], -77);
+  ASSERT_EQ(angles.vert_angles_[2], -129);
+  ASSERT_EQ(angles.vert_angles_[3], 180);
+
+  ASSERT_EQ(angles.horiz_angles_[0], 439);
+  ASSERT_EQ(angles.horiz_angles_[1], -1312);
+  ASSERT_EQ(angles.horiz_angles_[2], 2186);
+  ASSERT_EQ(angles.horiz_angles_[3], -3060);
+
   ASSERT_EQ(angles.user_chans_.size(), 4);
   ASSERT_EQ(angles.toUserChan(0), 2);
   ASSERT_EQ(angles.toUserChan(1), 1);
