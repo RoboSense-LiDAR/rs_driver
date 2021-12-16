@@ -131,15 +131,21 @@ TEST(TestDecoderRS32, decodeMsopPkt)
   };
 
   RSDecoderParam param;
-  param.dense_points = false;
   DecoderRS32<PointCloud> decoder(param, errCallback);
+  ASSERT_EQ(decoder.chan_angles_.user_chans_.size(), 32);
+  decoder.chan_angles_.user_chans_[0] = 2;
+  decoder.chan_angles_.user_chans_[1] = 1;
+  decoder.param_.dense_points = false;
+  decoder.param_.use_lidar_clock = true;
+
   decoder.point_cloud_ = std::make_shared<PointCloud>();
 
-  decoder.param_.use_lidar_clock = true;
   decoder.decodeMsopPkt(pkt, sizeof(pkt));
   ASSERT_EQ(decoder.getTemperature(), 2.1875);
   ASSERT_EQ(decoder.point_cloud_->points.size(), 32);
 
   PointT& point = decoder.point_cloud_->points[0];
   ASSERT_EQ(point.intensity, 1);
+  ASSERT_EQ(point.ring, 2);
+  ASSERT_NE(point.timestamp, 0);
 }

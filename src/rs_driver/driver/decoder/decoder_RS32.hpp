@@ -203,7 +203,6 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    std::cout << "cal ymd" << std::endl;
     pkt_ts = calcTimeYMD(&pkt.header.timestamp);
   }
   else
@@ -216,8 +215,6 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   double block_ts = pkt_ts;
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
-  //  std::cout << "blk:" << blk << std::endl;
-
     const RS32MsopBlock& block = pkt.blocks[blk];
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 2) != 0)
@@ -226,10 +223,7 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       break;
     }
 
-   // std::cout << "+ blk:" << blk << std::endl;
-
     block_ts += diff.ts(blk);
-
     int block_az = ntohs(block.azimuth);
     int16_t block_azi_diff = diff.azimuth(blk);
 
@@ -237,13 +231,8 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     {
       const RSChannel& channel = block.channels[chan];
 
- //     std::cout << "chan:" << chan << std::endl;
-
       float chan_ts = block_ts + this->const_param_.CHAN_TSS[chan];
-      int16_t angle_horiz = block_az + 
-        block_azi_diff * this->const_param_.CHAN_TSS[chan] / this->const_param_.BLOCK_DURATION;
-
-//      std::cout << "+ chan:" << chan << std::endl;
+      int16_t angle_horiz = block_az + block_azi_diff * this->const_param_.CHAN_AZIS[chan];
 
       int16_t angle_vert = this->chan_angles_.vertAdjust(chan);
       int16_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
@@ -253,20 +242,9 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
       if (this->distance_block_.in(distance) && this->scan_block_.in(angle_horiz_final))
       {
-#if 0
-        std::cout << ")) chan:" << chan << std::endl;
-        std::cout << "vert:" << angle_vert 
-          << "horiz_horiz:" << angle_horiz
-          << "horiz_final:" << angle_horiz_final << std::endl;
-#endif
-
-        float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + 
-          this->const_param_.RX * COS(angle_horiz);
-        float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - 
-          this->const_param_.RX * SIN(angle_horiz);
+        float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->const_param_.RX * COS(angle_horiz);
+        float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->const_param_.RX * SIN(angle_horiz);
         float z =  distance * SIN(angle_vert) + this->const_param_.RZ;
-
-     //   std::cout << ")) )) chan:" << chan << std::endl;
 
         typename T_PointCloud::PointT point;
         setX(point, x);

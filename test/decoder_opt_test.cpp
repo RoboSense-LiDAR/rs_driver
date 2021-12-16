@@ -254,9 +254,8 @@ TEST(TestChanAngles, memberLoadFromDifop_fail)
 TEST(TestTrigon, ctor)
 {
   Trigon trigon;
-  trigon.print();
+  //trigon.print();
 
-  std::cout << "+ ti" << std::endl;
   ASSERT_EQ(trigon.sin(-9000), -1.0f);
   ASSERT_LT(trigon.cos(-9000), 0.0001f);
 
