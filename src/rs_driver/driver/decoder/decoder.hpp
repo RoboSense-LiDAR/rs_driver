@@ -68,6 +68,7 @@ typedef struct
 } RSDecoderConstParam;
 
 #include <rs_driver/driver/decoder/set_member.hpp>
+#include <rs_driver/driver/decoder/trigon.hpp>
 #include <rs_driver/driver/decoder/decoder_base_opt.hpp>
 #include <rs_driver/driver/decoder/block_diff.hpp>
 #include <rs_driver/common/error_code.h>

@@ -16,6 +16,7 @@ add_executable(rs_driver_test
               single_return_block_diff_test.cpp
               dual_return_block_diff_test.cpp
               decoder_opt_test.cpp
+              trigon_test.cpp
               decoder_test.cpp
               decoder_rs32_test.cpp)
               
