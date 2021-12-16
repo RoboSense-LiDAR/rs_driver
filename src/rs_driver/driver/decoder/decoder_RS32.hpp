@@ -180,16 +180,11 @@ inline void DecoderRS32<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
 
-//  this->print();
-
+  //
+  // RS32's channel angles is of higher resolution than the other lidars. 
+  // fix them to the same resolution.
+  //
   this->chan_angles_.narrow();
-
-  //hexdump (packet, size, "");
-
-  //std::cout << "off:" << offsetof(RS32DifopPkt, ver_angle_cali) << std::endl;
-
- // this->print();
-  //exit(0);
 }
 
 template <typename T_PointCloud>

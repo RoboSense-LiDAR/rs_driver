@@ -356,14 +356,14 @@ inline int16_t calcTemp(const RsTemprature* tmp)
 class ScanBlock
 {
 public:
-  ScanBlock(uint16_t start, uint16_t end)
+  ScanBlock(int32_t start, int32_t end)
   {
     start_ = start % 36000;
     end_ = (end <= 36000) ? end : (end % 36000);
     cross_zero_ = (start_ > end_);
   }
 
-  bool in(uint16_t angle)
+  bool in(int32_t angle)
   {
     if (cross_zero_)
       return (angle >= start_) || (angle < end_);
@@ -374,8 +374,8 @@ public:
 #ifndef UNIT_TEST
 private:
 #endif
-  uint16_t start_;
-  uint16_t end_;
+  int32_t start_;
+  int32_t end_;
   bool cross_zero_;
 };
 
