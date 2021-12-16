@@ -70,11 +70,10 @@ typedef struct
 #include <rs_driver/driver/decoder/member_checker.hpp>
 #include <rs_driver/driver/decoder/trigon.hpp>
 #include <rs_driver/driver/decoder/chan_angles.hpp>
-#include <rs_driver/driver/decoder/decoder_base_opt.hpp>
 #include <rs_driver/driver/decoder/block_diff.hpp>
+#include <rs_driver/driver/decoder/decoder_base_opt.hpp>
 #include <rs_driver/common/error_code.h>
 #include <rs_driver/driver/driver_param.h>
-#include <rs_driver/utility/time.h>
 
 #include <arpa/inet.h>
 
@@ -83,16 +82,23 @@ typedef struct
 #include <fstream>
 #include <chrono>
 #include <memory>
-#include <cmath>
 
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
 #endif
+#include <cmath>
 
 namespace robosense
 {
 namespace lidar
 {
+
+// Echo mode
+enum RSEchoMode
+{
+  ECHO_SINGLE = 0,
+  ECHO_DUAL
+};
 
 #if 0
 const size_t MECH_PKT_LEN = 1248;
@@ -103,13 +109,6 @@ const size_t ROCK_MSOP_LEN = 1236;
 
 constexpr int RS_ONE_ROUND = 36000;
 constexpr uint16_t PROTOCOL_VER_0 = 0x00;
-
-/* Echo mode definition */
-enum RSEchoMode
-{
-  ECHO_SINGLE = 0,
-  ECHO_DUAL
-};
 
 template <typename T_PointCloud>
 class Decoder
@@ -160,11 +159,11 @@ public:
 protected:
 #endif
 
-  void toSplit(int32_t azimuth);
-  void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
-
   template <typename T_Difop>
   void decodeDifopCommon(const T_Difop& pkt);
+
+  void toSplit(int32_t azimuth);
+  void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
 
   RSDecoderConstParam const_param_;
   RSDecoderParam param_;
@@ -229,7 +228,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , num_blks_(0)
   , point_cloud_seq_(0)
 {
-  /*  Calulate the lidar_alph0 and lidar_Rxy */
+  // calulate lidar_alph0 and lidar_Rxy
   lidar_alph0_ = std::atan2(const_param_.RY, const_param_.RX) * 180 / M_PI * 100;
   lidar_Rxy_ = std::sqrt(const_param_.RX * const_param_.RX + const_param_.RY * const_param_.RY);
 

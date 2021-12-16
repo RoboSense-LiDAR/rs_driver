@@ -31,12 +31,12 @@ TEST(TestParseTemp, calcTemp)
 {
   {
     uint8_t temp[] = {0x18, 0x01};
-    ASSERT_EQ(calcTemp((RsTemprature*)&temp), 35);
+    ASSERT_EQ(calcTemp((RSTemprature*)&temp), 35);
   }
 
   {
     uint8_t temp[] = {0x18, 0x81};
-    ASSERT_EQ(calcTemp((RsTemprature*)&temp), -35);
+    ASSERT_EQ(calcTemp((RSTemprature*)&temp), -35);
   }
 }
 

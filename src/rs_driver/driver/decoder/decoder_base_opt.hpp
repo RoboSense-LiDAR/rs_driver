@@ -47,6 +47,9 @@ namespace lidar
 
 #pragma pack(push, 1)
 
+//
+// msop
+//
 typedef struct
 {
   uint8_t year;
@@ -59,29 +62,22 @@ typedef struct
   uint16_t us;
 } RSTimestampYMD;
 
-typedef struct 
-{
-    uint8_t sec[6];
-    uint8_t ss[4];
-} RSTimestampUTC2;
-
 typedef struct
 {
   uint8_t sec[6];
   uint32_t us;
 } RSTimestampUTC;
 
-typedef struct
+typedef struct 
 {
-  uint8_t sync_mode;
-  uint8_t sync_sts;
-  RSTimestampUTC timestamp;
-} RSTimeInfo;
+  uint8_t sec[6];
+  uint8_t ss[4];
+} RSTimestampUTC2;
 
 typedef struct
 {
   uint8_t tt[2];
-} RsTemprature;
+} RSTemprature;
 
 typedef struct
 {
@@ -90,7 +86,7 @@ typedef struct
   RSTimestampYMD timestamp;
   uint8_t lidar_type;
   uint8_t reserved_2[7];
-  RsTemprature temp;
+  RSTemprature temp;
   //uint16_t temp_raw;
   uint8_t reserved_3[2];
 } RSMsopHeaderV1;
@@ -101,7 +97,7 @@ typedef struct
   uint16_t protocol_version;
   uint8_t reserved_1;
   uint8_t wave_mode;
-  RsTemprature temp;
+  RSTemprature temp;
 #if 0
   uint8_t temp_low;
   uint8_t temp_high;
@@ -114,6 +110,16 @@ typedef struct
 
 typedef struct
 {
+  uint16_t distance;
+  uint8_t intensity;
+} RSChannel;
+
+//
+// difop
+//
+
+typedef struct
+{
   uint8_t lidar_ip[4];
   uint8_t host_ip[4];
   uint8_t mac_addr[6];
@@ -121,7 +127,7 @@ typedef struct
   uint16_t dest_port;
   uint16_t port3;
   uint16_t port4;
-} RSEthNet;
+} RSEthNetV1;
 
 typedef struct
 {
@@ -132,7 +138,7 @@ typedef struct
   uint16_t reserve_1;
   uint16_t difop_port;
   uint16_t reserve_2;
-} RSEthNetNew;
+} RSEthNetV2;
 
 typedef struct
 {
@@ -142,21 +148,9 @@ typedef struct
 
 typedef struct
 {
-  uint8_t sign;
-  uint16_t value;
-} RSCalibrationAngle;
-
-typedef struct
-{
-  uint16_t distance;
-  uint8_t intensity;
-} RSChannel;
-
-typedef struct
-{
   uint8_t top_ver[5];
   uint8_t bottom_ver[5];
-} RSVersion;
+} RSVersionV1;
 
 typedef struct
 {
@@ -165,12 +159,12 @@ typedef struct
   uint8_t bot_soft_ver[5];
   uint8_t motor_firmware_ver[5];
   uint8_t hw_ver[3];
-} RSVersionNew;
+} RSVersionV2;
 
 typedef struct
 {
   uint8_t num[6];
-} RSSn;
+} RSSN;
 
 typedef struct
 {
@@ -185,7 +179,7 @@ typedef struct
   uint16_t vol_ejc_5v;
   uint16_t vol_recv_5v;
   uint16_t vol_apd;
-} RSStatus;
+} RSStatusV1;
 
 typedef struct
 {
@@ -196,7 +190,7 @@ typedef struct
   uint16_t vol_sim_5v;
   uint16_t vol_apd;
   uint8_t reserved[12];
-} RSStatusNew;
+} RSStatusV2;
 
 typedef struct
 {
@@ -213,7 +207,7 @@ typedef struct
   uint8_t reserved_2[5];
   uint16_t cur_rpm;
   uint8_t reserved_3[7];
-} RSDiagno;
+} RSDiagnoV1;
 
 typedef struct
 {
@@ -228,7 +222,20 @@ typedef struct
   uint16_t main_status;
   uint8_t gps_status;
   uint8_t reserved[22];
-} RSDiagnoNew;
+} RSDiagnoV2;
+
+typedef struct
+{
+  uint8_t sign;
+  uint16_t value;
+} RSCalibrationAngle;
+
+typedef struct
+{
+  uint8_t sync_mode;
+  uint8_t sync_sts;
+  RSTimestampUTC timestamp;
+} RSTimeInfo;
 
 #pragma pack(pop)
 
@@ -335,7 +342,7 @@ inline uint64_t calcTimeHost(void)
   return t_us.count();
 }
 
-inline int16_t calcTemp(const RsTemprature* tmp)
+inline int16_t calcTemp(const RSTemprature* tmp)
 {
   // | lsb | padding | neg | msb |
   // |  5  |    3    |  1  |  7  | (in bits)

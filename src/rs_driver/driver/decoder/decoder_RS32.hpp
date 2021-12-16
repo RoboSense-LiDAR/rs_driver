@@ -59,27 +59,26 @@ typedef struct
 {
   uint8_t id[8];
   uint16_t rpm;
-  RSEthNet eth;
+  RSEthNetV1 eth;
   RSFOV fov;
   uint16_t reserved0;
   uint16_t phase_lock_angle;
-  RSVersion version;
+  RSVersionV1 version;
   uint8_t reserved_1[242];
-  RSSn sn;
+  RSSN sn;
   uint16_t zero_cali;
   uint8_t return_mode;
   uint16_t sw_ver;
   RSTimestampYMD timestamp;
-  RSStatus status;
+  RSStatusV1 status;
   uint8_t reserved_2[5];
-  RSDiagno diagno;
+  RSDiagnoV1 diagno;
   uint8_t gprmc[86];
   RSCalibrationAngle ver_angle_cali[32];
   RSCalibrationAngle hori_angle_cali[32];
   uint8_t reserved_3[586];
   uint16_t tail;
 } RS32DifopPkt;
-
 #pragma pack(pop)
 
 template <typename T_PointCloud>
