@@ -137,13 +137,15 @@ public:
 
   void print ()
   {
-    std::cout << "blks_per_frame:\t" << this->blks_per_frame_ << std::endl
-              << "block_azi_diff:\t" << this->block_azi_diff_ << std::endl
+    std::cout << "-----------------------------------------" << std::endl
+              << "rps:\t\t\t" << this->rps_ << std::endl
+              << "echo_mode:\t\t" << this->echo_mode_ << std::endl
+              << "blks_per_frame:\t\t" << this->blks_per_frame_ << std::endl
+              << "split_blks_per_frame:\t" << this->split_blks_per_frame_ << std::endl
+              << "block_azi_diff:\t\t" << this->block_azi_diff_ << std::endl
               << "fov_blind_ts_diff:\t" << this->fov_blind_ts_diff_ << std::endl
-              << "rps:\t" << this->rps_ << std::endl
-              << "echo_mode:\t" << this->echo_mode_ << std::endl
               << "angle_from_file:\t" << this->param_.config_from_file << std::endl
-              << "angles_ready:\t" << this->angles_ready_ << std::endl;
+              << "angles_ready:\t\t" << this->angles_ready_ << std::endl;
   }
 
   explicit Decoder(const RSDecoderParam& param, 
