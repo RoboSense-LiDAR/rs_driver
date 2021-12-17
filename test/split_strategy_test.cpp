@@ -5,48 +5,64 @@
 
 using namespace robosense::lidar;
 
-TEST(TestSplitAngle, toSplit)
+TEST(TestSplitStrategyByAngle, newBlock)
 {
   {
-    SplitAngle sa(10);
-    ASSERT_FALSE(sa.toSplit(5));
-    ASSERT_TRUE(sa.toSplit(15));
+    SplitStrategyByAngle sa(10);
+    ASSERT_FALSE(sa.newBlock(5));
+    ASSERT_TRUE(sa.newBlock(15));
   }
 
   {
-    SplitAngle sa(10);
-    ASSERT_FALSE(sa.toSplit(5));
-    ASSERT_TRUE(sa.toSplit(10));
-    ASSERT_FALSE(sa.toSplit(15));
+    SplitStrategyByAngle sa(10);
+    ASSERT_FALSE(sa.newBlock(5));
+    ASSERT_TRUE(sa.newBlock(10));
+    ASSERT_FALSE(sa.newBlock(15));
   }
 
   {
-    SplitAngle sa(10);
-    ASSERT_FALSE(sa.toSplit(10));
-    ASSERT_FALSE(sa.toSplit(15));
+    SplitStrategyByAngle sa(10);
+    ASSERT_FALSE(sa.newBlock(10));
+    ASSERT_FALSE(sa.newBlock(15));
   }
 }
 
-TEST(TestSplitAngle, toSplit_Zero)
+TEST(TestSplitStrategyByAngle, newBlock_Zero)
 {
   {
-    SplitAngle sa(0);
-    ASSERT_FALSE(sa.toSplit(35999));
-    ASSERT_TRUE(sa.toSplit(1));
-    ASSERT_FALSE(sa.toSplit(2));
+    SplitStrategyByAngle sa(0);
+    ASSERT_FALSE(sa.newBlock(35999));
+    ASSERT_TRUE(sa.newBlock(1));
+    ASSERT_FALSE(sa.newBlock(2));
   }
 
   {
-    SplitAngle sa(0);
-    ASSERT_FALSE(sa.toSplit(35999));
-    ASSERT_TRUE(sa.toSplit(0));
-    ASSERT_FALSE(sa.toSplit(2));
+    SplitStrategyByAngle sa(0);
+    ASSERT_FALSE(sa.newBlock(35999));
+    ASSERT_TRUE(sa.newBlock(0));
+    ASSERT_FALSE(sa.newBlock(2));
   }
 
   {
-    SplitAngle sa(0);
-    ASSERT_FALSE(sa.toSplit(0));
-    ASSERT_FALSE(sa.toSplit(2));
+    SplitStrategyByAngle sa(0);
+    ASSERT_FALSE(sa.newBlock(0));
+    ASSERT_FALSE(sa.newBlock(2));
   }
 }
+
+TEST(TestSplitStrategyByNum, newBlock)
+{
+  uint16_t max_blks = 2;
+  SplitStrategyByNum sn(&max_blks);
+  ASSERT_FALSE(sn.newBlock(0));
+  ASSERT_TRUE(sn.newBlock(0));
+  ASSERT_FALSE(sn.newBlock(0));
+  ASSERT_TRUE(sn.newBlock(0));
+
+  max_blks = 3;
+  ASSERT_FALSE(sn.newBlock(0));
+  ASSERT_FALSE(sn.newBlock(0));
+  ASSERT_TRUE(sn.newBlock(0));
+}
+
 

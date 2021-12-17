@@ -323,7 +323,6 @@ TEST(TestDecoder, split_by_angle)
   param.split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;
   param.split_angle = 0.0f;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
-  ASSERT_EQ(decoder.split_angle_.split_angle_, 0);
 
   point_cloud_to_get = std::make_shared<PointCloud>();
   decoder.regRecvCallback (getCallback, putCallback);
@@ -364,7 +363,6 @@ TEST(TestDecoder, split_by_fixed_pkts)
   param.split_frame_mode = SplitFrameMode::SPLIT_BY_FIXED_BLKS;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
   decoder.split_blks_per_frame_ = 2;
-  ASSERT_EQ(decoder.num_blks_, 0);
 
   point_cloud_to_get = std::make_shared<PointCloud>();
   decoder.regRecvCallback (getCallback, putCallback);
@@ -402,8 +400,6 @@ TEST(TestDecoder, split_by_custom_blks)
   param.split_frame_mode = SplitFrameMode::SPLIT_BY_CUSTOM_BLKS;
   param.num_blks_split = 2;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
-  decoder.blks_per_frame_ = 2;
-  ASSERT_EQ(decoder.num_blks_, 0);
 
   point_cloud_to_get = std::make_shared<PointCloud>();
   decoder.regRecvCallback (getCallback, putCallback);

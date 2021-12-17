@@ -37,16 +37,24 @@ namespace robosense
 namespace lidar
 {
 
-class SplitAngle
+class SplitStrategy
 {
 public:
-  SplitAngle (int32_t split_angle)
-   : split_angle_(split_angle),
-     prev_angle_(split_angle)
+  virtual bool newBlock(int32_t angle) = 0;
+  virtual ~SplitStrategy() = default;
+};
+
+class SplitStrategyByAngle : public SplitStrategy
+{
+public:
+  SplitStrategyByAngle (int32_t split_angle)
+   : split_angle_(split_angle), prev_angle_(split_angle)
   {
   }
 
-  bool toSplit(int32_t angle)
+  virtual ~SplitStrategyByAngle() = default;
+
+  virtual bool newBlock(int32_t angle)
   {
     if (angle < prev_angle_)
       prev_angle_ -= 36000;
@@ -62,11 +70,41 @@ public:
     return v;
   }
 
+
 #ifndef UNIT_TEST
 private:
 #endif
-    int32_t split_angle_;
+    const int32_t split_angle_;
     int32_t prev_angle_;
+};
+
+class SplitStrategyByNum : public SplitStrategy
+{
+public:
+  SplitStrategyByNum (uint16_t* max_blks)
+   : max_blks_(max_blks), blks_(0)
+  {
+  }
+
+  virtual ~SplitStrategyByNum() = default;
+
+  virtual bool newBlock(int32_t)
+  {
+    blks_++;
+    if (blks_ >= *max_blks_)
+    {
+      blks_ = 0;
+      return true;
+    }
+
+    return false;
+  }
+
+#ifndef UNIT_TEST
+private:
+#endif
+  uint16_t* max_blks_;
+  uint16_t blks_;
 };
 
 }  // namespace lidar

@@ -154,7 +154,7 @@ protected:
   ChanAngles chan_angles_; // vert_angles/horiz_angles adjustment
   DistanceSection distance_section_; // valid distance section
   AzimuthSection scan_section_; // valid azimuth section
-  SplitAngle split_angle_; // angle to split frame
+  std::shared_ptr<SplitStrategy> split_strategy_; // split strategy
 
   uint16_t blks_per_frame_; // blocks per frame/round
   uint16_t split_blks_per_frame_; // blocks in msop pkt per frame/round. 
@@ -169,7 +169,6 @@ protected:
 
   bool angles_ready_; // is vert_angles/horiz_angles ready from csv file/difop packet?
   double prev_chan_ts_; // previous channel/point timestamp
-  uint16_t num_blks_; // number of blocks in current point cloud
 
   int lidar_alph0_;  // lens center related
   float lidar_Rxy_;  // lens center related
@@ -192,7 +191,6 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , distance_section_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, 
       param.min_distance, param.max_distance)
   , scan_section_(param.start_angle * 100, param.end_angle * 100)
-  , split_angle_(param.split_angle * 100)
   , blks_per_frame_(1/(10*const_param.BLOCK_DURATION))
   , split_blks_per_frame_(blks_per_frame_)
   , block_azi_diff_(20)
@@ -203,9 +201,25 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , temperature_(0.0)
   , angles_ready_(false)
   , prev_chan_ts_(0.0)
-  , num_blks_(0)
   , point_cloud_seq_(0)
 {
+  switch (param_.split_frame_mode)
+  {
+    case SplitFrameMode::SPLIT_BY_FIXED_BLKS:
+      split_strategy_ = std::make_shared<SplitStrategyByNum>(&split_blks_per_frame_);
+      break;
+
+    case SplitFrameMode::SPLIT_BY_CUSTOM_BLKS:
+      split_strategy_ = std::make_shared<SplitStrategyByNum>(&param_.num_blks_split);
+      break;
+
+    case SplitFrameMode::SPLIT_BY_ANGLE:
+    default:
+      uint16_t angle = (uint16_t)(param_.split_angle * 100);
+      split_strategy_ = std::make_shared<SplitStrategyByAngle>(angle);
+      break;
+  }
+
   // calulate lidar_alph0 and lidar_Rxy
   lidar_alph0_ = std::atan2(const_param_.RY, const_param_.RX) * 180 / M_PI * 100;
   lidar_Rxy_ = std::sqrt(const_param_.RX * const_param_.RX + const_param_.RY * const_param_.RY);
@@ -259,38 +273,7 @@ void Decoder<T_PointCloud>::regRecvCallback(
 template <typename T_PointCloud>
 inline void Decoder<T_PointCloud>::toSplit(int32_t azimuth)
 {
-  bool split = false;
-
-  switch (param_.split_frame_mode)
-  {
-    case SplitFrameMode::SPLIT_BY_ANGLE:
-      split = split_angle_.toSplit(azimuth);
-      break;
-
-    case SplitFrameMode::SPLIT_BY_FIXED_BLKS: 
-
-      this->num_blks_++;
-      if (this->num_blks_ >= this->split_blks_per_frame_)
-      {
-        this->num_blks_ = 0;
-        split = true;
-      }
-      break;
-
-    case SplitFrameMode::SPLIT_BY_CUSTOM_BLKS:
-
-      this->num_blks_++;
-      if (this->num_blks_ >= this->param_.num_blks_split)
-      {
-        this->num_blks_ = 0;
-        split = true;
-      }
-      break;
-
-    default:
-      break;
-  }
-
+  bool split = this->split_strategy_->newBlock(azimuth);
   if (split)
   {
     if (point_cloud_->points.size() > 0)
