@@ -1,13 +1,13 @@
 
 #include <gtest/gtest.h>
 
-#include <rs_driver/msg/packet.h>
+#include <rs_driver/utility/buffer.h>
 
 using namespace robosense::lidar;
 
-TEST(TestPacket, ctor)
+TEST(TestBuffer, ctor)
 {
-  Packet pkt(100);
+  Buffer pkt(100);
 
   ASSERT_TRUE(pkt.buf() != NULL);
   ASSERT_EQ(pkt.bufSize(), 100);

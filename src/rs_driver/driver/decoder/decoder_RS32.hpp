@@ -233,7 +233,7 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     block_ts += diff.ts(blk);
     int32_t block_az = ntohs(block.azimuth);
 
-    this->toSplit(block_az);
+    this->newBlock(block_az);
 
     int32_t block_azi_diff = diff.azimuth(blk);
 

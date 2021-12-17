@@ -11,7 +11,7 @@ add_definitions("-DUNIT_TEST")
 
 add_executable(rs_driver_test
               rs_driver_test.cpp
-              packet_test.cpp
+              buffer_test.cpp
               sync_queue_test.cpp
               single_return_block_diff_test.cpp
               dual_return_block_diff_test.cpp

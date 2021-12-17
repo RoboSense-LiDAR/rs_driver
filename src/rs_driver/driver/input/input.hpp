@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <rs_driver/driver/driver_param.h>
-#include <rs_driver/msg/packet.h>
+#include <rs_driver/utility/buffer.h>
 
 #include <thread>
 #include <cstring>
@@ -52,8 +52,8 @@ class Input
 public:
   Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb);
 
-  inline void regRecvCallback(const std::function<std::shared_ptr<Packet>(size_t)>& cb_get,
-                    const std::function<void(std::shared_ptr<Packet>)>& cb_put);
+  inline void regRecvCallback(const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get,
+                    const std::function<void(std::shared_ptr<Buffer>)>& cb_put);
 
   virtual bool init() = 0;
   virtual bool start() = 0;
@@ -63,11 +63,11 @@ public:
   }
 
 protected:
-  inline void pushPacket(std::shared_ptr<Packet> pkt);
+  inline void pushPacket(std::shared_ptr<Buffer> pkt);
 
   RSInputParam input_param_;
-  std::function<std::shared_ptr<Packet>(size_t size)> cb_get_;
-  std::function<void(std::shared_ptr<Packet>)> cb_put_;
+  std::function<std::shared_ptr<Buffer>(size_t size)> cb_get_;
+  std::function<void(std::shared_ptr<Buffer>)> cb_put_;
   std::function<void(const Error&)> excb_;
   std::thread recv_thread_;
   bool to_exit_recv_;
@@ -82,8 +82,8 @@ inline Input::Input(const RSInputParam& input_param,
 {
 }
 
-inline void Input::regRecvCallback(const std::function<std::shared_ptr<Packet>(size_t)>& cb_get,
-                                   const std::function<void(std::shared_ptr<Packet>)>& cb_put)
+inline void Input::regRecvCallback(const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get,
+                                   const std::function<void(std::shared_ptr<Buffer>)>& cb_put)
 {
   cb_get_ = cb_get;
   cb_put_ = cb_put;
@@ -100,7 +100,7 @@ inline void Input::stop()
   }
 }
 
-inline void Input::pushPacket(std::shared_ptr<Packet> pkt)
+inline void Input::pushPacket(std::shared_ptr<Buffer> pkt)
 {
   cb_put_(pkt);
 }

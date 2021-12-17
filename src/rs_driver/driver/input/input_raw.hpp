@@ -67,7 +67,7 @@ private:
 
 inline void InputRaw::feedPacket(const uint8_t* data, size_t size)
 {
-  std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
+  std::shared_ptr<Buffer> pkt = cb_get_(MAX_PKT_LEN);
   memcpy(pkt->data(), data, size);
   pkt->setData(0, size);
   pushPacket(pkt);

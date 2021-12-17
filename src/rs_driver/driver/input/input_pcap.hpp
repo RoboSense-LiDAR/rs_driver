@@ -45,9 +45,9 @@ class InputPcap : public Input
 {
 public:
   InputPcap(const RSInputParam& input_param, 
-      const std::function<void(const Error&)>& excb, double msec_to_delay)
+      const std::function<void(const Error&)>& excb, double sec_to_delay)
     : Input(input_param, excb), pcap_offset_(ETH_HDR_LEN), 
-    difop_filter_valid_(false), msec_to_delay_(msec_to_delay*1000)
+    difop_filter_valid_(false), msec_to_delay_(sec_to_delay*1000000)
   {
     if (input_param.use_vlan)
       pcap_offset_ += VLAN_LEN;
@@ -163,14 +163,14 @@ inline void InputPcap::recvPacket()
 
     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
     {
-      std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_(MAX_PKT_LEN);
       memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_);
       pkt->setData(0, header->len - pcap_offset_);
       pushPacket(pkt);
     }
     else if (difop_filter_valid_ && (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
     {
-      std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_(MAX_PKT_LEN);
       memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_);
       pkt->setData(0, header->len - pcap_offset_);
       pushPacket(pkt);

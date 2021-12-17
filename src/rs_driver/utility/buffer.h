@@ -40,11 +40,11 @@ namespace robosense
 {
 namespace lidar
 {
-class Packet
+class Buffer
 {
 public:
 
-  Packet(size_t buf_size)
+  Buffer(size_t buf_size)
     : data_off_(0), data_size_(0)
   {
     buf_.resize(buf_size);

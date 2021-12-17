@@ -32,11 +32,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/macro/version.h>
-#include <rs_driver/msg/packet.h>
+#include <rs_driver/common/error_code.h>
+#include <rs_driver/utility/buffer.h>
+#include <rs_driver/utility/dbg.h>
 #include <rs_driver/msg/packet_msg.h>
 #include <rs_driver/msg/scan_msg.h>
-#include <rs_driver/utility/dbg.h>
-#include <rs_driver/common/error_code.h>
 #include <rs_driver/utility/sync_queue.h>
 #include <rs_driver/driver/input/input_factory.hpp>
 #include <rs_driver/driver/decoder/decoder_factory.hpp>
@@ -82,11 +82,11 @@ private:
   std::shared_ptr<T_PointCloud> getPointCloud();
   void putPointCloud(std::shared_ptr<T_PointCloud> pc);
 
-  void runCallBack(std::shared_ptr<Packet> pkt);
+  void runCallBack(std::shared_ptr<Buffer> pkt);
   void reportError(const Error& error);
 
-  std::shared_ptr<Packet> packetGet(size_t size);
-  void packetPut(std::shared_ptr<Packet> pkt);
+  std::shared_ptr<Buffer> packetGet(size_t size);
+  void packetPut(std::shared_ptr<Buffer> pkt);
 
   void processMsop();
   void processDifop();
@@ -98,9 +98,9 @@ private:
   std::function<void(const Error&)> err_cb_;
   std::shared_ptr<Decoder<T_PointCloud>> lidar_decoder_ptr_;
   std::shared_ptr<Input> input_ptr_;
-  SyncQueue<std::shared_ptr<Packet>> free_pkt_queue_;
-  SyncQueue<std::shared_ptr<Packet>> msop_pkt_queue_;
-  SyncQueue<std::shared_ptr<Packet>> difop_pkt_queue_;
+  SyncQueue<std::shared_ptr<Buffer>> free_pkt_queue_;
+  SyncQueue<std::shared_ptr<Buffer>> msop_pkt_queue_;
+  SyncQueue<std::shared_ptr<Buffer>> difop_pkt_queue_;
   std::thread msop_handle_thread_;
   std::thread difop_handle_thread_;
   bool to_exit_handle_;
@@ -148,11 +148,11 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
       std::bind(&LidarDriverImpl<T_PointCloud>::getPointCloud, this), 
       std::bind(&LidarDriverImpl<T_PointCloud>::putPointCloud, this, std::placeholders::_1));
 
-  uint64_t packet_diff = lidar_decoder_ptr_->getPacketDiff();
+  double packet_duration = lidar_decoder_ptr_->getPacketDuration();
 
   input_ptr_ = InputFactory::createInput(param.input_type, param.input_param, 
       std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1), 
-      packet_diff);
+      packet_duration);
 
   input_ptr_->regRecvCallback(std::bind(&LidarDriverImpl<T_PointCloud>::packetGet, this, std::placeholders::_1),
                               std::bind(&LidarDriverImpl<T_PointCloud>::packetPut, this, std::placeholders::_1));
@@ -266,7 +266,7 @@ inline bool LidarDriverImpl<T_PointCloud>::getTemperature(float& temp)
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::runCallBack(std::shared_ptr<Packet> pkt)
+inline void LidarDriverImpl<T_PointCloud>::runCallBack(std::shared_ptr<Buffer> pkt)
 {
   if (pkt_cb_)
   {
@@ -284,21 +284,21 @@ inline void LidarDriverImpl<T_PointCloud>::reportError(const Error& error)
 }
 
 template <typename T_PointCloud>
-inline std::shared_ptr<Packet> LidarDriverImpl<T_PointCloud>::packetGet(size_t size)
+inline std::shared_ptr<Buffer> LidarDriverImpl<T_PointCloud>::packetGet(size_t size)
 {
-  std::shared_ptr<Packet> pkt = free_pkt_queue_.pop();
+  std::shared_ptr<Buffer> pkt = free_pkt_queue_.pop();
   if (pkt.get() != NULL)
   {
     return pkt;
   }
 
-  return std::make_shared<Packet>(size);
+  return std::make_shared<Buffer>(size);
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Packet> pkt)
+inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt)
 {
-  SyncQueue<std::shared_ptr<Packet>>* queue; 
+  SyncQueue<std::shared_ptr<Buffer>>* queue; 
 
 
   uint8_t* id = pkt->data();
@@ -326,7 +326,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
 {
   while (!to_exit_handle_)
   {
-    std::shared_ptr<Packet> pkt = msop_pkt_queue_.popWait(1000);
+    std::shared_ptr<Buffer> pkt = msop_pkt_queue_.popWait(1000);
     if (pkt.get() == NULL)
       continue;
 
@@ -342,7 +342,7 @@ inline void LidarDriverImpl<T_PointCloud>::processDifop()
 {
   while (!to_exit_handle_)
   {
-    std::shared_ptr<Packet> pkt = difop_pkt_queue_.popWait(500000);
+    std::shared_ptr<Buffer> pkt = difop_pkt_queue_.popWait(500000);
     if (pkt.get() == NULL)
       continue;
 

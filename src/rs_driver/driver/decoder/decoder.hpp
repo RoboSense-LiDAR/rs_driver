@@ -129,7 +129,7 @@ public:
       const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put);
 
   float getTemperature();
-  double getPacketDiff();
+  double getPacketDuration();
   void print();
 
 #ifndef UNIT_TEST
@@ -139,7 +139,7 @@ protected:
   template <typename T_Difop>
   void decodeDifopCommon(const T_Difop& pkt);
 
-  void toSplit(int32_t azimuth);
+  void newBlock(int32_t azimuth);
   void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
 
   RSDecoderConstParam const_param_; // const param of lidar/decoder
@@ -254,7 +254,7 @@ float Decoder<T_PointCloud>::getTemperature()
 }
 
 template <typename T_PointCloud>
-double Decoder<T_PointCloud>::getPacketDiff()
+double Decoder<T_PointCloud>::getPacketDuration()
 {
   return this->const_param_.BLOCK_DURATION * const_param_.BLOCKS_PER_PKT;
 }
@@ -271,7 +271,7 @@ void Decoder<T_PointCloud>::regRecvCallback(
 }
 
 template <typename T_PointCloud>
-inline void Decoder<T_PointCloud>::toSplit(int32_t azimuth)
+inline void Decoder<T_PointCloud>::newBlock(int32_t azimuth)
 {
   bool split = this->split_strategy_->newBlock(azimuth);
   if (split)

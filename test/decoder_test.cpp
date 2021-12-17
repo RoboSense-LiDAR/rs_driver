@@ -156,7 +156,7 @@ TEST(TestDecoder, processDifopPkt)
     , 0x01, 0x00, 0x02
   };
 
-  ASSERT_LT(decoder.getPacketDiff() - 55.52/1000, 0.00001);
+  ASSERT_LT(decoder.getPacketDuration() - 55.52/1000, 0.00001);
 
   //
   // angles from angle.csv
@@ -330,12 +330,12 @@ TEST(TestDecoder, split_by_angle)
   {
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (35999);
+    decoder.newBlock (35999);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_FALSE(flag_point_cloud);
 
     errCode = ERRCODE_SUCCESS;
-    decoder.toSplit (2);
+    decoder.newBlock (2);
     ASSERT_EQ(errCode, ERRCODE_ZEROPOINTS);
   }
 
@@ -346,7 +346,7 @@ TEST(TestDecoder, split_by_angle)
 
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (1);
+    decoder.newBlock (1);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_TRUE(flag_point_cloud);
     ASSERT_TRUE(point_cloud_to_put.get() != NULL);
@@ -374,7 +374,7 @@ TEST(TestDecoder, split_by_fixed_pkts)
   {
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (0);
+    decoder.newBlock (0);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_FALSE(flag_point_cloud);
   }
@@ -382,7 +382,7 @@ TEST(TestDecoder, split_by_fixed_pkts)
   {
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (0);
+    decoder.newBlock (0);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_TRUE(flag_point_cloud);
 
@@ -411,7 +411,7 @@ TEST(TestDecoder, split_by_custom_blks)
   {
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (0);
+    decoder.newBlock (0);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_FALSE(flag_point_cloud);
   }
@@ -419,7 +419,7 @@ TEST(TestDecoder, split_by_custom_blks)
   {
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
-    decoder.toSplit (0);
+    decoder.newBlock (0);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_TRUE(flag_point_cloud);
 
