@@ -379,6 +379,12 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
 
   if (param.config_from_file)
   {
+    if (param_.wait_for_difop)
+    {
+      RS_WARNING << "When config_from_file is true, wait_for_difop cannot be true."
+                 << " Reset it to be false." << RS_REND;
+    }
+
     int ret = chan_angles_.loadFromFile(param.angle_path);
     this->angles_ready_ = (ret == 0);
   }

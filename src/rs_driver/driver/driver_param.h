@@ -206,6 +206,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
 {
   bool config_from_file = false;
   std::string angle_path = "";   ///< Path of angle calibration files(angle.csv). Only used for internal debugging.
+  bool wait_for_difop = true;    ///< true: start sending point cloud until receive difop packet
   float min_distance = 0.2f;                                         ///< Minimum distance of point cloud range
   float max_distance = 200.0f;                                       ///< Max distance of point cloud range
   float start_angle = 0.0f;                                          ///< Start angle of point cloud
@@ -215,7 +216,6 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
                                                                      ///< 3: Split frames by custom number of packets (num_pkts_split)
   float split_angle = 0.0f;        ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
   uint16_t num_blks_split = 1;     ///< Number of packets in one frame, only be used when split_frame_mode=3
-  bool wait_for_difop = true;      ///< true: start sending point cloud until receive difop packet
   bool use_lidar_clock = false;    ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
   bool dense_points = false;  ///< true: discard NAN points; false: reserve NAN points
 #if 0

@@ -18,35 +18,32 @@ static void errCallback(const Error& err)
 
 TEST(TestDecoderRS32, getEchoMode)
 {
-  RSDecoderParam param;
-  DecoderRS32<PointCloud> decoder(param, errCallback);
-
-  ASSERT_TRUE(decoder.getEchoMode(0) == RSEchoMode::ECHO_DUAL);
-  ASSERT_TRUE(decoder.getEchoMode(1) == RSEchoMode::ECHO_SINGLE);
-  ASSERT_TRUE(decoder.getEchoMode(2) == RSEchoMode::ECHO_SINGLE);
+  ASSERT_TRUE(DecoderRS32<PointCloud>::getEchoMode(0) == RSEchoMode::ECHO_DUAL);
+  ASSERT_TRUE(DecoderRS32<PointCloud>::getEchoMode(1) == RSEchoMode::ECHO_SINGLE);
+  ASSERT_TRUE(DecoderRS32<PointCloud>::getEchoMode(2) == RSEchoMode::ECHO_SINGLE);
 }
 
 TEST(TestDecoderRS32, decodeDifopPkt)
 {
+  // const_param
   RSDecoderParam param;
   DecoderRS32<PointCloud> decoder(param, errCallback);
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
   ASSERT_EQ(decoder.split_blks_per_frame_, 1801);
 
+  // rpm = 600, dual return
   RS32DifopPkt pkt;
-
-  // rpm = 600
   pkt.rpm = htons(600);
-  pkt.return_mode = 0; // dual return
+  pkt.return_mode = 0;
   decoder.decodeDifopPkt((uint8_t*)&pkt, sizeof(pkt));
   ASSERT_EQ(decoder.rps_, 10);
   ASSERT_EQ(decoder.echo_mode_, RSEchoMode::ECHO_DUAL);
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
   ASSERT_EQ(decoder.split_blks_per_frame_, 3602);
 
-  // rpm = 1200
+  // rpm = 1200, single return
   pkt.rpm = htons(1200);
-  pkt.return_mode = 1; // single return
+  pkt.return_mode = 1; 
   decoder.decodeDifopPkt((uint8_t*)&pkt, sizeof(pkt));
   ASSERT_EQ(decoder.rps_, 20);
   ASSERT_EQ(decoder.echo_mode_, RSEchoMode::ECHO_SINGLE);
@@ -145,6 +142,7 @@ TEST(TestDecoderRS32, decodeMsopPkt)
     0x00, 0x00, // block id
   };
 
+  // dense_points = false, use_lidar_clock = true
   RSDecoderParam param;
   DecoderRS32<PointCloud> decoder(param, errCallback);
   ASSERT_EQ(decoder.chan_angles_.user_chans_.size(), 32);
@@ -161,6 +159,7 @@ TEST(TestDecoderRS32, decodeMsopPkt)
 
   PointT& point = decoder.point_cloud_->points[0];
   ASSERT_EQ(point.intensity, 1);
-  ASSERT_EQ(point.ring, 2);
   ASSERT_NE(point.timestamp, 0);
+  ASSERT_EQ(point.ring, 2);
 }
+

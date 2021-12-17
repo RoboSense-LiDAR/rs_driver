@@ -13,13 +13,13 @@ add_executable(rs_driver_test
               rs_driver_test.cpp
               buffer_test.cpp
               sync_queue_test.cpp
-              single_return_block_diff_test.cpp
-              dual_return_block_diff_test.cpp
+              trigon_test.cpp
               basic_attr_test.cpp
-              split_strategy_test.cpp
               section_test.cpp
               chan_angles_test.cpp
-              trigon_test.cpp
+              split_strategy_test.cpp
+              single_return_block_diff_test.cpp
+              dual_return_block_diff_test.cpp
               decoder_test.cpp
               decoder_rs32_test.cpp)
               

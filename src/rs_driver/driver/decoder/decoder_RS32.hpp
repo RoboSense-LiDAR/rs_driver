@@ -214,7 +214,8 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   }
   else
   {
-    pkt_ts = calcTimeHost();
+    // roll back to first block to approach lidar ts as near as possible.
+    pkt_ts = calcTimeHost() - this->getPacketDuration();
   }
 
   T_BlockDiff diff(pkt, this->const_param_.BLOCKS_PER_PKT, this->const_param_.BLOCK_DURATION);

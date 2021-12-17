@@ -56,15 +56,28 @@ static void errCallback(const Error& err)
   errCode = err.error_code;
 }
 
-TEST(TestDecoder, angles_from_angle_file)
+TEST(TestDecoder, angles_from_file)
 {
   RSDecoderConstParam const_param;
   const_param.CHANNELS_PER_BLOCK = 4;
   RSDecoderParam param;
   param.config_from_file = true;
   param.angle_path = "../rs_driver/test/res/angle.csv";
+  errCode = ERRCODE_SUCCESS;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  ASSERT_EQ(errCode, ERRCODE_SUCCESS);
   ASSERT_TRUE(decoder.angles_ready_);
+}
+
+TEST(TestDecoder, angles_from_file_fail)
+{
+  RSDecoderConstParam const_param;
+  const_param.CHANNELS_PER_BLOCK = 4;
+  RSDecoderParam param;
+  param.config_from_file = true;
+  param.angle_path = "../rs_driver/test/res/non_exist.csv";
+  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  ASSERT_FALSE(decoder.angles_ready_);
 }
 
 TEST(TestDecoder, processDifopPkt_fail)
@@ -82,14 +95,96 @@ TEST(TestDecoder, processDifopPkt_fail)
   RSDecoderParam param;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
 
+  // wrong difop length
   MyDifopPkt pkt;
   errCode = ERRCODE_SUCCESS;
   decoder.processDifopPkt((const uint8_t*)&pkt, 10);
   ASSERT_EQ(errCode, ERRCODE_WRONGPKTLENGTH);
 
+  // wrong difop id
   errCode = ERRCODE_SUCCESS;
   decoder.processDifopPkt((const uint8_t*)&pkt, sizeof(pkt));
   ASSERT_EQ(errCode, ERRCODE_WRONGPKTHEADER);
+}
+
+TEST(TestDecoder, processDifopPkt)
+{
+  RSDecoderConstParam const_param = 
+  {
+    sizeof(MyMsopPkt) // msop len
+      , sizeof(MyDifopPkt) // difop len
+      , 8 // msop id len
+      , 8 // difop id len
+      , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
+    , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+    , {0xFF, 0xEE} // block id
+    , 1000 // blocks per packet
+    , 2 // channels per block
+  };
+
+  const_param.BLOCK_DURATION = 55.52f / 1000000;
+
+  RSDecoderParam param;
+  param.config_from_file = false;
+  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  ASSERT_FALSE(decoder.angles_ready_);
+
+  //
+  // angles from difop. no angles in difop
+  //
+
+  uint8_t pkt_no_angles[] = 
+  {
+    0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // difop id
+    , 0x02, 0x58 // rpm
+    , 0x23, 0x28 // start angle = 9000
+    , 0x46, 0x50 // end angle = 18000 
+    , 0xFF, 0xFF, 0xFF // vert angles
+    , 0xFF, 0xFF, 0xFF
+    , 0xFF, 0xFF, 0xFF // horiz angles
+    , 0xFF, 0xFF, 0xFF
+  };
+
+  errCode = ERRCODE_SUCCESS;
+  decoder.processDifopPkt(pkt_no_angles, sizeof(MyDifopPkt));
+  errCode = ERRCODE_SUCCESS;
+
+  ASSERT_EQ(decoder.rps_, 10);
+  ASSERT_EQ(decoder.blks_per_frame_, 1801);
+  ASSERT_EQ(decoder.split_blks_per_frame_, 1801);
+  ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075f);
+  ASSERT_FALSE(decoder.angles_ready_);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 0);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_[0], 0);
+
+  //
+  // angles from difop. valid angels in difop.
+  //
+  uint8_t pkt[] = 
+  {
+    0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // difop id
+    , 0x02, 0x58 // rpm
+    , 0x23, 0x28 // start angle = 9000
+    , 0x46, 0x50 // end angle = 18000 
+    , 0x00, 0x00, 0x10 // vert angles
+    , 0x01, 0x00, 0x20
+    , 0x00, 0x00, 0x01 // horiz angles
+    , 0x01, 0x00, 0x02
+  };
+
+  ASSERT_LT(decoder.getPacketDuration() - 55.52/1000, 0.00001);
+
+  errCode = ERRCODE_SUCCESS;
+  decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
+  ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+
+  ASSERT_TRUE(decoder.angles_ready_);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
+  ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 16);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
+  ASSERT_EQ(decoder.chan_angles_.horiz_angles_[0], 1);
 }
 
 TEST(TestDecoder, processDifopPkt_invalid_rpm)
@@ -119,103 +214,7 @@ TEST(TestDecoder, processDifopPkt_invalid_rpm)
   errCode = ERRCODE_SUCCESS;
   decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
-
   ASSERT_EQ(decoder.rps_, 10);
-}
-
-TEST(TestDecoder, processDifopPkt)
-{
-  RSDecoderConstParam const_param = 
-  {
-    sizeof(MyMsopPkt) // msop len
-      , sizeof(MyDifopPkt) // difop len
-      , 8 // msop id len
-      , 8 // difop id len
-      , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
-    , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-    , {0xFF, 0xEE} // block id
-    , 1000 // blocks per packet
-    , 2 // channels per block
-  };
-
-  const_param.BLOCK_DURATION = 55.52f / 1000000;
-
-  RSDecoderParam param;
-  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
-  ASSERT_FALSE(decoder.angles_ready_);
-
-  uint8_t pkt[] = 
-  {
-    0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // difop id
-    , 0x02, 0x58 // rpm
-    , 0x23, 0x28 // start angle = 9000
-    , 0x46, 0x50 // end angle = 18000 
-    , 0x00, 0x00, 0x10 // vert angles
-    , 0x01, 0x00, 0x20
-    , 0x00, 0x00, 0x01 // horiz angles
-    , 0x01, 0x00, 0x02
-  };
-
-  ASSERT_LT(decoder.getPacketDuration() - 55.52/1000, 0.00001);
-
-  //
-  // angles from angle.csv
-  //
-
-  decoder.param_.config_from_file = true;
-  decoder.param_.angle_path = "non_exist.csv";
-  errCode = ERRCODE_SUCCESS;
-  decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
-  ASSERT_EQ(errCode, ERRCODE_SUCCESS);
-
-  ASSERT_EQ(decoder.rps_, 10);
-  ASSERT_EQ(decoder.blks_per_frame_, 1801);
-  ASSERT_EQ(decoder.split_blks_per_frame_, 1801);
-  ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075f);
-  ASSERT_FALSE(decoder.angles_ready_);
-  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
-  ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 0);
-  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
-  ASSERT_EQ(decoder.chan_angles_.horiz_angles_[0], 0);
-
-  //
-  //angles from difop. no angles in difop
-  //
-
-  uint8_t pkt_no_angles[] = 
-  {
-    0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // difop id
-    , 0x02, 0x58 // rpm
-    , 0x23, 0x28 // start angle = 9000
-    , 0x46, 0x50 // end angle = 18000 
-    , 0xFF, 0xFF, 0xFF // vert angles
-    , 0xFF, 0xFF, 0xFF
-    , 0xFF, 0xFF, 0xFF // horiz angles
-    , 0xFF, 0xFF, 0xFF
-  };
-
-  decoder.param_.config_from_file = false;
-  errCode = ERRCODE_SUCCESS;
-  decoder.processDifopPkt(pkt_no_angles, sizeof(MyDifopPkt));
-  errCode = ERRCODE_SUCCESS;
-
-  ASSERT_FALSE(decoder.angles_ready_);
-  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
-  ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 0);
-  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
-  ASSERT_EQ(decoder.chan_angles_.horiz_angles_[0], 0);
-
-  // angles from difop.
-  decoder.param_.config_from_file = false;
-  errCode = ERRCODE_SUCCESS;
-  decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
-  errCode = ERRCODE_SUCCESS;
-
-  ASSERT_TRUE(decoder.angles_ready_);
-  ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
-  ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 16);
-  ASSERT_EQ(decoder.chan_angles_.horiz_angles_.size(), 2);
-  ASSERT_EQ(decoder.chan_angles_.horiz_angles_[0], 1);
 }
 
 TEST(TestDecoder, processMsopPkt)
@@ -231,11 +230,10 @@ TEST(TestDecoder, processMsopPkt)
     };
 
   MyMsopPkt pkt;
-
   RSDecoderParam param;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
 
-  // wrong msop len
+  // wait_for_difop = true, angles not ready
   decoder.param_.wait_for_difop = true;
   decoder.angles_ready_ = false;
   errCode = ERRCODE_SUCCESS;
