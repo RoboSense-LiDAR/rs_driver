@@ -1,7 +1,7 @@
 
 #include <gtest/gtest.h>
 
-#include <rs_driver/driver/decoder/decoder_base_opt.hpp>
+#include <rs_driver/driver/decoder/basic_attr.hpp>
 
 using namespace robosense::lidar;
 
@@ -37,51 +37,6 @@ TEST(TestParseTemp, calcTemp)
   {
     uint8_t temp[] = {0x18, 0x81};
     ASSERT_EQ(calcTemp((RSTemprature*)&temp), -35);
-  }
-}
-
-TEST(TestSplitAngle, toSplit)
-{
-  {
-    SplitAngle sa(10);
-    ASSERT_FALSE(sa.toSplit(5));
-    ASSERT_TRUE(sa.toSplit(15));
-  }
-
-  {
-    SplitAngle sa(10);
-    ASSERT_FALSE(sa.toSplit(5));
-    ASSERT_TRUE(sa.toSplit(10));
-    ASSERT_FALSE(sa.toSplit(15));
-  }
-
-  {
-    SplitAngle sa(10);
-    ASSERT_FALSE(sa.toSplit(10));
-    ASSERT_FALSE(sa.toSplit(15));
-  }
-}
-
-TEST(TestSplitAngle, toSplit_Zero)
-{
-  {
-    SplitAngle sa(0);
-    ASSERT_FALSE(sa.toSplit(35999));
-    ASSERT_TRUE(sa.toSplit(1));
-    ASSERT_FALSE(sa.toSplit(2));
-  }
-
-  {
-    SplitAngle sa(0);
-    ASSERT_FALSE(sa.toSplit(35999));
-    ASSERT_TRUE(sa.toSplit(0));
-    ASSERT_FALSE(sa.toSplit(2));
-  }
-
-  {
-    SplitAngle sa(0);
-    ASSERT_FALSE(sa.toSplit(0));
-    ASSERT_FALSE(sa.toSplit(2));
   }
 }
 

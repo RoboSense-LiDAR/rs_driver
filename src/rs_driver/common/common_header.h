@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #if defined(_WIN32)
+
 #include <io.h>
 #include <windows.h>
 inline void setConsoleColor(WORD c)
@@ -42,10 +43,8 @@ inline void setConsoleColor(WORD c)
   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
   SetConsoleTextAttribute(hConsole, c);
 }
-#endif
 
-/*Camera*/
-typedef std::pair<std::string, double> CameraTrigger;
+#endif
 
 /*Output style*/
 #ifndef RS_INFOL

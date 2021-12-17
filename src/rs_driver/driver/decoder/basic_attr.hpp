@@ -351,37 +351,5 @@ inline int16_t calcTemp(const RSTemprature* tmp)
   return t;
 }
 
-class SplitAngle
-{
-public:
-  SplitAngle (int32_t split_angle)
-   : split_angle_(split_angle),
-     prev_angle_(split_angle)
-  {
-  }
-
-  bool toSplit(int32_t angle)
-  {
-    if (angle < prev_angle_)
-      prev_angle_ -= 36000;
-
-    bool v = ((prev_angle_ < split_angle_) && (split_angle_ <= angle));
-#if 0
-    if (v) 
-    {
-      std::cout << prev_angle_ << "\t" << angle << std::endl;
-    }
-#endif
-    prev_angle_ = angle;
-    return v;
-  }
-
-#ifndef UNIT_TEST
-private:
-#endif
-    int32_t split_angle_;
-    int32_t prev_angle_;
-};
-
 }  // namespace lidar
 }  // namespace robosense

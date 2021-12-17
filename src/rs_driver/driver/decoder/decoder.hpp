@@ -36,9 +36,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/driver_param.h>
 #include <rs_driver/driver/decoder/member_checker.hpp>
 #include <rs_driver/driver/decoder/trigon.hpp>
-#include <rs_driver/driver/decoder/chan_angles.hpp>
 #include <rs_driver/driver/decoder/section.hpp>
-#include <rs_driver/driver/decoder/decoder_base_opt.hpp>
+#include <rs_driver/driver/decoder/chan_angles.hpp>
+#include <rs_driver/driver/decoder/member_checker.hpp>
+#include <rs_driver/driver/decoder/basic_attr.hpp>
+#include <rs_driver/driver/decoder/split_strategy.hpp>
 #include <rs_driver/driver/decoder/block_diff.hpp>
 
 #ifndef _USE_MATH_DEFINES
