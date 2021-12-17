@@ -62,11 +62,16 @@ TEST(TestSingleReturnBlockDiff, ctor)
   SingleReturnBlockDiff<MyPacket> diff(pkt, 
       const_param.BLOCKS_PER_PKT, const_param.BLOCK_DURATION);
 
+  // first block = 0
   ASSERT_EQ(diff.ts(0), 0.0f);
+  // second block. calculate it.
   ASSERT_EQ(diff.ts(1), 0.5f);
 
+  // first block. calculate it.
   ASSERT_EQ(diff.azimuth(0), 20);
+  // second block. calculate it.
   ASSERT_EQ(diff.azimuth(1), 30);
+  // second block = prev block
   ASSERT_EQ(diff.azimuth(2), 30);
 }
 

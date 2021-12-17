@@ -265,6 +265,7 @@ TEST(TestDecoder, processMsopPkt)
 
 TEST(TestDecoder, setPointCloudHeader)
 {
+  // dense_points 
   RSDecoderConstParam const_param = {};
   const_param.CHANNELS_PER_BLOCK = 2;
   RSDecoderParam param;
@@ -278,6 +279,7 @@ TEST(TestDecoder, setPointCloudHeader)
   pt->points.emplace_back(point);
   pt->points.emplace_back(point);
 
+  // dense_points = true
   {
     decoder.setPointCloudHeader(pt, 0.5f);
     ASSERT_EQ(pt->seq, 0);
@@ -287,8 +289,8 @@ TEST(TestDecoder, setPointCloudHeader)
     ASSERT_EQ(pt->width, 2);
   }
 
+  // dense_points = false
   decoder.param_.dense_points = false;
-
   {
     decoder.setPointCloudHeader(pt, 0.5f);
     ASSERT_EQ(pt->seq, 1);
@@ -326,17 +328,20 @@ TEST(TestDecoder, split_by_angle)
   decoder.regRecvCallback (getCallback, putCallback);
 
   {
+    // not cross split angle yet.
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
     decoder.newBlock (35999);
     ASSERT_EQ(errCode, ERRCODE_SUCCESS);
     ASSERT_FALSE(flag_point_cloud);
 
+    // cross split angle. no points in point cloud.
     errCode = ERRCODE_SUCCESS;
     decoder.newBlock (2);
     ASSERT_EQ(errCode, ERRCODE_ZEROPOINTS);
   }
 
+  // cross split angle. points in point cloud.
   {
     PointT point;
     point_cloud_to_get->points.emplace_back(point);
@@ -370,6 +375,7 @@ TEST(TestDecoder, split_by_fixed_pkts)
   point_cloud_to_get->points.emplace_back(point);
 
   {
+    // blocks < split_blks_per_frame_
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
     decoder.newBlock (0);
@@ -378,6 +384,7 @@ TEST(TestDecoder, split_by_fixed_pkts)
   }
 
   {
+    // blocks = split_blks_per_frame_
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
     decoder.newBlock (0);
@@ -407,6 +414,7 @@ TEST(TestDecoder, split_by_custom_blks)
   point_cloud_to_get->points.emplace_back(point);
 
   {
+    // blocks < num_blks_split
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
     decoder.newBlock (0);
@@ -415,6 +423,7 @@ TEST(TestDecoder, split_by_custom_blks)
   }
 
   {
+    // blocks = num_blks_split
     errCode = ERRCODE_SUCCESS;
     flag_point_cloud = false;
     decoder.newBlock (0);

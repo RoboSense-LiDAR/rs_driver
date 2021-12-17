@@ -51,11 +51,9 @@ TEST(TestSyncQueue, clear)
 {
   SyncQueue<std::shared_ptr<int>> queue;
 
-  {
-    std::shared_ptr<int> v_ptr = std::make_shared<int>(100);
-    ASSERT_EQ(queue.push(v_ptr), 1);
-    ASSERT_EQ(queue.push(v_ptr), 2);
-    queue.clear();
-    ASSERT_EQ(queue.push(v_ptr), 1);
-  }
+  std::shared_ptr<int> v_ptr = std::make_shared<int>(100);
+  ASSERT_EQ(queue.push(v_ptr), 1);
+  ASSERT_EQ(queue.push(v_ptr), 2);
+  queue.clear();
+  ASSERT_EQ(queue.push(v_ptr), 1);
 }
