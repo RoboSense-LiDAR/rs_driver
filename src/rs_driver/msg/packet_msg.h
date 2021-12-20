@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
+
 #include <vector>
 
 namespace robosense
@@ -42,11 +43,8 @@ enum PktType
   MSOP = 0,
   DIFOP
 };
-#ifdef _MSC_VER
-struct __declspec(align(16)) PacketMsg
-#elif __GNUC__
-struct __attribute__((aligned(16))) PacketMsg  ///< LiDAR single packet message
-#endif
+
+struct PacketMsg
 {
   std::vector<uint8_t> packet;
   PacketMsg()

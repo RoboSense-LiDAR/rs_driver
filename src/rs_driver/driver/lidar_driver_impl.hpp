@@ -138,6 +138,15 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   lidar_decoder_ptr_ = DecoderFactory<T_PointCloud>::createDecoder(
       param.lidar_type, param.decoder_param, 
       std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1));
+  if ((point_cloud_cb_get_ == nullptr) || (point_cloud_cb_put_ == nullptr))
+  {
+    std::cout << "please set point cloud callback first." << std::endl;
+    return false;
+  }
+
+  lidar_decoder_ptr_->regRecvCallback(
+      std::bind(&LidarDriverImpl<T_PointCloud>::getPointCloud, this), 
+      std::bind(&LidarDriverImpl<T_PointCloud>::putPointCloud, this, std::placeholders::_1));
 
   double packet_duration = lidar_decoder_ptr_->getPacketDuration();
 
@@ -210,10 +219,6 @@ void LidarDriverImpl<T_PointCloud>::regRecvCallback(const std::function<std::sha
 {
   point_cloud_cb_get_ = cb_get;
   point_cloud_cb_put_ = cb_put;
-
-  lidar_decoder_ptr_->regRecvCallback(
-      std::bind(&LidarDriverImpl<T_PointCloud>::getPointCloud, this), 
-      std::bind(&LidarDriverImpl<T_PointCloud>::putPointCloud, this, std::placeholders::_1));
 }
 
 template <typename T_PointCloud>
