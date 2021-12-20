@@ -93,7 +93,9 @@ public:
   {
 #ifdef DBG
     if (angle < MIN || angle >= MAX)
+    {
       return 0.0f;
+    }
 #endif
 
     return sins_[angle];
@@ -103,7 +105,9 @@ public:
   {
 #ifdef DBG
     if (angle < MIN || angle >= MAX)
+    {
       return 0.0f;
+    }
 #endif
 
     return coss_[angle];

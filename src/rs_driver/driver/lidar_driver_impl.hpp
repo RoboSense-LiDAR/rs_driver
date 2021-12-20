@@ -138,6 +138,7 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   lidar_decoder_ptr_ = DecoderFactory<T_PointCloud>::createDecoder(
       param.lidar_type, param.decoder_param, 
       std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1));
+
   if ((point_cloud_cb_get_ == nullptr) || (point_cloud_cb_put_ == nullptr))
   {
     std::cout << "please set point cloud callback first." << std::endl;
@@ -182,10 +183,14 @@ template <typename T_PointCloud>
 inline bool LidarDriverImpl<T_PointCloud>::start()
 {
   if (start_flag_)
+  {
     return true;
+  }
 
   if (!init_flag_)
+  {
     return false;
+  }
 
   to_exit_handle_ = false;
   msop_handle_thread_ = std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processMsop, this));
@@ -201,7 +206,9 @@ template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::stop()
 {
   if (input_ptr_ != nullptr)
+  {
     input_ptr_->stop();
+  }
 
   if (start_flag_)
   {
@@ -336,7 +343,9 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
   {
     std::shared_ptr<Buffer> pkt = msop_pkt_queue_.popWait(1000);
     if (pkt.get() == NULL)
+    {
       continue;
+    }
 
     lidar_decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
     runCallBack(pkt);
@@ -352,7 +361,9 @@ inline void LidarDriverImpl<T_PointCloud>::processDifop()
   {
     std::shared_ptr<Buffer> pkt = difop_pkt_queue_.popWait(500000);
     if (pkt.get() == NULL)
+    {
       continue;
+    }
 
     lidar_decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
 

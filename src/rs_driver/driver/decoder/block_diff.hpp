@@ -57,9 +57,13 @@ public:
     int32_t azi= 0;
 
     if (blk < (BLOCKS_PER_PKT - 1))
+    {
       azi = ntohs(this->pkt_.blocks[blk+1].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
+    }
     else
+    {
       azi = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-1].azimuth);
+    }
 
     return azi;
   }

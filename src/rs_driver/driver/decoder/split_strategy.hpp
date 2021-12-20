@@ -57,7 +57,9 @@ public:
   virtual bool newBlock(int32_t angle)
   {
     if (angle < prev_angle_)
+    {
       prev_angle_ -= 36000;
+    }
 
     bool v = ((prev_angle_ < split_angle_) && (split_angle_ <= angle));
 #if 0

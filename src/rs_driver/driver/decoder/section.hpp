@@ -50,9 +50,13 @@ public:
   bool in(int32_t angle)
   {
     if (cross_zero_)
+    {
       return (angle >= start_) || (angle < end_);
+    }
     else
+    {
       return (angle >= start_) && (angle < end_);
+    }
   }
 
 #ifndef UNIT_TEST
