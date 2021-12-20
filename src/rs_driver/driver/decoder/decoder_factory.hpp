@@ -31,11 +31,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #include <rs_driver/driver/decoder/decoder_RS32.hpp>
+#include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #if 0
 #include <rs_driver/driver/decoder/decoder_RS16.hpp>
 #include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
-#include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
 #include <rs_driver/driver/decoder/decoder_RSROCK.hpp>
@@ -71,10 +71,10 @@ DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam
     case LidarType::RS32:
       ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param, excb);
       break;
-#if 0
     case LidarType::RSBP:
-      ret_ptr = std::make_shared<DecoderRSBP<T_PointCloud>>(param.decoder_param);
+      ret_ptr = std::make_shared<DecoderRSBP<T_PointCloud>>(param, excb);
       break;
+#if 0
     case LidarType::RS128:
       ret_ptr = std::make_shared<DecoderRS128<T_PointCloud>>(param.decoder_param);
       break;
@@ -148,8 +148,8 @@ template <typename T_PointCloud>
 inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRSBPConstantParam()
 {
   LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0xA050A55A0A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
+  ret_param.MSOP_ID = 0xA050 A55A 0A05 AA55;
+  ret_param.DIFOP_ID = 0x5555 1111 5A00 FFA5;
   ret_param.BLOCK_ID = 0xEEFF;
   ret_param.PKT_RATE = 1500;
   ret_param.BLOCKS_PER_PKT = 12;

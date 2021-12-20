@@ -58,10 +58,10 @@ TEST(TestChanAngles, loadFromDifop)
                               0x01, 0x03, 0x04,
                               0x01, 0x05, 0x06,
                               0x00, 0x07, 0x08};
-  uint8_t horiz_angle_arr[] = {0x00, 0x11, 0x22,
-                               0x01, 0x33, 0x44,
-                               0x00, 0x55, 0x66,
-                               0x01, 0x77, 0x88};
+  uint8_t horiz_angle_arr[] = {0x00, 0x01, 0x11,
+                               0x01, 0x02, 0x22,
+                               0x00, 0x03, 0x33,
+                               0x01, 0x04, 0x44};
 
   std::vector<int32_t> vert_angles, horiz_angles;
 
@@ -80,10 +80,10 @@ TEST(TestChanAngles, loadFromDifop)
   ASSERT_EQ(vert_angles[2], -1286);
   ASSERT_EQ(vert_angles[3], 1800);
 
-  ASSERT_EQ(horiz_angles[0], 4386);
-  ASSERT_EQ(horiz_angles[1], -13124);
-  ASSERT_EQ(horiz_angles[2], 21862);
-  ASSERT_EQ(horiz_angles[3], -30600);
+  ASSERT_EQ(horiz_angles[0], 273);
+  ASSERT_EQ(horiz_angles[1], -546);
+  ASSERT_EQ(horiz_angles[2], 819);
+  ASSERT_EQ(horiz_angles[3], -1092);
 
   // load again
   ASSERT_EQ(ChanAngles::loadFromDifop(
@@ -133,10 +133,10 @@ TEST(TestChanAngles, memberLoadFromDifop)
                               0x01, 0x03, 0x04,
                               0x01, 0x05, 0x06,
                               0x00, 0x07, 0x08};
-  uint8_t horiz_angle_arr[] = {0x00, 0x11, 0x22,
-                               0x01, 0x33, 0x44,
-                               0x00, 0x55, 0x66,
-                               0x01, 0x77, 0x88};
+  uint8_t horiz_angle_arr[] = {0x00, 0x01, 0x11,
+                               0x01, 0x02, 0x22,
+                               0x00, 0x03, 0x33,
+                               0x01, 0x04, 0x44};
 
   ChanAngles angles(4);
   ASSERT_EQ(angles.chan_num_, 4);
@@ -153,10 +153,10 @@ TEST(TestChanAngles, memberLoadFromDifop)
   ASSERT_EQ(angles.vert_angles_[2], -1286);
   ASSERT_EQ(angles.vert_angles_[3], 1800);
 
-  ASSERT_EQ(angles.horiz_angles_[0], 4386);
-  ASSERT_EQ(angles.horiz_angles_[1], -13124);
-  ASSERT_EQ(angles.horiz_angles_[2], 21862);
-  ASSERT_EQ(angles.horiz_angles_[3], -30600);
+  ASSERT_EQ(angles.horiz_angles_[0], 273);
+  ASSERT_EQ(angles.horiz_angles_[1], -546);
+  ASSERT_EQ(angles.horiz_angles_[2], 819);
+  ASSERT_EQ(angles.horiz_angles_[3], -1092);
 
   ASSERT_EQ(angles.user_chans_.size(), 4);
   ASSERT_EQ(angles.toUserChan(0), 2);
@@ -171,10 +171,10 @@ TEST(TestChanAngles, memberLoadFromDifop_narrow)
                               0x01, 0x03, 0x04,
                               0x01, 0x05, 0x06,
                               0x00, 0x07, 0x08};
-  uint8_t horiz_angle_arr[] = {0x00, 0x11, 0x22,
-                               0x01, 0x33, 0x44,
-                               0x00, 0x55, 0x66,
-                               0x01, 0x77, 0x88};
+  uint8_t horiz_angle_arr[] = {0x00, 0x01, 0x11,
+                               0x01, 0x02, 0x22,
+                               0x00, 0x03, 0x33,
+                               0x01, 0x04, 0x44};
 
   ChanAngles angles(4, true);
   ASSERT_EQ(angles.chan_num_, 4);
@@ -191,10 +191,10 @@ TEST(TestChanAngles, memberLoadFromDifop_narrow)
   ASSERT_EQ(angles.vert_angles_[2], -129);
   ASSERT_EQ(angles.vert_angles_[3], 180);
 
-  ASSERT_EQ(angles.horiz_angles_[0], 439);
-  ASSERT_EQ(angles.horiz_angles_[1], -1312);
-  ASSERT_EQ(angles.horiz_angles_[2], 2186);
-  ASSERT_EQ(angles.horiz_angles_[3], -3060);
+  ASSERT_EQ(angles.horiz_angles_[0], 27);
+  ASSERT_EQ(angles.horiz_angles_[1], -55);
+  ASSERT_EQ(angles.horiz_angles_[2], 82);
+  ASSERT_EQ(angles.horiz_angles_[3], -109);
 }
 
 TEST(TestChanAngles, memberLoadFromDifop_fail)
@@ -218,5 +218,48 @@ TEST(TestChanAngles, memberLoadFromDifop_fail)
         4), 0);
   ASSERT_EQ(angles.vert_angles_.size(), 4);
   ASSERT_EQ(angles.vert_angles_[0], 0);
+}
+
+TEST(TestChanAngles, memberLoadFromDifop_fail_angle)
+{
+  uint8_t vert_angle_arr[] = {0x00, 0x01, 0x02, 
+                              0x01, 0x03, 0x04,
+                              0x01, 0x05, 0x06,
+                              0x00, 0x07, 0x08};
+
+  ChanAngles angles(4, true);
+  ASSERT_EQ(angles.chan_num_, 4);
+
+  {
+    uint8_t horiz_angle_arr[] = 
+    {
+      0x00, 0x01, 0x11,
+      0x01, 0x02, 0x22,
+      0x00, 0x03, 0x33,
+      0x00, 0x23, 0x28
+    };
+
+    // load
+    ASSERT_LT(angles.loadFromDifop(
+          (const RSCalibrationAngle*)vert_angle_arr, 
+          (const RSCalibrationAngle*)horiz_angle_arr, 
+          4), 0);
+  }
+
+  {
+    uint8_t horiz_angle_arr[] = 
+    {
+      0x00, 0x01, 0x11,
+      0x01, 0x02, 0x22,
+      0x00, 0x03, 0x33,
+      0x01, 0x23, 0x29
+    };
+
+    // load
+    ASSERT_LT(angles.loadFromDifop(
+          (const RSCalibrationAngle*)vert_angle_arr, 
+          (const RSCalibrationAngle*)horiz_angle_arr, 
+          4), 0);
+  }
 }
 

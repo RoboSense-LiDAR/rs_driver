@@ -64,6 +64,8 @@ public:
     {
       azi = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-1].azimuth);
     }
+    
+    if (azi < 0) azi += 36000;
 
     return azi;
   }
@@ -109,6 +111,8 @@ public:
     {
       azi = ntohs(this->pkt_.blocks[blk+2].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
     }
+
+    if (azi < 0) azi += 36000;
 
     return azi;
   }

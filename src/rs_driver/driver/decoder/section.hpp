@@ -45,10 +45,15 @@ public:
     start_ = start % 36000;
     end_ = (end <= 36000) ? end : (end % 36000);
     cross_zero_ = (start_ > end_);
+
+    full_round_ = ((start_ == 0) && (end_ == 36000));
   }
 
   bool in(int32_t angle)
   {
+    if (full_round_)
+      return true;
+
     if (cross_zero_)
     {
       return (angle >= start_) || (angle < end_);
@@ -65,6 +70,7 @@ private:
   int32_t start_;
   int32_t end_;
   bool cross_zero_;
+  bool full_round_;
 };
 
 class DistanceSection

@@ -224,13 +224,23 @@ private:
       if (vert.sign != 0) v = -v;
       vert_angles.emplace_back(v);
 
+      if (!angleCheck (v))
+        return -1;
+
       v = ntohs(horiz.value);
       if (horiz.sign != 0) v = -v;
       horiz_angles.emplace_back(v);
 
+      if (!angleCheck (v))
+        return -1;
     }
 
     return ((vert_angles.size() > 0) ? 0 : -1);
+  }
+
+  static bool angleCheck(int32_t v)
+  {
+    return ((-9000 <= v) && (v < 9000));
   }
 
   uint16_t chan_num_;
