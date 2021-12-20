@@ -199,20 +199,18 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 {
   const RS32MsopPkt& pkt = *(const RS32MsopPkt*)(packet);
 
-  this->temperature_ = calcTemp(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
+  this->temperature_ = parseTemp(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
   double pkt_ts = 0;
-#if 0
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = calcTimeYMD(&pkt.header.timestamp);
+    pkt_ts = parseTimeYMD(&pkt.header.timestamp);
   }
   else
   {
     // roll back to first block to approach lidar ts as near as possible.
-    pkt_ts = calcTimeHost() - this->getPacketDuration();
+    pkt_ts = getTimeHost() * 0.000001 - this->getPacketDuration();
   }
-#endif
 
   T_BlockDiff diff(pkt, this->const_param_.BLOCKS_PER_PKT, this->const_param_.BLOCK_DURATION);
 

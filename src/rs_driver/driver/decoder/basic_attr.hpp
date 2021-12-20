@@ -78,7 +78,7 @@ typedef struct
 
 #pragma pack(pop)
 
-inline uint64_t calcTimeUTCWithNs(const RSTimestampUTC2* tsUtc)
+inline uint64_t parseTimeUTCWithNs(const RSTimestampUTC2* tsUtc)
 {
   // sec
   uint64_t sec = 0;
@@ -98,7 +98,7 @@ inline uint64_t calcTimeUTCWithNs(const RSTimestampUTC2* tsUtc)
   return (sec * 1000000 + ns/1000);
 }
 
-inline uint64_t calcTimeUTCWithUs(const RSTimestampUTC2* tsUtc)
+inline uint64_t parseTimeUTCWithUs(const RSTimestampUTC2* tsUtc)
 {
   // sec
   uint64_t sec = 0;
@@ -118,7 +118,7 @@ inline uint64_t calcTimeUTCWithUs(const RSTimestampUTC2* tsUtc)
   return (sec * 1000000 + us);
 }
 
-inline uint64_t calcTimeUTCWithMs(const RSTimestampUTC2* tsUtc)
+inline uint64_t parseTimeUTCWithMs(const RSTimestampUTC2* tsUtc)
 {
   // sec
   uint64_t sec = 0;
@@ -141,7 +141,7 @@ inline uint64_t calcTimeUTCWithMs(const RSTimestampUTC2* tsUtc)
   return (sec * 1000000 + ms * 1000 + us);
 }
 
-inline uint64_t calcTimeYMD(const RSTimestampYMD* tsYmd)
+inline uint64_t parseTimeYMD(const RSTimestampYMD* tsYmd)
 {
   std::tm stm;
   memset(&stm, 0, sizeof(stm));
@@ -171,7 +171,7 @@ inline uint64_t calcTimeYMD(const RSTimestampYMD* tsYmd)
   return (sec * 1000000 + ms * 1000 + us);
 }
 
-inline uint64_t calcTimeHost(void)
+inline uint64_t getTimeHost(void)
 {
   std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
   std::chrono::system_clock::duration t_s = t.time_since_epoch();
@@ -181,7 +181,7 @@ inline uint64_t calcTimeHost(void)
   return t_us.count();
 }
 
-inline int16_t calcTemp(const RSTemprature* tmp)
+inline int16_t parseTemp(const RSTemprature* tmp)
 {
   // | lsb | padding | neg | msb |
   // |  5  |    3    |  1  |  7  | (in bits)
