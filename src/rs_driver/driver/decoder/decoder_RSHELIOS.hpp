@@ -24,13 +24,13 @@ to endorse or promote products derived from this software without specific prior
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
 DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+PECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
-#include <rs_driver/driver/decoder/decoder_base.hpp>
+#include <rs_driver/driver/decoder/decoder.hpp>
 namespace robosense
 {
 namespace lidar
@@ -38,26 +38,26 @@ namespace lidar
 #pragma pack(push, 1)
 typedef struct
 {
-  uint16_t id;
+  uint8_t id[2];
   uint16_t azimuth;
   RSChannel channels[32];
 } RSHELIOSMsopBlock;
 
 typedef struct
 {
-  uint32_t id;
+  uint8_t id[4];
   uint16_t protocol_version;
-  uint8_t reserved_1[14];
+  uint8_t reserved1[14];
   RSTimestampUTC timestamp;
   uint8_t lidar_type;
-  uint8_t reserved_2[7];
-  uint16_t temp_raw;
-  uint8_t reserved_3[2];
-} RSHeliosMsopHeader;
+  uint8_t reserved2[7];
+  RSTemperature temp;
+  uint8_t reserved3[2];
+} RSHELIOSMsopHeader;
 
 typedef struct
 {
-  RSHeliosMsopHeader header;
+  RSHELIOSMsopHeader header;
   RSHELIOSMsopBlock blocks[12];
   unsigned int index;
   uint16_t tail;
@@ -65,40 +65,53 @@ typedef struct
 
 typedef struct
 {
-  uint64_t id;
+  uint8_t id[8];
   uint16_t rpm;
-  RSEthNetNew eth;
+  RSEthNetV2 eth;
   RSFOV fov;
-  uint8_t reserved_1[2];
+  uint8_t reserved1[2];
   uint16_t phase_lock_angle;
-  RSVersionNew version;
-  uint8_t reserved_2[229];
-  RSSn sn;
+  RSVersionV2 version;
+  uint8_t reserved2[229];
+  RSSN sn;
   uint16_t zero_cali;
   uint8_t return_mode;
   RSTimeInfo time_info;
-  RSStatusNew status;
-  uint8_t reserved_3[5];
-  RSDiagnoNew diagno;
+  RSStatusV2 status;
+  uint8_t reserved3[5];
+  RSDiagnoV2 diagno;
   uint8_t gprmc[86];
   RSCalibrationAngle ver_angle_cali[32];
   RSCalibrationAngle hori_angle_cali[32];
-  uint8_t reserved_4[586];
+  uint8_t reserved4[586];
   uint16_t tail;
 } RSHELIOSDifopPkt;
 
 #pragma pack(pop)
 
 template <typename T_PointCloud>
-class DecoderRSHELIOS : public DecoderBase<T_PointCloud>
+class DecoderRSHELIOS : public Decoder<T_PointCloud>
 {
 public:
-  explicit DecoderRSHELIOS(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
-  RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
-  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, typename T_PointCloud::VectorT& vec, int& height, int& azimuth);
-  double getLidarTime(const uint8_t* pkt);
+  virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
+  virtual void decodeMsopPkt(const uint8_t* pkt, size_t size);
+  virtual ~DecoderRSHELIOS() = default;
+
+  explicit DecoderRSHELIOS(const RSDecoderParam& param, 
+      const std::function<void(const Error&)>& excb);
+
+#ifndef UNIT_TEST
+protected:
+#endif
+
+  static RSDecoderConstParam getConstParam();
+  static RSEchoMode getEchoMode(uint8_t mode);
+
+  template <typename T_BlockDiff>
+  void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 };
 
+#if 0
 template <typename T_PointCloud>
 inline DecoderRSHELIOS<T_PointCloud>::DecoderRSHELIOS(const RSDecoderParam& param,
                                                       const LidarConstantParameter& lidar_const_param)
@@ -248,6 +261,7 @@ inline RSDecoderResult DecoderRSHELIOS<T_PointCloud>::decodeDifopPkt(const uint8
   }
   return RSDecoderResult::DECODE_OK;
 }
+#endif
 
 }  // namespace lidar
 }  // namespace robosense

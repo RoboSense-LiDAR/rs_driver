@@ -67,8 +67,7 @@ typedef struct
   RSTimestampYMD timestamp;
   uint8_t lidar_type;
   uint8_t reserved_2[7];
-  RSTemprature temp;
-  //uint16_t temp_raw;
+  RSTemperature temp;
   uint8_t reserved_3[2];
 } RSMsopHeaderV1;
 
@@ -78,11 +77,7 @@ typedef struct
   uint16_t protocol_version;
   uint8_t reserved_1;
   uint8_t wave_mode;
-  RSTemprature temp;
-#if 0
-  uint8_t temp_low;
-  uint8_t temp_high;
-#endif
+  RSTemperature temp;
   RSTimestampUTC timestamp;
   uint8_t reserved_2[10];
   uint8_t lidar_type;

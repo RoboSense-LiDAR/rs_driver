@@ -61,22 +61,22 @@ typedef struct
   uint16_t rpm;
   RSEthNetV1 eth;
   RSFOV fov;
-  uint16_t reserved0;
+  uint8_t reserved0[2];
   uint16_t phase_lock_angle;
   RSVersionV1 version;
-  uint8_t reserved_1[242];
+  uint8_t reserved1[242];
   RSSN sn;
   uint16_t zero_cali;
   uint8_t return_mode;
   uint16_t sw_ver;
   RSTimestampYMD timestamp;
   RSStatusV1 status;
-  uint8_t reserved_2[5];
+  uint8_t reserved2[5];
   RSDiagnoV1 diagno;
   uint8_t gprmc[86];
   RSCalibrationAngle ver_angle_cali[32];
   RSCalibrationAngle hori_angle_cali[32];
-  uint8_t reserved_3[586];
+  uint8_t reserved3[586];
   uint16_t tail;
 } RS32DifopPkt;
 #pragma pack(pop)

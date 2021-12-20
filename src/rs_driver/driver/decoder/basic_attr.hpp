@@ -74,7 +74,7 @@ typedef struct
 typedef struct
 {
   uint8_t tt[2];
-} RSTemprature;
+} RSTemperature;
 
 #pragma pack(pop)
 
@@ -181,7 +181,7 @@ inline uint64_t getTimeHost(void)
   return t_us.count();
 }
 
-inline int16_t parseTemp(const RSTemprature* tmp)
+inline int16_t parseTemp(const RSTemperature* tmp)
 {
   // | lsb | padding | neg | msb |
   // |  5  |    3    |  1  |  7  | (in bits)
