@@ -31,94 +31,90 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
+#include <rs_driver/common/common_header.h>
+#include <thread>
+#include <atomic>
+#include <queue>
+#include <future>
+#include <memory>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
 namespace robosense
 {
 namespace lidar
 {
-
-template <typename T_Packet>
-class SingleReturnBlockDiff
+constexpr uint16_t MAX_THREAD_NUM = 2;
+struct Thread
+{
+  Thread() : start_(false)
+  {
+  }
+  std::shared_ptr<std::thread> thread_;
+  std::atomic<bool> start_;
+};
+class ThreadPool
 {
 public:
-
-  virtual float ts(uint16_t blk)
+  typedef std::shared_ptr<ThreadPool> Ptr;
+  inline ThreadPool() : stop_flag_(false), idl_thr_num_(MAX_THREAD_NUM)
   {
-    float ret = 0.0f;
-    if (blk > 0)
+    for (int i = 0; i < idl_thr_num_; ++i)
     {
-      ret = BLOCK_DURATION;
+      pool_.emplace_back([this] {
+        while (!this->stop_flag_)
+        {
+          std::function<void()> task;
+          {
+            std::unique_lock<std::mutex> lock{ this->mutex_ };
+            this->cv_task_.wait(lock, [this] { return this->stop_flag_.load() || !this->tasks_.empty(); });
+            if (this->stop_flag_ && this->tasks_.empty())
+              return;
+            task = std::move(this->tasks_.front());
+            this->tasks_.pop();
+          }
+          idl_thr_num_--;
+          task();
+          idl_thr_num_++;
+        }
+      });
     }
-
-    return ret;
   }
 
-  virtual int32_t azimuth(uint16_t blk)
+  inline ~ThreadPool()
   {
-    int32_t azi= 0;
-
-    if (blk < (BLOCKS_PER_PKT - 1))
-      azi = ntohs(this->pkt_.blocks[blk+1].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
-    else
-      azi = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-1].azimuth);
-
-    return azi;
+    stop_flag_.store(true);
+    cv_task_.notify_all();
+    for (std::thread& thread : pool_)
+    {
+      thread.join();
+    }
   }
 
-  SingleReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
-    : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration)
-  {
-  }
-
-protected:
-  const T_Packet& pkt_;
-  const uint16_t BLOCKS_PER_PKT;
-  const double BLOCK_DURATION;
-};
-
-template <typename T_Packet>
-class DualReturnBlockDiff
-
-{
 public:
-
-  float ts(uint16_t blk)
+  template <class F, class... Args>
+  inline void commit(F&& f, Args&&... args)
   {
-    float ret = 0.0f;
-
-    if ((blk % 2 == 0) && (blk != 0))
+    if (stop_flag_.load())
+      throw std::runtime_error("Commit on LiDAR threadpool is stopped.");
+    using RetType = decltype(f(args...));
+    auto task =
+        std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
     {
-      ret = BLOCK_DURATION;
+      std::lock_guard<std::mutex> lock{ mutex_ };
+      tasks_.emplace([task]() { (*task)(); });
     }
-
-    return ret;
+    cv_task_.notify_one();
   }
 
-  int32_t azimuth(uint16_t blk)
-  {
-    int32_t azi = 0;
-
-    if (blk >= (BLOCKS_PER_PKT - 2))
-    {
-      azi = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-2].azimuth);
-    }
-    else
-    {
-      azi = ntohs(this->pkt_.blocks[blk+2].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
-    }
-
-    return azi;
-  }
-
-  DualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
-    : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration)
-  {
-  }
-
-protected:
-  const T_Packet& pkt_;
-  const uint16_t BLOCKS_PER_PKT;
-  const double BLOCK_DURATION;
+private:
+  using Task = std::function<void()>;
+  std::vector<std::thread> pool_;
+  std::queue<Task> tasks_;
+  std::mutex mutex_;
+  std::condition_variable cv_task_;
+  std::atomic<bool> stop_flag_;
+  std::atomic<int> idl_thr_num_;
 };
-
 }  // namespace lidar
 }  // namespace robosense

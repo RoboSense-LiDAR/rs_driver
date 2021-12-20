@@ -256,7 +256,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   std::string multi_cast_address = "0.0.0.0";  ///< Address of multicast
   std::string pcap_path = "null";  ///< Absolute path of pcap file
   bool pcap_repeat = true;         ///< true: The pcap bag will repeat play
-  double pcap_rate = 1;            ///< Rate to read the pcap file
+  float pcap_rate = 1;            ///< Rate to read the pcap file
   bool use_vlan = false;           ///< Vlan on-off
   bool use_someip = false;         ///< Someip on-off
 

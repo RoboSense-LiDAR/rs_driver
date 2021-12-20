@@ -31,32 +31,71 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
-
-#include <pcl/io/io.h>
-#include <pcl/point_types.h>
-
-typedef pcl::PointXYZI PointXYZI;
-
-struct PointXYZIRT
+#include <rs_driver/common/common_header.h>
+namespace robosense
 {
-  PCL_ADD_POINT4D;
-  uint8_t intensity;
-  uint16_t ring = 0;
-  double timestamp = 0;
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-} EIGEN_ALIGN16;
-
-POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRT, (float, x, x)(float, y, y)(float, z, z)
-    (uint8_t, intensity, intensity)(uint16_t, ring, ring)(double, timestamp, timestamp))
-
-template <typename T_Point>
-class PointCloudT : public pcl::PointCloud<T_Point>
+namespace lidar
+{
+template <typename T>
+class Queue
 {
 public:
-  typedef T_Point PointT;
-  typedef typename pcl::PointCloud<T_Point>::VectorType VectorT;
+  inline Queue() : is_task_finished_(true)
+  {
+  }
 
-  double timestamp = 0.0;
-  std::string frame_id = "rslidar";  ///< Point cloud frame id
-  uint32_t seq = 0;           ///< Sequence number of message
+  inline T front()
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return queue_.front();
+  }
+
+  inline void push(const T& value)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    queue_.push(value);
+  }
+
+  inline void pop()
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!queue_.empty())
+    {
+      queue_.pop();
+    }
+  }
+
+  inline T popFront()
+  {
+    T value;
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!queue_.empty())
+    {
+      value = std::move(queue_.front());
+      queue_.pop();
+    }
+    return value;
+  }
+
+  inline void clear()
+  {
+    std::queue<T> empty;
+    std::lock_guard<std::mutex> lock(mutex_);
+    swap(empty, queue_);
+  }
+
+  inline size_t size()
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return queue_.size();
+  }
+
+public:
+  std::queue<T> queue_;
+  std::atomic<bool> is_task_finished_;
+
+private:
+  mutable std::mutex mutex_;
 };
+}  // namespace lidar
+}  // namespace robosense

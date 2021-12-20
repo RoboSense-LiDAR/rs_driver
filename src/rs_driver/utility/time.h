@@ -31,32 +31,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
-
-#include <pcl/io/io.h>
-#include <pcl/point_types.h>
-
-typedef pcl::PointXYZI PointXYZI;
-
-struct PointXYZIRT
+#include <rs_driver/common/common_header.h>
+#include <chrono>
+namespace robosense
 {
-  PCL_ADD_POINT4D;
-  uint8_t intensity;
-  uint16_t ring = 0;
-  double timestamp = 0;
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-} EIGEN_ALIGN16;
-
-POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRT, (float, x, x)(float, y, y)(float, z, z)
-    (uint8_t, intensity, intensity)(uint16_t, ring, ring)(double, timestamp, timestamp))
-
-template <typename T_Point>
-class PointCloudT : public pcl::PointCloud<T_Point>
+namespace lidar
 {
-public:
-  typedef T_Point PointT;
-  typedef typename pcl::PointCloud<T_Point>::VectorType VectorT;
-
-  double timestamp = 0.0;
-  std::string frame_id = "rslidar";  ///< Point cloud frame id
-  uint32_t seq = 0;           ///< Sequence number of message
-};
+inline double getTime(void)
+{
+  const auto t = std::chrono::system_clock::now();
+  const auto t_sec = std::chrono::duration_cast<std::chrono::duration<double>>(t.time_since_epoch());
+  return (double)t_sec.count();
+}
+}  // namespace lidar
+}  // namespace robosense

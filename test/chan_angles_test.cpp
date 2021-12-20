@@ -163,9 +163,27 @@ TEST(TestChanAngles, memberLoadFromDifop)
   ASSERT_EQ(angles.toUserChan(1), 1);
   ASSERT_EQ(angles.toUserChan(2), 0);
   ASSERT_EQ(angles.toUserChan(3), 3);
+}
 
-  // narrow after load. for RS32
-  angles.narrow();
+TEST(TestChanAngles, memberLoadFromDifop_narrow)
+{
+  uint8_t vert_angle_arr[] = {0x00, 0x01, 0x02, 
+                              0x01, 0x03, 0x04,
+                              0x01, 0x05, 0x06,
+                              0x00, 0x07, 0x08};
+  uint8_t horiz_angle_arr[] = {0x00, 0x11, 0x22,
+                               0x01, 0x33, 0x44,
+                               0x00, 0x55, 0x66,
+                               0x01, 0x77, 0x88};
+
+  ChanAngles angles(4, true);
+  ASSERT_EQ(angles.chan_num_, 4);
+
+  // load
+  ASSERT_EQ(angles.loadFromDifop(
+        (const RSCalibrationAngle*)vert_angle_arr, 
+        (const RSCalibrationAngle*)horiz_angle_arr, 
+        4), 0);
 
   ASSERT_EQ(angles.vert_angles_.size(), 4);
   ASSERT_EQ(angles.vert_angles_[0], 26);

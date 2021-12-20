@@ -273,7 +273,7 @@ public:
 
   explicit Decoder(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb,
-      const RSDecoderConstParam& const_param);
+      const RSDecoderConstParam& const_param, bool narrow_angles = false);
 
   void processDifopPkt(const uint8_t* pkt, size_t size);
   void processMsopPkt(const uint8_t* pkt, size_t size);
@@ -335,12 +335,12 @@ protected:
 template <typename T_PointCloud>
 inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param, 
     const std::function<void(const Error&)>& excb,
-    const RSDecoderConstParam& const_param)
+    const RSDecoderConstParam& const_param, bool narrow_angles)
   : const_param_(const_param)
   , param_(param)
   , excb_(excb)
   , height_(const_param.CHANNELS_PER_BLOCK)
-  , chan_angles_(const_param.CHANNELS_PER_BLOCK)
+  , chan_angles_(const_param.CHANNELS_PER_BLOCK, narrow_angles)
   , distance_section_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, 
       param.min_distance, param.max_distance)
   , scan_section_(param.start_angle * 100, param.end_angle * 100)

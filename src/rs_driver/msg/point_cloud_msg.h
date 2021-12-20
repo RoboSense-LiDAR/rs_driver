@@ -61,7 +61,7 @@ public:
   uint32_t width = 0;     ///< Width of point cloud
   bool is_dense = false;  ///< If is_dense=true, the point cloud does not contain NAN points
   double timestamp = 0.0;
-  std::string frame_id = "";  ///< Point cloud frame id
+  std::string frame_id = "rslidar";  ///< Point cloud frame id
   uint32_t seq = 0;           ///< Sequence number of message
 
   VectorT points;

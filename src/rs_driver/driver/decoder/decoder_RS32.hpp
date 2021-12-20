@@ -165,7 +165,7 @@ RSEchoMode DecoderRS32<T_PointCloud>::getEchoMode(uint8_t mode)
 template <typename T_PointCloud>
 inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb)
-  : Decoder<T_PointCloud>(param, excb, getConstParam())
+  : Decoder<T_PointCloud>(param, excb, getConstParam(), true)
 {
 }
 
@@ -178,12 +178,6 @@ inline void DecoderRS32<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
   this->echo_mode_ = getEchoMode (pkt.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
-
-  //
-  // RS32's channel angles is of higher resolution than the other lidars. 
-  // fix them to the same resolution.
-  //
-  this->chan_angles_.narrow();
 }
 
 template <typename T_PointCloud>
@@ -208,6 +202,7 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   this->temperature_ = calcTemp(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
   double pkt_ts = 0;
+#if 0
   if (this->param_.use_lidar_clock)
   {
     pkt_ts = calcTimeYMD(&pkt.header.timestamp);
@@ -217,6 +212,7 @@ inline void DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     // roll back to first block to approach lidar ts as near as possible.
     pkt_ts = calcTimeHost() - this->getPacketDuration();
   }
+#endif
 
   T_BlockDiff diff(pkt, this->const_param_.BLOCKS_PER_PKT, this->const_param_.BLOCK_DURATION);
 
