@@ -120,7 +120,7 @@ RSDecoderConstParam DecoderRSHELIOS<T_PointCloud>::getConstParam()
     , 1248 // difop len
     , 4 // msop id len
     , 8 // difop id len
-    , {0x55, 0xAA, 0x05, 0x0A} // msop id
+    , {0x55, 0xAA, 0x05, 0x5A} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0xFF, 0xEE} // block id
     , 12 // blocks per packet
@@ -212,7 +212,7 @@ inline void DecoderRSHELIOS<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pa
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp);
+    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 0.000001;
   }
   else
   {

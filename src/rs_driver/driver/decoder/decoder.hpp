@@ -310,7 +310,6 @@ protected:
   uint16_t block_azi_diff_; // azimuth difference between adjacent blocks.
   float fov_blind_ts_diff_; // timestamp difference across blind section(defined by fov)
 
-  unsigned int protocol_ver_; // protocol version of MSOP/DIFOP
   uint16_t rps_; // rounds per second
   RSEchoMode echo_mode_; // echo mode (defined by return mode)
   float temperature_; // lidar temperature
@@ -343,7 +342,6 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , split_blks_per_frame_(blks_per_frame_)
   , block_azi_diff_(20)
   , fov_blind_ts_diff_(0)
-  , protocol_ver_(0)
   , rps_(10)
   , echo_mode_(ECHO_SINGLE)
   , temperature_(0.0)

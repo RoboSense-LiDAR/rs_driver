@@ -204,7 +204,7 @@ inline void DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeYMD(&pkt.header.timestamp);
+    pkt_ts = parseTimeYMD(&pkt.header.timestamp) * 0.000001;
   }
   else
   {
