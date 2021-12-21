@@ -7,7 +7,7 @@ using namespace robosense::lidar;
 
 TEST(TestParseTime, parseTimeUTC)
 {
-  RSTimestampUTC2 ts = 
+  RSTimestampUTC ts = 
   {{0x01, 0x02, 0x03, 0x04, 0x05, 0x06}, {0x11, 0x22, 0x33, 0x44}};
 
   ASSERT_EQ(parseTimeUTCWithNs(&ts), 0x010203040506 * 1000000 + 0x11223344/1000);
@@ -31,12 +31,12 @@ TEST(TestParseTemp, parseTemp)
 {
   {
     uint8_t temp[] = {0x18, 0x01};
-    ASSERT_EQ(parseTemp((RSTemprature*)&temp), 35);
+    ASSERT_EQ(parseTemp((RSTemperature*)&temp), 35);
   }
 
   {
     uint8_t temp[] = {0x18, 0x81};
-    ASSERT_EQ(parseTemp((RSTemprature*)&temp), -35);
+    ASSERT_EQ(parseTemp((RSTemperature*)&temp), -35);
   }
 }
 

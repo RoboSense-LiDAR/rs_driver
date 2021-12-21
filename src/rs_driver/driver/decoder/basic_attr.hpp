@@ -59,17 +59,19 @@ typedef struct
   uint16_t us;
 } RSTimestampYMD;
 
+#if 0
 typedef struct
 {
   uint8_t sec[6];
   uint32_t us;
 } RSTimestampUTC;
+#endif
 
 typedef struct 
 {
   uint8_t sec[6];
   uint8_t ss[4];
-} RSTimestampUTC2;
+} RSTimestampUTC;
 
 typedef struct
 {
@@ -78,7 +80,7 @@ typedef struct
 
 #pragma pack(pop)
 
-inline uint64_t parseTimeUTCWithNs(const RSTimestampUTC2* tsUtc)
+inline uint64_t parseTimeUTCWithNs(const RSTimestampUTC* tsUtc)
 {
   // sec
   uint64_t sec = 0;
@@ -98,7 +100,7 @@ inline uint64_t parseTimeUTCWithNs(const RSTimestampUTC2* tsUtc)
   return (sec * 1000000 + ns/1000);
 }
 
-inline uint64_t parseTimeUTCWithUs(const RSTimestampUTC2* tsUtc)
+inline uint64_t parseTimeUTCWithUs(const RSTimestampUTC* tsUtc)
 {
   // sec
   uint64_t sec = 0;
@@ -118,7 +120,7 @@ inline uint64_t parseTimeUTCWithUs(const RSTimestampUTC2* tsUtc)
   return (sec * 1000000 + us);
 }
 
-inline uint64_t parseTimeUTCWithMs(const RSTimestampUTC2* tsUtc)
+inline uint64_t parseTimeUTCWithMs(const RSTimestampUTC* tsUtc)
 {
   // sec
   uint64_t sec = 0;
