@@ -1,25 +1,32 @@
-load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
-
-filegroup(
-    name = "all_srcs",
-    srcs = glob(["**"]),
-    visibility = ["//visibility:public"],
-)
-
-cmake(
+cc_library(
     name = "rs_driver",
-    cache_entries = {
-        "CMAKE_C_FLAGS": "-fPIC",
-    },
-    install = False,
-    lib_source = ":all_srcs",
-    out_headers_only = True,
+    hdrs = glob([
+        "**/*.h",
+        "**/*.hpp",
+    ]),
+    includes = ["./src"],
+    linkopts = [
+        "-lpthread",
+        "-lpcap",
+        # Keep these, we might need them later.
+        # "-lpcl",
+        # "-leigen3",
+    ],
     visibility = ["//visibility:public"],
 )
 
 cc_binary(
-    name = "demo",
+    name = "demo_online",
     srcs = ["demo/demo_online.cpp"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":rs_driver",
+    ],
+)
+
+cc_binary(
+    name = "demo_pcap",
+    srcs = ["demo/demo_pcap.cpp"],
     visibility = ["//visibility:public"],
     deps = [
         ":rs_driver",
