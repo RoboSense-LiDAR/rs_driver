@@ -40,7 +40,8 @@ namespace lidar
 #pragma pack(push, 1)
 typedef struct
 {
-  uint8_t id[2];
+  uint8_t id[1];
+  uint8_t ret_id;
   uint16_t azimuth;
   RSChannel channels[80];
 } RS80MsopBlock;
@@ -112,7 +113,7 @@ RSDecoderConstParam DecoderRS80<T_PointCloud>::getConstParam()
     , 8 // difop id len
     , {0x55, 0xAA, 0x05, 0x5A} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-    , {0xFF, 0xEE} // block id
+    , {0xFE} // block id
     , 4 // blocks per packet
     , 80 // channels per block
     , 1.0f // distance min
@@ -208,7 +209,7 @@ inline void DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 0.000001;
+    pkt_ts = parseTimeUTCWithNs(&pkt.header.timestamp) * 0.000001;
   }
   else
   {
@@ -223,18 +224,17 @@ inline void DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   {
     const RS80MsopBlock& block = pkt.blocks[blk];
 
-    if (memcmp(this->const_param_.BLOCK_ID, block.id, 2) != 0)
+    if (memcmp(this->const_param_.BLOCK_ID, block.id, 1) != 0)
     {
       this->excb_(Error(ERRCODE_WRONGPKTHEADER));
       break;
     }
 
-    block_ts += diff.ts(blk);
     int32_t block_az = ntohs(block.azimuth);
+    block_ts += diff.ts(blk);
+    int32_t block_azi_diff = diff.azimuth(blk);
 
     this->newBlock(block_az);
-
-    int32_t block_azi_diff = diff.azimuth(blk);
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {

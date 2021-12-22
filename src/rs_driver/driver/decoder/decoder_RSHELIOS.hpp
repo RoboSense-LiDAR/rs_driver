@@ -233,12 +233,11 @@ inline void DecoderRSHELIOS<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pa
       break;
     }
 
-    block_ts += diff.ts(blk);
     int32_t block_az = ntohs(block.azimuth);
+    block_ts += diff.ts(blk);
+    int32_t block_azi_diff = diff.azimuth(blk);
 
     this->newBlock(block_az);
-
-    int32_t block_azi_diff = diff.azimuth(blk);
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
