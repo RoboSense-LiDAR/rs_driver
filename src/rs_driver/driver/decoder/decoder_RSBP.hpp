@@ -72,8 +72,8 @@ typedef struct
   uint8_t reserved_2[5];
   RSDiagnoV1 diagno;
   uint8_t gprmc[86];
-  RSCalibrationAngle ver_angle_cali[32];
-  RSCalibrationAngle hori_angle_cali[32];
+  RSCalibrationAngle vert_angle_cali[32];
+  RSCalibrationAngle horiz_angle_cali[32];
   uint8_t reserved_3[586];
   uint16_t tail;
 } RSBPDifopPkt;

@@ -81,8 +81,8 @@ typedef struct
   uint8_t reserved3[5];
   RSDiagnoV2 diagno;
   uint8_t gprmc[86];
-  RSCalibrationAngle ver_angle_cali[32];
-  RSCalibrationAngle hori_angle_cali[32];
+  RSCalibrationAngle vert_angle_cali[32];
+  RSCalibrationAngle horiz_angle_cali[32];
   uint8_t reserved4[586];
   uint16_t tail;
 } RSHELIOSDifopPkt;

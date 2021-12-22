@@ -21,8 +21,8 @@ struct MyDifopPkt
   uint8_t id[8];
   uint16_t rpm;
   RSFOV fov;
-  RSCalibrationAngle ver_angle_cali[2];
-  RSCalibrationAngle hori_angle_cali[2];
+  RSCalibrationAngle vert_angle_cali[2];
+  RSCalibrationAngle horiz_angle_cali[2];
 };
 #pragma pack(pop)
 

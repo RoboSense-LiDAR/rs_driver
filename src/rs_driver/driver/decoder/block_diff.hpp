@@ -65,7 +65,10 @@ public:
       azi = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-1].azimuth);
     }
     
-    if (azi < 0) azi += 36000;
+    if (azi < 0) 
+    {
+      azi += 36000;
+    }
 
     return azi;
   }
@@ -83,7 +86,6 @@ protected:
 
 template <typename T_Packet>
 class DualReturnBlockDiff
-
 {
 public:
 
@@ -112,12 +114,66 @@ public:
       azi = ntohs(this->pkt_.blocks[blk+2].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
     }
 
-    if (azi < 0) azi += 36000;
+    if (azi < 0) 
+    {
+      azi += 36000;
+    }
 
     return azi;
   }
 
   DualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
+    : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration)
+  {
+  }
+
+protected:
+  const T_Packet& pkt_;
+  const uint16_t BLOCKS_PER_PKT;
+  const double BLOCK_DURATION;
+};
+
+template <typename T_Packet>
+class ABDualReturnBlockDiff
+{
+public:
+
+  float ts(uint16_t blk)
+  {
+    float ret = 0.0f;
+
+    if (ntohs(pkt_.blocks[0].azimuth) == ntohs(pkt_.blocks[1].azimuth)) // AAB
+    {
+      if (blk == 2) 
+      {
+        ret = BLOCK_DURATION;
+      }
+    }
+    else  // ABB
+    {
+      if (blk == 1) 
+      {
+        ret = BLOCK_DURATION;
+      }
+    }
+
+    return ret;
+  }
+
+  int32_t azimuth(uint16_t blk)
+  {
+    int32_t azi = 
+      ntohs(pkt_.blocks[2].azimuth) - ntohs(pkt_.blocks[0].azimuth);
+
+    if (azi < 0) 
+    {
+      azi += 36000;
+    }
+
+    return azi;
+  }
+
+  ABDualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
     : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration)
   {
   }

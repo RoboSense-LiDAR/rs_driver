@@ -533,7 +533,7 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
 
   if (!this->param_.config_from_file && !this->angles_ready_)
   {
-    int ret = this->chan_angles_.loadFromDifop(pkt.ver_angle_cali, pkt.hori_angle_cali, 
+    int ret = this->chan_angles_.loadFromDifop(pkt.vert_angle_cali, pkt.horiz_angle_cali, 
         this->const_param_.CHANNELS_PER_BLOCK);
     this->angles_ready_ = (ret == 0);
   }
