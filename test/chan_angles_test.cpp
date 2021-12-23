@@ -165,38 +165,6 @@ TEST(TestChanAngles, memberLoadFromDifop)
   ASSERT_EQ(angles.toUserChan(3), 3);
 }
 
-TEST(TestChanAngles, memberLoadFromDifop_narrow)
-{
-  uint8_t vert_angle_arr[] = {0x00, 0x01, 0x02, 
-                              0x01, 0x03, 0x04,
-                              0x01, 0x05, 0x06,
-                              0x00, 0x07, 0x08};
-  uint8_t horiz_angle_arr[] = {0x00, 0x01, 0x11,
-                               0x01, 0x02, 0x22,
-                               0x00, 0x03, 0x33,
-                               0x01, 0x04, 0x44};
-
-  ChanAngles angles(4, true);
-  ASSERT_EQ(angles.chan_num_, 4);
-
-  // load
-  ASSERT_EQ(angles.loadFromDifop(
-        (const RSCalibrationAngle*)vert_angle_arr, 
-        (const RSCalibrationAngle*)horiz_angle_arr, 
-        4), 0);
-
-  ASSERT_EQ(angles.vert_angles_.size(), 4);
-  ASSERT_EQ(angles.vert_angles_[0], 26);
-  ASSERT_EQ(angles.vert_angles_[1], -77);
-  ASSERT_EQ(angles.vert_angles_[2], -129);
-  ASSERT_EQ(angles.vert_angles_[3], 180);
-
-  ASSERT_EQ(angles.horiz_angles_[0], 27);
-  ASSERT_EQ(angles.horiz_angles_[1], -55);
-  ASSERT_EQ(angles.horiz_angles_[2], 82);
-  ASSERT_EQ(angles.horiz_angles_[3], -109);
-}
-
 TEST(TestChanAngles, memberLoadFromDifop_fail)
 {
   uint8_t vert_angle_arr[] = {0x00, 0x01, 0x02, 
@@ -227,10 +195,12 @@ TEST(TestChanAngles, memberLoadFromDifop_fail_angle)
                               0x01, 0x05, 0x06,
                               0x00, 0x07, 0x08};
 
-  ChanAngles angles(4, true);
+  // -9000 <= angle < 9000
+  ChanAngles angles(4);
   ASSERT_EQ(angles.chan_num_, 4);
 
   {
+    // 9000
     uint8_t horiz_angle_arr[] = 
     {
       0x00, 0x01, 0x11,
@@ -247,6 +217,7 @@ TEST(TestChanAngles, memberLoadFromDifop_fail_angle)
   }
 
   {
+    // -9001
     uint8_t horiz_angle_arr[] = 
     {
       0x00, 0x01, 0x11,

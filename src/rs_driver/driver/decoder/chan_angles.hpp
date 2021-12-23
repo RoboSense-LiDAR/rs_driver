@@ -53,8 +53,8 @@ class ChanAngles
 {
 public:
 
-  ChanAngles(uint16_t chan_num, bool narrow_angles = false)
-    : chan_num_(chan_num), narrow_angles_(narrow_angles)
+  ChanAngles(uint16_t chan_num)
+    : chan_num_(chan_num)
   {
     vert_angles_.resize(chan_num_);
     horiz_angles_.resize(chan_num_);
@@ -98,16 +98,6 @@ public:
     vert_angles_.swap(vert_angles);
     horiz_angles_.swap(horiz_angles);
     genUserChan(vert_angles_, user_chans_);
-
-    //
-    // some lidars, such as RS32, have higher resolution than the other lidars. 
-    // fix them to the same resolution.
-    //
-    if (narrow_angles_)
-    {  
-      narrow();
-    }
-
     return 0;
   }
 
@@ -144,15 +134,6 @@ public:
 #ifndef UNIT_TEST
 private:
 #endif
-
-  void narrow()
-  {
-    for (uint16_t chan = 0; chan < chan_num_; chan++)
-    {
-      vert_angles_[chan] = std::round(vert_angles_[chan] * 0.1f);
-      horiz_angles_[chan] = std::round(horiz_angles_[chan] * 0.1f);
-    }
-  }
 
   static
   void genUserChan(const std::vector<int32_t>& vert_angles, std::vector<uint16_t>& user_chans)
@@ -233,6 +214,7 @@ private:
 
       if (!angleCheck (v))
         return -1;
+
     }
 
     return ((vert_angles.size() > 0) ? 0 : -1);
@@ -244,7 +226,6 @@ private:
   }
 
   uint16_t chan_num_;
-  bool narrow_angles_;
   std::vector<int32_t> vert_angles_;
   std::vector<int32_t> horiz_angles_;
   std::vector<uint16_t> user_chans_;

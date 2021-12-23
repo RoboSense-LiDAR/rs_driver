@@ -101,7 +101,7 @@ typedef struct
 
 #pragma pack(pop)
 
-void RS16DifopPkt2Adapter (const uint8_t* difop)
+inline void RS16DifopPkt2Adapter (const uint8_t* difop)
 {
   RS16DifopPkt& orig = *(RS16DifopPkt*)difop;
   AdapterRS16DifopPkt& adapter = *(AdapterRS16DifopPkt*)difop;
@@ -115,7 +115,7 @@ void RS16DifopPkt2Adapter (const uint8_t* difop)
     v = v << 8;
     v += orig.pitch_cali[i*3 + 2];
 
-    uint16_t v2 = (uint16_t)(v * 0.01);
+    uint16_t v2 = (uint16_t)(v * 0.01); // higher resolution to lower one.
 
     adapter.vert_angle_cali[i].sign = (i < 8) ? 1 : 0;
     adapter.vert_angle_cali[i].value = htons(v2);

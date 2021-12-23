@@ -79,7 +79,58 @@ typedef struct
   uint8_t reserved3[586];
   uint16_t tail;
 } RS32DifopPkt;
+
+typedef struct
+{
+  uint8_t id[8];
+  uint16_t rpm;
+  RSEthNetV1 eth;
+  RSFOV fov;
+  uint8_t reserved0[2];
+  uint16_t phase_lock_angle;
+  RSVersionV1 version;
+  uint8_t reserved1[242];
+  RSSN sn;
+  uint16_t zero_cali;
+  uint8_t return_mode;
+  uint16_t sw_ver;
+  RSTimestampYMD timestamp;
+  RSStatusV1 status;
+  uint8_t reserved2[5];
+  RSDiagnoV1 diagno;
+  uint8_t gprmc[86];
+  RSCalibrationAngle vert_angle_cali_orig[32];
+  RSCalibrationAngle horiz_angle_cali_orig[32];
+  RSCalibrationAngle vert_angle_cali[32];
+  RSCalibrationAngle horiz_angle_cali[32];
+} AdapterRS32DifopPkt;
+
 #pragma pack(pop)
+
+inline void RS32DifopPkt2Adapter (const uint8_t* difop)
+{
+  RS32DifopPkt& orig = *(RS32DifopPkt*)difop;
+  AdapterRS32DifopPkt& adapter = *(AdapterRS32DifopPkt*)difop;
+
+  for (uint16_t i = 0; i < 32; i++)
+  {
+    uint16_t v;
+
+    // vert angles
+    adapter.vert_angle_cali[i].sign = orig.vert_angle_cali[i].sign;
+
+    v = ntohs(orig.vert_angle_cali[i].value);
+    v = std::round(v * 0.1f);
+    adapter.vert_angle_cali[i].value = htons(v);
+
+    // horiz_angles
+    adapter.horiz_angle_cali[i].sign = orig.horiz_angle_cali[i].sign;
+
+    v = ntohs(orig.horiz_angle_cali[i].value);
+    v = std::round(v * 0.1f);
+    adapter.horiz_angle_cali[i].value = htons(v);
+  }
+}
 
 template <typename T_PointCloud>
 class DecoderRS32 : public Decoder<T_PointCloud>
@@ -165,15 +216,17 @@ RSEchoMode DecoderRS32<T_PointCloud>::getEchoMode(uint8_t mode)
 template <typename T_PointCloud>
 inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb)
-  : Decoder<T_PointCloud>(param, excb, getConstParam(), true)
+  : Decoder<T_PointCloud>(param, excb, getConstParam())
 {
 }
 
 template <typename T_PointCloud>
 inline void DecoderRS32<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
-  const RS32DifopPkt& pkt = *(const RS32DifopPkt*)(packet);
-  this->template decodeDifopCommon<RS32DifopPkt>(pkt);
+  RS32DifopPkt2Adapter (packet);
+
+  const AdapterRS32DifopPkt& pkt = *(const AdapterRS32DifopPkt*)(packet);
+  this->template decodeDifopCommon<AdapterRS32DifopPkt>(pkt);
 
   this->echo_mode_ = getEchoMode (pkt.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
