@@ -35,8 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
 #include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
-#if 0
 #include <rs_driver/driver/decoder/decoder_RS16.hpp>
+#if 0
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
 #include <rs_driver/driver/decoder/decoder_RSROCK.hpp>
 #endif
@@ -63,11 +63,9 @@ DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam
 
   switch (type)
   {
-#if 0
     case LidarType::RS16:
-      ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param.decoder_param);
+      ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param, excb);
       break;
-#endif
     case LidarType::RS32:
       ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param, excb);
       break;

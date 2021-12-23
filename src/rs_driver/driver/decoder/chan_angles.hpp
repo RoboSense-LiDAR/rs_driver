@@ -100,7 +100,7 @@ public:
     genUserChan(vert_angles_, user_chans_);
 
     //
-    // some lidas, such as RS32, have higher resolution than the other lidars. 
+    // some lidars, such as RS32, have higher resolution than the other lidars. 
     // fix them to the same resolution.
     //
     if (narrow_angles_)
