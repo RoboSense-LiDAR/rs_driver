@@ -306,7 +306,7 @@ inline void DecoderRS16<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
         setIntensity(point, intensity);
 
         setTimestamp(point, chan_ts);
-        setRing(point, this->chan_angles_.toUserChan(chan));
+        setRing(point, (this->chan_angles_.toUserChan(chan) >> 1));
 
         this->point_cloud_->points.emplace_back(point);
       }
@@ -319,13 +319,14 @@ inline void DecoderRS16<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
         setIntensity(point, 0);
 
         setTimestamp(point, chan_ts);
-        setRing(point, this->chan_angles_.toUserChan(chan));
+        setRing(point, (this->chan_angles_.toUserChan(chan) >> 1));
 
         this->point_cloud_->points.emplace_back(point);
       }
 
       this->prev_chan_ts_ = chan_ts;
     }
+
   }
 }
 
