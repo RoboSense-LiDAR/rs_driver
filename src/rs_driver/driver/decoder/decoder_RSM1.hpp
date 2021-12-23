@@ -208,7 +208,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
-  this->current_temperature_ = static_cast<float>(mpkt_ptr->header.temperature);
+  this->current_temperature_ = static_cast<float>(mpkt_ptr->header.temperature - 80);
   this->protocol_ver_ = RS_SWAP_SHORT(mpkt_ptr->header.protocol_version);
   double pkt_timestamp = 0;
   switch (mpkt_ptr->blocks[0].return_seq)
