@@ -227,7 +227,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
 
   for (size_t blk_idx = 0; blk_idx < this->lidar_const_param_.BLOCKS_PER_PKT; blk_idx++)
   {
-    RSM1Block blk = mpkt_ptr->blocks[blk_idx];
+    const RSM1Block& blk = mpkt_ptr->blocks[blk_idx];
     double point_time = pkt_timestamp + blk.time_offset * 1e-6;
     for (size_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
