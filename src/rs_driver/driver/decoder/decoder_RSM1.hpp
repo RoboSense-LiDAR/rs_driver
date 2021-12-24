@@ -40,8 +40,8 @@ namespace lidar
 
 typedef struct
 {
-  uint32_t id;
-  uint16_t pkt_cnt;
+  uint8_t id[4];
+  uint16_t pkt_seq;
   uint16_t protocol_version;
   uint8_t return_mode;
   uint8_t time_mode;
@@ -119,7 +119,7 @@ typedef struct
   uint8_t reserved1[1];
   uint8_t frame_rate;
   RSM1DifopEther ether;
-  RSM1DifopFov fov_setting;
+  RSM1DifopFov fov;
   RSM1DifopVerInfo ver_info;
   RSSN sn;
   uint8_t return_mode;
@@ -131,34 +131,6 @@ typedef struct
 } RSM1DifopPkt;
 
 #pragma pack(pop)
-
-class Split
-{
-public:
-
-  Split(uint16_t* max_seq)
-    : max_seq_(max_seq), prev_seq_(0)
-  {
-  }
-
-  bool newPacket(uint16_t seq)
-  {
-    if ((seq == *max_seq_) || (seq < prev_seq_))
-    {
-      prev_seq_ = 1;
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
-
-private:
-
-  uint16_t* max_seq_;
-  uint16_t prev_seq_;
-};
 
 const uint32_t SINGLE_PKT_NUM = 630;
 const uint32_t DUAL_PKT_NUM = 1260;
@@ -181,7 +153,7 @@ private:
   RSEchoMode getEchoMode(uint8_t mode);
 
   uint16_t max_seq_;
-  Split split_;
+  SplitStrategyBySeq split_;
 };
 
 template <typename T_PointCloud>
@@ -191,9 +163,9 @@ RSDecoderConstParam DecoderRSM1<T_PointCloud>::getConstParam()
   {
       1210 // msop len
     , 256 // difop len
-    , 8 // msop id len
+    , 4 // msop id len
     , 8 // difop id len
-    , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
+    , {0x55, 0xAA, 0x5A, 0xA5} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0x00, 0x00}
     , 0 
@@ -256,7 +228,7 @@ void DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size
     // roll back to first block to approach lidar ts as near as possible.
     pkt_ts = getTimeHost() * 0.000001 - this->getPacketDuration();
   }
-
+  
   for (size_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
     const RSM1Block& block = pkt.blocks[blk];
@@ -303,8 +275,11 @@ void DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size
     }
   }
 
-  unsigned int pkt_cnt = ntohs(pkt.header.pkt_cnt);
-  bool toSplit = split_.newPacket(pkt_cnt);
+  uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
+  if (split_.newPacket(pkt_seq))
+  {
+    this->splitFrame();
+  }
 }
 
 }  // namespace lidar

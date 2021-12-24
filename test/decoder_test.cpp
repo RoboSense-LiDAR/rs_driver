@@ -302,6 +302,7 @@ TEST(TestDecoder, setPointCloudHeader)
 }
 
 std::shared_ptr<PointCloud> point_cloud_to_get;
+
 std::shared_ptr<PointCloud> getCallback(void)
 {
   return point_cloud_to_get;
@@ -309,12 +310,14 @@ std::shared_ptr<PointCloud> getCallback(void)
 
 bool flag_point_cloud = false;
 std::shared_ptr<PointCloud> point_cloud_to_put;
+
 void putCallback(std::shared_ptr<PointCloud> pt)
 {
   point_cloud_to_put = pt;
   flag_point_cloud = true;
 }
 
+#if 0
 TEST(TestDecoder, split_by_angle)
 {
   RSDecoderConstParam const_param;
@@ -435,4 +438,5 @@ TEST(TestDecoder, split_by_custom_blks)
     ASSERT_EQ(point_cloud_to_put->width, 1);
   }
 }
+#endif
 

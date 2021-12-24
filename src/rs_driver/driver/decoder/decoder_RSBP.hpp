@@ -229,8 +229,10 @@ inline void DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     block_ts += diff.ts(blk);
     int32_t block_azi_diff = diff.azimuth(blk);
 
-    this->newBlock(block_az);
-
+    if (this->split_strategy_->newBlock(block_az))
+    {
+      this->splitFrame();
+    }
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {

@@ -65,4 +65,28 @@ TEST(TestSplitStrategyByNum, newBlock)
   ASSERT_TRUE(sn.newBlock(0));
 }
 
+TEST(TestSplitStrategyBySeq, newPacket_max_seq)
+{
+  uint16_t max_seq = 2;
+  SplitStrategyBySeq sn(&max_seq);
+
+  // reach max_seq
+  ASSERT_FALSE(sn.newPacket(1));
+  ASSERT_TRUE(sn.newPacket(2));
+
+  // reach max_seq again
+  ASSERT_FALSE(sn.newPacket(1));
+  ASSERT_TRUE(sn.newPacket(2));
+}
+
+TEST(TestSplitStrategyBySeq, newPacket_rewind)
+{
+  uint16_t max_seq = 3;
+  SplitStrategyBySeq sn(&max_seq);
+
+  // rewind
+  ASSERT_FALSE(sn.newPacket(1));
+  ASSERT_FALSE(sn.newPacket(2));
+  ASSERT_TRUE(sn.newPacket(1));
+}
 

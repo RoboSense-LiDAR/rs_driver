@@ -109,5 +109,39 @@ private:
   uint16_t blks_;
 };
 
+class SplitStrategyBySeq
+{
+public:
+
+  SplitStrategyBySeq(uint16_t* max_seq)
+    : max_seq_(max_seq), prev_seq_(0)
+  {
+  }
+
+  bool newPacket(uint16_t seq)
+  {
+    if (seq == *max_seq_)
+    {
+      prev_seq_ = 0;
+      return true;
+    }
+    else if (seq < prev_seq_)
+    {
+      prev_seq_ = seq;
+      return true;
+    }
+    else
+    {
+      prev_seq_ = seq;
+      return false;
+    }
+  }
+
+private:
+
+  uint16_t* max_seq_;
+  uint16_t prev_seq_;
+};
+
 }  // namespace lidar
 }  // namespace robosense

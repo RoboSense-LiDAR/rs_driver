@@ -287,7 +287,7 @@ protected:
   template <typename T_Difop>
   void decodeDifopCommon(const T_Difop& pkt);
 
-  void newBlock(int32_t azimuth);
+  void splitFrame();
   void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
 
   RSDecoderConstParam const_param_; // const param of lidar/decoder
@@ -423,21 +423,17 @@ void Decoder<T_PointCloud>::regRecvCallback(
 }
 
 template <typename T_PointCloud>
-inline void Decoder<T_PointCloud>::newBlock(int32_t azimuth)
+inline void Decoder<T_PointCloud>::splitFrame()
 {
-  bool split = this->split_strategy_->newBlock(azimuth);
-  if (split)
+  if (point_cloud_->points.size() > 0)
   {
-    if (point_cloud_->points.size() > 0)
-    {
-      setPointCloudHeader(point_cloud_, prev_chan_ts_);
-      point_cloud_cb_put_(point_cloud_);
-      point_cloud_ = point_cloud_cb_get_();
-    }
-    else
-    {
-      excb_(Error(ERRCODE_ZEROPOINTS));
-    }
+    setPointCloudHeader(point_cloud_, prev_chan_ts_);
+    point_cloud_cb_put_(point_cloud_);
+    point_cloud_ = point_cloud_cb_get_();
+  }
+  else
+  {
+    excb_(Error(ERRCODE_ZEROPOINTS));
   }
 }
 
@@ -538,51 +534,6 @@ inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
     this->angles_ready_ = (ret == 0);
   }
 }
-
-#if 0
-template <typename T_PointCloud>
-inline RSEchoMode Decoder<T_PointCloud>::getEchoMode(const LidarType& type, const uint8_t& return_mode)
-{
-  switch (type)
-  {
-    case LidarType::RS128:
-    case LidarType::RS80:
-    case LidarType::RSHELIOS:
-      switch (return_mode)
-      {
-        case 0x00:
-        case 0x03:
-          return RSEchoMode::ECHO_DUAL;
-        default:
-          return RSEchoMode::ECHO_SINGLE;
-      }
-    case LidarType::RS16:
-    case LidarType::RS32:
-    case LidarType::RSBP:
-      switch (return_mode)
-      {
-        case 0x00:
-          return RSEchoMode::ECHO_DUAL;
-        default:
-          return RSEchoMode::ECHO_SINGLE;
-      }
-    case LidarType::RSM1:
-      switch (return_mode)
-      {
-        case 0x00:
-        case 0x01:
-        case 0x02:
-        case 0x03:
-          return RSEchoMode::ECHO_DUAL;
-        default:
-          return RSEchoMode::ECHO_SINGLE;
-      }
-    case LidarType::RSROCK:  // TODO
-      return RSEchoMode::ECHO_SINGLE;
-  }
-  return RSEchoMode::ECHO_SINGLE;
-}
-#endif
 
 }  // namespace lidar
 }  // namespace robosense
