@@ -143,17 +143,18 @@ public: virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
 protected:
 #endif
 
-  static RSDecoderConstParam getConstParam();
+  static RSDecoderConstParam& initConstParam(RSDecoderConstParam& param);
+  //static RSDecoderConstParam getConstParam();
   static RSEchoMode getEchoMode(uint8_t mode);
 
   template <typename T_BlockDiff>
   void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
+
+  static RSDecoderConstParam rs_const_param_;
 };
 
 template <typename T_PointCloud>
-RSDecoderConstParam DecoderRS16<T_PointCloud>::getConstParam()
-{
-  RSDecoderConstParam param = 
+RSDecoderConstParam DecoderRS16<T_PointCloud>::rs_const_param_ = 
   {
       1248 // msop len
     , 1248 // difop len
@@ -175,6 +176,9 @@ RSDecoderConstParam DecoderRS16<T_PointCloud>::getConstParam()
     , 0.0f // RZ
   };
 
+template <typename T_PointCloud>
+RSDecoderConstParam& DecoderRS16<T_PointCloud>::initConstParam(RSDecoderConstParam& param)
+{
   float blk_ts = 55.5f * 2;
   float firing_tss[] = 
   {
@@ -211,7 +215,7 @@ RSEchoMode DecoderRS16<T_PointCloud>::getEchoMode(uint8_t mode)
 template <typename T_PointCloud>
 inline DecoderRS16<T_PointCloud>::DecoderRS16(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb)
-  : Decoder<T_PointCloud>(param, excb, getConstParam())
+  : Decoder<T_PointCloud>(param, excb, initConstParam(rs_const_param_))
 {
 }
 

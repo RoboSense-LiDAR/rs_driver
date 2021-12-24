@@ -148,26 +148,26 @@ public:
 protected:
 #endif
 
-  static RSDecoderConstParam getConstParam();
+  static RSDecoderConstParam& initConstParam(RSDecoderConstParam& param);
   static RSEchoMode getEchoMode(uint8_t mode);
 
   template <typename T_BlockDiff>
   void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
+
+  static RSDecoderConstParam rs_const_param_;
 };
 
 template <typename T_PointCloud>
-RSDecoderConstParam DecoderRS32<T_PointCloud>::getConstParam()
+RSDecoderConstParam DecoderRS32<T_PointCloud>::rs_const_param_ = 
 {
-  RSDecoderConstParam param = 
-  {
-      1248 // msop len
+  1248 // msop len
     , 1248 // difop len
     , 8 // msop id len
     , 8 // difop id len
     , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
-    , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-    , {0xFF, 0xEE} // block id
-    , 12 // blocks per packet
+  , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+  , {0xFF, 0xEE} // block id
+  , 12 // blocks per packet
     , 32 // channels per block
     , 0.4f // distance min
     , 200.0f // distance max
@@ -178,8 +178,11 @@ RSDecoderConstParam DecoderRS32<T_PointCloud>::getConstParam()
     , 0.03997f // RX
     , -0.01087f // RY
     , 0.0f // RZ
-  };
+};
 
+template <typename T_PointCloud>
+RSDecoderConstParam& DecoderRS32<T_PointCloud>::initConstParam(RSDecoderConstParam& param)
+{
   float blk_ts = 55.52f;
   float firing_tss[] = 
   {
@@ -216,7 +219,7 @@ RSEchoMode DecoderRS32<T_PointCloud>::getEchoMode(uint8_t mode)
 template <typename T_PointCloud>
 inline DecoderRS32<T_PointCloud>::DecoderRS32(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb)
-  : Decoder<T_PointCloud>(param, excb, getConstParam())
+  : Decoder<T_PointCloud>(param, excb, initConstParam(rs_const_param_))
 {
 }
 
