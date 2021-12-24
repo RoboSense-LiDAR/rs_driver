@@ -287,7 +287,7 @@ void DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size
         setIntensity(point, intensity);
         setRing(point, chan + 1);
         setTimestamp(point, point_time);
-//        vec.emplace_back(std::move(point));
+        this->point_cloud_->points.emplace_back(point);
       }
       else if (!this->param_.dense_points)
       {
@@ -298,7 +298,7 @@ void DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size
         setIntensity(point, 0);
         setRing(point, chan + 1);
         setTimestamp(point, point_time);
- //       vec.emplace_back(std::move(point));
+        this->point_cloud_->points.emplace_back(point);
       }
     }
   }
