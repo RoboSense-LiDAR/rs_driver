@@ -149,43 +149,38 @@ public:
 
 private:
 
-  RSDecoderConstParam getConstParam();
   RSEchoMode getEchoMode(uint8_t mode);
+
+  static RSDecoderConstParam rs_const_param_;
 
   uint16_t max_seq_;
   SplitStrategyBySeq split_;
 };
 
 template <typename T_PointCloud>
-RSDecoderConstParam DecoderRSM1<T_PointCloud>::getConstParam()
+RSDecoderConstParam DecoderRSM1<T_PointCloud>::rs_const_param_ = 
 {
-  RSDecoderConstParam param = 
-  {
-      1210 // msop len
+  1210 // msop len
     , 256 // difop len
     , 4 // msop id len
     , 8 // difop id len
     , {0x55, 0xAA, 0x5A, 0xA5} // msop id
-    , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-    , {0x00, 0x00}
-    , 0 
-    , 0
-    , 0.2f // distance min
+  , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+  , {0x00, 0x00}
+  , 0 // blocks per packet
+  , 0 // channels per block
+  , 0.2f // distance min
     , 200.0f // distance max
     , 0.005f // distance resolution
-  };
-
-  return param;
-}
+};
 
 template <typename T_PointCloud>
 inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb)
-  : Decoder<T_PointCloud>(param, excb, getConstParam())
+  : Decoder<T_PointCloud>(param, excb, rs_const_param_)
   , max_seq_(SINGLE_PKT_NUM)
   , split_(&max_seq_)
 {
-//  this->time_duration_between_blocks_ = 5 * 1e-6;
 }
 
 template <typename T_PointCloud>

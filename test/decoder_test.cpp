@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "rs_driver/msg/point_cloud_msg.h"
-#include <rs_driver/driver/decoder/decoder.hpp>
+#include <rs_driver/driver/decoder/decoder_mech.hpp>
 #include <rs_driver/utility/dbg.h>
 
 using namespace robosense::lidar;
@@ -27,13 +27,13 @@ struct MyDifopPkt
 #pragma pack(pop)
 
 template <typename T_PointCloud>
-class MyDecoder : public Decoder<T_PointCloud>
+class MyDecoder : public DecoderMech<T_PointCloud>
 {
 public:
   MyDecoder(const RSDecoderParam& param, 
     const std::function<void(const Error&)>& excb,
-    const RSDecoderConstParam& const_param)
-  : Decoder<T_PointCloud>(param, excb, const_param)
+    const RSDecoderMechConstParam& const_param)
+  : DecoderMech<T_PointCloud>(param, excb, const_param)
   {
   }
 
@@ -58,31 +58,36 @@ static void errCallback(const Error& err)
 
 TEST(TestDecoder, angles_from_file)
 {
-  RSDecoderConstParam const_param;
-  const_param.CHANNELS_PER_BLOCK = 4;
+  RSDecoderMechConstParam const_param;
+  const_param.base.CHANNELS_PER_BLOCK = 4;
+
   RSDecoderParam param;
   param.config_from_file = true;
   param.angle_path = "../rs_driver/test/res/angle.csv";
+
   errCode = ERRCODE_SUCCESS;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+
   ASSERT_TRUE(decoder.angles_ready_);
 }
 
 TEST(TestDecoder, angles_from_file_fail)
 {
-  RSDecoderConstParam const_param;
-  const_param.CHANNELS_PER_BLOCK = 4;
+  RSDecoderMechConstParam const_param;
+  const_param.base.CHANNELS_PER_BLOCK = 4;
+
   RSDecoderParam param;
   param.config_from_file = true;
   param.angle_path = "../rs_driver/test/res/non_exist.csv";
+
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
   ASSERT_FALSE(decoder.angles_ready_);
 }
 
 TEST(TestDecoder, processDifopPkt_fail)
 {
-    RSDecoderConstParam const_param = 
+    RSDecoderMechConstParam const_param = 
     {
         sizeof(MyMsopPkt) // msop len
       , sizeof(MyDifopPkt) // difop len
@@ -109,7 +114,7 @@ TEST(TestDecoder, processDifopPkt_fail)
 
 TEST(TestDecoder, processDifopPkt)
 {
-  RSDecoderConstParam const_param = 
+  RSDecoderMechConstParam const_param = 
   {
     sizeof(MyMsopPkt) // msop len
       , sizeof(MyDifopPkt) // difop len
@@ -189,7 +194,7 @@ TEST(TestDecoder, processDifopPkt)
 
 TEST(TestDecoder, processDifopPkt_invalid_rpm)
 {
-    RSDecoderConstParam const_param = 
+    RSDecoderMechConstParam const_param = 
     {
         sizeof(MyMsopPkt) // msop len
       , sizeof(MyDifopPkt) // difop len
@@ -219,7 +224,7 @@ TEST(TestDecoder, processDifopPkt_invalid_rpm)
 
 TEST(TestDecoder, processMsopPkt)
 {
-    RSDecoderConstParam const_param = 
+    RSDecoderMechConstParam const_param = 
     {
         sizeof(MyMsopPkt) // msop len
       , sizeof(MyDifopPkt) // difop len
@@ -266,8 +271,8 @@ TEST(TestDecoder, processMsopPkt)
 TEST(TestDecoder, setPointCloudHeader)
 {
   // dense_points 
-  RSDecoderConstParam const_param = {};
-  const_param.CHANNELS_PER_BLOCK = 2;
+  RSDecoderMechConstParam const_param = {};
+  const_param.base.CHANNELS_PER_BLOCK = 2;
   RSDecoderParam param;
   param.dense_points = true;
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
@@ -301,6 +306,7 @@ TEST(TestDecoder, setPointCloudHeader)
   }
 }
 
+#if 0
 std::shared_ptr<PointCloud> point_cloud_to_get;
 
 std::shared_ptr<PointCloud> getCallback(void)
@@ -317,14 +323,15 @@ void putCallback(std::shared_ptr<PointCloud> pt)
   flag_point_cloud = true;
 }
 
-#if 0
 TEST(TestDecoder, split_by_angle)
 {
-  RSDecoderConstParam const_param;
-  const_param.CHANNELS_PER_BLOCK = 2;
+  RSDecoderMechConstParam const_param;
+  const_param.base.CHANNELS_PER_BLOCK = 2;
+
   RSDecoderParam param;
   param.split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;
   param.split_angle = 0.0f;
+
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
 
   point_cloud_to_get = std::make_shared<PointCloud>();
@@ -363,10 +370,12 @@ TEST(TestDecoder, split_by_angle)
 
 TEST(TestDecoder, split_by_fixed_pkts)
 {
-  RSDecoderConstParam const_param;
-  const_param.CHANNELS_PER_BLOCK = 2;
+  RSDecoderMechConstParam const_param;
+  const_param.base.CHANNELS_PER_BLOCK = 2;
+
   RSDecoderParam param;
   param.split_frame_mode = SplitFrameMode::SPLIT_BY_FIXED_BLKS;
+
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
   decoder.split_blks_per_frame_ = 2;
 
@@ -402,11 +411,13 @@ TEST(TestDecoder, split_by_fixed_pkts)
 
 TEST(TestDecoder, split_by_custom_blks)
 {
-  RSDecoderConstParam const_param;
-  const_param.CHANNELS_PER_BLOCK = 2;
+  RSDecoderMechConstParam const_param;
+  const_param.base.CHANNELS_PER_BLOCK = 2;
+
   RSDecoderParam param;
   param.split_frame_mode = SplitFrameMode::SPLIT_BY_CUSTOM_BLKS;
   param.num_blks_split = 2;
+
   MyDecoder<PointCloud> decoder(param, errCallback, const_param);
 
   point_cloud_to_get = std::make_shared<PointCloud>();

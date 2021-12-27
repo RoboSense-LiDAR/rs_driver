@@ -30,11 +30,13 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
-#include <rs_driver/driver/decoder/decoder.hpp>
+#include <rs_driver/driver/decoder/decoder_mech.hpp>
+
 namespace robosense
 {
 namespace lidar
 {
+
 #pragma pack(push, 1)
 typedef struct
 {
@@ -130,7 +132,7 @@ inline void RS16DifopPkt2Adapter (const uint8_t* difop)
 }
 
 template <typename T_PointCloud>
-class DecoderRS16 : public Decoder<T_PointCloud>
+class DecoderRS16 : public DecoderMech<T_PointCloud>
 {
 public: virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual void decodeMsopPkt(const uint8_t* pkt, size_t size);
@@ -143,18 +145,17 @@ public: virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
 protected:
 #endif
 
-  static RSDecoderConstParam& initConstParam(RSDecoderConstParam& param);
-  //static RSDecoderConstParam getConstParam();
+  static RSDecoderMechConstParam& initConstParam(RSDecoderMechConstParam& param);
   static RSEchoMode getEchoMode(uint8_t mode);
 
   template <typename T_BlockDiff>
   void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 
-  static RSDecoderConstParam rs_const_param_;
+  static RSDecoderMechConstParam rs_const_param_;
 };
 
 template <typename T_PointCloud>
-RSDecoderConstParam DecoderRS16<T_PointCloud>::rs_const_param_ = 
+RSDecoderMechConstParam DecoderRS16<T_PointCloud>::rs_const_param_ = 
   {
       1248 // msop len
     , 1248 // difop len
@@ -177,7 +178,7 @@ RSDecoderConstParam DecoderRS16<T_PointCloud>::rs_const_param_ =
   };
 
 template <typename T_PointCloud>
-RSDecoderConstParam& DecoderRS16<T_PointCloud>::initConstParam(RSDecoderConstParam& param)
+RSDecoderMechConstParam& DecoderRS16<T_PointCloud>::initConstParam(RSDecoderMechConstParam& param)
 {
   float blk_ts = 55.5f * 2;
   float firing_tss[] = 
@@ -215,7 +216,7 @@ RSEchoMode DecoderRS16<T_PointCloud>::getEchoMode(uint8_t mode)
 template <typename T_PointCloud>
 inline DecoderRS16<T_PointCloud>::DecoderRS16(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb)
-  : Decoder<T_PointCloud>(param, excb, initConstParam(rs_const_param_))
+  : DecoderMech<T_PointCloud>(param, excb, initConstParam(rs_const_param_))
 {
 }
 
@@ -264,7 +265,7 @@ inline void DecoderRS16<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     pkt_ts = getTimeHost() * 0.000001 - this->getPacketDuration();
   }
 
-  T_BlockDiff diff(pkt, this->const_param_.BLOCKS_PER_PKT, this->const_param_.BLOCK_DURATION);
+  T_BlockDiff diff(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION);
 
   double block_ts = pkt_ts;
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
@@ -290,9 +291,9 @@ inline void DecoderRS16<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     {
       const RSChannel& channel = block.channels[chan]; 
 
-      double chan_ts = block_ts + this->const_param_.CHAN_TSS[chan];
+      double chan_ts = block_ts + this->mech_const_param_.CHAN_TSS[chan];
       int32_t angle_horiz = block_az + 
-        (int32_t)((float)block_azi_diff * this->const_param_.CHAN_AZIS[chan]);
+        (int32_t)((float)block_azi_diff * this->mech_const_param_.CHAN_AZIS[chan]);
 
       int32_t angle_vert = this->chan_angles_.vertAdjust(chan);
       int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
@@ -302,9 +303,9 @@ inline void DecoderRS16<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
       if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
       {
-        float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->const_param_.RX * COS(angle_horiz);
-        float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->const_param_.RX * SIN(angle_horiz);
-        float z =  distance * SIN(angle_vert) + this->const_param_.RZ;
+        float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
+        float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->mech_const_param_.RX * SIN(angle_horiz);
+        float z =  distance * SIN(angle_vert) + this->mech_const_param_.RZ;
 
         typename T_PointCloud::PointT point;
         setX(point, x);

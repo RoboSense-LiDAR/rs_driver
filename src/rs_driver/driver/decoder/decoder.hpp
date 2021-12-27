@@ -56,9 +56,6 @@ namespace robosense
 namespace lidar
 {
 
-//
-// msop & difop
-// 
 #pragma pack(push, 1)
 typedef struct
 {
@@ -202,6 +199,7 @@ typedef struct
   uint8_t sync_sts;
   RSTimestampUTC timestamp;
 } RSTimeInfo;
+
 #pragma pack(pop)
 
 // Echo mode
@@ -212,7 +210,7 @@ enum RSEchoMode
 };
 
 // decoder const param
-typedef struct
+struct RSDecoderConstParam
 {
   uint16_t MSOP_LEN;
   uint16_t DIFOP_LEN;
@@ -227,39 +225,19 @@ typedef struct
   // duration
   uint16_t BLOCKS_PER_PKT;
   uint16_t CHANNELS_PER_BLOCK;
-  //uint16_t LASER_NUM; // diff from CHANNELS_PER_BLOCK ?
 
   // distance resolution
   float DISTANCE_MIN;
   float DISTANCE_MAX;
   float DISTANCE_RES;
   float TEMPERATURE_RES;
-
-  // lens center
-  float RX;
-  float RY;
-  float RZ;
-
-  // firing_ts / block_ts, chan_ts
-  double BLOCK_DURATION;
-  double CHAN_TSS[128];
-  float CHAN_AZIS[128];
-
-} RSDecoderConstParam;
-
-#if 0
-const size_t MECH_PKT_LEN = 1248;
-const size_t MEMS_MSOP_LEN = 1210;
-const size_t MEMS_DIFOP_LEN = 256;
-const size_t ROCK_MSOP_LEN = 1236;
-#endif
+};
 
 template <typename T_PointCloud>
 class Decoder
 {
 public:
 
-  constexpr static int32_t RS_ONE_ROUND = 36000;
   constexpr static uint16_t PROTOCOL_VER_0 = 0x00;
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size) = 0;
@@ -278,14 +256,10 @@ public:
 
   float getTemperature();
   double getPacketDuration();
-  void print();
 
 #ifndef UNIT_TEST
 protected:
 #endif
-
-  template <typename T_Difop>
-  void decodeDifopCommon(const T_Difop& pkt);
 
   void splitFrame();
   void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
@@ -299,26 +273,13 @@ protected:
 #define SIN(angle) this->trigon_.sin(angle)
 #define COS(angle) this->trigon_.cos(angle)
 
-  ChanAngles chan_angles_; // vert_angles/horiz_angles adjustment
   DistanceSection distance_section_; // valid distance section
-  AzimuthSection scan_section_; // valid azimuth section
-  std::shared_ptr<SplitStrategy> split_strategy_; // split strategy
 
-  uint16_t blks_per_frame_; // blocks per frame/round
-  uint16_t split_blks_per_frame_; // blocks in msop pkt per frame/round. 
-                                  // dependent on return mode.
-  uint16_t block_azi_diff_; // azimuth difference between adjacent blocks.
-  float fov_blind_ts_diff_; // timestamp difference across blind section(defined by fov)
-
-  uint16_t rps_; // rounds per second
   RSEchoMode echo_mode_; // echo mode (defined by return mode)
   float temperature_; // lidar temperature
 
   bool angles_ready_; // is vert_angles/horiz_angles ready from csv file/difop packet?
   double prev_chan_ts_; // previous channel/point timestamp
-
-  int lidar_alph0_;  // lens center related
-  float lidar_Rxy_;  // lens center related
 
   std::function<std::shared_ptr<T_PointCloud>(void)> point_cloud_cb_get_;
   std::function<void(std::shared_ptr<T_PointCloud>)> point_cloud_cb_put_;
@@ -333,70 +294,15 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   : const_param_(const_param)
   , param_(param)
   , excb_(excb)
-  , height_(const_param.CHANNELS_PER_BLOCK)
-  , chan_angles_(const_param.CHANNELS_PER_BLOCK)
+  //, height_(const_param.CHANNELS_PER_BLOCK)
   , distance_section_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, 
       param.min_distance, param.max_distance)
-  , scan_section_(param.start_angle * 100, param.end_angle * 100)
-  , blks_per_frame_(1/(10*const_param.BLOCK_DURATION))
-  , split_blks_per_frame_(blks_per_frame_)
-  , block_azi_diff_(20)
-  , fov_blind_ts_diff_(0)
-  , rps_(10)
   , echo_mode_(ECHO_SINGLE)
   , temperature_(0.0)
   , angles_ready_(false)
   , prev_chan_ts_(0.0)
   , point_cloud_seq_(0)
 {
-  switch (param_.split_frame_mode)
-  {
-    case SplitFrameMode::SPLIT_BY_FIXED_BLKS:
-      split_strategy_ = std::make_shared<SplitStrategyByNum>(&split_blks_per_frame_);
-      break;
-
-    case SplitFrameMode::SPLIT_BY_CUSTOM_BLKS:
-      split_strategy_ = std::make_shared<SplitStrategyByNum>(&param_.num_blks_split);
-      break;
-
-    case SplitFrameMode::SPLIT_BY_ANGLE:
-    default:
-      uint16_t angle = (uint16_t)(param_.split_angle * 100);
-      split_strategy_ = std::make_shared<SplitStrategyByAngle>(angle);
-      break;
-  }
-
-  // calulate lidar_alph0 and lidar_Rxy
-  lidar_alph0_ = std::atan2(const_param_.RY, const_param_.RX) * 180 / M_PI * 100;
-  lidar_Rxy_ = std::sqrt(const_param_.RX * const_param_.RX + const_param_.RY * const_param_.RY);
-
-  if (param.config_from_file)
-  {
-    if (param_.wait_for_difop)
-    {
-      RS_WARNING << "When config_from_file is true, wait_for_difop cannot be true."
-                 << " Reset it to be false." << RS_REND;
-    }
-
-    int ret = chan_angles_.loadFromFile(param.angle_path);
-    this->angles_ready_ = (ret == 0);
-  }
-}
-
-template <typename T_PointCloud>
-void Decoder<T_PointCloud>::print()
-{
-  std::cout << "-----------------------------------------" << std::endl
-    << "rps:\t\t\t" << this->rps_ << std::endl
-    << "echo_mode:\t\t" << this->echo_mode_ << std::endl
-    << "blks_per_frame:\t\t" << this->blks_per_frame_ << std::endl
-    << "split_blks_per_frame:\t" << this->split_blks_per_frame_ << std::endl
-    << "block_azi_diff:\t\t" << this->block_azi_diff_ << std::endl
-    << "fov_blind_ts_diff:\t" << this->fov_blind_ts_diff_ << std::endl
-    << "angle_from_file:\t" << this->param_.config_from_file << std::endl
-    << "angles_ready:\t\t" << this->angles_ready_ << std::endl;
-
-  this->chan_angles_.print();
 }
 
 template <typename T_PointCloud>
@@ -408,7 +314,8 @@ float Decoder<T_PointCloud>::getTemperature()
 template <typename T_PointCloud>
 double Decoder<T_PointCloud>::getPacketDuration()
 {
-  return this->const_param_.BLOCK_DURATION * const_param_.BLOCKS_PER_PKT;
+  return 0;
+  //return this->const_param_.BLOCK_DURATION * const_param_.BLOCKS_PER_PKT;
 }
 
 template <typename T_PointCloud>
@@ -495,44 +402,6 @@ void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
   }
 
   decodeDifopPkt(pkt, size);
-}
-
-template <typename T_PointCloud>
-template <typename T_Difop>
-inline void Decoder<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
-{
-  // rounds per second
-  this->rps_ = ntohs(pkt.rpm) / 60;
-  if (this->rps_ == 0)
-  {
-    RS_WARNING << "LiDAR RPM is 0. Use default value 600." << RS_REND;
-    this->rps_ = 10;
-  }
-
-  // blocks per frame
-  this->blks_per_frame_ = 1 / (this->rps_ * this->const_param_.BLOCK_DURATION);
-
-  // block diff of azimuth
-  this->block_azi_diff_ = 
-    std::round(RS_ONE_ROUND * this->rps_ * this->const_param_.BLOCK_DURATION);
-
-  // fov related
-  uint16_t fov_start_angle = ntohs(pkt.fov.start_angle);
-  uint16_t fov_end_angle = ntohs(pkt.fov.end_angle);
-  uint16_t fov_range = (fov_start_angle < fov_end_angle) ? 
-    (fov_end_angle - fov_start_angle) : (fov_end_angle + RS_ONE_ROUND - fov_start_angle);
-  uint16_t fov_blind_range = RS_ONE_ROUND - fov_range;
-
-  // fov blind diff of timestamp
-  this->fov_blind_ts_diff_ = 
-    (float)fov_blind_range / ((float)RS_ONE_ROUND * (float)this->rps_);
-
-  if (!this->param_.config_from_file && !this->angles_ready_)
-  {
-    int ret = this->chan_angles_.loadFromDifop(pkt.vert_angle_cali, pkt.horiz_angle_cali, 
-        this->const_param_.CHANNELS_PER_BLOCK);
-    this->angles_ready_ = (ret == 0);
-  }
 }
 
 }  // namespace lidar

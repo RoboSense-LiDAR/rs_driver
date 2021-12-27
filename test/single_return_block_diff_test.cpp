@@ -1,7 +1,7 @@
 
 #include <gtest/gtest.h>
 
-#include <rs_driver/driver/decoder/decoder.hpp>
+#include <rs_driver/driver/decoder/decoder_mech.hpp>
 #include <rs_driver/driver/decoder/block_diff.hpp>
 
 using namespace robosense::lidar;
@@ -25,7 +25,7 @@ typedef struct
 
 TEST(TestSingleReturnBlockDiff, ctor)
 {
-  RSDecoderConstParam const_param = 
+  RSDecoderMechConstParam const_param = 
     {
       0 // msop len
       , 0 // difop len
@@ -60,7 +60,7 @@ TEST(TestSingleReturnBlockDiff, ctor)
   };
 
   SingleReturnBlockDiff<MyPacket> diff(pkt, 
-      const_param.BLOCKS_PER_PKT, const_param.BLOCK_DURATION);
+      const_param.base.BLOCKS_PER_PKT, const_param.BLOCK_DURATION);
 
   // first block
   ASSERT_EQ(diff.ts(0), 0.0f);

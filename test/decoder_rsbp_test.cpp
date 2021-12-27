@@ -28,6 +28,7 @@ TEST(TestDecoderRSBP, decodeDifopPkt)
   // const_param
   RSDecoderParam param;
   DecoderRSBP<PointCloud> decoder(param, errCallback);
+
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
   ASSERT_EQ(decoder.split_blks_per_frame_, 1801);
 
@@ -145,6 +146,7 @@ TEST(TestDecoderRSBP, decodeMsopPkt)
   // dense_points = false, use_lidar_clock = true
   RSDecoderParam param;
   DecoderRSBP<PointCloud> decoder(param, errCallback);
+
   ASSERT_EQ(decoder.chan_angles_.user_chans_.size(), 32);
   decoder.chan_angles_.user_chans_[0] = 2;
   decoder.chan_angles_.user_chans_[1] = 1;
