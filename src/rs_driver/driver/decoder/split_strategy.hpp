@@ -116,31 +116,56 @@ public:
   SplitStrategyBySeq(uint16_t* max_seq)
     : max_seq_(max_seq), prev_seq_(0)
   {
+    setSafeRange();
   }
 
   bool newPacket(uint16_t seq)
   {
-    if (seq == *max_seq_)
+    bool split = false;
+
+    if (isSafe(seq))
     {
-      prev_seq_ = 0;
-      return true;
+      if (seq == *max_seq_)
+      {
+        prev_seq_ = 0;
+        split = true;
+      }
+      else if (seq > prev_seq_)
+      {
+        prev_seq_ = seq;
+      }
     }
     else if (seq < prev_seq_)
     {
       prev_seq_ = seq;
-      return true;
+      split = true;
     }
-    else
-    {
-      prev_seq_ = seq;
-      return false;
-    }
+
+    setSafeRange();
+    return split;
   }
 
+#ifndef UNIT_TEST
 private:
+#endif
+
+  constexpr static uint16_t RANGE = 10;
+
+  void setSafeRange()
+  {
+    safe_seq_min_ = (prev_seq_ > RANGE) ? prev_seq_ - RANGE : 0;
+    safe_seq_max_ = prev_seq_ + RANGE;
+  }
+
+  bool isSafe(uint16_t seq)
+  {
+    return ((safe_seq_min_ < seq) && (seq < safe_seq_max_));
+  }
 
   uint16_t* max_seq_;
   uint16_t prev_seq_;
+  uint16_t safe_seq_min_;
+  uint16_t safe_seq_max_;
 };
 
 }  // namespace lidar
