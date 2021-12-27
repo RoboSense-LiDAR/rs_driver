@@ -47,7 +47,7 @@ struct RSDecoderMechConstParam
   float RY;
   float RZ;
 
-  // firing_ts / block_ts, chan_ts
+  // firing_ts/chan_ts
   double BLOCK_DURATION;
   double CHAN_TSS[128];
   float CHAN_AZIS[128];

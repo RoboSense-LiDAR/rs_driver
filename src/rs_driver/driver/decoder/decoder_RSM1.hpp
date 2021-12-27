@@ -137,9 +137,9 @@ class DecoderRSM1 : public Decoder<T_PointCloud>
 {
 public:
 
-  static const uint32_t SINGLE_PKT_NUM = 630;
-  static const uint32_t DUAL_PKT_NUM = 1260;
-  static const int ANGLE_OFFSET = 32768;
+  constexpr static uint32_t SINGLE_PKT_NUM = 630;
+  constexpr static uint32_t DUAL_PKT_NUM = 1260;
+  constexpr static int ANGLE_OFFSET = 32768;
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual void decodeMsopPkt(const uint8_t* pkt, size_t size);

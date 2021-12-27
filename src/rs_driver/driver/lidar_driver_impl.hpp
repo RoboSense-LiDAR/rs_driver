@@ -34,7 +34,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/macro/version.h>
 #include <rs_driver/common/error_code.h>
 #include <rs_driver/utility/buffer.h>
-#include <rs_driver/utility/dbg.h>
 #include <rs_driver/msg/packet_msg.h>
 #include <rs_driver/msg/scan_msg.h>
 #include <rs_driver/utility/sync_queue.h>
@@ -330,7 +329,7 @@ inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt
     return;
   }
 
-  static const int PACKET_POOL_MAX = 1024;
+  constexpr static int PACKET_POOL_MAX = 1024;
 
   size_t sz = queue->push(pkt);
   if (sz > PACKET_POOL_MAX)

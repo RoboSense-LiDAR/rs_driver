@@ -59,14 +59,6 @@ typedef struct
   uint16_t us;
 } RSTimestampYMD;
 
-#if 0
-typedef struct
-{
-  uint8_t sec[6];
-  uint32_t us;
-} RSTimestampUTC;
-#endif
-
 typedef struct 
 {
   uint8_t sec[6];

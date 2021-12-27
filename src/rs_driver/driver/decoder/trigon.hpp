@@ -49,8 +49,8 @@ class Trigon
 {
 public:
 
-  static const int32_t MIN = -9000;
-  static const int32_t MAX = 45000;
+  constexpr static int32_t MIN = -9000;
+  constexpr static int32_t MAX = 45000;
 
   Trigon()
   {

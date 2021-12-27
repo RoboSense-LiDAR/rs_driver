@@ -75,7 +75,8 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type,
       break;
 
     default:
-      break;
+      RS_ERROR << "Wrong Input Type." << RS_REND;
+      exit(-1);
   }
 
   return input;
