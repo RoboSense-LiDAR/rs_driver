@@ -37,9 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
 #include <rs_driver/driver/decoder/decoder_RS16.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
-#if 0
-#include <rs_driver/driver/decoder/decoder_RSROCK.hpp>
-#endif
 
 namespace robosense
 {
@@ -63,11 +60,6 @@ DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam
 
   switch (type)
   {
-#if 0
-    case LidarType::RSROCK:
-      ret_ptr = std::make_shared<DecoderRSROCK<T_PointCloud>>(param.decoder_param);
-      break;
-#endif
     case LidarType::RS16:
       ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param, excb);
       break;
@@ -96,167 +88,6 @@ DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam
 
   return ret_ptr;
 }
-
-#if 0
-template <typename T_PointCloud>
-inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS16ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0xA050A55A0A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xEEFF;
-  ret_param.PKT_RATE = 750;
-  ret_param.BLOCKS_PER_PKT = 12;
-  ret_param.CHANNELS_PER_BLOCK = 32;
-  ret_param.LASER_NUM = 16;
-  ret_param.DSR_TOFFSET = 2.8;
-  ret_param.FIRING_FREQUENCY = 0.009;
-  ret_param.DIS_RESOLUTION = 0.005;
-  ret_param.RX = 0.03825;
-  ret_param.RY = -0.01088;
-  ret_param.RZ = 0;
-  return ret_param;
-}
-
-template <typename T_PointCloud>
-inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS32ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0xA050A55A0A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xEEFF;
-  ret_param.PKT_RATE = 1500;
-  ret_param.BLOCKS_PER_PKT = 12;
-
-  ret_param.CHANNELS_PER_BLOCK = 32;
-  ret_param.LASER_NUM = 32;
-
-  ret_param.DSR_TOFFSET = 1.44;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.005;
-
-  ret_param.RX = 0.03997;
-  ret_param.RY = -0.01087;
-  ret_param.RZ = 0;
-
-  return ret_param;
-}
-
-template <typename T_PointCloud>
-inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRSBPConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0xA050 A55A 0A05 AA55;
-  ret_param.DIFOP_ID = 0x5555 1111 5A00 FFA5;
-  ret_param.BLOCK_ID = 0xEEFF;
-  ret_param.PKT_RATE = 1500;
-  ret_param.BLOCKS_PER_PKT = 12;
-  ret_param.CHANNELS_PER_BLOCK = 32;
-  ret_param.LASER_NUM = 32;
-  ret_param.DSR_TOFFSET = 1.28;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.005;
-  ret_param.RX = 0.01473;
-  ret_param.RY = 0.0085;
-  ret_param.RZ = 0.09427;
-  return ret_param;
-}
-
-template <typename T_PointCloud>
-inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS80ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0x5A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xFE;
-  ret_param.PKT_RATE = 4500;
-  ret_param.BLOCKS_PER_PKT = 4;
-  ret_param.CHANNELS_PER_BLOCK = 80;
-  ret_param.LASER_NUM = 80;
-  ret_param.DSR_TOFFSET = 3.236;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.005;
-  ret_param.RX = 0.03615;
-  ret_param.RY = -0.017;
-  ret_param.RZ = 0;
-  return ret_param;
-}
-
-template <typename T_PointCloud>
-inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRS128ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0x5A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xFE;
-  ret_param.PKT_RATE = 6000;
-  ret_param.BLOCKS_PER_PKT = 3;
-  ret_param.CHANNELS_PER_BLOCK = 128;
-  ret_param.LASER_NUM = 128;
-  ret_param.DSR_TOFFSET = 3.236;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.005;
-  ret_param.RX = 0.03615;
-  ret_param.RY = -0.017;
-  ret_param.RZ = 0;
-  return ret_param;
-}
-
-template <typename T_PointCloud>
-inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRSM1ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0xA55AAA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCKS_PER_PKT = 25;
-  ret_param.CHANNELS_PER_BLOCK = 5;
-  ret_param.LASER_NUM = 5;
-  ret_param.DIS_RESOLUTION = 0.005;
-  return ret_param;
-}
-
-template <typename T_PointCloud>
-inline const LidarConstantParameter DecoderFactory<T_PointCloud>::getRSHELIOSConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0x5A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xEEFF;
-  ret_param.PKT_RATE = 1500;
-  ret_param.BLOCKS_PER_PKT = 12;
-  ret_param.BLOCKS_PER_FRAME = 1800;
-  ret_param.CHANNELS_PER_BLOCK = 32;
-  ret_param.LASER_NUM = 32;
-  ret_param.DSR_TOFFSET = 1.0;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.0025;
-  ret_param.RX = 0.03498;
-  ret_param.RY = -0.015;
-  ret_param.RZ = 0.0;
-  return ret_param;
-}
-
-// TODO
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRSROCKConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0x000001005A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xEEFF;
-  ret_param.PKT_RATE = 1071;  // TODO
-  ret_param.BLOCKS_PER_PKT = 6;
-  ret_param.CHANNELS_PER_BLOCK = 14 * 4;  // TODO
-  ret_param.LASER_NUM = 4;
-  ret_param.DSR_TOFFSET = 1.0;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.0025;
-  ret_param.RX = 0.07526;
-  ret_param.RY = 0.00968;
-  ret_param.RZ = 0.0;
-  return ret_param;
-}
-#endif
 
 }  // namespace lidar
 }  // namespace robosense
