@@ -231,18 +231,18 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
 #endif
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFO << "             RoboSense Decoder Parameters " << RS_REND;
-    RS_INFOL << "config_from_file: " << config_from_file << RS_REND;
-    RS_INFOL << "angle_path: " << angle_path << RS_REND;
+    RS_INFOL << "wait_for_difop: " << wait_for_difop << RS_REND;
     RS_INFOL << "max_distance: " << max_distance << RS_REND;
     RS_INFOL << "min_distance: " << min_distance << RS_REND;
     RS_INFOL << "start_angle: " << start_angle << RS_REND;
     RS_INFOL << "end_angle: " << end_angle << RS_REND;
-    RS_INFOL << "wait_for_difop: " << wait_for_difop << RS_REND;
     RS_INFOL << "use_lidar_clock: " << use_lidar_clock << RS_REND;
+    RS_INFOL << "dense_points: " << dense_points << RS_REND;
+    RS_INFOL << "config_from_file: " << config_from_file << RS_REND;
+    RS_INFOL << "angle_path: " << angle_path << RS_REND;
     RS_INFOL << "split_frame_mode: " << split_frame_mode << RS_REND;
     RS_INFOL << "split_angle: " << split_angle << RS_REND;
     RS_INFOL << "num_blks_split: " << num_blks_split << RS_REND;
-    RS_INFOL << "dense_points: " << dense_points << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 
@@ -256,7 +256,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   std::string multi_cast_address = "0.0.0.0";  ///< Address of multicast
   std::string pcap_path = "null";  ///< Absolute path of pcap file
   bool pcap_repeat = true;         ///< true: The pcap bag will repeat play
-  float pcap_rate = 1;            ///< Rate to read the pcap file
+  float pcap_rate = 1.0f;            ///< Rate to read the pcap file
   bool use_vlan = false;           ///< Vlan on-off
   bool use_someip = false;         ///< Someip on-off
 
@@ -268,8 +268,9 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "host_address: " << host_address << RS_REND;
     RS_INFOL << "msop_port: " << msop_port << RS_REND;
     RS_INFOL << "difop_port: " << difop_port << RS_REND;
+    RS_INFOL << "pcap_path: " << pcap_rate << RS_REND;
+    RS_INFOL << "pcap_rate: " << pcap_path << RS_REND;
     RS_INFOL << "pcap_repeat: " << pcap_repeat << RS_REND;
-    RS_INFOL << "pcap_path: " << pcap_path << RS_REND;
     RS_INFOL << "use_vlan: " << use_vlan << RS_REND;
     RS_INFOL << "use_someip: " << use_someip << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
@@ -286,13 +287,14 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
 
   void print() const
   {
-    input_param.print();
-    decoder_param.print();
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFOL << "             RoboSense Driver Parameters " << RS_REND;
-    RS_INFOL << "lidar_type: " << lidarTypeToStr(lidar_type) << RS_REND;
     RS_INFOL << "input type: " << inputTypeToStr(input_type) << RS_REND;
+    RS_INFOL << "lidar_type: " << lidarTypeToStr(lidar_type) << RS_REND;
     RS_INFOL << "------------------------------------------------------" << RS_REND;
+
+    input_param.print();
+    decoder_param.print();
   }
 
 } RSDriverParam;
