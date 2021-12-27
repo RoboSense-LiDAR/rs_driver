@@ -315,7 +315,6 @@ inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt
 {
   SyncQueue<std::shared_ptr<Buffer>>* queue; 
 
-
   uint8_t* id = pkt->data();
   if (*id == 0x55)
   {
@@ -324,6 +323,11 @@ inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt
   else if (*id == 0xA5)
   {
     queue = &difop_pkt_queue_;
+  }
+  else
+  {
+    free_pkt_queue_.push(pkt);
+    return;
   }
 
   static const int PACKET_POOL_MAX = 1024;
@@ -366,7 +370,6 @@ inline void LidarDriverImpl<T_PointCloud>::processDifop()
     }
 
     lidar_decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
-
     runCallBack(pkt);
 
     free_pkt_queue_.push(pkt);

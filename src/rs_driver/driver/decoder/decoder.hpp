@@ -283,7 +283,7 @@ protected:
   float temperature_; // lidar temperature
 
   bool angles_ready_; // is vert_angles/horiz_angles ready from csv file/difop packet?
-  double prev_chan_ts_; // previous channel/point timestamp
+  double prev_point_ts_; // last point's timestamp
 
   std::shared_ptr<T_PointCloud> point_cloud_; // curernt point cloud
   uint32_t point_cloud_seq_; // sequence of point cloud
@@ -303,7 +303,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   , echo_mode_(ECHO_SINGLE)
   , temperature_(0.0)
   , angles_ready_(false)
-  , prev_chan_ts_(0.0)
+  , prev_point_ts_(0.0)
   , point_cloud_seq_(0)
 {
 }
@@ -336,7 +336,7 @@ inline void Decoder<T_PointCloud>::splitFrame()
 {
   if (point_cloud_->points.size() > 0)
   {
-    setPointCloudHeader(point_cloud_, prev_chan_ts_);
+    setPointCloudHeader(point_cloud_, prev_point_ts_);
     point_cloud_cb_put_(point_cloud_);
     point_cloud_ = point_cloud_cb_get_();
   }
@@ -365,6 +365,24 @@ void Decoder<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointCloud> ms
 }
 
 template <typename T_PointCloud>
+void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
+{
+  if (size != this->const_param_.DIFOP_LEN)
+  {
+     this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
+     return;
+  }
+
+  if (memcmp(pkt, this->const_param_.DIFOP_ID, const_param_.DIFOP_ID_LEN) != 0)
+  {
+    this->excb_(Error(ERRCODE_WRONGPKTHEADER));
+    return;
+  }
+
+  decodeDifopPkt(pkt, size);
+}
+
+template <typename T_PointCloud>
 void Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
 {
   if (param_.wait_for_difop && !angles_ready_)
@@ -386,24 +404,6 @@ void Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
   }
 
   decodeMsopPkt(pkt, size);
-}
-
-template <typename T_PointCloud>
-void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
-{
-  if (size != this->const_param_.DIFOP_LEN)
-  {
-     this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
-     return;
-  }
-
-  if (memcmp(pkt, this->const_param_.DIFOP_ID, const_param_.DIFOP_ID_LEN) != 0)
-  {
-    this->excb_(Error(ERRCODE_WRONGPKTHEADER));
-    return;
-  }
-
-  decodeDifopPkt(pkt, size);
 }
 
 }  // namespace lidar

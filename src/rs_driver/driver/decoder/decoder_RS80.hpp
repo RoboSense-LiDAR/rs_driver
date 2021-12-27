@@ -289,7 +289,7 @@ inline void DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
         this->point_cloud_->points.emplace_back(point);
       }
 
-      this->prev_chan_ts_ = chan_ts;
+      this->prev_point_ts_ = chan_ts;
     }
   }
 }
