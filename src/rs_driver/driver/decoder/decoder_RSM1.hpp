@@ -181,6 +181,8 @@ inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param,
   , max_seq_(SINGLE_PKT_NUM)
   , split_(&max_seq_)
 {
+  this->height_ = 1; // TODO
+  this->packet_duration_ = 1; // TODO 
 }
 
 template <typename T_PointCloud>

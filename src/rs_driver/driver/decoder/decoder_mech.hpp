@@ -75,7 +75,7 @@ protected:
   template <typename T_Difop>
   void decodeDifopCommon(const T_Difop& pkt);
 
-  RSDecoderMechConstParam mech_const_param_; // const param of lidar/decoder
+  RSDecoderMechConstParam mech_const_param_; // const param 
   ChanAngles chan_angles_; // vert_angles/horiz_angles adjustment
   AzimuthSection scan_section_; // valid azimuth section
   std::shared_ptr<SplitStrategy> split_strategy_; // split strategy
@@ -104,6 +104,10 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderParam& param,
   , block_azi_diff_(20)
   , fov_blind_ts_diff_(0)
 {
+  this->height_ = this->const_param_.CHANNELS_PER_BLOCK;
+  this->packet_duration_ = 
+    this->mech_const_param_.BLOCK_DURATION * this->const_param_.BLOCKS_PER_PKT;
+
   switch (this->param_.split_frame_mode)
   {
     case SplitFrameMode::SPLIT_BY_FIXED_BLKS:
@@ -121,7 +125,7 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderParam& param,
       break;
   }
 
-  // calulate lidar_alph0 and lidar_Rxy
+  // lens center: (alph0, Rxy)
   lidar_alph0_ = std::atan2(mech_const_param_.RY, mech_const_param_.RX) * 180 / M_PI * 100;
   lidar_Rxy_ = std::sqrt(mech_const_param_.RX * mech_const_param_.RX + 
       mech_const_param_.RY * mech_const_param_.RY);

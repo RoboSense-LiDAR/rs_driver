@@ -212,21 +212,22 @@ enum RSEchoMode
 // decoder const param
 struct RSDecoderConstParam
 {
+  // packet len
   uint16_t MSOP_LEN;
   uint16_t DIFOP_LEN;
 
-  // identity
+  // packet identity
   uint8_t MSOP_ID_LEN;
   uint8_t DIFOP_ID_LEN;
   uint8_t MSOP_ID[8];
   uint8_t DIFOP_ID[8];
   uint8_t BLOCK_ID[2];
 
-  // duration
+  // packet structure
   uint16_t BLOCKS_PER_PKT;
   uint16_t CHANNELS_PER_BLOCK;
 
-  // distance resolution
+  // distance & temperature
   float DISTANCE_MIN;
   float DISTANCE_MAX;
   float DISTANCE_RES;
@@ -244,12 +245,12 @@ public:
   virtual void decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual ~Decoder() = default;
 
+  void processDifopPkt(const uint8_t* pkt, size_t size);
+  void processMsopPkt(const uint8_t* pkt, size_t size);
+
   explicit Decoder(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb,
       const RSDecoderConstParam& const_param);
-
-  void processDifopPkt(const uint8_t* pkt, size_t size);
-  void processMsopPkt(const uint8_t* pkt, size_t size);
 
   void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
       const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put);
@@ -264,16 +265,19 @@ protected:
   void splitFrame();
   void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
 
-  RSDecoderConstParam const_param_; // const param of lidar/decoder
-  RSDecoderParam param_; // user param of lidar/decoder
+  RSDecoderConstParam const_param_; // const param
+  RSDecoderParam param_; // user param
   std::function<void(const Error&)> excb_;
-  uint16_t height_; 
+  std::function<std::shared_ptr<T_PointCloud>(void)> point_cloud_cb_get_;
+  std::function<void(std::shared_ptr<T_PointCloud>)> point_cloud_cb_put_;
 
   Trigon trigon_;
 #define SIN(angle) this->trigon_.sin(angle)
 #define COS(angle) this->trigon_.cos(angle)
 
-  DistanceSection distance_section_; // valid distance section
+  uint16_t height_; 
+  double packet_duration_;
+  DistanceSection distance_section_; // invalid section of distance
 
   RSEchoMode echo_mode_; // echo mode (defined by return mode)
   float temperature_; // lidar temperature
@@ -281,8 +285,6 @@ protected:
   bool angles_ready_; // is vert_angles/horiz_angles ready from csv file/difop packet?
   double prev_chan_ts_; // previous channel/point timestamp
 
-  std::function<std::shared_ptr<T_PointCloud>(void)> point_cloud_cb_get_;
-  std::function<void(std::shared_ptr<T_PointCloud>)> point_cloud_cb_put_;
   std::shared_ptr<T_PointCloud> point_cloud_; // curernt point cloud
   uint32_t point_cloud_seq_; // sequence of point cloud
 };
@@ -294,7 +296,8 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param,
   : const_param_(const_param)
   , param_(param)
   , excb_(excb)
-  //, height_(const_param.CHANNELS_PER_BLOCK)
+  , height_(0)
+  , packet_duration_(0)
   , distance_section_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, 
       param.min_distance, param.max_distance)
   , echo_mode_(ECHO_SINGLE)
@@ -314,8 +317,7 @@ float Decoder<T_PointCloud>::getTemperature()
 template <typename T_PointCloud>
 double Decoder<T_PointCloud>::getPacketDuration()
 {
-  return 0;
-  //return this->const_param_.BLOCK_DURATION * const_param_.BLOCKS_PER_PKT;
+  return packet_duration_;
 }
 
 template <typename T_PointCloud>

@@ -218,6 +218,7 @@ inline DecoderRS16<T_PointCloud>::DecoderRS16(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb)
   : DecoderMech<T_PointCloud>(param, excb, initConstParam(rs_const_param_))
 {
+  this->height_ = 16;
 }
 
 template <typename T_PointCloud>
