@@ -139,8 +139,8 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderParam& param,
     {
       this->param_.wait_for_difop = false;
 
-      RS_WARNING << "When config_from_file is true, wait_for_difop cannot be true."
-                 << " Reset it to be false." << RS_REND;
+      RS_WARNING << "wait_for_difop cannot be true when config_from_file is true."
+                 << " reset it to be false." << RS_REND;
     }
   }
 }
