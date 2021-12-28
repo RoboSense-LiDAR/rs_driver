@@ -248,9 +248,9 @@ public:
   void processDifopPkt(const uint8_t* pkt, size_t size);
   void processMsopPkt(const uint8_t* pkt, size_t size);
 
-  explicit Decoder(const RSDecoderParam& param, 
-      const std::function<void(const Error&)>& excb,
-      const RSDecoderConstParam& const_param);
+  explicit Decoder(const RSDecoderConstParam& const_param, 
+      const RSDecoderParam& param, 
+      const std::function<void(const Error&)>& excb);
 
   void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
       const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put);
@@ -290,9 +290,9 @@ protected:
 };
 
 template <typename T_PointCloud>
-inline Decoder<T_PointCloud>::Decoder(const RSDecoderParam& param, 
-    const std::function<void(const Error&)>& excb,
-    const RSDecoderConstParam& const_param)
+inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param, 
+    const RSDecoderParam& param, 
+    const std::function<void(const Error&)>& excb)
   : const_param_(const_param)
   , param_(param)
   , excb_(excb)

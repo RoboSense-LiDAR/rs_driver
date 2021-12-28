@@ -167,7 +167,7 @@ RSEchoMode DecoderRSBP<T_PointCloud>::getEchoMode(uint8_t mode)
 template <typename T_PointCloud>
 inline DecoderRSBP<T_PointCloud>::DecoderRSBP(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb)
-  : DecoderMech<T_PointCloud>(param, excb, initConstParam(rs_const_param_))
+  : DecoderMech<T_PointCloud>(initConstParam(rs_const_param_), param, excb)
 {
 }
 

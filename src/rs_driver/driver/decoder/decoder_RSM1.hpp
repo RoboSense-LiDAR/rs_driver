@@ -178,7 +178,7 @@ RSDecoderConstParam DecoderRSM1<T_PointCloud>::rs_const_param_ =
 template <typename T_PointCloud>
 inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb)
-  : Decoder<T_PointCloud>(param, excb, rs_const_param_)
+  : Decoder<T_PointCloud>(rs_const_param_, param, excb)
   , max_seq_(SINGLE_PKT_NUM)
   , split_(&max_seq_)
 {
