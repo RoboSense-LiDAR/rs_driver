@@ -30,45 +30,47 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
+#pragma once
 #include <rs_driver/driver/decoder/decoder_RS16.hpp>
 #include <rs_driver/driver/decoder/decoder_RS32.hpp>
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
+#if 0
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
 #include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
+#endif
 
 namespace robosense
 {
 namespace lidar
 {
-template <typename T_PointCloud>
 class DecoderFactory
 {
 public:
 
-  static std::shared_ptr<Decoder<T_PointCloud>> createDecoder(LidarType type, 
+  static std::shared_ptr<Decoder> createDecoder(LidarType type, 
       const RSDecoderParam& param, const std::function<void(const Error&)>& excb);
 };
 
-template <typename T_PointCloud>
-inline std::shared_ptr<Decoder<T_PointCloud>>
-DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam& param,
+inline std::shared_ptr<Decoder>
+DecoderFactory::createDecoder(LidarType type, const RSDecoderParam& param,
     const std::function<void(const Error&)>& excb)
 {
-  std::shared_ptr<Decoder<T_PointCloud>> ret_ptr;
+  std::shared_ptr<Decoder> ret_ptr;
 
   switch (type)
   {
     case LidarType::RS16:
-      ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRS16>(param, excb);
       break;
     case LidarType::RS32:
-      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRS32>(param, excb);
       break;
     case LidarType::RSBP:
-      ret_ptr = std::make_shared<DecoderRSBP<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRSBP>(param, excb);
       break;
+#if 0
     case LidarType::RSHELIOS:
       ret_ptr = std::make_shared<DecoderRSHELIOS<T_PointCloud>>(param, excb);
       break;
@@ -81,6 +83,7 @@ DecoderFactory<T_PointCloud>::createDecoder(LidarType type, const RSDecoderParam
     case LidarType::RSM1:
       ret_ptr = std::make_shared<DecoderRSM1<T_PointCloud>>(param, excb);
       break;
+#endif
     default:
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
       exit(-1);

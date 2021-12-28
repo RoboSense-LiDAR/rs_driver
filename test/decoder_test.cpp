@@ -26,14 +26,13 @@ struct MyDifopPkt
 };
 #pragma pack(pop)
 
-template <typename T_PointCloud>
-class MyDecoder : public DecoderMech<T_PointCloud>
+class MyDecoder : public DecoderMech
 {
 public:
   MyDecoder(const RSDecoderMechConstParam& const_param,
       const RSDecoderParam& param, 
     const std::function<void(const Error&)>& excb)
-  : DecoderMech<T_PointCloud>(const_param, param, excb)
+  : DecoderMech(const_param, param, excb)
   {
   }
 
@@ -66,7 +65,7 @@ TEST(TestDecoder, angles_from_file)
   param.angle_path = "../rs_driver/test/res/angle.csv";
 
   errCode = ERRCODE_SUCCESS;
-  MyDecoder<PointCloud> decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param, errCallback);
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
 
   ASSERT_TRUE(decoder.angles_ready_);
@@ -81,7 +80,7 @@ TEST(TestDecoder, angles_from_file_fail)
   param.config_from_file = true;
   param.angle_path = "../rs_driver/test/res/non_exist.csv";
 
-  MyDecoder<PointCloud> decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param, errCallback);
   ASSERT_FALSE(decoder.angles_ready_);
 }
 
@@ -98,7 +97,7 @@ TEST(TestDecoder, processDifopPkt_fail)
     };
 
   RSDecoderParam param;
-  MyDecoder<PointCloud> decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param, errCallback);
 
   // wrong difop length
   MyDifopPkt pkt;
@@ -131,7 +130,7 @@ TEST(TestDecoder, processDifopPkt)
 
   RSDecoderParam param;
   param.config_from_file = false;
-  MyDecoder<PointCloud> decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param, errCallback);
   ASSERT_FALSE(decoder.angles_ready_);
 
   //
@@ -208,7 +207,7 @@ TEST(TestDecoder, processDifopPkt_invalid_rpm)
     };
 
   RSDecoderParam param;
-  MyDecoder<PointCloud> decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param, errCallback);
 
   uint8_t pkt[] = 
   {
@@ -236,7 +235,7 @@ TEST(TestDecoder, processMsopPkt)
 
   MyMsopPkt pkt;
   RSDecoderParam param;
-  MyDecoder<PointCloud> decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param, errCallback);
 
   // wait_for_difop = true, angles not ready
   decoder.param_.wait_for_difop = true;
@@ -268,6 +267,7 @@ TEST(TestDecoder, processMsopPkt)
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
 }
 
+#if 0
 TEST(TestDecoder, setPointCloudHeader)
 {
   // dense_points 
@@ -275,7 +275,7 @@ TEST(TestDecoder, setPointCloudHeader)
   const_param.base.CHANNELS_PER_BLOCK = 2;
   RSDecoderParam param;
   param.dense_points = true;
-  MyDecoder<PointCloud> decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param, errCallback);
   ASSERT_EQ(decoder.point_cloud_seq_, 0);
   ASSERT_TRUE(decoder.param_.dense_points);
 
@@ -306,7 +306,6 @@ TEST(TestDecoder, setPointCloudHeader)
   }
 }
 
-#if 0
 std::shared_ptr<PointCloud> point_cloud_to_get;
 
 std::shared_ptr<PointCloud> getCallback(void)
@@ -332,7 +331,7 @@ TEST(TestDecoder, split_by_angle)
   param.split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;
   param.split_angle = 0.0f;
 
-  MyDecoder<PointCloud> decoder(param, errCallback, const_param);
+  MyDecoder decoder(param, errCallback, const_param);
 
   point_cloud_to_get = std::make_shared<PointCloud>();
   decoder.regRecvCallback (getCallback, putCallback);

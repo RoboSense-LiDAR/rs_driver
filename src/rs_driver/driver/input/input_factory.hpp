@@ -30,6 +30,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
+#pragma once
 #include <rs_driver/driver/input/input.hpp>
 #include <rs_driver/driver/input/input_sock.hpp>
 #include <rs_driver/driver/input/input_pcap.hpp>

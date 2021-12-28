@@ -57,6 +57,36 @@ public:
   }
 
   /**
+   * @brief Register the lidar point cloud callback function to driver. When point cloud is ready, this function will be
+   * called
+   * @param callback The callback function
+   */
+  inline void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get_pc,
+      const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put_pc)
+  {
+    driver_ptr_->regRecvCallback(cb_get_pc, cb_put_pc);
+  }
+
+  /**
+   * @brief Register the lidar difop packet message callback function to driver. When lidar difop packet message is
+   * ready, this function will be called
+   * @param callback The callback function
+   */
+  inline void regRecvCallback(const std::function<void(const uint8_t*, size_t)>& cb_pkt)
+  {
+    driver_ptr_->regRecvCallback(cb_pkt);
+  }
+
+  /**
+   * @brief Register the exception message callback function to driver. When error occurs, this function will be called
+   * @param callback The callback function
+   */
+  inline void regExceptionCallback(const std::function<void(const Error&)>& cb_excp)
+  {
+    driver_ptr_->regExceptionCallback(cb_excp);
+  }
+
+  /**
    * @brief The initialization function, used to set up parameters and instance objects,
    *        used when get packets from online lidar or pcap
    * @param param The custom struct RSDriverParam
@@ -76,43 +106,7 @@ public:
     return driver_ptr_->start();
   }
 
-  /**
-   * @brief Stop all threads
-   */
-  inline void stop()
-  {
-    driver_ptr_->stop();
-  }
 
-  /**
-   * @brief Register the lidar point cloud callback function to driver. When point cloud is ready, this function will be
-   * called
-   * @param callback The callback function
-   */
-  inline void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
-      const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put)
-  {
-    driver_ptr_->regRecvCallback(cb_get, cb_put);
-  }
-
-  /**
-   * @brief Register the exception message callback function to driver. When error occurs, this function will be called
-   * @param callback The callback function
-   */
-  inline void regExceptionCallback(const std::function<void(const Error&)>& callback)
-  {
-    driver_ptr_->regExceptionCallback(callback);
-  }
-
-  /**
-   * @brief Register the lidar difop packet message callback function to driver. When lidar difop packet message is
-   * ready, this function will be called
-   * @param callback The callback function
-   */
-  inline void regRecvCallback(const std::function<void(const uint8_t*, size_t)>& callback)
-  {
-    driver_ptr_->regRecvCallback(callback);
-  }
 
   /**
    * @brief Decode lidar msop/difop messages
@@ -131,6 +125,14 @@ public:
   inline bool getTemperature(float& temp)
   {
     return driver_ptr_->getTemperature(temp);
+  }
+
+  /**
+   * @brief Stop all threads
+   */
+  inline void stop()
+  {
+    driver_ptr_->stop();
   }
 
 private:

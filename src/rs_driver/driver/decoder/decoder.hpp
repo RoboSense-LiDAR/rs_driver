@@ -234,7 +234,21 @@ struct RSDecoderConstParam
   float TEMPERATURE_RES;
 };
 
-template <typename T_PointCloud>
+struct RSPoint
+{
+  float x;
+  float y;
+  float z;
+  uint8_t intensity;
+  uint16_t ring;
+  double timestamp;
+};
+
+#define INIT_ONLY_ONCE() \
+  static bool init_flag = false; \
+  if (init_flag) return param; \
+  init_flag = true;
+
 class Decoder
 {
 public:
@@ -248,12 +262,12 @@ public:
   void processDifopPkt(const uint8_t* pkt, size_t size);
   void processMsopPkt(const uint8_t* pkt, size_t size);
 
+  void regRecvCallback(const std::function<void(const RSPoint&)>& cb_new_point, 
+      const std::function<void(uint16_t, double)>& cb_split);
+
   explicit Decoder(const RSDecoderConstParam& const_param, 
       const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb);
-
-  void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
-      const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put);
 
   float getTemperature();
   double getPacketDuration();
@@ -262,14 +276,11 @@ public:
 protected:
 #endif
 
-  void splitFrame();
-  void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts);
-
   RSDecoderConstParam const_param_; // const param
   RSDecoderParam param_; // user param
+  std::function<void(const RSPoint&)> cb_new_point_;
+  std::function<void(uint16_t, double)> cb_split_;
   std::function<void(const Error&)> excb_;
-  std::function<std::shared_ptr<T_PointCloud>(void)> point_cloud_cb_get_;
-  std::function<void(std::shared_ptr<T_PointCloud>)> point_cloud_cb_put_;
 
   Trigon trigon_;
 #define SIN(angle) this->trigon_.sin(angle)
@@ -284,13 +295,17 @@ protected:
 
   bool angles_ready_; // is vert_angles/horiz_angles ready from csv file/difop packet?
   double prev_point_ts_; // last point's timestamp
-
-  std::shared_ptr<T_PointCloud> point_cloud_; // curernt point cloud
-  uint32_t point_cloud_seq_; // sequence of point cloud
 };
 
-template <typename T_PointCloud>
-inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param, 
+inline void Decoder::regRecvCallback(
+    const std::function<void(const RSPoint&)>& cb_new_point, 
+    const std::function<void(uint16_t, double)>& cb_split) 
+{
+  cb_new_point_ = cb_new_point;
+  cb_split_ = cb_split;
+}
+
+inline Decoder::Decoder(const RSDecoderConstParam& const_param, 
     const RSDecoderParam& param, 
     const std::function<void(const Error&)>& excb)
   : const_param_(const_param)
@@ -304,68 +319,20 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param,
   , temperature_(0.0)
   , angles_ready_(false)
   , prev_point_ts_(0.0)
-  , point_cloud_seq_(0)
 {
 }
 
-template <typename T_PointCloud>
-float Decoder<T_PointCloud>::getTemperature()
+inline float Decoder::getTemperature()
 {
   return temperature_;
 }
 
-template <typename T_PointCloud>
-double Decoder<T_PointCloud>::getPacketDuration()
+inline double Decoder::getPacketDuration()
 {
   return packet_duration_;
 }
 
-template <typename T_PointCloud>
-void Decoder<T_PointCloud>::regRecvCallback(
-    const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
-    const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put) 
-{
-  point_cloud_cb_get_ = cb_get;
-  point_cloud_cb_put_ = cb_put;
-
-  point_cloud_ = point_cloud_cb_get_();
-}
-
-template <typename T_PointCloud>
-inline void Decoder<T_PointCloud>::splitFrame()
-{
-  if (point_cloud_->points.size() > 0)
-  {
-    setPointCloudHeader(point_cloud_, prev_point_ts_);
-    point_cloud_cb_put_(point_cloud_);
-    point_cloud_ = point_cloud_cb_get_();
-  }
-  else
-  {
-    excb_(Error(ERRCODE_ZEROPOINTS));
-  }
-}
-
-template <typename T_PointCloud>
-void Decoder<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, double chan_ts)
-{
-  msg->seq = point_cloud_seq_++;
-  msg->timestamp = chan_ts;
-  msg->is_dense = param_.dense_points;
-  if (msg->is_dense)
-  {
-    msg->height = 1;
-    msg->width = msg->points.size();
-  }
-  else
-  {
-    msg->height = height_;
-    msg->width = msg->points.size() / msg->height;
-  }
-}
-
-template <typename T_PointCloud>
-void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
+inline void Decoder::processDifopPkt(const uint8_t* pkt, size_t size)
 {
   if (size != this->const_param_.DIFOP_LEN)
   {
@@ -382,8 +349,7 @@ void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
   decodeDifopPkt(pkt, size);
 }
 
-template <typename T_PointCloud>
-void Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
+inline void Decoder::processMsopPkt(const uint8_t* pkt, size_t size)
 {
   if (param_.wait_for_difop && !angles_ready_)
   {
