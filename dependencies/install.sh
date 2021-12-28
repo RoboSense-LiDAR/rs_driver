@@ -3,4 +3,4 @@
 apt-get update
 
 apt-get install -y --no-install-recommends \
-   libboost-dev libpcap-dev
+   libboost-dev libboost-system-dev libpcap-dev

@@ -8,6 +8,7 @@ cc_library(
     linkopts = [
         "-lpthread",
         "-lpcap",
+        "-lboost_system",
         # Keep these, we might need them later.
         # "-lpcl",
         # "-leigen3",
