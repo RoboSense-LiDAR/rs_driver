@@ -123,19 +123,27 @@ public:
   {
     bool split = false;
 
-    if (isSafe(seq))
+    if (seq > safe_seq_max_)
     {
-      if (seq == *max_seq_)
+      // do nothing. drop it.
+    }
+    else if (seq > prev_seq_)
+    {
+      if (seq == *max_seq_) // reach end
       {
         prev_seq_ = 0;
         split = true;
       }
-      else if (seq > prev_seq_)
+      else
       {
         prev_seq_ = seq;
       }
     }
-    else if (seq < prev_seq_)
+    else if (seq > safe_seq_min_)
+    {
+      // do nothing. save it.
+    }
+    else // rewind
     {
       prev_seq_ = seq;
       split = true;
@@ -153,13 +161,8 @@ private:
 
   void setSafeRange()
   {
-    safe_seq_min_ = (prev_seq_ > RANGE) ? prev_seq_ - RANGE : 0;
+    safe_seq_min_ = (prev_seq_ > RANGE) ? (prev_seq_ - RANGE) : 0;
     safe_seq_max_ = prev_seq_ + RANGE;
-  }
-
-  bool isSafe(uint16_t seq)
-  {
-    return ((safe_seq_min_ < seq) && (seq < safe_seq_max_));
   }
 
   uint16_t* max_seq_;
