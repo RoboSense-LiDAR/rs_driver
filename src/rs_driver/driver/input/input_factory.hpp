@@ -46,12 +46,12 @@ class InputFactory
 public:
   static std::shared_ptr<Input> createInput(InputType type, 
       const RSInputParam& param, const std::function<void(const Error&)>& excb,
-      double sec_to_delay);
+      double sec_to_delay, std::function<void(const uint8_t*, size_t)>& cb_feed_pkt);
 };
 
 inline std::shared_ptr<Input> InputFactory::createInput(InputType type, 
     const RSInputParam& param, const std::function<void(const Error&)>& excb, 
-    double sec_to_delay)
+    double sec_to_delay, std::function<void(const uint8_t*, size_t)>& cb_feed_pkt)
 {
   std::shared_ptr<Input> input;
 
@@ -71,7 +71,10 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type,
 
     case InputType::RAW_PACKET:
       {
-        input = std::make_shared<InputRaw>(param, excb);
+        std::shared_ptr<InputRaw> inputRaw = std::make_shared<InputRaw>(param, excb);
+        cb_feed_pkt = std::bind(&InputRaw::feedPacket, inputRaw, 
+            std::placeholders::_1, std::placeholders::_2);
+        input = inputRaw;
       }
       break;
 
