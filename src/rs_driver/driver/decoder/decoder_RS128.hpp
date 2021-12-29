@@ -100,7 +100,7 @@ protected:
   void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 };
 
-RSDecoderMechConstParam& DecoderRS128::getConstParam()
+inline RSDecoderMechConstParam& DecoderRS128::getConstParam()
 {
   static RSDecoderMechConstParam param = 
   {
@@ -158,7 +158,7 @@ RSDecoderMechConstParam& DecoderRS128::getConstParam()
   return param;
 }
 
-RSEchoMode DecoderRS128::getEchoMode(uint8_t mode)
+inline RSEchoMode DecoderRS128::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {

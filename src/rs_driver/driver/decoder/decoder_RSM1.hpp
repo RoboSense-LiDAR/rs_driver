@@ -150,33 +150,37 @@ public:
 
 private:
 
+  static RSDecoderConstParam& getConstParam();
   RSEchoMode getEchoMode(uint8_t mode);
-
-  static RSDecoderConstParam rs_const_param_;
 
   uint16_t max_seq_;
   SplitStrategyBySeq split_;
 };
 
-RSDecoderConstParam DecoderRSM1::rs_const_param_ = 
+inline RSDecoderConstParam& DecoderRSM1::getConstParam()
 {
-  1210 // msop len
-    , 256 // difop len
-    , 4 // msop id len
-    , 8 // difop id len
-    , {0x55, 0xAA, 0x5A, 0xA5} // msop id
-  , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-  , {0x00, 0x00}
-  , 25 // blocks per packet
-  , 5 // channels per block
-  , 0.2f // distance min
-    , 200.0f // distance max
-    , 0.005f // distance resolution
-};
+  static RSDecoderConstParam param = 
+  {
+    1210 // msop len
+      , 256 // difop len
+      , 4 // msop id len
+      , 8 // difop id len
+      , {0x55, 0xAA, 0x5A, 0xA5} // msop id
+    , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+    , {0x00, 0x00}
+    , 25 // blocks per packet
+      , 5 // channels per block
+      , 0.2f // distance min
+      , 200.0f // distance max
+      , 0.005f // distance resolution
+  };
+
+  return param;
+}
 
 inline DecoderRSM1::DecoderRSM1(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb)
-  : Decoder(rs_const_param_, param, excb)
+  : Decoder(getConstParam(), param, excb)
   , max_seq_(SINGLE_PKT_NUM)
   , split_(&max_seq_)
 {
@@ -185,7 +189,7 @@ inline DecoderRSM1::DecoderRSM1(const RSDecoderParam& param,
   this->angles_ready_ = true;
 }
 
-RSEchoMode DecoderRSM1::getEchoMode(uint8_t mode)
+inline RSEchoMode DecoderRSM1::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
@@ -199,14 +203,14 @@ RSEchoMode DecoderRSM1::getEchoMode(uint8_t mode)
   }
 }
 
-void DecoderRSM1::decodeDifopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRSM1::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
   const RSM1DifopPkt& pkt = *(RSM1DifopPkt*)packet;
   this->echo_mode_ = this->getEchoMode(pkt.return_mode);
   max_seq_ = (this->echo_mode_ == ECHO_SINGLE) ? SINGLE_PKT_NUM : DUAL_PKT_NUM;
 }
 
-void DecoderRSM1::decodeMsopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRSM1::decodeMsopPkt(const uint8_t* packet, size_t size)
 {
   const RSM1MsopPkt& pkt = *(RSM1MsopPkt*)packet;
 
