@@ -93,8 +93,7 @@ typedef struct
 
 #pragma pack(pop)
 
-template <typename T_PointCloud>
-class DecoderRSHELIOS : public DecoderMech<T_PointCloud>
+class DecoderRSHELIOS : public DecoderMech
 {
 public:
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
@@ -108,45 +107,43 @@ public:
 protected:
 #endif
 
-  static RSDecoderMechConstParam& initConstParam(RSDecoderMechConstParam& param);
+  static RSDecoderMechConstParam& getConstParam();
   static RSEchoMode getEchoMode(uint8_t mode);
 
   template <typename T_BlockDiff>
   void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
-
-  static RSDecoderMechConstParam rs_const_param_;
 };
 
-template <typename T_PointCloud>
-RSDecoderMechConstParam DecoderRSHELIOS<T_PointCloud>::rs_const_param_ = 
+RSDecoderMechConstParam& DecoderRSHELIOS::getConstParam()
+{
+  static RSDecoderMechConstParam param = 
   {
-      1248 // msop len
-    , 1248 // difop len
-    , 4 // msop id len
-    , 8 // difop id len
-    , {0x55, 0xAA, 0x05, 0x5A} // msop id
+    1248 // msop len
+      , 1248 // difop len
+      , 4 // msop id len
+      , 8 // difop id len
+      , {0x55, 0xAA, 0x05, 0x5A} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0xFF, 0xEE} // block id
     , 12 // blocks per packet
-    , 32 // channels per block
-    , 0.4f // distance min
-    , 200.0f // distance max
-    , 0.0025f // distance resolution
-    , 0.0625f // temperature resolution
+      , 32 // channels per block
+      , 0.4f // distance min
+      , 200.0f // distance max
+      , 0.0025f // distance resolution
+      , 0.0625f // temperature resolution
 
-    // lens center
-    , 0.03498f // RX
-    , -0.015f // RY
-    , 0.0f // RZ
+      // lens center
+      , 0.03498f // RX
+      , -0.015f // RY
+      , 0.0f // RZ
   };
 
-template <typename T_PointCloud>
-RSDecoderMechConstParam& DecoderRSHELIOS<T_PointCloud>::initConstParam(RSDecoderMechConstParam& param)
-{
+  INIT_ONLY_ONCE();
+
   float blk_ts = 55.56f;
   float firing_tss[] = 
   {
-     0.00f,  1.57f,  3.15f,  4.72f,  6.30f,  7.87f,  9.45f, 11.36f, 
+    0.00f,  1.57f,  3.15f,  4.72f,  6.30f,  7.87f,  9.45f, 11.36f, 
     13.26f, 15.17f, 17.08f, 18.99f, 20.56f, 22.14f, 23.71f, 25.29f,
     26.53f, 29.01f, 27.77f, 30.25f, 31.49f, 33.98f, 32.73f, 35.22f, 
     36.46f, 37.70f, 38.94f, 40.18f, 41.42f, 42.67f, 43.91f, 45.15f
@@ -162,8 +159,7 @@ RSDecoderMechConstParam& DecoderRSHELIOS<T_PointCloud>::initConstParam(RSDecoder
   return param;
 }
 
-template <typename T_PointCloud>
-RSEchoMode DecoderRSHELIOS<T_PointCloud>::getEchoMode(uint8_t mode)
+RSEchoMode DecoderRSHELIOS::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
@@ -177,15 +173,13 @@ RSEchoMode DecoderRSHELIOS<T_PointCloud>::getEchoMode(uint8_t mode)
   }
 }
 
-template <typename T_PointCloud>
-inline DecoderRSHELIOS<T_PointCloud>::DecoderRSHELIOS(const RSDecoderParam& param,
+inline DecoderRSHELIOS::DecoderRSHELIOS(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb)
-  : DecoderMech<T_PointCloud>(initConstParam(rs_const_param_), param, excb)
+  : DecoderMech(getConstParam(), param, excb)
 {
 }
 
-template <typename T_PointCloud>
-inline void DecoderRSHELIOS<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRSHELIOS::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
   const RSHELIOSDifopPkt& pkt = *(const RSHELIOSDifopPkt*)(packet);
   this->template decodeDifopCommon<RSHELIOSDifopPkt>(pkt);
@@ -195,8 +189,7 @@ inline void DecoderRSHELIOS<T_PointCloud>::decodeDifopPkt(const uint8_t* packet,
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
 }
 
-template <typename T_PointCloud>
-inline void DecoderRSHELIOS<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
+inline void DecoderRSHELIOS::decodeMsopPkt(const uint8_t* pkt, size_t size)
 {
   if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
   {
@@ -208,9 +201,8 @@ inline void DecoderRSHELIOS<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, siz
   }
 }
 
-template <typename T_PointCloud>
 template <typename T_BlockDiff>
-inline void DecoderRSHELIOS<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRSHELIOS::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
   const RSHELIOSMsopPkt& pkt = *(const RSHELIOSMsopPkt*)(packet);
 
@@ -246,7 +238,7 @@ inline void DecoderRSHELIOS<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pa
 
     if (this->split_strategy_->newBlock(block_az))
     {
-      this->splitFrame();
+      this->cb_split_frame_(this->height_, this->prev_point_ts_);
     }
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
@@ -259,39 +251,31 @@ inline void DecoderRSHELIOS<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pa
 
       int32_t angle_vert = this->chan_angles_.vertAdjust(chan);
       int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
-
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
-      uint8_t intensity = channel.intensity;
 
       if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
       {
-        float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
-        float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->mech_const_param_.RX * SIN(angle_horiz);
-        float z =  distance * SIN(angle_vert) + this->mech_const_param_.RZ;
+        RSPoint point;
+        point.x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
+        point.y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->mech_const_param_.RX * SIN(angle_horiz);
+        point.z =  distance * SIN(angle_vert) + this->mech_const_param_.RZ;
+        point.intensity = channel.intensity;
+        point.timestamp = chan_ts;
+        point.ring = this->chan_angles_.toUserChan(chan);
 
-        typename T_PointCloud::PointT point;
-        setX(point, x);
-        setY(point, y);
-        setZ(point, z);
-        setIntensity(point, intensity);
-
-        setTimestamp(point, chan_ts);
-        setRing(point, this->chan_angles_.toUserChan(chan));
-
-        this->point_cloud_->points.emplace_back(point);
+        this->cb_new_point_(point);
       }
       else if (!this->param_.dense_points)
       {
-        typename T_PointCloud::PointT point;
-        setX(point, NAN);
-        setY(point, NAN);
-        setZ(point, NAN);
-        setIntensity(point, 0);
+        RSPoint point;
+        point.x = NAN;
+        point.y = NAN;
+        point.z = NAN;
+        point.intensity = 0;
+        point.timestamp = chan_ts;
+        point.ring = this->chan_angles_.toUserChan(chan);
 
-        setTimestamp(point, chan_ts);
-        setRing(point, this->chan_angles_.toUserChan(chan));
-
-        this->point_cloud_->points.emplace_back(point);
+        this->cb_new_point_(point);
       }
 
       this->prev_point_ts_ = chan_ts;

@@ -133,8 +133,7 @@ typedef struct
 
 #pragma pack(pop)
 
-template <typename T_PointCloud>
-class DecoderRSM1 : public Decoder<T_PointCloud>
+class DecoderRSM1 : public Decoder
 {
 public:
 
@@ -159,8 +158,7 @@ private:
   SplitStrategyBySeq split_;
 };
 
-template <typename T_PointCloud>
-RSDecoderConstParam DecoderRSM1<T_PointCloud>::rs_const_param_ = 
+RSDecoderConstParam DecoderRSM1::rs_const_param_ = 
 {
   1210 // msop len
     , 256 // difop len
@@ -176,10 +174,9 @@ RSDecoderConstParam DecoderRSM1<T_PointCloud>::rs_const_param_ =
     , 0.005f // distance resolution
 };
 
-template <typename T_PointCloud>
-inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param, 
+inline DecoderRSM1::DecoderRSM1(const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb)
-  : Decoder<T_PointCloud>(rs_const_param_, param, excb)
+  : Decoder(rs_const_param_, param, excb)
   , max_seq_(SINGLE_PKT_NUM)
   , split_(&max_seq_)
 {
@@ -188,8 +185,7 @@ inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param,
   this->angles_ready_ = true;
 }
 
-template <typename T_PointCloud>
-RSEchoMode DecoderRSM1<T_PointCloud>::getEchoMode(uint8_t mode)
+RSEchoMode DecoderRSM1::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
@@ -203,15 +199,14 @@ RSEchoMode DecoderRSM1<T_PointCloud>::getEchoMode(uint8_t mode)
   }
 }
 
-template <typename T_PointCloud> void DecoderRSM1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
+void DecoderRSM1::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
   const RSM1DifopPkt& pkt = *(RSM1DifopPkt*)packet;
   this->echo_mode_ = this->getEchoMode(pkt.return_mode);
   max_seq_ = (this->echo_mode_ == ECHO_SINGLE) ? SINGLE_PKT_NUM : DUAL_PKT_NUM;
 }
 
-template <typename T_PointCloud>
-void DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
+void DecoderRSM1::decodeMsopPkt(const uint8_t* packet, size_t size)
 {
   const RSM1MsopPkt& pkt = *(RSM1MsopPkt*)packet;
 
@@ -245,32 +240,27 @@ void DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size
         int pitch = ntohs(channel.pitch) - ANGLE_OFFSET;
         int yaw = ntohs(channel.yaw) - ANGLE_OFFSET;
 
-        float x = distance * COS (pitch) * COS (yaw);
-        float y = distance * COS (pitch) * SIN (yaw);
-        float z = distance * SIN (pitch);
-        uint8_t intensity = channel.intensity;
+        RSPoint point;
+        point.x = distance * COS (pitch) * COS (yaw);
+        point.y = distance * COS (pitch) * SIN (yaw);
+        point.z = distance * SIN (pitch);
+        point.intensity = channel.intensity;
+        point.timestamp = point_time;
+        point.ring = chan;
 
-        typename T_PointCloud::PointT point;
-        setX(point, x);
-        setY(point, y);
-        setZ(point, z);
-        setIntensity(point, intensity);
-
-        setRing(point, chan);
-        setTimestamp(point, point_time);
-        this->point_cloud_->points.emplace_back(point);
+        this->cb_new_point_(point);
       }
       else if (!this->param_.dense_points)
       {
-        typename T_PointCloud::PointT point;
-        setX(point, NAN);
-        setY(point, NAN);
-        setZ(point, NAN);
-        setIntensity(point, 0);
+        RSPoint point;
+        point.x = NAN;
+        point.y = NAN;
+        point.z = NAN;
+        point.intensity = 0;
+        point.timestamp = point_time;
+        point.ring = chan;
 
-        setRing(point, chan);
-        setTimestamp(point, point_time);
-        this->point_cloud_->points.emplace_back(point);
+        this->cb_new_point_(point);
       }
     }
 
@@ -280,7 +270,7 @@ void DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size
   uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
   if (split_.newPacket(pkt_seq))
   {
-    this->splitFrame();
+    this->cb_split_frame_(this->height_, this->prev_point_ts_);
   }
 }
 

@@ -34,12 +34,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RS16.hpp>
 #include <rs_driver/driver/decoder/decoder_RS32.hpp>
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
-#if 0
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
 #include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
-#endif
 
 namespace robosense
 {
@@ -70,20 +68,18 @@ DecoderFactory::createDecoder(LidarType type, const RSDecoderParam& param,
     case LidarType::RSBP:
       ret_ptr = std::make_shared<DecoderRSBP>(param, excb);
       break;
-#if 0
     case LidarType::RSHELIOS:
-      ret_ptr = std::make_shared<DecoderRSHELIOS<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRSHELIOS>(param, excb);
       break;
     case LidarType::RS80:
-      ret_ptr = std::make_shared<DecoderRS80<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRS80>(param, excb);
       break;
     case LidarType::RS128:
-      ret_ptr = std::make_shared<DecoderRS128<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRS128>(param, excb);
       break;
     case LidarType::RSM1:
-      ret_ptr = std::make_shared<DecoderRSM1<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRSM1>(param, excb);
       break;
-#endif
     default:
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
       exit(-1);

@@ -263,7 +263,7 @@ public:
   void processMsopPkt(const uint8_t* pkt, size_t size);
 
   void regRecvCallback(const std::function<void(const RSPoint&)>& cb_new_point, 
-      const std::function<void(uint16_t, double)>& cb_split);
+      const std::function<void(uint16_t, double)>& cb_split_frame);
 
   explicit Decoder(const RSDecoderConstParam& const_param, 
       const RSDecoderParam& param, 
@@ -279,7 +279,7 @@ protected:
   RSDecoderConstParam const_param_; // const param
   RSDecoderParam param_; // user param
   std::function<void(const RSPoint&)> cb_new_point_;
-  std::function<void(uint16_t, double)> cb_split_;
+  std::function<void(uint16_t, double)> cb_split_frame_;
   std::function<void(const Error&)> excb_;
 
   Trigon trigon_;
@@ -299,10 +299,10 @@ protected:
 
 inline void Decoder::regRecvCallback(
     const std::function<void(const RSPoint&)>& cb_new_point, 
-    const std::function<void(uint16_t, double)>& cb_split) 
+    const std::function<void(uint16_t, double)>& cb_split_frame) 
 {
   cb_new_point_ = cb_new_point;
-  cb_split_ = cb_split;
+  cb_split_frame_ = cb_split_frame;
 }
 
 inline Decoder::Decoder(const RSDecoderConstParam& const_param, 

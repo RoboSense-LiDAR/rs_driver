@@ -146,14 +146,14 @@ public:
 protected:
 #endif
 
-  static RSDecoderMechConstParam& initConstParam();
+  static RSDecoderMechConstParam& getConstParam();
   static RSEchoMode getEchoMode(uint8_t mode);
 
   template <typename T_BlockDiff>
   void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 };
 
-inline RSDecoderMechConstParam& DecoderRS32::initConstParam()
+inline RSDecoderMechConstParam& DecoderRS32::getConstParam()
 {
   static RSDecoderMechConstParam param = 
   {
@@ -213,7 +213,7 @@ inline RSEchoMode DecoderRS32::getEchoMode(uint8_t mode)
 
 inline DecoderRS32::DecoderRS32(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb)
-  : DecoderMech(initConstParam(), param, excb)
+  : DecoderMech(getConstParam(), param, excb)
 {
 }
 
@@ -278,7 +278,7 @@ inline void DecoderRS32::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 
     if (this->split_strategy_->newBlock(block_az))
     {
-      this->cb_split_(this->height_, this->prev_point_ts_);
+      this->cb_split_frame_(this->height_, this->prev_point_ts_);
     }
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
