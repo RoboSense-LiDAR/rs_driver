@@ -142,6 +142,7 @@ inline int SockInput::createSocket(uint16_t port, const std::string& hostIp, con
   int fd;
   int flags;
   int ret;
+  int reuse = 1;
 
   fd = socket(PF_INET, SOCK_DGRAM, 0);
   if (fd < 0)
@@ -157,6 +158,13 @@ inline int SockInput::createSocket(uint16_t port, const std::string& hostIp, con
   host_addr.sin_addr.s_addr = INADDR_ANY;
   if (hostIp != "0.0.0.0" && grpIp == "0.0.0.0")
     inet_pton(AF_INET, hostIp.c_str(), &(host_addr.sin_addr));
+
+  ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+  if (ret < 0)
+  {
+    std::cerr << "setsockopt: " << std::strerror(errno) << std::endl;
+    goto failOption;
+  }
 
   ret = bind(fd, (struct sockaddr*)&host_addr, sizeof(host_addr));
   if (ret < 0)
@@ -198,6 +206,7 @@ inline int SockInput::createSocket(uint16_t port, const std::string& hostIp, con
 failNonBlock:
 failGroup:
 failBind:
+failOption:
   close(fd);
 failSocket:
   return -1;
