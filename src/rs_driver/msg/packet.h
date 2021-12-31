@@ -31,23 +31,32 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
-#include <rs_driver/msg/packet_msg.h>
-#include <string>
+
+#include <vector>
 
 namespace robosense
 {
 namespace lidar
 {
-#ifdef _MSC_VER
-struct __declspec(align(16)) ScanMsg
-#elif __GNUC__
-struct __attribute__((aligned(16))) ScanMsg
-#endif
+
+struct Packet
 {
   double timestamp = 0.0;
   uint32_t seq = 0;
-  //std::string frame_id = "";
-  std::vector<PacketMsg> packets;  ///< A vector which store a scan of packets (the size of the vector is not fix)
+  uint8_t type = 0; /// 0 - msop, 1 - difop
+
+  Packet(const Packet& msg)
+  {
+    buf_.assign(msg.buf_.begin(), msg.buf_.end());
+  }
+
+  Packet(size_t size = 0)
+  {
+    buf_.resize(size);
+  }
+
+  std::vector<uint8_t> buf_;
 };
+
 }  // namespace lidar
 }  // namespace robosense

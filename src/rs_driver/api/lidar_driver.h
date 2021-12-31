@@ -72,9 +72,9 @@ public:
    * ready, this function will be called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<void(const uint8_t*, size_t)>& cb_pkt)
+  inline void regRecvCallback(const std::function<void(const Packet&)>& cb_put_pkt)
   {
-    driver_ptr_->regRecvCallback(cb_pkt);
+    driver_ptr_->regRecvCallback(cb_put_pkt);
   }
 
   /**
@@ -106,15 +106,13 @@ public:
     return driver_ptr_->start();
   }
 
-
-
   /**
    * @brief Decode lidar msop/difop messages
    * @param pkt_msg The lidar msop/difop packet
    */
-  inline void decodePacket(const uint8_t* pkt, size_t size)
+  inline void decodePacket(const Packet& pkt)
   {
-    driver_ptr_->decodePacket(pkt, size);
+    driver_ptr_->decodePacket(pkt);
   }
 
   /**
