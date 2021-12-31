@@ -44,6 +44,7 @@ struct Packet
   double timestamp = 0.0;
   uint32_t seq = 0;
   uint8_t type = 0; /// 0 - msop, 1 - difop
+  std::string frame_id = "";
 
   Packet(const Packet& msg)
   {
