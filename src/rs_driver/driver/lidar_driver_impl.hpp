@@ -195,15 +195,6 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
       std::bind(&LidarDriverImpl<T_PointCloud>::packetGet, this, std::placeholders::_1), 
       std::bind(&LidarDriverImpl<T_PointCloud>::packetPut, this, std::placeholders::_1));
 
-#if 0
-  if (param.input_type == InputType::RAW_PACKET)
-  {
-    InputRaw* inputRaw = dynamic_cast<InputRaw*>(input_ptr_.get());
-    cb_feed_pkt_ = 
-      std::bind(&InputRaw::feedPacket, inputRaw, std::placeholders::_1, std::placeholders::_2);
-  }
-#endif
-
   if (!input_ptr_->init())
   {
     goto failInputInit;
