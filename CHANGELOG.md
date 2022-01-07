@@ -7,10 +7,14 @@
 - Add split frame when pkt_cnt < last_pkt_cnt in mems
 - Add temperature in mems
 - Add ROCK support
+- Support to bind the receiving socket to the specified ip
+- Join multicast group with code instead of shell script
+- Allow msop socket and difop socket to receive via same port.
 
 ### Fixed
 - Fix don't get time when PointType doesn't have timestamp member
 - Fix ROCK light center compensation algorithm
+- Fix incorrect delay while playing pcap file with multicast lidars
 
 ### Removed
 - Remove redundance condition code in vec.emplace_back(std::move(point)) in mech lidars
