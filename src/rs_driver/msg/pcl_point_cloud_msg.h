@@ -60,3 +60,4 @@ public:
   std::string frame_id = "rslidar";  ///< Point cloud frame id
   uint32_t seq = 0;           ///< Sequence number of message
 };
+
