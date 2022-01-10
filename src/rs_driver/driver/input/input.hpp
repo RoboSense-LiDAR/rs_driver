@@ -32,8 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <rs_driver/driver/driver_param.h>
-#include <rs_driver/utility/buffer.h>
+#include <rs_driver/driver/driver_param.hpp>
+#include <rs_driver/utility/buffer.hpp>
 
 #include <thread>
 #include <cstring>

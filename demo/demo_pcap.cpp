@@ -30,14 +30,14 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
-#include "rs_driver/api/lidar_driver.h"
+#include <rs_driver/api/lidar_driver.hpp>
 
 #define PCL_POINTCLOUD
 
 #ifdef PCL_POINTCLOUD
-#include "rs_driver/msg/pcl_point_cloud_msg.h"
+#include <rs_driver/msg/pcl_point_cloud_msg.hpp>
 #else
-#include "rs_driver/msg/point_cloud_msg.h"
+#include <rs_driver/msg/point_cloud_msg.hpp>
 #endif
 
 typedef PointXYZI PointT;

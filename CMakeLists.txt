@@ -143,8 +143,8 @@ configure_file(
 )
 
 configure_file (
-  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.h.in
-  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.h 
+  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.hpp.in
+  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.hpp
   @ONLY
 )
 

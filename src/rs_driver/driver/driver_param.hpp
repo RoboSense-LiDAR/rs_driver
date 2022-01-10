@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <rs_driver/common/common_header.h>
+#include <rs_driver/common/common_header.hpp>
 #include <string>
 #include <map>
 
@@ -256,11 +256,11 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   uint16_t difop_port = 7788;                  ///< Difop packet port number
   std::string host_address = "0.0.0.0";        ///< Address of host
   std::string multi_cast_address = "0.0.0.0";  ///< Address of multicast
-  std::string pcap_path = "null";  ///< Absolute path of pcap file
-  bool pcap_repeat = true;         ///< true: The pcap bag will repeat play
-  float pcap_rate = 1.0f;            ///< Rate to read the pcap file
-  bool use_vlan = false;           ///< Vlan on-off
-  bool use_someip = false;         ///< Someip on-off
+  std::string pcap_path = "";                  ///< Absolute path of pcap file
+  bool pcap_repeat = true;                     ///< true: The pcap bag will repeat play
+  float pcap_rate = 1.0f;                      ///< Rate to read the pcap file
+  bool use_vlan = false;                       ///< Vlan on-off
+  bool use_someip = false;                     ///< Someip on-off
 
   void print() const
   {

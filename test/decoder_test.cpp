@@ -1,9 +1,9 @@
 
 #include <gtest/gtest.h>
 
-#include "rs_driver/msg/point_cloud_msg.h"
 #include <rs_driver/driver/decoder/decoder_mech.hpp>
-#include <rs_driver/utility/dbg.h>
+#include <rs_driver/msg/point_cloud_msg.hpp>
+#include <rs_driver/utility/dbg.hpp>
 
 using namespace robosense::lidar;
 

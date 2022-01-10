@@ -1,7 +1,7 @@
 
 #include <gtest/gtest.h>
 
-#include <rs_driver/utility/buffer.h>
+#include <rs_driver/utility/buffer.hpp>
 
 using namespace robosense::lidar;
 

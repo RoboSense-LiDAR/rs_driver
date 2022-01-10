@@ -1,7 +1,7 @@
 
 #include <gtest/gtest.h>
 
-#include <rs_driver/utility/sync_queue.h>
+#include <rs_driver/utility/sync_queue.hpp>
 
 using namespace robosense::lidar;
 

@@ -30,9 +30,10 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
+#include <rs_driver/api/lidar_driver.hpp>
+
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
-#include "rs_driver/api/lidar_driver.h"
 
 typedef pcl::PointXYZI PointT;
 
@@ -88,11 +89,11 @@ bool parseArgument(int argc, const char* const* argv, const char* str, std::stri
 
 void parseParam(int argc, char* argv[], RSDriverParam& param)
 {
-  param.wait_for_difop = false;
+  param.decoder_param.wait_for_difop = false;
   std::string result_str;
   if (parseArgument(argc, argv, "-type", result_str))
   {
-    param.lidar_type = param.strToLidarType(result_str);
+    param.lidar_type = strToLidarType(result_str);
   }
   if (parseArgument(argc, argv, "-msop", result_str))
   {
@@ -102,6 +103,7 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
   {
     param.input_param.difop_port = std::stoi(result_str);
   }
+#if 0
   if (parseArgument(argc, argv, "-x", result_str))
   {
     param.decoder_param.transform_param.x = std::stof(result_str);
@@ -126,9 +128,10 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
   {
     param.decoder_param.transform_param.yaw = std::stof(result_str);
   }
+#endif
   if (parseArgument(argc, argv, "-pcap", param.input_param.pcap_path))
   {
-    param.input_param.read_pcap = true;
+    //param.input_param.read_pcap = true;
   }
 }
 
@@ -154,7 +157,7 @@ void printHelpMenu()
 
 void printParam(const RSDriverParam& param)
 {
-  if (param.input_param.read_pcap)
+  if (param.input_type == InputType::PCAP_FILE)
   {
     RS_INFOL << "Working mode: ";
     RS_INFO << "Offline Pcap " << RS_REND;
@@ -166,12 +169,14 @@ void printParam(const RSDriverParam& param)
     RS_INFOL << "Working mode: ";
     RS_INFO << "Online LiDAR " << RS_REND;
   }
+
   RS_INFOL << "MSOP Port: ";
   RS_INFO << param.input_param.msop_port << RS_REND;
   RS_INFOL << "DIFOP Port: ";
   RS_INFO << param.input_param.difop_port << RS_REND;
   RS_INFOL << "LiDAR Type: ";
-  RS_INFO << param.lidarTypeToStr(param.lidar_type) << RS_REND;
+  RS_INFO << lidarTypeToStr(param.lidar_type) << RS_REND;
+#if 0
   RS_INFOL << "Transformation Parameters (x, y, z, roll, pitch, yaw): " << RS_REND;
   RS_INFOL << "x: ";
   RS_INFO << std::fixed << param.decoder_param.transform_param.x << RS_REND;
@@ -185,6 +190,7 @@ void printParam(const RSDriverParam& param)
   RS_INFO << std::fixed << param.decoder_param.transform_param.pitch << RS_REND;
   RS_INFOL << "yaw: ";
   RS_INFO << std::fixed << param.decoder_param.transform_param.yaw << RS_REND;
+#endif
 }
 
 std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
@@ -259,7 +265,7 @@ int main(int argc, char* argv[])
 
   LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
-  driver.regRecvCallback(pointCloudPutCallback, pointCloudGetCallback);      ///< Register the point cloud callback function into the driver
+  driver.regRecvCallback(pointCloudGetCallback, pointCloudPutCallback);      ///< Register the point cloud callback function into the driver
   if (!driver.init(param))                         ///< Call the init function and pass the parameter
   {
     RS_ERROR << "Driver Initialize Error..." << RS_REND;
