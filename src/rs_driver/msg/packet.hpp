@@ -45,7 +45,6 @@ struct Packet
 {
   double timestamp = 0.0;
   uint32_t seq = 0;
-//  std::string frame_id = "";
   uint8_t is_difop = 0;
   uint8_t is_frame_begin = 0;
 

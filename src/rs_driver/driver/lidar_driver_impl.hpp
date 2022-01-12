@@ -75,7 +75,7 @@ public:
   bool start();
   void stop();
 
- void decodePacket(const Packet& pkt);
+  void decodePacket(const Packet& pkt);
   bool getTemperature(float& temp);
 
 private:
