@@ -270,8 +270,8 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "host_address: " << host_address << RS_REND;
     RS_INFOL << "msop_port: " << msop_port << RS_REND;
     RS_INFOL << "difop_port: " << difop_port << RS_REND;
-    RS_INFOL << "pcap_path: " << pcap_rate << RS_REND;
-    RS_INFOL << "pcap_rate: " << pcap_path << RS_REND;
+    RS_INFOL << "pcap_path: " << pcap_path << RS_REND;
+    RS_INFOL << "pcap_rate: " << pcap_rate << RS_REND;
     RS_INFOL << "pcap_repeat: " << pcap_repeat << RS_REND;
     RS_INFOL << "use_vlan: " << use_vlan << RS_REND;
     RS_INFOL << "use_someip: " << use_someip << RS_REND;
