@@ -142,7 +142,7 @@ public:
   constexpr static int ANGLE_OFFSET = 32768;
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
-  virtual void decodeMsopPkt(const uint8_t* pkt, size_t size);
+  virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
   virtual ~DecoderRSM1() = default;
 
   explicit DecoderRSM1(const RSDecoderParam& param, 
@@ -210,9 +210,10 @@ inline void DecoderRSM1::decodeDifopPkt(const uint8_t* packet, size_t size)
   max_seq_ = (this->echo_mode_ == ECHO_SINGLE) ? SINGLE_PKT_NUM : DUAL_PKT_NUM;
 }
 
-inline void DecoderRSM1::decodeMsopPkt(const uint8_t* packet, size_t size)
+inline bool DecoderRSM1::decodeMsopPkt(const uint8_t* packet, size_t size)
 {
   const RSM1MsopPkt& pkt = *(RSM1MsopPkt*)packet;
+  bool ret = false;
 
   this->temperature_ = static_cast<float>(pkt.header.temperature - 80);
 
@@ -275,7 +276,10 @@ inline void DecoderRSM1::decodeMsopPkt(const uint8_t* packet, size_t size)
   if (split_.newPacket(pkt_seq))
   {
     this->cb_split_frame_(this->height_, this->prev_point_ts_);
+    ret = true;
   }
+
+  return ret;
 }
 
 }  // namespace lidar

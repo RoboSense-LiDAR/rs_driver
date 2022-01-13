@@ -136,7 +136,7 @@ class DecoderRS32 : public DecoderMech
 public:
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
-  virtual void decodeMsopPkt(const uint8_t* pkt, size_t size);
+  virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
   virtual ~DecoderRS32() = default;
 
   explicit DecoderRS32(const RSDecoderParam& param, 
@@ -150,7 +150,7 @@ protected:
   static RSEchoMode getEchoMode(uint8_t mode);
 
   template <typename T_BlockDiff>
-  void internDecodeMsopPkt(const uint8_t* pkt, size_t size);
+  bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 };
 
 inline RSDecoderMechConstParam& DecoderRS32::getConstParam()
@@ -229,22 +229,23 @@ inline void DecoderRS32::decodeDifopPkt(const uint8_t* packet, size_t size)
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
 }
 
-inline void DecoderRS32::decodeMsopPkt(const uint8_t* pkt, size_t size)
+inline bool DecoderRS32::decodeMsopPkt(const uint8_t* pkt, size_t size)
 {
   if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
   {
-    internDecodeMsopPkt<SingleReturnBlockDiff<RS32MsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<SingleReturnBlockDiff<RS32MsopPkt>>(pkt, size);
   }
   else
   {
-    internDecodeMsopPkt<DualReturnBlockDiff<RS32MsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<DualReturnBlockDiff<RS32MsopPkt>>(pkt, size);
   }
 }
 
 template <typename T_BlockDiff>
-inline void DecoderRS32::internDecodeMsopPkt(const uint8_t* packet, size_t size)
+inline bool DecoderRS32::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
   const RS32MsopPkt& pkt = *(const RS32MsopPkt*)(packet);
+  bool ret = false;
 
   this->temperature_ = parseTemp(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
@@ -279,6 +280,7 @@ inline void DecoderRS32::internDecodeMsopPkt(const uint8_t* packet, size_t size)
     if (this->split_strategy_->newBlock(block_az))
     {
       this->cb_split_frame_(this->height_, this->prev_point_ts_);
+      ret = true;
     }
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
@@ -321,6 +323,8 @@ inline void DecoderRS32::internDecodeMsopPkt(const uint8_t* packet, size_t size)
       this->prev_point_ts_ = chan_ts;
     }
   }
+
+  return ret;
 }
 
 }  // namespace lidar

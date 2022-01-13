@@ -80,7 +80,7 @@ public:
 
 private:
 
-  void runCallBack(std::shared_ptr<Buffer> pkt, double timestamp, uint8_t is_difop = true, uint8_t is_frame_begin = false);
+  void runCallBack(std::shared_ptr<Buffer> pkt, double timestamp, uint8_t is_difop, uint8_t is_frame_begin);
   void reportError(const Error& error);
 
   std::shared_ptr<Buffer> packetGet(size_t size);
@@ -351,8 +351,8 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
       continue;
     }
 
-    lidar_decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
-    runCallBack(pkt, 0, false, false);
+    bool split = lidar_decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
+    runCallBack(pkt, 0, false, split); // msop packet
 
     free_pkt_queue_.push(pkt);
   }
@@ -370,7 +370,7 @@ inline void LidarDriverImpl<T_PointCloud>::processDifop()
     }
 
     lidar_decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
-    runCallBack(pkt, 0);
+    runCallBack(pkt, 0, true, false); // difop packet
 
     free_pkt_queue_.push(pkt);
   }

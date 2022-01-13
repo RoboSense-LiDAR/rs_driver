@@ -256,11 +256,11 @@ public:
   constexpr static uint16_t PROTOCOL_VER_0 = 0x00;
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size) = 0;
-  virtual void decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
+  virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual ~Decoder() = default;
 
   void processDifopPkt(const uint8_t* pkt, size_t size);
-  void processMsopPkt(const uint8_t* pkt, size_t size);
+  bool processMsopPkt(const uint8_t* pkt, size_t size);
 
   void regRecvCallback(const std::function<void(const RSPoint&)>& cb_new_point, 
       const std::function<void(uint16_t, double)>& cb_split_frame);
@@ -349,27 +349,27 @@ inline void Decoder::processDifopPkt(const uint8_t* pkt, size_t size)
   decodeDifopPkt(pkt, size);
 }
 
-inline void Decoder::processMsopPkt(const uint8_t* pkt, size_t size)
+inline bool Decoder::processMsopPkt(const uint8_t* pkt, size_t size)
 {
   if (param_.wait_for_difop && !angles_ready_)
   {
      excb_(Error(ERRCODE_NODIFOPRECV));
-     return;
+     return false;
   }
 
   if (size != this->const_param_.MSOP_LEN)
   {
      this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
-     return;
+     return false;
   }
 
   if (memcmp(pkt, this->const_param_.MSOP_ID, const_param_.MSOP_ID_LEN) != 0)
   {
     this->excb_(Error(ERRCODE_WRONGPKTHEADER));
-    return;
+    return false;
   }
 
-  decodeMsopPkt(pkt, size);
+  return decodeMsopPkt(pkt, size);
 }
 
 }  // namespace lidar
