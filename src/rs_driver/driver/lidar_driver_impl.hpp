@@ -186,8 +186,7 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   lidar_decoder_ptr_->regRecvCallback( 
       std::bind(&LidarDriverImpl<T_PointCloud>::newPoint, this, std::placeholders::_1), 
       std::bind(&LidarDriverImpl<T_PointCloud>::splitFrame, this, std::placeholders::_1, std::placeholders::_2));
-  //lidar_decoder_ptr_->enableWritePktTs((cb_put_pkt_ == nullptr) ? false : true);
-  lidar_decoder_ptr_->enableWritePktTs(true);
+  lidar_decoder_ptr_->enableWritePktTs((cb_put_pkt_ == nullptr) ? false : true);
 
   double packet_duration = lidar_decoder_ptr_->getPacketDuration();
 
@@ -354,7 +353,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     }
 
     bool split = lidar_decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
-    runCallBack(pkt, 0, false, split); // msop packet
+    runCallBack(pkt, lidar_decoder_ptr_->prevPktTs(), false, split); // msop packet
 
     free_pkt_queue_.push(pkt);
   }

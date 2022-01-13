@@ -272,6 +272,7 @@ public:
   float getTemperature();
   double getPacketDuration();
   void enableWritePktTs(bool value);
+  double prevPktTs();
 
 #ifndef UNIT_TEST
 protected:
@@ -296,6 +297,7 @@ protected:
   float temperature_; // lidar temperature
 
   bool angles_ready_; // is vert_angles/horiz_angles ready from csv file/difop packet?
+  double prev_pkt_ts_; // last packet's timestamp
   double prev_point_ts_; // last point's timestamp
 };
 
@@ -321,6 +323,7 @@ inline Decoder::Decoder(const RSDecoderConstParam& const_param,
   , echo_mode_(ECHO_SINGLE)
   , temperature_(0.0)
   , angles_ready_(false)
+  , prev_pkt_ts_(0.0)
   , prev_point_ts_(0.0)
 {
 }
@@ -338,6 +341,11 @@ inline float Decoder::getTemperature()
 inline double Decoder::getPacketDuration()
 {
   return packet_duration_;
+}
+
+inline double Decoder::prevPktTs()
+{
+  return prev_pkt_ts_;
 }
 
 inline void Decoder::processDifopPkt(const uint8_t* pkt, size_t size)
