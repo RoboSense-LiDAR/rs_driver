@@ -141,7 +141,7 @@ inline uint64_t parseTimeYMD(const RSTimestampYMD* tsYmd)
   memset(&stm, 0, sizeof(stm));
 
   // since 2000 in robosense YMD, and since 1900 in struct tm
-  stm.tm_year = tsYmd->year + 2000 - 1900; 
+  stm.tm_year = tsYmd->year + (2000 - 1900); 
   // since 1 in robosense YMD, and since 0 in struct tm
   stm.tm_mon = tsYmd->month - 1; 
   // since 1 in both robosense YMD and struct tm
@@ -167,6 +167,44 @@ inline uint64_t parseTimeYMD(const RSTimestampYMD* tsYmd)
 #endif
 
   return (sec * 1e6 + ms * 1e3 + us);
+}
+
+inline void createTimeYMD(uint64_t usec, RSTimestampYMD* tsYmd)
+{
+  uint64_t us = usec % 1000;
+  uint64_t tot_ms = (usec - us) / 1000;
+
+  uint64_t ms = tot_ms % 1000;
+  uint64_t sec = tot_ms / 1000;
+
+  time_t t_sec = sec;
+
+  std::tm* stm =  localtime(&t_sec);
+
+  // since 2000 in robosense YMD, and since 1900 in struct tm
+  tsYmd->year = stm->tm_year - (2000 - 1900); 
+  // since 1 in robosense YMD, and since 0 in struct tm
+  tsYmd->month = stm->tm_mon + 1; 
+  // since 1 in both robosense YMD and struct tm
+  tsYmd->day = stm->tm_mday;
+  tsYmd->hour = stm->tm_hour;
+  tsYmd->minute = stm->tm_min;
+  tsYmd->second = stm->tm_sec;
+
+  tsYmd->ms = htons((uint16_t)ms);
+  tsYmd->us = htons((uint16_t)us);
+
+#if 0
+  std::cout << "year:" << (int)tsYmd->year 
+    << ", month:" << (int)tsYmd->month 
+    << ", day:" << (int)tsYmd->day
+    << ", hour:" << (int)tsYmd->hour
+    << ", minute:" << (int)tsYmd->minute
+    << ", second:" << (int)tsYmd->second
+    << ", ms:" << tsYmd->ms 
+    << ", us:" << tsYmd->us 
+    << std::endl;
+#endif
 }
 
 inline uint64_t getTimeHost(void)

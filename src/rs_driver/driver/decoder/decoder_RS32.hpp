@@ -256,8 +256,15 @@ inline bool DecoderRS32::internDecodeMsopPkt(const uint8_t* packet, size_t size)
   }
   else
   {
+    uint64_t ts = getTimeHost();
+
     // roll back to first block to approach lidar ts as near as possible.
-    pkt_ts = getTimeHost() * 1e-6 - this->getPacketDuration();
+    pkt_ts = ts * 1e-6 - this->getPacketDuration();
+
+    if (this->write_pkt_ts_)
+    {
+      createTimeYMD (ts, (RSTimestampYMD*)&pkt.header.timestamp);
+    }
   }
 
   T_BlockDiff diff(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION);
