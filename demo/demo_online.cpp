@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
   param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
   param.lidar_type = LidarType::RS32;   ///< Set the lidar type. Make sure this type is correct
   param.decoder_param.wait_for_difop = true;          ///< true: start sending point cloud until receive difop packet
+  param.decoder_param.use_lidar_clock = false;
   param.print();
 
   LidarDriver<PointCloudMsg> driver;

@@ -38,7 +38,7 @@ namespace robosense
 namespace lidar
 {
 
-inline void hexdump(const unsigned char* data, size_t size, const char* desc = NULL)
+inline void hexdump(const uint8_t* data, size_t size, const char* desc = NULL)
 {
   printf("\n---------------%s(size:%d)------------------", (desc ? desc : ""), (int)size);
 

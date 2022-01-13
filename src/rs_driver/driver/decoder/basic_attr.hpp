@@ -157,12 +157,16 @@ inline uint64_t parseTimeYMD(const RSTimestampYMD* tsYmd)
 #if 0
   std::cout << "tm_year:" << stm.tm_year 
     << ", tm_mon:" << stm.tm_mon 
+    << ", tm_day:" << stm.tm_mday
+    << ", tm_hour:" << stm.tm_hour
+    << ", tm_min:" << stm.tm_min
+    << ", tm_sec:" << stm.tm_sec
     << ", ms:" << ms 
     << ", us:" << us 
     << std::endl;
 #endif
 
-  return (sec * 1000000 + ms * 1000 + us);
+  return (sec * 1e6 + ms * 1e3 + us);
 }
 
 inline uint64_t getTimeHost(void)
@@ -171,7 +175,7 @@ inline uint64_t getTimeHost(void)
   std::chrono::system_clock::duration t_s = t.time_since_epoch();
 
   std::chrono::duration<uint64_t, std::ratio<1l, 1000000l>> t_us = 
-  std::chrono::duration_cast<std::chrono::duration<uint64_t, std::ratio<1l, 1000000l>>>(t_s);
+    std::chrono::duration_cast<std::chrono::duration<uint64_t, std::ratio<1l, 1000000l>>>(t_s);
   return t_us.count();
 }
 

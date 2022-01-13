@@ -13,7 +13,7 @@ project(rs_driver VERSION 1.4.3)
 #=============================
 option(COMPILE_DEMOS "Build rs_driver demos" ON)
 option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
-option(COMPILE_TESTS "Build rs_driver unit tests" ON)
+option(COMPILE_TESTS "Build rs_driver unit tests" OFF)
 
 #=============================
 #  Compile Features
