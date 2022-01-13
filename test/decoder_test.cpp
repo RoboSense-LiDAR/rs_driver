@@ -42,8 +42,9 @@ public:
     this->template decodeDifopCommon<MyDifopPkt>(pkt);
   }
 
-  virtual void decodeMsopPkt(const uint8_t* pkt, size_t size)
+  virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size)
   {
+    return false;
   }
 
 };

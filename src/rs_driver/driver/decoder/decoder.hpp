@@ -328,7 +328,7 @@ inline Decoder::Decoder(const RSDecoderConstParam& const_param,
 {
 }
 
-void Decoder::enableWritePktTs(bool value)
+inline void Decoder::enableWritePktTs(bool value)
 {
   write_pkt_ts_ = value;
 }
