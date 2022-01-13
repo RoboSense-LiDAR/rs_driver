@@ -271,6 +271,7 @@ public:
 
   float getTemperature();
   double getPacketDuration();
+  void enableWritePktTs(bool value);
 
 #ifndef UNIT_TEST
 protected:
@@ -281,6 +282,7 @@ protected:
   std::function<void(const RSPoint&)> cb_new_point_;
   std::function<void(uint16_t, double)> cb_split_frame_;
   std::function<void(const Error&)> excb_;
+  bool write_pkt_ts_;
 
   Trigon trigon_;
 #define SIN(angle) this->trigon_.sin(angle)
@@ -311,6 +313,7 @@ inline Decoder::Decoder(const RSDecoderConstParam& const_param,
   : const_param_(const_param)
   , param_(param)
   , excb_(excb)
+  , write_pkt_ts_(false)
   , height_(0)
   , packet_duration_(0)
   , distance_section_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, 
@@ -320,6 +323,11 @@ inline Decoder::Decoder(const RSDecoderConstParam& const_param,
   , angles_ready_(false)
   , prev_point_ts_(0.0)
 {
+}
+
+void Decoder::enableWritePktTs(bool value)
+{
+  write_pkt_ts_ = value;
 }
 
 inline float Decoder::getTemperature()
