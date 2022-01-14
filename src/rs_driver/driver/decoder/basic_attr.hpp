@@ -82,6 +82,7 @@ inline uint64_t parseTimeUTCWithNs(const RSTimestampUTC* tsUtc)
     sec += tsUtc->sec[i];
   }
 
+  // ns
   uint64_t ns = 0;
   for (int i = 0; i < 4; i++)
   {
@@ -102,6 +103,7 @@ inline uint64_t parseTimeUTCWithUs(const RSTimestampUTC* tsUtc)
     sec += tsUtc->sec[i];
   }
 
+  // us
   uint64_t us = 0;
   for (int i = 0; i < 4; i++)
   {
@@ -110,6 +112,24 @@ inline uint64_t parseTimeUTCWithUs(const RSTimestampUTC* tsUtc)
   }
 
   return (sec * 1000000 + us);
+}
+
+inline void createTimeUTCWithUs(uint64_t us, RSTimestampUTC* tsUtc)
+{
+  uint64_t sec  = us / 1000000;
+  uint64_t usec = us % 1000000;
+
+  for (int i = 5; i >= 0; i--)
+  {
+    tsUtc->sec[i] = sec & 0xFF;
+    sec >>= 8;
+  }
+
+  for (int i = 3; i >= 0; i--)
+  {
+    tsUtc->ss[i] = usec & 0xFF;
+    usec >>= 8;
+  }
 }
 
 inline uint64_t parseTimeUTCWithMs(const RSTimestampUTC* tsUtc)
@@ -166,7 +186,7 @@ inline uint64_t parseTimeYMD(const RSTimestampYMD* tsYmd)
     << std::endl;
 #endif
 
-  return (sec * 1e6 + ms * 1e3 + us);
+  return (sec * 1000000 + ms * 1000 + us);
 }
 
 inline void createTimeYMD(uint64_t usec, RSTimestampYMD* tsYmd)
@@ -179,7 +199,19 @@ inline void createTimeYMD(uint64_t usec, RSTimestampYMD* tsYmd)
 
   time_t t_sec = sec;
 
-  std::tm* stm =  localtime(&t_sec);
+  std::tm* stm = localtime(&t_sec);
+
+#if 0
+  std::cout << "+ tm_year:" << stm->tm_year 
+    << ", tm_mon:" << stm->tm_mon 
+    << ", tm_day:" << stm->tm_mday
+    << ", tm_hour:" << stm->tm_hour
+    << ", tm_min:" << stm->tm_min
+    << ", tm_sec:" << stm->tm_sec
+    << ", ms:" << ms 
+    << ", us:" << us 
+    << std::endl;
+#endif
 
   // since 2000 in robosense YMD, and since 1900 in struct tm
   tsYmd->year = stm->tm_year - (2000 - 1900); 
@@ -193,18 +225,6 @@ inline void createTimeYMD(uint64_t usec, RSTimestampYMD* tsYmd)
 
   tsYmd->ms = htons((uint16_t)ms);
   tsYmd->us = htons((uint16_t)us);
-
-#if 0
-  std::cout << "year:" << (int)tsYmd->year 
-    << ", month:" << (int)tsYmd->month 
-    << ", day:" << (int)tsYmd->day
-    << ", hour:" << (int)tsYmd->hour
-    << ", minute:" << (int)tsYmd->minute
-    << ", second:" << (int)tsYmd->second
-    << ", ms:" << tsYmd->ms 
-    << ", us:" << tsYmd->us 
-    << std::endl;
-#endif
 }
 
 inline uint64_t getTimeHost(void)
