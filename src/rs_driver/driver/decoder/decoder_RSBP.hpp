@@ -272,6 +272,7 @@ inline bool DecoderRSBP::internDecodeMsopPkt(const uint8_t* packet, size_t size)
     }
   }
 
+  this->prev_pkt_ts_ = pkt_ts;
   return ret;
 }
 

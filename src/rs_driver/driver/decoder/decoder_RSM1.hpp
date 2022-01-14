@@ -279,6 +279,7 @@ inline bool DecoderRSM1::decodeMsopPkt(const uint8_t* packet, size_t size)
     ret = true;
   }
 
+  this->prev_pkt_ts_ = pkt_ts;
   return ret;
 }
 

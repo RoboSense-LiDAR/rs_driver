@@ -284,6 +284,7 @@ inline bool DecoderRSHELIOS::internDecodeMsopPkt(const uint8_t* packet, size_t s
     }
   }
 
+  this->prev_pkt_ts_ = pkt_ts;
   return ret;
 }
 
