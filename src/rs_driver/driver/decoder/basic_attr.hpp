@@ -93,6 +93,26 @@ inline uint64_t parseTimeUTCWithNs(const RSTimestampUTC* tsUtc)
   return (sec * 1000000 + ns/1000);
 }
 
+inline void createTimeUTCWithNs(uint64_t us, RSTimestampUTC* tsUtc)
+{
+  uint64_t sec  = us / 1000000;
+  uint64_t nsec = (us % 1000000) * 1000;
+
+  std::cout << std::hex << "usec:" << nsec << std::endl;
+
+  for (int i = 5; i >= 0; i--)
+  {
+    tsUtc->sec[i] = sec & 0xFF;
+    sec >>= 8;
+  }
+
+  for (int i = 3; i >= 0; i--)
+  {
+    tsUtc->ss[i] = nsec & 0xFF;
+    nsec >>= 8;
+  }
+}
+
 inline uint64_t parseTimeUTCWithUs(const RSTimestampUTC* tsUtc)
 {
   // sec

@@ -17,23 +17,28 @@ TEST(TestParseTime, parseTimeYMD)
   ASSERT_EQ(memcmp(ts2, ts1, 10), 0);
 }
 
-TEST(TestParseTime, parseTimeUTC)
+TEST(TestParseTime, parseTimeUTCWithNs)
+{
+  RSTimestampUTC ts1 = 
+  {{0x01, 0x02, 0x03, 0x04, 0x05, 0x06}, {0x06, 0xA1, 0x1C, 0xF0}};
+  RSTimestampUTC ts2;
+
+  ASSERT_EQ(parseTimeUTCWithNs(&ts1), 0x010203040506 * 1000000 + 0x06A11CF0/1000);
+
+  createTimeUTCWithNs(0x010203040506 * 1000000 + 0x06A11CF0/1000, &ts2);
+  ASSERT_EQ(memcmp(&ts2, &ts1, sizeof(ts1)), 0);
+}
+
+TEST(TestParseTime, parseTimeUTCWithUs)
 {
   RSTimestampUTC ts1 = 
   {{0x01, 0x02, 0x03, 0x04, 0x05, 0x06}, {0x00, 0x02, 0x33, 0x44}};
   RSTimestampUTC ts2;
 
-  ASSERT_EQ(parseTimeUTCWithNs(&ts1), 0x010203040506 * 1000000 + 0x00023344/1000);
+  ASSERT_EQ(parseTimeUTCWithUs(&ts1), 0x010203040506 * 1000000 + 0x00023344);
 
-  {
-    ASSERT_EQ(parseTimeUTCWithUs(&ts1), 0x010203040506 * 1000000 + 0x00023344);
-
-    createTimeUTCWithUs(0x010203040506 * 1000000 + 0x00023344, &ts2);
-    hexdump ((uint8_t*)&ts2, sizeof(ts2), "ts2");
-    ASSERT_EQ(memcmp(&ts2, &ts1, sizeof(ts1)), 0);
-  }
-
-  ASSERT_EQ(parseTimeUTCWithMs(&ts1), 0x010203040506 * 1000000 + 0x0002 * 1000 + 0x3344);
+  createTimeUTCWithUs(0x010203040506 * 1000000 + 0x00023344, &ts2);
+  ASSERT_EQ(memcmp(&ts2, &ts1, sizeof(ts1)), 0);
 }
 
 TEST(TestParseTime, getTimeHost)
