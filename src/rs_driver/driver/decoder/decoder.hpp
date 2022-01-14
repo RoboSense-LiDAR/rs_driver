@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arpa/inet.h>
 #include <functional>
 #include <memory>
+#include <iomanip>
 
 namespace robosense
 {
