@@ -220,12 +220,19 @@ inline bool DecoderRSM1::decodeMsopPkt(const uint8_t* packet, size_t size)
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 0.000001;
+    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
   }
   else
   {
+    uint64_t ts = getTimeHost();
+
     // roll back to first block to approach lidar ts as near as possible.
-    pkt_ts = getTimeHost() * 0.000001 - this->getPacketDuration();
+    pkt_ts = getTimeHost() * 1e-6 - this->getPacketDuration();
+
+    if (this->write_pkt_ts_)
+    {
+      createTimeUTCWithUs (ts, (RSTimestampUTC*)&pkt.header.timestamp);
+    }
   }
   
   for (size_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
