@@ -234,7 +234,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   uint16_t msop_port = 6699;                   ///< Msop packet port number
   uint16_t difop_port = 7788;                  ///< Difop packet port number
   std::string host_address = "0.0.0.0";        ///< Address of host
-  std::string multicast_address = "0.0.0.0";   ///< Address of multicast
+  std::string group_address = "0.0.0.0";       ///< Address of multicast group
   std::string pcap_path = "";                  ///< Absolute path of pcap file
   bool pcap_repeat = true;                     ///< true: The pcap bag will repeat play
   float pcap_rate = 1.0f;                      ///< Rate to read the pcap file
@@ -245,10 +245,10 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   {
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFO << "             RoboSense Input Parameters " << RS_REND;
-    RS_INFOL << "multicast_address: " << multicast_address << RS_REND;
-    RS_INFOL << "host_address: " << host_address << RS_REND;
     RS_INFOL << "msop_port: " << msop_port << RS_REND;
     RS_INFOL << "difop_port: " << difop_port << RS_REND;
+    RS_INFOL << "host_address: " << host_address << RS_REND;
+    RS_INFOL << "group_address: " << group_address << RS_REND;
     RS_INFOL << "pcap_path: " << pcap_path << RS_REND;
     RS_INFOL << "pcap_rate: " << pcap_rate << RS_REND;
     RS_INFOL << "pcap_repeat: " << pcap_repeat << RS_REND;

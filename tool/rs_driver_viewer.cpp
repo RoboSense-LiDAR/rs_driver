@@ -96,7 +96,7 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
   }
 
   parseArgument(argc, argv, "-host", param.input_param.host_address);
-  parseArgument(argc, argv, "-multicast", param.input_param.host_address);
+  parseArgument(argc, argv, "-group", param.input_param.group_address);
 
   if (parseArgument(argc, argv, "-msop", result_str))
   {
@@ -144,7 +144,7 @@ void printHelpMenu()
   RS_MSG << "        -msop             = LiDAR msop port number,the default value is 6699" << RS_REND;
   RS_MSG << "        -difop            = LiDAR difop port number,the default value is 7788" << RS_REND;
   RS_MSG << "        -host             = LiDAR destination address." << RS_REND;
-  RS_MSG << "        -multicast        = LiDAR destination group address." << RS_REND;
+  RS_MSG << "        -group            = LiDAR destination group address." << RS_REND;
   RS_MSG << "        -pcap             = The path of the pcap file, if this argument is set, the driver "
             "will work in off-line mode and read the pcap file. Otherwise the driver work in online mode." << RS_REND;
 
@@ -179,8 +179,8 @@ void printParam(const RSDriverParam& param)
   RS_INFO << param.input_param.difop_port << RS_REND;
   RS_INFOL << "Host Adress: ";
   RS_INFO << param.input_param.host_address << RS_REND;
-  RS_INFOL << "Multicast Adress: ";
-  RS_INFO << param.input_param.multicast_address << RS_REND;
+  RS_INFOL << "Group Adress: ";
+  RS_INFO << param.input_param.group_address << RS_REND;
 
   RS_INFOL << "LiDAR Type: ";
   RS_INFO << lidarTypeToStr(param.lidar_type) << RS_REND;
