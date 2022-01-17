@@ -256,6 +256,8 @@ inline bool DecoderRSM1::decodeMsopPkt(const uint8_t* packet, size_t size)
         point.x = distance * COS (pitch) * COS (yaw);
         point.y = distance * COS (pitch) * SIN (yaw);
         point.z = distance * SIN (pitch);
+        this->transformPoint(point.x, point.y, point.z);
+
         point.intensity = channel.intensity;
         point.timestamp = point_time;
         point.ring = chan;

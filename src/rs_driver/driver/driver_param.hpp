@@ -165,22 +165,6 @@ enum SplitFrameMode
   SPLIT_BY_CUSTOM_BLKS
 };
 
-#if 0
-typedef struct RSCameraTriggerParam  ///< Camera trigger parameters
-{
-  std::map<double, std::string> trigger_map;  ///< Map stored the trigger angle and camera frame id
-  void print() const
-  {
-    RS_INFO << "------------------------------------------------------" << RS_REND;
-    RS_INFO << "             RoboSense Camera Trigger Parameters " << RS_REND;
-    for (auto iter : trigger_map)
-    {
-      RS_INFOL << "camera_frame_id: " << iter.second << " trigger_angle : " << iter.first << RS_REND;
-    }
-    RS_INFO << "------------------------------------------------------" << RS_REND;
-  }
-} RSCameraTriggerParam;
-
 typedef struct RSTransformParam  ///< The Point transform parameter
 {
   float x = 0.0f;      ///< unit, m
@@ -189,6 +173,7 @@ typedef struct RSTransformParam  ///< The Point transform parameter
   float roll = 0.0f;   ///< unit, radian
   float pitch = 0.0f;  ///< unit, radian
   float yaw = 0.0f;    ///< unit, radian
+
   void print() const
   {
     RS_INFO << "------------------------------------------------------" << RS_REND;
@@ -202,7 +187,6 @@ typedef struct RSTransformParam  ///< The Point transform parameter
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 } RSTransformParam;
-#endif
 
 typedef struct RSDecoderParam  ///< LiDAR decoder parameter
 {
@@ -220,17 +204,10 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
   uint16_t num_blks_split = 1;     ///< Number of packets in one frame, only be used when split_frame_mode=3
   bool use_lidar_clock = false;    ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
   bool dense_points = false;  ///< true: discard NAN points; false: reserve NAN points
-#if 0
   RSTransformParam transform_param;    ///< Used to transform points
-  RSCameraTriggerParam trigger_param;  ///< Used to trigger camera
-#endif
 
   void print() const
   {
-#if 0
-    transform_param.print();
-    trigger_param.print();
-#endif
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFO << "             RoboSense Decoder Parameters " << RS_REND;
     RS_INFOL << "wait_for_difop: " << wait_for_difop << RS_REND;
@@ -246,6 +223,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFOL << "split_angle: " << split_angle << RS_REND;
     RS_INFOL << "num_blks_split: " << num_blks_split << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
+    transform_param.print();
   }
 
 } RSDecoderParam;

@@ -46,6 +46,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
 #endif
+
+#ifdef ENABLE_TRANSFORM
+// Eigen lib
+#include <Eigen/Dense>
+#endif
+
 #include <cmath>
 #include <arpa/inet.h>
 #include <functional>
@@ -274,6 +280,7 @@ public:
   double getPacketDuration();
   void enableWritePktTs(bool value);
   double prevPktTs();
+  void transformPoint(float& x, float& y, float& z);
 
 #ifndef UNIT_TEST
 protected:
@@ -347,6 +354,23 @@ inline double Decoder::getPacketDuration()
 inline double Decoder::prevPktTs()
 {
   return prev_pkt_ts_;
+}
+
+inline void Decoder::transformPoint(float& x, float& y, float& z)
+{
+#ifdef ENABLE_TRANSFORM
+  Eigen::AngleAxisd current_rotation_x(param_.transform_param.roll, Eigen::Vector3d::UnitX());
+  Eigen::AngleAxisd current_rotation_y(param_.transform_param.pitch, Eigen::Vector3d::UnitY());
+  Eigen::AngleAxisd current_rotation_z(param_.transform_param.yaw, Eigen::Vector3d::UnitZ());
+  Eigen::Translation3d current_translation(param_.transform_param.x, param_.transform_param.y,
+                                           param_.transform_param.z);
+  Eigen::Matrix4d trans = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
+  Eigen::Vector4d target_ori(x, y, z, 1);
+  Eigen::Vector4d target_rotate = trans * target_ori;
+  x = target_rotate(0);
+  y = target_rotate(1);
+  z = target_rotate(2);
+#endif
 }
 
 inline void Decoder::processDifopPkt(const uint8_t* pkt, size_t size)

@@ -12,13 +12,14 @@ project(rs_driver VERSION 1.4.3)
 #  Compile Demos&Tools
 #=============================
 option(COMPILE_DEMOS "Build rs_driver demos" ON)
-option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
-option(COMPILE_TESTS "Build rs_driver unit tests" OFF)
+option(COMPILE_TOOLS "Build point cloud visualization tool" ON)
+option(COMPILE_TESTS "Build rs_driver unit tests" ON)
 
 #=============================
 #  Compile Features
 #=============================
 option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
+option(ENABLE_TRANSFORM "Enable transform functions" OFF)
 
 #========================
 #  Project setup
@@ -93,15 +94,16 @@ else()
   list(APPEND EXTERNAL_LIBS pcap)
 endif(WIN32)
 
-#========================
-#  Eigen
-#========================
 if(${ENABLE_TRANSFORM})
   add_definitions("-DENABLE_TRANSFORM")
+
+  #========================
+  #  Eigen
+  #========================
   find_package(Eigen3 REQUIRED)
   include_directories(${EIGEN3_INCLUDE_DIR})
   message(=============================================================)
-  message("-- Enable Transform Fcuntions")
+  message("-- Enable Transform Fucntions")
   message(=============================================================)
 endif(${ENABLE_TRANSFORM})
 

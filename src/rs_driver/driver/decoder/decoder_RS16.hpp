@@ -289,6 +289,8 @@ inline bool DecoderRS16::internDecodeMsopPkt(const uint8_t* packet, size_t size)
         point.x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
         point.y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->mech_const_param_.RX * SIN(angle_horiz);
         point.z =  distance * SIN(angle_vert) + this->mech_const_param_.RZ;
+        this->transformPoint(point.x, point.y, point.z);
+
         point.intensity = channel.intensity;
         point.timestamp = chan_ts;
         point.ring = (this->chan_angles_.toUserChan(chan) >> 1);
