@@ -257,15 +257,29 @@ inline uint64_t getTimeHost(void)
   return t_us.count();
 }
 
-inline int16_t parseTemp(const RSTemperature* tmp)
+inline int16_t parseTempInLe(const RSTemperature* tmp) // format of little endian
 {
   // | lsb | padding | neg | msb |
   // |  5  |    3    |  1  |  7  | (in bits)
   uint8_t lsb = tmp->tt[0] >> 3;
-  uint8_t msb = tmp->tt[1] & 0x7F;
   uint8_t neg = tmp->tt[1] & 0x80;
+  uint8_t msb = tmp->tt[1] & 0x7F;
 
   int16_t t = ((uint16_t)msb << 5) + lsb;
+  if (neg) t = -t;
+
+  return t;
+}
+
+inline int16_t parseTempInBe(const RSTemperature* tmp) // format of big endian
+{
+  // | neg | msb | lsb | padding |
+  // |  1  |  7  |  4  |    4    | (in bits)
+  uint8_t neg = tmp->tt[0] & 0x80;
+  uint8_t msb = tmp->tt[0] & 0x7F;
+  uint8_t lsb = tmp->tt[1] >> 4;
+
+  int16_t t = ((uint16_t)msb << 4) + lsb;
   if (neg) t = -t;
 
   return t;

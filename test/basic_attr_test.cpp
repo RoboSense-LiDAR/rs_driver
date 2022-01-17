@@ -46,16 +46,29 @@ TEST(TestParseTime, getTimeHost)
   getTimeHost();
 }
 
-TEST(TestParseTemp, parseTemp)
+TEST(TestParseTemp, parseTempInLe)
 {
   {
-    uint8_t temp[] = {0x18, 0x01};
-    ASSERT_EQ(parseTemp((RSTemperature*)&temp), 35);
+    uint8_t temp[] = {0x88, 0x11};
+    ASSERT_EQ(parseTempInLe((RSTemperature*)&temp), 561);
   }
 
   {
-    uint8_t temp[] = {0x18, 0x81};
-    ASSERT_EQ(parseTemp((RSTemperature*)&temp), -35);
+    uint8_t temp[] = {0x88, 0x91};
+    ASSERT_EQ(parseTempInLe((RSTemperature*)&temp), -561);
+  }
+}
+
+TEST(TestParseTemp, parseTempInBe)
+{
+  {
+    uint8_t temp[] = {0x23, 0x10};
+    ASSERT_EQ(parseTempInBe((RSTemperature*)&temp), 561);
+  }
+
+  {
+    uint8_t temp[] = {0xA3, 0x10};
+    ASSERT_EQ(parseTempInBe((RSTemperature*)&temp), -561);
   }
 }
 

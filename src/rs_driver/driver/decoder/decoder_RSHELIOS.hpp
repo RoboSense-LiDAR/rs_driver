@@ -207,7 +207,7 @@ inline bool DecoderRSHELIOS::internDecodeMsopPkt(const uint8_t* packet, size_t s
   const RSHELIOSMsopPkt& pkt = *(const RSHELIOSMsopPkt*)(packet);
   bool ret = false;
 
-  this->temperature_ = parseTemp(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
+  this->temperature_ = parseTempInLe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)

@@ -201,7 +201,7 @@ inline bool DecoderRS80::internDecodeMsopPkt(const uint8_t* packet, size_t size)
   const RS80MsopPkt& pkt = *(const RS80MsopPkt*)(packet);
   bool ret = false;
 
-  this->temperature_ = parseTemp(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
+  this->temperature_ = parseTempInBe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
