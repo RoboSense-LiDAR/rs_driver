@@ -90,7 +90,6 @@ private:
   void processDifop();
 
   std::shared_ptr<T_PointCloud> getPointCloud();
-  void newPoint(const RSPoint& point);
   void splitFrame(uint16_t height, double ts);
   void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, uint16_t height, double chan_ts);
 
@@ -102,7 +101,7 @@ private:
   std::function<void(const uint8_t*, size_t)> cb_feed_pkt_;
 
   std::shared_ptr<Input> input_ptr_;
-  std::shared_ptr<Decoder> lidar_decoder_ptr_;
+  std::shared_ptr<Decoder<T_PointCloud>> lidar_decoder_ptr_;
   SyncQueue<std::shared_ptr<Buffer>> free_pkt_queue_;
   SyncQueue<std::shared_ptr<Buffer>> msop_pkt_queue_;
   SyncQueue<std::shared_ptr<Buffer>> difop_pkt_queue_;
@@ -112,8 +111,6 @@ private:
   bool init_flag_;
   bool start_flag_;
   uint32_t pkt_seq_;
-
-  std::shared_ptr<T_PointCloud> point_cloud_;
   uint32_t point_cloud_seq_;
 };
 
@@ -153,8 +150,6 @@ void LidarDriverImpl<T_PointCloud>::regRecvCallback(
 {
   cb_get_pc_ = cb_get;
   cb_put_pc_ = cb_put;
-
-  point_cloud_ = getPointCloud();
 }
 
 template <typename T_PointCloud>
@@ -179,16 +174,26 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
     return true;
   }
 
-  lidar_decoder_ptr_ = DecoderFactory::createDecoder(
+  //
+  // decoder
+  //
+  lidar_decoder_ptr_ = DecoderFactory<T_PointCloud>::createDecoder(
       param.lidar_type, param.decoder_param, 
       std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1));
-
-  lidar_decoder_ptr_->regRecvCallback( 
-      std::bind(&LidarDriverImpl<T_PointCloud>::newPoint, this, std::placeholders::_1), 
-      std::bind(&LidarDriverImpl<T_PointCloud>::splitFrame, this, std::placeholders::_1, std::placeholders::_2));
+  
+  // rewrite pkt timestamp or not ?
   lidar_decoder_ptr_->enableWritePktTs((cb_put_pkt_ == nullptr) ? false : true);
 
+  // point cloud related
+  lidar_decoder_ptr_->point_cloud_ = getPointCloud();
+  lidar_decoder_ptr_->setSplitCallback( 
+      std::bind(&LidarDriverImpl<T_PointCloud>::splitFrame, this, std::placeholders::_1, std::placeholders::_2));
+
   double packet_duration = lidar_decoder_ptr_->getPacketDuration();
+
+  //
+  // input
+  //
 
   input_ptr_ = InputFactory::createInput(param.input_type, param.input_param, 
       std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1), 
@@ -280,6 +285,7 @@ inline void LidarDriverImpl<T_PointCloud>::runCallBack(std::shared_ptr<Buffer> b
   if (cb_put_pkt_)
   {
     Packet pkt;
+    pkt.timestamp = timestamp;
     pkt.is_difop = is_difop;
     pkt.is_frame_begin = is_frame_begin;
     pkt.seq = pkt_seq_++;
@@ -352,8 +358,8 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
       continue;
     }
 
-    bool split = lidar_decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
-    runCallBack(pkt, lidar_decoder_ptr_->prevPktTs(), false, split); // msop packet
+    bool pkt_to_split = lidar_decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
+    runCallBack(pkt, lidar_decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
 
     free_pkt_queue_.push(pkt);
   }
@@ -378,28 +384,14 @@ inline void LidarDriverImpl<T_PointCloud>::processDifop()
 }
 
 template <typename T_PointCloud>
-void LidarDriverImpl<T_PointCloud>::newPoint(const RSPoint& pt)
-{
-  typename T_PointCloud::PointT point;
-  setX(point, pt.x);
-  setY(point, pt.y);
-  setZ(point, pt.z);
-  setIntensity(point, pt.intensity);
-  setRing(point, pt.ring);
-  setTimestamp(point, pt.timestamp);
-
-  point_cloud_->points.emplace_back(point);
-}
-
-template <typename T_PointCloud>
 void LidarDriverImpl<T_PointCloud>::splitFrame(uint16_t height, double ts)
 {
-  if (point_cloud_->points.size() > 0)
+  std::shared_ptr<T_PointCloud> pc = lidar_decoder_ptr_->point_cloud_;
+  if (pc->points.size() > 0)
   {
-    setPointCloudHeader(point_cloud_, height, ts);
-    cb_put_pc_(point_cloud_);
-
-    point_cloud_ = getPointCloud();
+    setPointCloudHeader(pc, height, ts);
+    cb_put_pc_(pc);
+    lidar_decoder_ptr_->point_cloud_ = getPointCloud();
   }
   else
   {

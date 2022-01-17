@@ -241,21 +241,12 @@ struct RSDecoderConstParam
   float TEMPERATURE_RES;
 };
 
-struct RSPoint
-{
-  float x;
-  float y;
-  float z;
-  uint8_t intensity;
-  uint16_t ring;
-  double timestamp;
-};
-
 #define INIT_ONLY_ONCE() \
   static bool init_flag = false; \
   if (init_flag) return param; \
   init_flag = true;
 
+template <typename T_PointCloud>
 class Decoder
 {
 public:
@@ -269,9 +260,6 @@ public:
   void processDifopPkt(const uint8_t* pkt, size_t size);
   bool processMsopPkt(const uint8_t* pkt, size_t size);
 
-  void regRecvCallback(const std::function<void(const RSPoint&)>& cb_new_point, 
-      const std::function<void(uint16_t, double)>& cb_split_frame);
-
   explicit Decoder(const RSDecoderConstParam& const_param, 
       const RSDecoderParam& param, 
       const std::function<void(const Error&)>& excb);
@@ -282,13 +270,15 @@ public:
   double prevPktTs();
   void transformPoint(float& x, float& y, float& z);
 
+  void setSplitCallback(const std::function<void(uint16_t, double)>& cb_split_frame);
+  std::shared_ptr<T_PointCloud> point_cloud_; // accumulated point cloud currently
+
 #ifndef UNIT_TEST
 protected:
 #endif
 
   RSDecoderConstParam const_param_; // const param
   RSDecoderParam param_; // user param
-  std::function<void(const RSPoint&)> cb_new_point_;
   std::function<void(uint16_t, double)> cb_split_frame_;
   std::function<void(const Error&)> excb_;
   bool write_pkt_ts_;
@@ -309,15 +299,14 @@ protected:
   double prev_point_ts_; // last point's timestamp
 };
 
-inline void Decoder::regRecvCallback(
-    const std::function<void(const RSPoint&)>& cb_new_point, 
-    const std::function<void(uint16_t, double)>& cb_split_frame) 
+template <typename T_PointCloud>
+inline void Decoder<T_PointCloud>::setSplitCallback(const std::function<void(uint16_t, double)>& cb_split_frame)
 {
-  cb_new_point_ = cb_new_point;
   cb_split_frame_ = cb_split_frame;
 }
 
-inline Decoder::Decoder(const RSDecoderConstParam& const_param, 
+template <typename T_PointCloud>
+inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param, 
     const RSDecoderParam& param, 
     const std::function<void(const Error&)>& excb)
   : const_param_(const_param)
@@ -336,27 +325,32 @@ inline Decoder::Decoder(const RSDecoderConstParam& const_param,
 {
 }
 
-inline void Decoder::enableWritePktTs(bool value)
+template <typename T_PointCloud>
+inline void Decoder<T_PointCloud>::enableWritePktTs(bool value)
 {
   write_pkt_ts_ = value;
 }
 
-inline float Decoder::getTemperature()
+template <typename T_PointCloud>
+inline float Decoder<T_PointCloud>::getTemperature()
 {
   return temperature_;
 }
 
-inline double Decoder::getPacketDuration()
+template <typename T_PointCloud>
+inline double Decoder<T_PointCloud>::getPacketDuration()
 {
   return packet_duration_;
 }
 
-inline double Decoder::prevPktTs()
+template <typename T_PointCloud>
+inline double Decoder<T_PointCloud>::prevPktTs()
 {
   return prev_pkt_ts_;
 }
 
-inline void Decoder::transformPoint(float& x, float& y, float& z)
+template <typename T_PointCloud>
+inline void Decoder<T_PointCloud>::transformPoint(float& x, float& y, float& z)
 {
 #ifdef ENABLE_TRANSFORM
   Eigen::AngleAxisd current_rotation_x(param_.transform_param.roll, Eigen::Vector3d::UnitX());
@@ -373,7 +367,8 @@ inline void Decoder::transformPoint(float& x, float& y, float& z)
 #endif
 }
 
-inline void Decoder::processDifopPkt(const uint8_t* pkt, size_t size)
+template <typename T_PointCloud>
+inline void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
 {
   if (size != this->const_param_.DIFOP_LEN)
   {
@@ -390,7 +385,8 @@ inline void Decoder::processDifopPkt(const uint8_t* pkt, size_t size)
   decodeDifopPkt(pkt, size);
 }
 
-inline bool Decoder::processMsopPkt(const uint8_t* pkt, size_t size)
+template <typename T_PointCloud>
+inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
 {
   if (param_.wait_for_difop && !angles_ready_)
   {

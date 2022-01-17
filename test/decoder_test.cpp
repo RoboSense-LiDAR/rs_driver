@@ -26,13 +26,13 @@ struct MyDifopPkt
 };
 #pragma pack(pop)
 
-class MyDecoder : public DecoderMech
+class MyDecoder : public DecoderMech<PointCloud>
 {
 public:
   MyDecoder(const RSDecoderMechConstParam& const_param,
       const RSDecoderParam& param, 
     const std::function<void(const Error&)>& excb)
-  : DecoderMech(const_param, param, excb)
+  : DecoderMech<PointCloud>(const_param, param, excb)
   {
   }
 

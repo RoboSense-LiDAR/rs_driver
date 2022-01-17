@@ -18,16 +18,16 @@ static void errCallback(const Error& err)
 
 TEST(TestDecoderRSBP, getEchoMode)
 {
-  ASSERT_TRUE(DecoderRSBP::getEchoMode(0) == RSEchoMode::ECHO_DUAL);
-  ASSERT_TRUE(DecoderRSBP::getEchoMode(1) == RSEchoMode::ECHO_SINGLE);
-  ASSERT_TRUE(DecoderRSBP::getEchoMode(2) == RSEchoMode::ECHO_SINGLE);
+  ASSERT_TRUE(DecoderRSBP<PointCloud>::getEchoMode(0) == RSEchoMode::ECHO_DUAL);
+  ASSERT_TRUE(DecoderRSBP<PointCloud>::getEchoMode(1) == RSEchoMode::ECHO_SINGLE);
+  ASSERT_TRUE(DecoderRSBP<PointCloud>::getEchoMode(2) == RSEchoMode::ECHO_SINGLE);
 }
 
 TEST(TestDecoderRSBP, decodeDifopPkt)
 {
   // const_param
   RSDecoderParam param;
-  DecoderRSBP decoder(param, errCallback);
+  DecoderRSBP<PointCloud> decoder(param, errCallback);
 
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
   ASSERT_EQ(decoder.split_blks_per_frame_, 1801);
@@ -50,13 +50,6 @@ TEST(TestDecoderRSBP, decodeDifopPkt)
   ASSERT_EQ(decoder.echo_mode_, RSEchoMode::ECHO_SINGLE);
   ASSERT_EQ(decoder.blks_per_frame_, 900);
   ASSERT_EQ(decoder.split_blks_per_frame_, 900);
-}
-
-static std::vector<RSPoint> points;
-
-static void newPoint(const RSPoint& point)
-{
-  points.emplace_back(point);
 }
 
 static void splitFrame(uint16_t height, double ts)
@@ -156,7 +149,7 @@ TEST(TestDecoderRSBP, decodeMsopPkt)
 
   // dense_points = false, use_lidar_clock = true
   RSDecoderParam param;
-  DecoderRSBP decoder(param, errCallback);
+  DecoderRSBP<PointCloud> decoder(param, errCallback);
 
   ASSERT_EQ(decoder.chan_angles_.user_chans_.size(), 32);
   decoder.chan_angles_.user_chans_[0] = 2;
@@ -164,13 +157,14 @@ TEST(TestDecoderRSBP, decodeMsopPkt)
   decoder.param_.dense_points = false;
   decoder.param_.use_lidar_clock = true;
 
-  decoder.regRecvCallback(newPoint, splitFrame);
+  decoder.point_cloud_ = std::make_shared<PointCloud>();
+  decoder.setSplitCallback(splitFrame);
 
   decoder.decodeMsopPkt(pkt, sizeof(pkt));
   ASSERT_EQ(decoder.getTemperature(), 2.1875);
-  ASSERT_EQ(points.size(), 32);
+  ASSERT_EQ(decoder.point_cloud_->points.size(), 32);
 
-  RSPoint& point = points[0];
+  PointT& point = decoder.point_cloud_->points[0];
   ASSERT_EQ(point.intensity, 1);
   ASSERT_NE(point.timestamp, 0);
   ASSERT_EQ(point.ring, 2);

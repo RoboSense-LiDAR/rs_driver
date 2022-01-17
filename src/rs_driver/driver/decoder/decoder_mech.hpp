@@ -62,7 +62,8 @@ typedef struct
   RSCalibrationAngle horiz_angle_cali[32];
 } AdapterDifopPkt;
 
-class DecoderMech : public Decoder
+template <typename T_PointCloud>
+class DecoderMech : public Decoder<T_PointCloud>
 {
 public:
 
@@ -98,10 +99,11 @@ protected:
   float lidar_Rxy_;  // lens center related
 };
 
-inline DecoderMech::DecoderMech(const RSDecoderMechConstParam& const_param, 
+template <typename T_PointCloud>
+inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& const_param, 
     const RSDecoderParam& param, 
     const std::function<void(const Error&)>& excb)
-  : Decoder(const_param.base, param, excb)
+  : Decoder<T_PointCloud>(const_param.base, param, excb)
   , mech_const_param_(const_param)
   , chan_angles_(this->const_param_.CHANNELS_PER_BLOCK)
   , scan_section_(this->param_.start_angle * 100, this->param_.end_angle * 100)
@@ -152,7 +154,8 @@ inline DecoderMech::DecoderMech(const RSDecoderMechConstParam& const_param,
   }
 }
 
-inline void DecoderMech::print()
+template <typename T_PointCloud>
+inline void DecoderMech<T_PointCloud>::print()
 {
   std::cout << "-----------------------------------------" << std::endl
     << "rps:\t\t\t" << this->rps_ << std::endl
@@ -167,8 +170,9 @@ inline void DecoderMech::print()
   this->chan_angles_.print();
 }
 
+template <typename T_PointCloud>
 template <typename T_Difop>
-inline void DecoderMech::decodeDifopCommon(const T_Difop& pkt)
+inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
 {
   // rounds per second
   this->rps_ = ntohs(pkt.rpm) / 60;
