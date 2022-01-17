@@ -137,6 +137,7 @@ class DecoderRSM1 : public Decoder
 {
 public:
 
+  constexpr static double FRAME_DURATION = 0.1;
   constexpr static uint32_t SINGLE_PKT_NUM = 630;
   constexpr static uint32_t DUAL_PKT_NUM = 1260;
   constexpr static int ANGLE_OFFSET = 32768;
@@ -185,7 +186,7 @@ inline DecoderRSM1::DecoderRSM1(const RSDecoderParam& param,
   , split_(&max_seq_)
 {
   this->height_ = this->const_param_.CHANNELS_PER_BLOCK;
-  this->packet_duration_ = 1; // TODO 
+  this->packet_duration_ = FRAME_DURATION / SINGLE_PKT_NUM;
   this->angles_ready_ = true;
 }
 
