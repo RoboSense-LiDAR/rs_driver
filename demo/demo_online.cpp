@@ -83,15 +83,15 @@ int main(int argc, char* argv[])
   param.input_type = InputType::ONLINE_LIDAR;
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
-  param.lidar_type = LidarType::RS32;   ///< Set the lidar type. Make sure this type is correct
-  param.decoder_param.wait_for_difop = true;          ///< true: start sending point cloud until receive difop packet
+  param.lidar_type = LidarType::RS16;   ///< Set the lidar type. Make sure this type is correct
+  param.decoder_param.wait_for_difop = true;       ///< true: start sending point cloud until receive difop packet
   param.decoder_param.use_lidar_clock = false;
   param.print();
 
   LidarDriver<PointCloudMsg> driver;
-  driver.regRecvCallback(pointCloudGetCallback, pointCloudPutCallback); ///< Register the point cloud callback function into the driver
-  driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function into the driver
-  if (!driver.init(param))                         ///< Call the init function and pass the parameter
+  driver.regPointCloudCallback(pointCloudGetCallback, pointCloudPutCallback); ///< Register the point cloud callback function 
+  driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function
+  if (!driver.init(param))                         ///< Call the init function
   {
     RS_ERROR << "Driver Initialize Error..." << RS_REND;
     return -1;

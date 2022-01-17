@@ -63,10 +63,10 @@ public:
    * called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get_pc,
+  inline void regPointCloudCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get_pc,
       const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put_pc)
   {
-    driver_ptr_->regRecvCallback(cb_get_pc, cb_put_pc);
+    driver_ptr_->regPointCloudCallback(cb_get_pc, cb_put_pc);
   }
 
   /**
@@ -74,9 +74,9 @@ public:
    * ready, this function will be called
    * @param callback The callback function
    */
-  inline void regRecvCallback(const std::function<void(const Packet&)>& cb_put_pkt)
+  inline void regPacketCallback(const std::function<void(const Packet&)>& cb_put_pkt)
   {
-    driver_ptr_->regRecvCallback(cb_put_pkt);
+    driver_ptr_->regPacketCallback(cb_put_pkt);
   }
 
   /**

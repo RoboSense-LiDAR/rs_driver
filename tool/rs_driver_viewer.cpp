@@ -271,7 +271,7 @@ int main(int argc, char* argv[])
 
   LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback
-  driver.regRecvCallback(pointCloudGetCallback, pointCloudPutCallback); ///< Register the point cloud callback 
+  driver.regPointCloudCallback(pointCloudGetCallback, pointCloudPutCallback); ///< Register the point cloud callback 
   if (!driver.init(param))                         ///< Call the init function
   {
     RS_ERROR << "Driver Initialize Error..." << RS_REND;

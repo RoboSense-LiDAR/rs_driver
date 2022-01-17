@@ -66,9 +66,9 @@ public:
   LidarDriverImpl();
   ~LidarDriverImpl();
 
-  void regRecvCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get_pc,
+  void regPointCloudCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get_pc,
       const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put_pc);
-  void regRecvCallback(const std::function<void(const Packet&)>& cb_put_pkt);
+  void regPacketCallback(const std::function<void(const Packet&)>& cb_put_pkt);
   void regExceptionCallback(const std::function<void(const Error&)>& cb_excp);
  
   bool init(const RSDriverParam& param);
@@ -80,8 +80,8 @@ public:
 
 private:
 
-  void runCallBack(std::shared_ptr<Buffer> pkt, double timestamp, uint8_t is_difop, uint8_t is_frame_begin);
-  void reportError(const Error& error);
+  void runPacketCallBack(std::shared_ptr<Buffer> buf, double timestamp, uint8_t is_difop, uint8_t is_frame_begin);
+  void runExceptionCallback(const Error& error);
 
   std::shared_ptr<Buffer> packetGet(size_t size);
   void packetPut(std::shared_ptr<Buffer> pkt);
@@ -138,13 +138,13 @@ std::shared_ptr<T_PointCloud> LidarDriverImpl<T_PointCloud>::getPointCloud()
       return pc;
     }
 
-    reportError(Error(ERRCODE_POINTCLOUDNULL));
+    runExceptionCallback(Error(ERRCODE_POINTCLOUDNULL));
     std::this_thread::sleep_for(std::chrono::milliseconds(300));
   }
 }
 
 template <typename T_PointCloud>
-void LidarDriverImpl<T_PointCloud>::regRecvCallback(
+void LidarDriverImpl<T_PointCloud>::regPointCloudCallback(
     const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get,
     const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put) 
 {
@@ -153,7 +153,7 @@ void LidarDriverImpl<T_PointCloud>::regRecvCallback(
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::regRecvCallback(
+inline void LidarDriverImpl<T_PointCloud>::regPacketCallback(
     const std::function<void(const Packet&)>& cb_put_pkt)
 {
   cb_put_pkt_ = cb_put_pkt;
@@ -179,7 +179,7 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   //
   lidar_decoder_ptr_ = DecoderFactory<T_PointCloud>::createDecoder(
       param.lidar_type, param.decoder_param, 
-      std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1));
+      std::bind(&LidarDriverImpl<T_PointCloud>::runExceptionCallback, this, std::placeholders::_1));
   
   // rewrite pkt timestamp or not ?
   lidar_decoder_ptr_->enableWritePktTs((cb_put_pkt_ == nullptr) ? false : true);
@@ -196,7 +196,7 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   //
 
   input_ptr_ = InputFactory::createInput(param.input_type, param.input_param, 
-      std::bind(&LidarDriverImpl<T_PointCloud>::reportError, this, std::placeholders::_1), 
+      std::bind(&LidarDriverImpl<T_PointCloud>::runExceptionCallback, this, std::placeholders::_1), 
       packet_duration, cb_feed_pkt_);
 
   input_ptr_->regRecvCallback(
@@ -279,7 +279,7 @@ inline bool LidarDriverImpl<T_PointCloud>::getTemperature(float& temp)
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::runCallBack(std::shared_ptr<Buffer> buf,
+inline void LidarDriverImpl<T_PointCloud>::runPacketCallBack(std::shared_ptr<Buffer> buf, 
     double timestamp, uint8_t is_difop, uint8_t is_frame_begin)
 {
   if (cb_put_pkt_)
@@ -297,7 +297,7 @@ inline void LidarDriverImpl<T_PointCloud>::runCallBack(std::shared_ptr<Buffer> b
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::reportError(const Error& error)
+inline void LidarDriverImpl<T_PointCloud>::runExceptionCallback(const Error& error)
 {
   if (cb_excp_)
   {
@@ -342,7 +342,7 @@ inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt
   size_t sz = queue->push(pkt);
   if (sz > PACKET_POOL_MAX)
   {
-    reportError(Error(ERRCODE_PKTBUFOVERFLOW));
+    runExceptionCallback(Error(ERRCODE_PKTBUFOVERFLOW));
     queue->clear();
   }
 }
@@ -359,7 +359,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     }
 
     bool pkt_to_split = lidar_decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
-    runCallBack(pkt, lidar_decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
+    runPacketCallBack(pkt, lidar_decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
 
     free_pkt_queue_.push(pkt);
   }
@@ -377,7 +377,7 @@ inline void LidarDriverImpl<T_PointCloud>::processDifop()
     }
 
     lidar_decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
-    runCallBack(pkt, 0, true, false); // difop packet
+    runPacketCallBack(pkt, 0, true, false); // difop packet
 
     free_pkt_queue_.push(pkt);
   }
@@ -395,7 +395,7 @@ void LidarDriverImpl<T_PointCloud>::splitFrame(uint16_t height, double ts)
   }
   else
   {
-    reportError(Error(ERRCODE_ZEROPOINTS));
+    runExceptionCallback(Error(ERRCODE_ZEROPOINTS));
   }
 }
 
