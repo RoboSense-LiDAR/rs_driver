@@ -193,18 +193,19 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
   bool config_from_file = false;
   std::string angle_path = "";   ///< Path of angle calibration files(angle.csv). Only used for internal debugging.
   bool wait_for_difop = true;    ///< true: start sending point cloud until receive difop packet
-  float min_distance = 0.2f;                                         ///< Minimum distance of point cloud range
-  float max_distance = 200.0f;                                       ///< Max distance of point cloud range
-  float start_angle = 0.0f;                                          ///< Start angle of point cloud
-  float end_angle = 360.0f;                                          ///< End angle of point cloud
-  SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;  ///< 1: Split frames by cut_angle;
-                                                                     ///< 2: Split frames by fixed number of packets;
-                                                                     ///< 3: Split frames by custom number of packets (num_pkts_split)
-  float split_angle = 0.0f;        ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
-  uint16_t num_blks_split = 1;     ///< Number of packets in one frame, only be used when split_frame_mode=3
-  bool use_lidar_clock = false;    ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
-  bool dense_points = false;  ///< true: discard NAN points; false: reserve NAN points
-  RSTransformParam transform_param;    ///< Used to transform points
+  float min_distance = 0.2f;     ///< Minimum distance of point cloud range
+  float max_distance = 200.0f;   ///< Max distance of point cloud range
+  float start_angle = 0.0f;      ///< Start angle of point cloud
+  float end_angle = 360.0f;      ///< End angle of point cloud
+  SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;  
+                                 ///< 1: Split frames by cut_angle;
+                                 ///< 2: Split frames by fixed number of packets;
+                                 ///< 3: Split frames by custom number of packets (num_pkts_split)
+  float split_angle = 0.0f;      ///< Cut angle(degree) used to split frame, only be used when split_frame_mode=1
+  uint16_t num_blks_split = 1;   ///< Number of packets in one frame, only be used when split_frame_mode=3
+  bool use_lidar_clock = false;  ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
+  bool dense_points = false;     ///< true: discard NAN points; false: reserve NAN points
+  RSTransformParam transform_param; ///< Used to transform points
 
   void print() const
   {
@@ -233,7 +234,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   uint16_t msop_port = 6699;                   ///< Msop packet port number
   uint16_t difop_port = 7788;                  ///< Difop packet port number
   std::string host_address = "0.0.0.0";        ///< Address of host
-  std::string multi_cast_address = "0.0.0.0";  ///< Address of multicast
+  std::string multicast_address = "0.0.0.0";   ///< Address of multicast
   std::string pcap_path = "";                  ///< Absolute path of pcap file
   bool pcap_repeat = true;                     ///< true: The pcap bag will repeat play
   float pcap_rate = 1.0f;                      ///< Rate to read the pcap file
@@ -244,7 +245,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   {
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFO << "             RoboSense Input Parameters " << RS_REND;
-    RS_INFOL << "multi_cast_address: " << multi_cast_address << RS_REND;
+    RS_INFOL << "multicast_address: " << multicast_address << RS_REND;
     RS_INFOL << "host_address: " << host_address << RS_REND;
     RS_INFOL << "msop_port: " << msop_port << RS_REND;
     RS_INFOL << "difop_port: " << difop_port << RS_REND;

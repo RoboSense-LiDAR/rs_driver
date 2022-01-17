@@ -102,13 +102,13 @@ inline bool InputSock::init()
 
   int msop_fd = -1, difop_fd = -1;
 
-  msop_fd = createSocket(input_param_.msop_port, input_param_.host_address, input_param_.multi_cast_address);
+  msop_fd = createSocket(input_param_.msop_port, input_param_.host_address, input_param_.multicast_address);
   if (msop_fd < 0)
     goto failMsop;
 
   if ((input_param_.difop_port != 0) && (input_param_.difop_port != input_param_.msop_port))
   {
-    difop_fd = createSocket(input_param_.difop_port, input_param_.host_address, input_param_.multi_cast_address);
+    difop_fd = createSocket(input_param_.difop_port, input_param_.host_address, input_param_.multicast_address);
     if (difop_fd < 0)
       goto failDifop;
   }
