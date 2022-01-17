@@ -79,56 +79,34 @@ typedef struct
   uint16_t tail;
 } RS16DifopPkt;
 
-typedef struct
-{
-  uint8_t id[8];
-  uint16_t rpm;
-  RSEthNetV1 eth;
-  RSFOV fov;
-  uint8_t reserved0[2];
-  uint16_t phase_lock_angle;
-  RSVersionV1 version;
-  uint8_t reserved1[242];
-  RSSN sn;
-  uint16_t zero_cali;
-  uint8_t return_mode;
-  uint16_t sw_ver;
-  RSTimestampYMD timestamp;
-  RSStatusV1 status;
-  uint8_t reserved2[5];
-  RSDiagnoV1 diagno;
-  uint8_t gprmc[86];
-  RSCalibrationAngle vert_angle_cali[32];
-  RSCalibrationAngle horiz_angle_cali[32];
-} AdapterRS16DifopPkt;
-
 #pragma pack(pop)
 
-inline void RS16DifopPkt2Adapter (const uint8_t* difop)
+inline void RS16DifopPkt2Adapter (const RS16DifopPkt& src, AdapterDifopPkt& dst)
 {
-  RS16DifopPkt& orig = *(RS16DifopPkt*)difop;
-  AdapterRS16DifopPkt& adapter = *(AdapterRS16DifopPkt*)difop;
+  dst.rpm = src.rpm;
+  dst.fov = src.fov;
+  dst.return_mode = src.return_mode;
 
   for (uint16_t i = 0, j = 16; i < 16; i++, j++)
   {
     uint32_t v = 0;
-    v += orig.pitch_cali[i*3];
+    v += src.pitch_cali[i*3];
     v = v << 8;
-    v += orig.pitch_cali[i*3 + 1];
+    v += src.pitch_cali[i*3 + 1];
     v = v << 8;
-    v += orig.pitch_cali[i*3 + 2];
+    v += src.pitch_cali[i*3 + 2];
 
     uint16_t v2 = (uint16_t)(v * 0.01); // higher resolution to lower one.
 
-    adapter.vert_angle_cali[i].sign = (i < 8) ? 1 : 0;
-    adapter.vert_angle_cali[i].value = htons(v2);
-    adapter.horiz_angle_cali[i].sign = 0;
-    adapter.horiz_angle_cali[i].value = 0;
+    dst.vert_angle_cali[i].sign = (i < 8) ? 1 : 0;
+    dst.vert_angle_cali[i].value = htons(v2);
+    dst.horiz_angle_cali[i].sign = 0;
+    dst.horiz_angle_cali[i].value = 0;
 
-    adapter.vert_angle_cali[j].sign = adapter.vert_angle_cali[i].sign;
-    adapter.vert_angle_cali[j].value = adapter.vert_angle_cali[i].value;
-    adapter.horiz_angle_cali[j].sign = 0;
-    adapter.horiz_angle_cali[j].value = 0;
+    dst.vert_angle_cali[j].sign = dst.vert_angle_cali[i].sign;
+    dst.vert_angle_cali[j].value = dst.vert_angle_cali[i].value;
+    dst.horiz_angle_cali[j].sign = 0;
+    dst.horiz_angle_cali[j].value = 0;
   }
 }
 
@@ -221,12 +199,13 @@ inline DecoderRS16::DecoderRS16(const RSDecoderParam& param,
 
 inline void DecoderRS16::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
-  RS16DifopPkt2Adapter (packet);
+  const RS16DifopPkt& orig = *(const RS16DifopPkt*)packet;
+  AdapterDifopPkt adapter;
+  RS16DifopPkt2Adapter (orig, adapter);
 
-  const AdapterRS16DifopPkt& pkt = *(const AdapterRS16DifopPkt*)(packet);
-  this->template decodeDifopCommon<AdapterRS16DifopPkt>(pkt);
+  this->template decodeDifopCommon<AdapterDifopPkt>(adapter);
 
-  this->echo_mode_ = getEchoMode (pkt.return_mode);
+  this->echo_mode_ = getEchoMode (adapter.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
 }

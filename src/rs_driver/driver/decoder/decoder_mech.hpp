@@ -53,6 +53,15 @@ struct RSDecoderMechConstParam
   float CHAN_AZIS[128];
 };
 
+typedef struct
+{
+  uint16_t rpm;
+  RSFOV fov;
+  uint8_t return_mode;
+  RSCalibrationAngle vert_angle_cali[32];
+  RSCalibrationAngle horiz_angle_cali[32];
+} AdapterDifopPkt;
+
 class DecoderMech : public Decoder
 {
 public:
