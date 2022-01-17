@@ -31,29 +31,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #include <rs_driver/api/lidar_driver.hpp>
+#include <rs_driver/msg/pcl_point_cloud_msg.hpp>
 
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-typedef pcl::PointXYZI PointT;
-
-template <typename T_Point>
-class PointCloudT : public pcl::PointCloud<T_Point>
-{
-public:
-  typedef T_Point PointT;
-  typedef typename pcl::PointCloud<T_Point>::VectorType VectorT;
-
-  double timestamp = 0.0;
-  std::string frame_id = "";  ///< Point cloud frame id
-  uint32_t seq = 0;           ///< Sequence number of message
-};
-
-typedef PointCloudT<PointT> PointCloudMsg;
-std::shared_ptr<PointCloudMsg> g_pointcloud;
-
 using namespace robosense::lidar;
 using namespace pcl::visualization;
+
+typedef PointCloudT<PointXYZI> PointCloudMsg;
+std::shared_ptr<PointCloudMsg> g_pointcloud;
+
 std::shared_ptr<PCLVisualizer> pcl_viewer;
 std::mutex mex_viewer;
 
@@ -91,6 +79,7 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
 {
   param.decoder_param.wait_for_difop = false;
   std::string result_str;
+
   if (parseArgument(argc, argv, "-type", result_str))
   {
     param.lidar_type = strToLidarType(result_str);
@@ -235,14 +224,14 @@ void exceptionCallback(const Error& code)
 int main(int argc, char* argv[])
 {
   RS_TITLE << "------------------------------------------------------" << RS_REND;
-  RS_TITLE << "            RS_Driver Viewer Version: v" << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "."
-           << RSLIDAR_VERSION_PATCH << RS_REND;
+  RS_TITLE << "            RS_Driver Viewer Version: v" << getDriverVersion() << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
   if (argc < 2)
   {
     RS_INFOL << "Use 'rs_driver_viewer -h/--help' to check the argument menu..." << RS_REND;
   }
+
   if (checkKeywordExist(argc, argv, "-h") || checkKeywordExist(argc, argv, "--help"))
   {
     printHelpMenu();
