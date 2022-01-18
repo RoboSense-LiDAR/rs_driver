@@ -101,7 +101,7 @@ TEST(TestDecoder, processDifopPkt_fail)
   MyDecoder decoder(const_param, param, errCallback);
 
   // wrong difop length
-  MyDifopPkt pkt;
+  MyDifopPkt pkt = {0};
   errCode = ERRCODE_SUCCESS;
   decoder.processDifopPkt((const uint8_t*)&pkt, 10);
   ASSERT_EQ(errCode, ERRCODE_WRONGPKTLENGTH);
