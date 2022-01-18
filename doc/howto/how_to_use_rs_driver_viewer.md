@@ -1,24 +1,24 @@
-# How to use visualization tool
+# How to visualize the point cloud with rs_driver_viewer
 
 ## 1 Introduction
 
-This document will show you how to use the visualization tool to watch point cloud from LiDAR.
+The rs_driver_viewer is a visualization tool for the point cloud. This document illustrates how to use it.
 
-## 2 Run
+## 2 Compile and Run
 
-If user install the **rs_driver** in the previous step, the tool can be start by the following command:
-
-```bash
-rs_driver_viewer
-```
-
-Otherwise, the tool need to be start with the absolute path:
+Compile the driver with the option COMPILE_TOOLS=ON. 
 
 ```bash
-./rs_driver/build/tool/rs_driver_viewer 
+cmake -DCOMPILE_TOOS=ON ..
 ```
 
-### 2.1 Arguments
+Run the tool.
+
+```bash
+./tool/rs_driver_viewer 
+```
+
+### 2.1 Help Menu
 
 - -h/--help
 
@@ -31,6 +31,18 @@ Otherwise, the tool need to be start with the absolute path:
 - -difop
 
    Difop port number of LiDAR, the default value is *7788*
+   
+- -host
+
+   the host address
+
+- -group
+
+   the multicast group address
+
+- -pcap
+
+   The absolute pcap file path. If this argument is empty, the driver read packets from online-lidar, else from the pcap file. 
 
 - -type
 
@@ -60,27 +72,25 @@ Otherwise, the tool need to be start with the absolute path:
 
    Transformation parameter, default is 0, unit: radian
 
-- -pcap
+Note:
 
-   The absolute path of pcap file. If this argument is set, the driver will work in off-line mode and the pcap file. Otherwise the driver work in online mode.
-
-**The point cloud transformation function can only be used when the cmake option ENABLE_TRANSFORM is set to ON.**
+**The point cloud transformation function can only be available if the cmake option ENABLE_TRANSFORM=ON.**
 
 ## 3 Examples
 
-- Online decode a RS128 LiDAR, which msop port is ```9966``` and difop port is ```8877```
+- Decode from an online RS128 LiDAR, whose msop port is ```9966``` and difop port is ```8877```
 
   ```bash
   rs_driver_viewer -msop 9966 -difop 8877 -type RS128 
   ```
 
-- Offline decode a RSHELIOS LiDAR with a pcap file.
+- Decode from a pcap file with RSHELIOS LiDAR data.
 
   ```bash
   rs_driver_viewer -pcap /home/robosense/helios.pcap -type RSHELIOS
   ```
 
-- Online decode a RS16 LiDAR with the coordinate transformation parameter x=1.5, y=2, z=0, roll=1.57, pitch=0, yaw=0
+- Decode with the coordinate transformation parameters: x=1.5, y=2, z=0, roll=1.57, pitch=0, yaw=0
 
   ```bash
   rs_driver_viewer -type RS16 -x 1.5 -y 2 -roll 1.57 
