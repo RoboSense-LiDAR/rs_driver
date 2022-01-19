@@ -82,9 +82,11 @@ int main(int argc, char* argv[])
 
   RSDriverParam param;                                         ///< Create a parameter object
   param.input_param.read_pcap = true;                          ///< Set read_pcap to true
-  param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap file directory
-  param.input_param.msop_port = 6699;                          ///< Set the lidar msop port number, the default is 6699
-  param.input_param.difop_port = 7788;                         ///< Set the lidar difop port number, the default is 7788
+  param.input_param.pcap_path = "/mnt/share/pcap/byd_cpn.pcap";  ///< Set the pcap file directory
+  param.input_param.msop_port = 51212;                          ///< Set the lidar msop port number, the default is 6699
+  param.input_param.difop_port = 51212;                         ///< Set the lidar difop port number, the default is 7788
+  param.input_param.user_layer_bytes = 8;
+  param.wait_for_difop = false;
   param.lidar_type = LidarType::RSM1;                          ///< Set the lidar type. Make sure this type is correct
 
   param.print();

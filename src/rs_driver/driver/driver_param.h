@@ -141,6 +141,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   std::string pcap_path = "null";  ///< Absolute path of pcap file
   bool use_vlan = false;           ///< Vlan on-off
   bool use_someip = false;         ///< Someip on-off
+  uint16_t user_layer_bytes = 0;    ///< Bytes of user layer. thers is no user layer if it is 0
   void print() const
   {
     RS_INFO << "------------------------------------------------------" << RS_REND;
@@ -154,6 +155,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "pcap_path: " << pcap_path << RS_REND;
     RS_INFOL << "use_vlan: " << use_vlan << RS_REND;
     RS_INFOL << "use_someip: " << use_someip << RS_REND;
+    RS_INFOL << "user_layer_bytes: " << user_layer_bytes << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 } RSInputParam;

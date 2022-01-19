@@ -48,6 +48,8 @@ public:
   {
     if (input_param.use_someip)
       sock_offset_ += SOME_IP_LEN;
+
+      sock_offset_ += input_param.user_layer_bytes;
   }
 
   virtual bool init();

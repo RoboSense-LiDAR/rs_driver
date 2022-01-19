@@ -46,8 +46,11 @@ public:
   {
     if (input_param.use_vlan)
       pcap_offset_ += VLAN_LEN;
+
     if (input_param.use_someip)
       pcap_offset_ += SOME_IP_LEN;
+
+    pcap_offset_ += input_param.user_layer_bytes;
 
     std::stringstream msop_stream, difop_stream;
     if (input_param_.use_vlan)
