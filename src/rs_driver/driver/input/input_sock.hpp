@@ -158,6 +158,7 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
   int fd;
   int flags;
   int ret;
+  int reuse = 1;
 
   fd = socket(PF_INET, SOCK_DGRAM, 0);
   if (fd < 0)
@@ -174,6 +175,13 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
   if (hostIp != "0.0.0.0" && grpIp == "0.0.0.0")
     inet_pton(AF_INET, hostIp.c_str(), &(host_addr.sin_addr));
 
+  ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+  if (ret < 0)
+  {
+    std::cerr << "setsockopt: " << std::strerror(errno) << std::endl;
+    goto failOption;
+  }
+
   ret = bind(fd, (struct sockaddr*)&host_addr, sizeof(host_addr));
   if (ret < 0)
   {
@@ -183,10 +191,16 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
 
   if (grpIp != "0.0.0.0")
   {
+#if 0
     struct ip_mreqn ipm;
     memset(&ipm, 0, sizeof(ipm));
     inet_pton(AF_INET, grpIp.c_str(), &(ipm.imr_multiaddr));
     inet_pton(AF_INET, hostIp.c_str(), &(ipm.imr_address));
+#else
+    struct ip_mreq ipm;
+    inet_pton(AF_INET, grpIp.c_str(), &(ipm.imr_multiaddr));
+    inet_pton(AF_INET, hostIp.c_str(), &(ipm.imr_interface));
+#endif
     ret = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ipm, sizeof(ipm));
     if (ret < 0)
     {
@@ -208,6 +222,7 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
 failNonBlock:
 failGroup:
 failBind:
+failOption:
   close(fd);
 failSocket:
   return -1;

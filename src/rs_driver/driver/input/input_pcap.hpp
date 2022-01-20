@@ -31,7 +31,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
-
 #include <rs_driver/driver/input/input.hpp>
 
 #include <sstream>
@@ -134,7 +133,9 @@ inline InputPcap::~InputPcap()
   stop();
 
   if (pcap_ != NULL)
+  {
     pcap_close(pcap_);
+  }
 }
 
 inline void InputPcap::recvPacket()
@@ -146,6 +147,8 @@ inline void InputPcap::recvPacket()
     int ret = pcap_next_ex(pcap_, &header, &pkt_data);
     if (ret < 0)  // reach file end.
     {
+      pcap_close(pcap_);
+
       if (input_param_.pcap_repeat)
       {
         excb_(Error(ERRCODE_PCAPREPEAT));
