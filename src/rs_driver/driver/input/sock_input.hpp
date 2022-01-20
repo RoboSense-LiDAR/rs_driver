@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "input.hpp"
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/select.h>
 
 namespace robosense
 {
