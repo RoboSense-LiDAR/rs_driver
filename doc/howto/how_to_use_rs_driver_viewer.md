@@ -32,6 +32,14 @@ Otherwise, the tool need to be start with the absolute path:
 
    Difop port number of LiDAR, the default value is *7788*
 
+- -host
+
+   Host address. 
+
+- -multi_cast
+
+   Destination multi-cast address.
+
 - -type
 
    Typer of LiDAR, the default value is *RS16*
@@ -72,6 +80,12 @@ Otherwise, the tool need to be start with the absolute path:
 
   ```bash
   rs_driver_viewer -msop 9966 -difop 8877 -type RS128 
+  ```
+
+- Online decode a RSM1 LiDAR, which send to a muti-cast group ```224.1.1.1``` and the host address is ```192.168.1.102```.
+
+  ```bash
+  rs_driver_viewer -type RSM1 -host 192.168.1.102 -multi_cast 224.1.1.1
   ```
 
 - Offline decode a RSHELIOS LiDAR with a pcap file.
