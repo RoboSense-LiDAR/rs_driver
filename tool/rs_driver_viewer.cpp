@@ -84,6 +84,10 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
   {
     param.input_param.difop_port = std::stoi(result_str);
   }
+
+  parseArgument(argc, argv, "-host", param.input_param.host_address);
+  parseArgument(argc, argv, "-multi_cast", param.input_param.multi_cast_address);
+
   if (parseArgument(argc, argv, "-x", result_str))
   {
     param.decoder_param.transform_param.x = std::stof(result_str);
@@ -119,6 +123,8 @@ void printHelpMenu()
   RS_MSG << "Arguments are: " << RS_REND;
   RS_MSG << "        -msop             = LiDAR msop port number,the default value is 6699" << RS_REND;
   RS_MSG << "        -difop            = LiDAR difop port number,the default value is 7788" << RS_REND;
+  RS_MSG << "        -host             = LiDAR destination address." << RS_REND;
+  RS_MSG << "        -multi_cast       = LiDAR destination multicast group address." << RS_REND;
   RS_MSG << "        -type             = LiDAR type( RS16, RS32, RSBP, RS128, RS80, RSM1, RSHELIOS, RSROCK ), the "
             "default "
             "value is RS16"
@@ -152,6 +158,10 @@ void printParam(const RSDriverParam& param)
   RS_INFO << param.input_param.msop_port << RS_REND;
   RS_INFOL << "DIFOP Port: ";
   RS_INFO << param.input_param.difop_port << RS_REND;
+  RS_INFOL << "Host Adress: ";
+  RS_INFO << param.input_param.host_address << RS_REND;
+  RS_INFOL << "Multi-cast Group Adress: ";
+  RS_INFO << param.input_param.multi_cast_address << RS_REND;
   RS_INFOL << "LiDAR Type: ";
   RS_INFO << param.lidarTypeToStr(param.lidar_type) << RS_REND;
   RS_INFOL << "Transformation Parameters (x, y, z, roll, pitch, yaw): " << RS_REND;
