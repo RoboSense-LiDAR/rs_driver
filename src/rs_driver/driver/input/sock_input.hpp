@@ -45,12 +45,13 @@ class SockInput : public Input
 {
 public:
   SockInput(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
-    : Input(input_param, excb), sock_offset_(0)
+    : Input(input_param, excb), sock_offset_(0), sock_tail_(0)
   {
     if (input_param.use_someip)
       sock_offset_ += SOME_IP_LEN;
 
       sock_offset_ += input_param.user_layer_bytes;
+      sock_tail_ += input_param.tail_layer_bytes;
   }
 
   virtual bool init();
@@ -65,6 +66,7 @@ private:
 private:
   int fds_[2];
   size_t sock_offset_;
+  size_t sock_tail_;
 };
 
 inline void SockInput::higherThreadPrioty(std::thread::native_handle_type handle)
@@ -255,7 +257,7 @@ inline void SockInput::recvPacket()
         break;
       }
 
-      pkt->setData(sock_offset_, ret - sock_offset_);
+      pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
       pushPacket(pkt);
     }
     else if (FD_ISSET(fds_[1], &rfds))
@@ -266,7 +268,7 @@ inline void SockInput::recvPacket()
       if (ret <= 0)
         break;
 
-      pkt->setData(sock_offset_, ret - sock_offset_);
+      pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
       pushPacket(pkt);
     }
   }

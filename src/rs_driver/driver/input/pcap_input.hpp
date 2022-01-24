@@ -42,7 +42,8 @@ class PcapInput : public Input
 {
 public:
   PcapInput(const RSInputParam& input_param, const std::function<void(const Error&)>& excb, long long msec_to_delay)
-    : Input(input_param, excb), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), difop_filter_valid_(false), msec_to_delay_(msec_to_delay)
+    : Input(input_param, excb), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), pcap_tail_(0), difop_filter_valid_(false), 
+    msec_to_delay_(msec_to_delay)
   {
     if (input_param.use_vlan)
       pcap_offset_ += VLAN_LEN;
@@ -51,6 +52,7 @@ public:
       pcap_offset_ += SOME_IP_LEN;
 
     pcap_offset_ += input_param.user_layer_bytes;
+    pcap_tail_ += input_param.tail_layer_bytes;
 
     std::stringstream msop_stream, difop_stream;
     if (input_param_.use_vlan)
@@ -76,6 +78,7 @@ private:
 private:
   pcap_t* pcap_;
   size_t pcap_offset_;
+  size_t pcap_tail_;
   std::string msop_filter_str_;
   std::string difop_filter_str_;
   bpf_program msop_filter_;
@@ -166,15 +169,15 @@ inline void PcapInput::recvPacket()
     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
     {
       std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
-      memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_);
-      pkt->setData(0, header->len - pcap_offset_);
+      memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_ - pcap_tail_);
+      pkt->setData(0, header->len - pcap_offset_ - pcap_tail_);
       pushPacket(pkt);
     }
     else if (difop_filter_valid_ && (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
     {
       std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
-      memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_);
-      pkt->setData(0, header->len - pcap_offset_);
+      memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_ - pcap_tail_);
+      pkt->setData(0, header->len - pcap_offset_ - pcap_tail_);
       pushPacket(pkt);
     }
     else
