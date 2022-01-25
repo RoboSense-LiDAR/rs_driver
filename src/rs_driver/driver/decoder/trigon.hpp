@@ -91,24 +91,20 @@ public:
 
   float sin(int32_t angle)
   {
-#ifdef DBG
     if (angle < MIN || angle >= MAX)
     {
       return 0.0f;
     }
-#endif
 
     return sins_[angle];
   }
 
   float cos(int32_t angle)
   {
-#ifdef DBG
     if (angle < MIN || angle >= MAX)
     {
-      return 0.0f;
+      return 1.0f;
     }
-#endif
 
     return coss_[angle];
   }

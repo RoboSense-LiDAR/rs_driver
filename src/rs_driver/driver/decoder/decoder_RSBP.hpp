@@ -260,7 +260,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
       if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
       {
-        float x  =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
+        float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
         float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->mech_const_param_.RX * SIN(angle_horiz);
         float z =  distance * SIN(angle_vert) + this->mech_const_param_.RZ;
         this->transformPoint(x, y, z);

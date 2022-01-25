@@ -200,6 +200,7 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   this->fov_blind_ts_diff_ = 
     (float)fov_blind_range / ((float)RS_ONE_ROUND * (float)this->rps_);
 
+  // load angles
   if (!this->param_.config_from_file && !this->angles_ready_)
   {
     int ret = this->chan_angles_.loadFromDifop(pkt.vert_angle_cali, pkt.horiz_angle_cali, 

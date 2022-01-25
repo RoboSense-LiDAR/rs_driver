@@ -70,12 +70,6 @@ public:
       azi += 36000;
     }
 
-    //process myself from illegal azimuth
-    if (azi > 100)
-    {
-      azi = 100;
-    }
-
     return azi;
   }
 
@@ -123,12 +117,6 @@ public:
     if (azi < 0) 
     {
       azi += 36000;
-    }
-
-    //process myself from illegal azimuth
-    if (azi > 100)
-    {
-      azi = 100;
     }
 
     return azi;
@@ -180,12 +168,6 @@ public:
     if (azi < 0) 
     {
       azi += 36000;
-    }
-
-    //process myself from illegal azimuth
-    if (azi > 100)
-    {
-      azi = 100;
     }
 
     return azi;
