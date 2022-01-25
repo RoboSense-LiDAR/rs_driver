@@ -93,7 +93,7 @@ public:
   {
     if (angle < MIN || angle >= MAX)
     {
-      return 0.0f;
+      angle = 0;
     }
 
     return sins_[angle];
@@ -103,7 +103,7 @@ public:
   {
     if (angle < MIN || angle >= MAX)
     {
-      return 1.0f;
+      angle = 0;
     }
 
     return coss_[angle];
