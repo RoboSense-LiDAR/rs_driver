@@ -43,6 +43,7 @@ enum LidarType  ///< LiDAR type
   RS32,
   RSBP,
   RS128,
+  RS128_40,
   RS80,
   RSHELIOS,
   RSROCK,
@@ -194,6 +195,9 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
       case LidarType::RS128:
         str = "RS128";
         break;
+      case LidarType::RS128_40:
+        str = "RS128_40";
+        break;
       case LidarType::RS80:
         str = "RS80";
         break;
@@ -229,6 +233,10 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
     else if (type == "RS128")
     {
       return lidar::LidarType::RS128;
+    }
+    else if (type == "RS128_40")
+    {
+      return lidar::LidarType::RS128_40;
     }
     else if (type == "RS80")
     {

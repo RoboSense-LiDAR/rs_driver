@@ -310,7 +310,7 @@ private:
   std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func);
 
 protected:
-  const LidarConstantParameter lidar_const_param_;
+  LidarConstantParameter lidar_const_param_;
   RSDecoderParam param_;
   RSEchoMode echo_mode_;
   unsigned int pkts_per_frame_;
@@ -642,8 +642,10 @@ inline void DecoderBase<T_Point>::decodeDifopCommon(const uint8_t* pkt, const Li
                                                       (RS_ONE_ROUND - fov_start_angle + fov_end_angle);
   int blocks_per_round =
       (this->lidar_const_param_.PKT_RATE / (this->rpm_ / 60)) * this->lidar_const_param_.BLOCKS_PER_PKT;
+
   this->fov_time_jump_diff_ =
       this->time_duration_between_blocks_ * (fov_range / (RS_ONE_ROUND / static_cast<float>(blocks_per_round)));
+
   if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
   {
     this->pkts_per_frame_ = ceil(2 * this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
@@ -843,6 +845,19 @@ inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const
 {
   switch (type)
   {
+    case LidarType::RS128_40:
+      switch (return_mode)
+      {
+        case 0x00:
+        case 0x01:
+        case 0x02:
+          return RSEchoMode::ECHO_SINGLE;
+        case 0x03:
+        case 0x04:
+        case 0x05:
+        default:
+          return RSEchoMode::ECHO_DUAL;
+      }
     case LidarType::RS128:
     case LidarType::RS80:
     case LidarType::RSHELIOS:
