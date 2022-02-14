@@ -251,25 +251,32 @@ inline void SockInput::recvPacket()
       std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
       pkt->resetData();
       ssize_t ret = recvfrom(fds_[0], pkt->data(), MAX_PKT_LEN, 0, NULL, NULL);
-      if (ret <= 0)
+      if (ret < 0)
       {
-        std::cout << "recv failed" << std::endl;
+        std::cout << "recv packet failed" << std::endl;
         break;
       }
-
-      pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
-      pushPacket(pkt);
+      else if (ret > 0)
+      {
+        pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
+        pushPacket(pkt);
+      }
     }
     else if (FD_ISSET(fds_[1], &rfds))
     {
       std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
       pkt->resetData();
       ssize_t ret = recvfrom(fds_[1], pkt->data(), MAX_PKT_LEN, 0, NULL, NULL);
-      if (ret <= 0)
+      if (ret < 0)
+      {
+        std::cout << "recv packet failed" << std::endl;
         break;
-
-      pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
-      pushPacket(pkt);
+      }
+      else if (ret > 0)
+      {
+        pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
+        pushPacket(pkt);
+      }
     }
   }
 }
