@@ -50,19 +50,9 @@ public:
   void feedPacket(const uint8_t* data, size_t size);
 
   InputRaw(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
-    : Input(input_param, excb), pcap_offset_(ETH_HDR_LEN), difop_filter_valid_(false)
+    : Input(input_param, excb)
   {
   }
-
-private:
-  pcap_t* pcap_;
-  size_t pcap_offset_;
-  std::string msop_filter_str_;
-  std::string difop_filter_str_;
-  bpf_program msop_filter_;
-  bpf_program difop_filter_;
-  bool difop_filter_valid_;
-  long long msec_to_delay_;
 };
 
 inline void InputRaw::feedPacket(const uint8_t* data, size_t size)
