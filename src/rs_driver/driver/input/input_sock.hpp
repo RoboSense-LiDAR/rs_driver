@@ -167,19 +167,21 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
     goto failSocket;
   }
 
+  ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+  if (ret < 0)
+  {
+    std::cerr << "setsockopt: " << std::strerror(errno) << std::endl;
+    goto failOption;
+  }
+
   struct sockaddr_in host_addr;
   memset(&host_addr, 0, sizeof(host_addr));
   host_addr.sin_family = AF_INET;
   host_addr.sin_port = htons(port);
   host_addr.sin_addr.s_addr = INADDR_ANY;
   if (hostIp != "0.0.0.0" && grpIp == "0.0.0.0")
-    inet_pton(AF_INET, hostIp.c_str(), &(host_addr.sin_addr));
-
-  ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
-  if (ret < 0)
   {
-    std::cerr << "setsockopt: " << std::strerror(errno) << std::endl;
-    goto failOption;
+    inet_pton(AF_INET, hostIp.c_str(), &(host_addr.sin_addr));
   }
 
   ret = bind(fd, (struct sockaddr*)&host_addr, sizeof(host_addr));
