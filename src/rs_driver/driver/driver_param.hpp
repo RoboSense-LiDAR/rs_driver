@@ -239,7 +239,6 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   bool pcap_repeat = true;                     ///< true: The pcap bag will repeat play
   float pcap_rate = 1.0f;                      ///< Rate to read the pcap file
   bool use_vlan = false;                       ///< Vlan on-off
-  bool use_someip = false;                     ///< Someip on-off
   uint16_t user_layer_bytes = 0;    ///< Bytes of user layer. thers is no user layer if it is 0
   uint16_t tail_layer_bytes = 0;    ///< Bytes of tail layer. thers is no tail layer if it is 0
 
@@ -255,8 +254,8 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "pcap_rate: " << pcap_rate << RS_REND;
     RS_INFOL << "pcap_repeat: " << pcap_repeat << RS_REND;
     RS_INFOL << "use_vlan: " << use_vlan << RS_REND;
-    RS_INFOL << "use_someip: " << use_someip << RS_REND;
     RS_INFOL << "user_layer_bytes: " << user_layer_bytes << RS_REND;
+    RS_INFOL << "tail_layer_bytes: " << tail_layer_bytes << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 
