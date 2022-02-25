@@ -17,6 +17,7 @@ option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
 #=============================
 #  Compile Features
 #=============================
+option(ENABLE_PCAP_PARSE "Enable PCAP file parse" ON) 
 option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
 option(ENABLE_PUBLISH_RAW_MSG "Publish raw messages" OFF)
 option(ENABLE_PUBLISH_CAM_MSG "Publish camera trigger messages" OFF)
@@ -108,6 +109,11 @@ endif(${ENABLE_TRANSFORM})
 #========================
 #  Build Features
 #========================
+
+if(${ENABLE_PCAP_PARSE})
+  add_definitions("-DENABLE_PCAP_PARSE")
+endif(${ENABLE_PCAP_PARSE})
+
 if(${ENABLE_HIGH_PRIORITY_THREAD})
   add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
 endif(${ENABLE_HIGH_PRIORITY_THREAD})

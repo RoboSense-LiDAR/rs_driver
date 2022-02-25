@@ -33,7 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #include <rs_driver/driver/input/input.hpp>
 #include <rs_driver/driver/input/sock_input.hpp>
+#ifdef ENABLE_PCAP_PARSE
 #include <rs_driver/driver/input/pcap_input.hpp>
+#endif
 
 namespace robosense
 {
@@ -96,12 +98,14 @@ inline std::shared_ptr<Input> InputFactory::createInput(const RSDriverParam& dri
   const RSInputParam& input_param = driver_param.input_param;
   std::shared_ptr<Input> input;
 
+#ifdef ENABLE_PCAP_PARSE
   if (input_param.read_pcap)
   {
     long long msec = msecToDelay(driver_param.lidar_type, input_param.pcap_rate);
     input = std::make_shared<PcapInput>(input_param, excb, msec);
   }
   else
+#endif
   {
     input = std::make_shared<SockInput>(input_param, excb);
   }

@@ -46,10 +46,14 @@ public:
     msec_to_delay_(msec_to_delay)
   {
     if (input_param.use_vlan)
+    {
       pcap_offset_ += VLAN_LEN;
+    }
 
     if (input_param.use_someip)
+    {
       pcap_offset_ += SOME_IP_LEN;
+    }
 
     pcap_offset_ += input_param.user_layer_bytes;
     pcap_tail_ += input_param.tail_layer_bytes;
