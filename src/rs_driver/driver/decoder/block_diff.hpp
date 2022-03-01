@@ -41,7 +41,7 @@ class SingleReturnBlockDiff
 {
 public:
 
-  virtual float ts(uint16_t blk)
+  float ts(uint16_t blk)
   {
     float ret = 0.0f;
     if (blk > 0)
@@ -52,7 +52,7 @@ public:
     return ret;
   }
 
-  virtual int32_t azimuth(uint16_t blk)
+  int32_t azimuth(uint16_t blk)
   {
     int32_t azi= 0;
 

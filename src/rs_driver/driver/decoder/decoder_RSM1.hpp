@@ -156,7 +156,7 @@ private:
   RSEchoMode getEchoMode(uint8_t mode);
 
   uint16_t max_seq_;
-  SplitStrategyBySeq split_;
+  SplitStrategyBySeq split_strategy_;
 };
 
 template <typename T_PointCloud>
@@ -176,6 +176,7 @@ inline RSDecoderConstParam& DecoderRSM1<T_PointCloud>::getConstParam()
       , 0.2f // distance min
       , 200.0f // distance max
       , 0.005f // distance resolution
+      , 80.0f // initial value of temperature 
   };
 
   return param;
@@ -186,7 +187,7 @@ inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param,
       const std::function<void(const Error&)>& excb)
   : Decoder<T_PointCloud>(getConstParam(), param, excb)
   , max_seq_(SINGLE_PKT_NUM)
-  , split_(&max_seq_)
+  , split_strategy_(&max_seq_)
 {
   this->height_ = this->const_param_.CHANNELS_PER_BLOCK;
   this->packet_duration_ = FRAME_DURATION / SINGLE_PKT_NUM;
@@ -222,7 +223,7 @@ inline bool DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   const RSM1MsopPkt& pkt = *(RSM1MsopPkt*)packet;
   bool ret = false;
 
-  this->temperature_ = static_cast<float>(pkt.header.temperature - 80);
+  this->temperature_ = static_cast<float>(pkt.header.temperature - this->const_param_.TEMPERATURE_RES);
 
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
@@ -291,14 +292,15 @@ inline bool DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
     this->prev_point_ts_ = point_time;
   }
 
+  this->prev_pkt_ts_ = pkt_ts;
+
   uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
-  if (split_.newPacket(pkt_seq))
+  if (split_strategy_.newPacket(pkt_seq))
   {
     this->cb_split_frame_(this->height_, this->prev_point_ts_);
     ret = true;
   }
 
-  this->prev_pkt_ts_ = pkt_ts;
   return ret;
 }
 
