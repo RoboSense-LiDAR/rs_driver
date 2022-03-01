@@ -1,4 +1,9 @@
-# Changelog
+# Changelog 
+
+## v1.3.2 - 2022-03-01
+
+### Fixed
+- Fix version to v1.3.2
 
 ## v1.3.1 - 2022-01-27
 
