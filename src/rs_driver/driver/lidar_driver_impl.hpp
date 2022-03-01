@@ -308,6 +308,11 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
   point_cloud_msg.point_cloud_ptr = point_cloud_transform_func_(output_point_cloud_ptr, height);
   point_cloud_msg.height = height;
   point_cloud_msg.width = point_cloud_msg.point_cloud_ptr->size() / point_cloud_msg.height;
+  size_t iter_move = point_cloud_msg.point_cloud_ptr->size() - point_cloud_msg.height * point_cloud_msg.width;
+  for (size_t i = 0; i < iter_move; i++)
+  {
+    point_cloud_msg.point_cloud_ptr->erase(point_cloud_msg.point_cloud_ptr->end());
+  }
   setPointCloudMsgHeader(point_cloud_msg);
   point_cloud_msg.timestamp = scan_msg.timestamp;
   if (point_cloud_msg.point_cloud_ptr->size() == 0)
@@ -415,7 +420,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     PacketMsg pkt = msop_pkt_queue_.popFront();
     int height = 1;
     int ret = lidar_decoder_ptr_->processMsopPkt(pkt.packet.data(), *point_cloud_ptr_, height);
-    scan_ptr_->packets.emplace_back(std::move(pkt));
+    scan_ptr_->packets.emplace_back(pkt);
     if ((ret == DECODE_OK || ret == FRAME_SPLIT))
     {
       if (ret == FRAME_SPLIT)
@@ -423,6 +428,11 @@ inline void LidarDriverImpl<T_Point>::processMsop()
         PointCloudMsg<T_Point> msg(point_cloud_transform_func_(point_cloud_ptr_, height));
         msg.height = height;
         msg.width = point_cloud_ptr_->size() / msg.height;
+        size_t iter_move = point_cloud_ptr_->size() - msg.height * msg.width;
+        for (size_t i = 0; i < iter_move; i++)
+        {
+          point_cloud_ptr_->erase(point_cloud_ptr_->end());
+        }
         setPointCloudMsgHeader(msg);
         if (driver_param_.decoder_param.use_lidar_clock == true)
         {
@@ -446,11 +456,16 @@ inline void LidarDriverImpl<T_Point>::processMsop()
         scan_ptr_.reset(new ScanMsg);
       }
     }
+    else if (ret == DISCARD_PKT)
+    {
+      scan_ptr_->packets.clear();
+      point_cloud_ptr_.reset(new typename PointCloudMsg<T_Point>::PointCloud);
+    }
     else
     {
       reportError(Error(ERRCODE_WRONGPKTHEADER));
-      msop_pkt_queue_.clear();
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      // msop_pkt_queue_.clear();
+      // std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   }
   msop_pkt_queue_.is_task_finished_.store(true);

@@ -3,7 +3,7 @@ cmake_policy(SET CMP0048 NEW)
 if(WIN32)
   cmake_policy(SET CMP0074 NEW)
 endif(WIN32)
-project(rs_driver VERSION 1.3.0)
+project(rs_driver VERSION 1.3.2)
 
 #=============================
 #  Compile Demos&Tools
@@ -86,6 +86,12 @@ include_directories(${Boost_INCLUDE_DIRS})
 list(APPEND EXTERNAL_LIBS ${Boost_LIBRARIES})
 list(APPEND EXTERNAL_LIBS "-lpthread")
 
+# fix pthread missing on ubuntu18.04 or ubuntu20.04
+if(WIN32)
+else()
+  list(APPEND EXTERNAL_LIBS pthread)
+endif(WIN32)
+
 #========================
 #  PCAP
 #========================
@@ -97,6 +103,7 @@ if(WIN32)
 else()
   list(APPEND EXTERNAL_LIBS pcap)
 endif(WIN32)
+
 
 #========================
 #  Eigen

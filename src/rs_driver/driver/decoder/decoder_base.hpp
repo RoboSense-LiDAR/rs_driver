@@ -46,7 +46,7 @@ namespace lidar
   template <typename T>                                                                                                \
   struct has_##member<                                                                                                 \
       T, typename std::enable_if<!std::is_same<decltype(std::declval<T>().member), void>::value, bool>::type>          \
-    : std::true_type                                                                                                   \
+      : std::true_type                                                                                                 \
   {                                                                                                                    \
   };
 #define RS_HAS_MEMBER(C, member) has_##member<C>::value
@@ -59,8 +59,6 @@ DEFINE_MEMBER_CHECKER(timestamp)
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
-constexpr float RS_DIS_RESOLUTION = 0.005;
-constexpr float RS_HELIOS_DIS_RESOLUTION = 0.0025;
 constexpr float RS_ANGLE_RESOLUTION = 0.01;
 constexpr float MICRO = 1000000.0;
 constexpr float NANO = 1000000000.0;
@@ -79,7 +77,8 @@ enum RSDecoderResult
   DECODE_OK = 0,
   FRAME_SPLIT = 1,
   WRONG_PKT_HEADER = -1,
-  PKT_NULL = -2
+  PKT_NULL = -2,
+  DISCARD_PKT = -3
 };
 
 #pragma pack(push, 1)
@@ -94,6 +93,7 @@ typedef struct
   uint16_t LASER_NUM;
   float DSR_TOFFSET;
   float FIRING_FREQUENCY;
+  float DIS_RESOLUTION;
   float RX;
   float RY;
   float RZ;
@@ -280,7 +280,7 @@ public:
   virtual ~DecoderBase() = default;
   virtual RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& point_cloud_vec, int& height);
   virtual RSDecoderResult processDifopPkt(const uint8_t* pkt);
-  virtual void loadCalibrationFile(const std::string& angle_path);
+  virtual void loadAngleFile(const std::string& angle_path);
   virtual void regRecvCallback(const std::function<void(const CameraTrigger&)>& callback);  ///< Camera trigger
   virtual double getLidarTemperature();
   virtual double getLidarTime(const uint8_t* pkt) = 0;
@@ -310,7 +310,7 @@ private:
   std::vector<double> initTrigonometricLookupTable(const std::function<double(const double)>& func);
 
 protected:
-  const LidarConstantParameter lidar_const_param_;
+  LidarConstantParameter lidar_const_param_;
   RSDecoderParam param_;
   RSEchoMode echo_mode_;
   unsigned int pkts_per_frame_;
@@ -335,6 +335,8 @@ protected:
   std::vector<std::function<void(const CameraTrigger&)>> camera_trigger_cb_vec_;
   std::function<double(const uint8_t*)> get_point_time_func_;
   std::function<void(const int&, const uint8_t*)> check_camera_trigger_func_;
+  int lidar_alph0_;  // atan2(Ry, Rx) * 180 / M_PI * 100
+  float lidar_Rxy_;  // sqrt(Rx*Rx + Ry*Ry)
 
 private:
   std::vector<double> cos_lookup_table_;
@@ -379,26 +381,26 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
     this->angle_flag_ = false;
   }
 
+  // even though T_Point does not have timestamp, it gives the timestamp
   /* Point time function*/
-  if (RS_HAS_MEMBER(T_Point, timestamp))  ///< return the timestamp of the first block in one packet
+  // if (RS_HAS_MEMBER(T_Point, timestamp))  ///< return the timestamp of the first block in one packet
+  // {
+  if (this->param_.use_lidar_clock)
   {
-    if (this->param_.use_lidar_clock)
-    {
-      get_point_time_func_ = [this](const uint8_t* pkt) { return getLidarTime(pkt); };
-    }
-    else
-    {
-      get_point_time_func_ = [this](const uint8_t* pkt) {
-        double ret_time =
-            getTime() - (this->lidar_const_param_.BLOCKS_PER_PKT - 1) * this->time_duration_between_blocks_;
-        return ret_time;
-      };
-    }
+    get_point_time_func_ = [this](const uint8_t* pkt) { return getLidarTime(pkt); };
   }
   else
   {
-    get_point_time_func_ = [this](const uint8_t* pkt) { return 0; };
+    get_point_time_func_ = [this](const uint8_t* pkt) {
+      double ret_time = getTime() - (this->lidar_const_param_.BLOCKS_PER_PKT - 1) * this->time_duration_between_blocks_;
+      return ret_time;
+    };
   }
+  // }
+  // else
+  // {
+  //   get_point_time_func_ = [this](const uint8_t* pkt) { return 0; };
+  // }
   /*Camera trigger function*/
   if (param.trigger_param.trigger_map.size() != 0)
   {
@@ -423,6 +425,10 @@ inline DecoderBase<T_Point>::DecoderBase(const RSDecoderParam& param, const Lida
   /* Cos & Sin look-up table*/
   cos_lookup_table_ = initTrigonometricLookupTable([](const double rad) -> double { return std::cos(rad); });
   sin_lookup_table_ = initTrigonometricLookupTable([](const double rad) -> double { return std::sin(rad); });
+
+  /*  Calulate the lidar_alph0 and lidar_Rxy */
+  lidar_alph0_ = std::atan2(lidar_const_param_.RY, lidar_const_param_.RX) * 180 / M_PI * 100;
+  lidar_Rxy_ = std::sqrt(lidar_const_param_.RX * lidar_const_param_.RX + lidar_const_param_.RY * lidar_const_param_.RY);
 }
 
 template <typename T_Point>
@@ -504,7 +510,7 @@ inline double DecoderBase<T_Point>::getLidarTemperature()
 }
 
 template <typename T_Point>
-inline void DecoderBase<T_Point>::loadCalibrationFile(const std::string& angle_path)
+inline void DecoderBase<T_Point>::loadAngleFile(const std::string& angle_path)
 {
   std::string line_str;
   std::ifstream fd_angle(angle_path.c_str(), std::ios::in);
@@ -636,8 +642,10 @@ inline void DecoderBase<T_Point>::decodeDifopCommon(const uint8_t* pkt, const Li
                                                       (RS_ONE_ROUND - fov_start_angle + fov_end_angle);
   int blocks_per_round =
       (this->lidar_const_param_.PKT_RATE / (this->rpm_ / 60)) * this->lidar_const_param_.BLOCKS_PER_PKT;
+
   this->fov_time_jump_diff_ =
       this->time_duration_between_blocks_ * (fov_range / (RS_ONE_ROUND / static_cast<float>(blocks_per_round)));
+
   if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
   {
     this->pkts_per_frame_ = ceil(2 * this->lidar_const_param_.PKT_RATE * 60 / this->rpm_);
@@ -837,6 +845,19 @@ inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const
 {
   switch (type)
   {
+    case LidarType::RS128_40:
+      switch (return_mode)
+      {
+        case 0x00:
+        case 0x01:
+        case 0x02:
+          return RSEchoMode::ECHO_SINGLE;
+        case 0x03:
+        case 0x04:
+        case 0x05:
+        default:
+          return RSEchoMode::ECHO_DUAL;
+      }
     case LidarType::RS128:
     case LidarType::RS80:
     case LidarType::RSHELIOS:
@@ -869,6 +890,8 @@ inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const
         default:
           return RSEchoMode::ECHO_SINGLE;
       }
+    case LidarType::RSROCK:  // TODO
+      return RSEchoMode::ECHO_SINGLE;
   }
   return RSEchoMode::ECHO_SINGLE;
 }

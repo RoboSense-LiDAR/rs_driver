@@ -30,6 +30,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
+#pragma once
 #include <rs_driver/driver/decoder/decoder_base.hpp>
 
 namespace robosense
@@ -68,7 +69,7 @@ typedef struct
   RSTimestampUTC timestamp;
   uint8_t reserved[10];
   uint8_t lidar_type;
-  uint8_t temperature;
+  int8_t temperature;
 } RSM1MsopHeader;
 
 typedef struct
@@ -208,6 +209,7 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
   {
     return RSDecoderResult::WRONG_PKT_HEADER;
   }
+  this->current_temperature_ = static_cast<float>(mpkt_ptr->header.temperature - 80);
   this->protocol_ver_ = RS_SWAP_SHORT(mpkt_ptr->header.protocol_version);
   double pkt_timestamp = 0;
   switch (mpkt_ptr->blocks[0].return_seq)
@@ -226,12 +228,12 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
 
   for (size_t blk_idx = 0; blk_idx < this->lidar_const_param_.BLOCKS_PER_PKT; blk_idx++)
   {
-    RSM1Block blk = mpkt_ptr->blocks[blk_idx];
+    const RSM1Block& blk = mpkt_ptr->blocks[blk_idx];
     double point_time = pkt_timestamp + blk.time_offset * 1e-6;
     for (size_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
       T_Point point;
-      float distance = RS_SWAP_SHORT(blk.channel[channel_idx].distance) * RS_DIS_RESOLUTION;
+      float distance = RS_SWAP_SHORT(blk.channel[channel_idx].distance) * this->lidar_const_param_.DIS_RESOLUTION;
       if (distance <= this->param_.max_distance && distance >= this->param_.min_distance)
       {
         int pitch = RS_SWAP_SHORT(blk.channel[channel_idx].pitch) - ANGLE_OFFSET;
@@ -259,6 +261,8 @@ inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
     }
   }
   unsigned int pkt_cnt = RS_SWAP_SHORT(mpkt_ptr->header.pkt_cnt);
+
+  // TODO whatif packet loss or seq unorder
   if (pkt_cnt == max_pkt_num_ || pkt_cnt < last_pkt_cnt_)
   {
     last_pkt_cnt_ = 1;

@@ -30,6 +30,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
+#pragma once
 #include <rs_driver/driver/decoder/decoder_base.hpp>
 namespace robosense
 {
@@ -169,11 +170,13 @@ inline RSDecoderResult DecoderRS32<T_Point>::decodeMsopPkt(const uint8_t* pkt, s
     azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
     for (int channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
-      float azi_channel_ori = cur_azi + azi_diff * this->lidar_const_param_.FIRING_FREQUENCY *
-                                            this->lidar_const_param_.DSR_TOFFSET *
-                                            static_cast<float>(2 * (channel_idx % 16) + (channel_idx / 16));
+      float azi_channel_ori = cur_azi +
+                              azi_diff * this->lidar_const_param_.FIRING_FREQUENCY *
+                                  this->lidar_const_param_.DSR_TOFFSET *
+                                  static_cast<float>(2 * (channel_idx % 16) + (channel_idx / 16));
       int azi_channel_final = this->azimuthCalibration(azi_channel_ori, channel_idx);
-      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) * RS_DIS_RESOLUTION;
+      float distance = RS_SWAP_SHORT(mpkt_ptr->blocks[blk_idx].channels[channel_idx].distance) *
+                       this->lidar_const_param_.DIS_RESOLUTION;
       int angle_horiz = static_cast<int>(azi_channel_ori + RS_ONE_ROUND) % RS_ONE_ROUND;
       int angle_vert = ((this->vert_angle_list_[channel_idx]) + RS_ONE_ROUND) % RS_ONE_ROUND;
 

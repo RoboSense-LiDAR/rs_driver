@@ -1,4 +1,33 @@
-# Changelog
+# Changelog 
+
+## v1.3.2 - 2022-03-01
+
+### Fixed
+- Fix version to v1.3.2
+
+## v1.3.1 - 2022-01-27
+
+### Added
+- Support the Ruby 4.0 Lidar
+- Add vlan support with the PCAP file
+- Add SOME/IP support
+- Add split frame when pkt_cnt < last_pkt_cnt in mems
+- Add temperature in mems
+- Add ROCK support
+- Support to bind the receiving socket to the specified ip
+- Join multicast group with code instead of shell script
+- Allow msop socket and difop socket to receive via same port.
+
+### Fixed
+- Fix don't get time when PointType doesn't have timestamp member
+- Fix ROCK light center compensation algorithm
+- Fix incorrect delay while playing pcap file with multicast lidars
+
+### Removed
+- Remove redundance condition code in vec.emplace_back(std::move(point)) in mech lidars
+
+
+
 
 ## v1.3.0 - 2020-11-10
 

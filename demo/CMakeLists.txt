@@ -8,12 +8,14 @@ add_executable(demo_online
               demo_online.cpp
               )
 target_link_libraries(demo_online
+                    pthread
                     ${EXTERNAL_LIBS}       
 )
 add_executable(demo_pcap
               demo_pcap.cpp
               )
 target_link_libraries(demo_pcap
+                    pthread
                 ${EXTERNAL_LIBS}       
 )
 
