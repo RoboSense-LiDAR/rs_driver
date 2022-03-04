@@ -126,7 +126,7 @@ inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pk
       }
     }
 
-    //azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
+    azi_diff = (azi_diff > 100) ? this->azi_diff_between_block_theoretical_ : azi_diff;
 
     for (uint16_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
     {
