@@ -108,9 +108,9 @@ inline DecoderRSHELIOS<T_Point>::DecoderRSHELIOS(const RSDecoderParam& param,
   this->vert_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
   this->hori_angle_list_.resize(this->lidar_const_param_.LASER_NUM);
   this->beam_ring_table_.resize(this->lidar_const_param_.LASER_NUM);
-  if (this->param_.max_distance > 100.0f)
+  if (this->param_.max_distance > 150.0f)
   {
-    this->param_.max_distance = 100.0f;
+    this->param_.max_distance = 150.0f;
   }
   if (this->param_.min_distance < 0.1f || this->param_.min_distance > this->param_.max_distance)
   {
