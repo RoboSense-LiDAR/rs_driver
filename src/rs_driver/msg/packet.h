@@ -45,6 +45,14 @@ public:
     buf_ = (uint8_t*)malloc(cap);
   }
 
+  ~Packet()
+  {
+    if (buf_ != NULL)
+    {
+      free(buf_);
+    }
+  }
+
   void setData(size_t off, size_t len)
   {
     off_ = off;
