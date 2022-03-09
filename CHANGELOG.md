@@ -1,14 +1,30 @@
 # Changelog
 
+## v1.4.5 - 2022-03-09
+
+### Added
+- Support dense attribute
+- Support to bind to a specifed ip
+- Limit max size of packet queue
+- Apply SO_REUSEADDR option to the receiving socket
+- Support user layer and tail layer
+- add macro option to disable the PCAP function.
+
+### Changed
+- Join multicast group with code instead of shell script
+
+### Fixed
+- Fix memory leaks problem
+- Fix temperature calculation (for M1 only)
+
 ## v1.4.0 - 2021-11-01
 
 ### Changed
-
 Optimazation to decrease CPU uage, includes: 
-- replace point with point cloud as template parameter
-- instead of alloc/free packet, use packet pool
-- instead of alloc/free point cloud, always keep point cloud memory
-- by default, use conditional macro to disable scan_msg/camera_trigger related code
+- Replace point with point cloud as template parameter
+- Instead of alloc/free packet, use packet pool
+- Instead of alloc/free point cloud, always keep point cloud memory
+- By default, use conditional macro to disable scan_msg/camera_trigger related code
 
 ## V1.3.1
 ### Added
