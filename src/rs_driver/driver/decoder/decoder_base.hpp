@@ -724,6 +724,8 @@ inline double DecoderBase<T_Point>::calculateTimeYMD(const uint8_t* pkt)
 #ifdef _MSC_VER
   long timezone = 0;
   _get_timezone(&timezone);
+#else
+  tzset();
 #endif
   const T_Msop* mpkt_ptr = reinterpret_cast<const T_Msop*>(pkt);
   std::tm stm;
