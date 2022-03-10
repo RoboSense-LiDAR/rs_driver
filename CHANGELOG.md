@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.5.0 - 2022-03-09
+
+### Changed
+- refactory the decoder part
+
 ## v1.4.0 - 2021-11-01
 
 ### Changed
