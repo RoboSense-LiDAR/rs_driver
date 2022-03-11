@@ -26,11 +26,11 @@ Run the tool.
 
 - -msop
 
-   Msop port number of LiDAR, the default value is *6699*
+   MSOP port number of LiDAR, the default value is *6699*
 
 - -difop
 
-   Difop port number of LiDAR, the default value is *7788*
+   DIFOP port number of LiDAR, the default value is *7788*
    
 - -host
 
@@ -42,11 +42,11 @@ Run the tool.
 
 - -pcap
 
-   The absolute pcap file path. If this argument is empty, the driver read packets from online-lidar, else from the pcap file. 
+   Full path of the PCAP file. If this argument is empty, the driver read packets from online Lidar, else from the PCAP file. 
 
 - -type
 
-   Typer of LiDAR, the default value is *RS16*
+   LiDAR type, the default value is *RS16*
 
 - -x
 
@@ -74,17 +74,17 @@ Run the tool.
 
 Note:
 
-**The point cloud transformation function can only be available if the cmake option ENABLE_TRANSFORM=ON.**
+**The point cloud transformation function is available only if the CMake option ENABLE_TRANSFORM is ON.**
 
 ## 3 Examples
 
-- Decode from an online RS128 LiDAR, whose msop port is ```9966``` and difop port is ```8877```
+- Decode from an online RS128 LiDAR. Its MSOP port is ```9966```, and difop port is ```8877```
 
   ```bash
   rs_driver_viewer -msop 9966 -difop 8877 -type RS128 
   ```
 
-- Decode from a pcap file with RSHELIOS LiDAR data.
+- Decode from a PCAP file with RSHELIOS LiDAR data.
 
   ```bash
   rs_driver_viewer -pcap /home/robosense/helios.pcap -type RSHELIOS
