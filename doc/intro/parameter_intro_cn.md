@@ -127,11 +127,11 @@ RSInputParam指定rs_driver得到有关雷达的Packet源的参数。
 + msop_port - 指定主机上的本地UDP端口，接收MSOP Packet
 + difop_port - 指定主机上的本地UDP端口，接收DIFOP Packet
 
-如下雷达仅针对ONLINE_LIDAR。
+如下参数仅针对ONLINE_LIDAR。
 + host_address - 指定本地的IP地址，接收MSOP/DIFOP Packet
 + group_address - 指定一个组播组。rs_driver将`host_address`指定的网卡加入这个组播组，以便接收MSOP/DIFOP Packet。
 
-如下雷达仅针对PCAP_FILE。
+如下参数仅针对PCAP_FILE。
 + pcap_path - PCAP文件的全路径
 + pcap_repeat - 指定是否重复播放PCAP文件
 + pcap_rate - rs_driver按`理论上的雷达帧率`播放PCAP文件。`pcap_rate`可以在这个速度上指定一个比例值，加快/放慢播放速度。
