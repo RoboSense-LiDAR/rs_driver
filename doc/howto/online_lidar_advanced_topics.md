@@ -1,8 +1,8 @@
-# Online Lidar - Adavanced Topics
+# Online Lidar - Advanced Topics
 
 ## 1 Introduction
 
- The RoboSense Lidars may work in unicast/multicast/broadcast mode, with VLAN layer and with user layers.
+ The RoboSense Lidar may work in unicast/multicast/broadcast mode, with VLAN layer and with user layers.
 
 This document illustrates how to configure the driver in each case.
 
@@ -51,7 +51,7 @@ param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 
 The Lidar may also works in multicast mode.
 + The lidar sends to `224.1.1.1`:`6699` 
-+ The host binds to port 6699. And it makes local NIC (Network Interface Card) join the multicast group `224.1.1.1`. The local NIC's IP is `192.168.1.102`.
++ The host binds to port `6699`. And it makes local NIC (Network Interface Card) join the multicast group `224.1.1.1`. The local NIC's IP is `192.168.1.102`.
 
 ![](../img/12_multicast.png)
 
