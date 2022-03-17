@@ -72,7 +72,6 @@ typedef struct RSDecoderParam
   uint16_t num_blks_split = 1;
   float start_angle = 0.0f;
   float end_angle = 360.0f;
-
 } RSDecoderParam;
 ```
 

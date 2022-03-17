@@ -20,11 +20,12 @@
 
 **rs_driver** is compatible with the following platforms and compilers: 
 
+- Ubuntu (16.04, 18.04)
+  - gcc (4.8+)
+
 - Windows
   - MSVC ( tested with VC2017 and VC2019)
   - Mingw-w64 (tested with x86_64-8.1.0-posix-seh-rt_v6-rev0 )
-- Ubuntu (16.04, 18.04)
-  - gcc (4.8+)
 
 ## 4 Dependency Libraries
 
