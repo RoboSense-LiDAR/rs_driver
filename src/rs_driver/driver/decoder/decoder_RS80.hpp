@@ -242,8 +242,7 @@ inline bool DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     }
 
     int32_t block_az = ntohs(block.azimuth);
-    block_ts += diff.ts(blk);
-    int32_t block_azi_diff = diff.azimuth(blk);
+    int32_t block_az_diff = diff.azimuth(blk);
 
     if (this->split_strategy_->newBlock(block_az))
     {
@@ -257,7 +256,7 @@ inline bool DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
       double chan_ts = block_ts + this->mech_const_param_.CHAN_TSS[chan];
       int32_t angle_horiz = block_az + 
-        (int32_t)((float)block_azi_diff * this->mech_const_param_.CHAN_AZIS[chan]);
+        (int32_t)((float)block_az_diff * this->mech_const_param_.CHAN_AZIS[chan]);
 
       int32_t angle_vert = this->chan_angles_.vertAdjust(chan);
       int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
@@ -295,6 +294,8 @@ inline bool DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
       this->prev_point_ts_ = chan_ts;
     }
+
+    block_ts += diff.ts(blk);
   }
 
   this->prev_pkt_ts_ = pkt_ts;

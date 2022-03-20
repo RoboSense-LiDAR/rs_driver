@@ -43,34 +43,28 @@ public:
 
   float ts(uint16_t blk)
   {
-    float ret = 0.0f;
-    if (blk > 0)
-    {
-      ret = BLOCK_DURATION;
-    }
-
-    return ret;
+    return BLOCK_DURATION;
   }
 
   int32_t azimuth(uint16_t blk)
   {
-    int32_t azi= 0;
+    int32_t az = 0;
 
     if (blk < (BLOCKS_PER_PKT - 1))
     {
-      azi = ntohs(this->pkt_.blocks[blk+1].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
+      az = ntohs(this->pkt_.blocks[blk+1].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
     }
     else
     {
-      azi = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-1].azimuth);
+      az = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-1].azimuth);
     }
     
-    if (azi < 0) 
+    if (az < 0) 
     {
-      azi += 36000;
+      az += 36000;
     }
 
-    return azi;
+    return az;
   }
 
   SingleReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
@@ -91,35 +85,35 @@ public:
 
   float ts(uint16_t blk)
   {
-    float ret = 0.0f;
-
-    if ((blk % 2 == 0) && (blk != 0))
+    if ((blk % 2) == 0)
     {
-      ret = BLOCK_DURATION;
+      return 0.0f;
     }
-
-    return ret;
+    else
+    {
+      return BLOCK_DURATION;
+    }
   }
 
   int32_t azimuth(uint16_t blk)
   {
-    int32_t azi = 0;
+    int32_t az = 0;
 
     if (blk >= (BLOCKS_PER_PKT - 2))
     {
-      azi = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-2].azimuth);
+      az = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-2].azimuth);
     }
     else
     {
-      azi = ntohs(this->pkt_.blocks[blk+2].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
+      az = ntohs(this->pkt_.blocks[blk+2].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
     }
 
-    if (azi < 0) 
+    if (az < 0) 
     {
-      azi += 36000;
+      az += 36000;
     }
 
-    return azi;
+    return az;
   }
 
   DualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
@@ -144,14 +138,14 @@ public:
 
     if (ntohs(pkt_.blocks[0].azimuth) == ntohs(pkt_.blocks[1].azimuth)) // AAB
     {
-      if (blk == 2) 
+      if (blk == 1) 
       {
         ret = BLOCK_DURATION;
       }
     }
     else  // ABB
     {
-      if (blk == 1) 
+      if (blk == 0) 
       {
         ret = BLOCK_DURATION;
       }
@@ -162,15 +156,15 @@ public:
 
   int32_t azimuth(uint16_t blk)
   {
-    int32_t azi = 
+    int32_t az = 
       ntohs(pkt_.blocks[2].azimuth) - ntohs(pkt_.blocks[0].azimuth);
 
-    if (azi < 0) 
+    if (az < 0) 
     {
-      azi += 36000;
+      az += 36000;
     }
 
-    return azi;
+    return az;
   }
 
   ABDualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)

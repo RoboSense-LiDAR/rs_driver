@@ -92,7 +92,7 @@ protected:
   uint16_t rps_; // rounds per second
   uint16_t blks_per_frame_; // blocks per frame/round
   uint16_t split_blks_per_frame_; // blocks in msop pkt per frame/round. 
-  uint16_t block_azi_diff_; // azimuth difference between adjacent blocks.
+  uint16_t block_az_diff_; // azimuth difference between adjacent blocks.
   float fov_blind_ts_diff_; // timestamp difference across blind section(defined by fov)
 
   int lidar_alph0_;  // lens center related
@@ -110,7 +110,7 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& con
   , rps_(10)
   , blks_per_frame_(1/(10*this->mech_const_param_.BLOCK_DURATION))
   , split_blks_per_frame_(blks_per_frame_)
-  , block_azi_diff_(20)
+  , block_az_diff_(20)
   , fov_blind_ts_diff_(0)
 {
   this->height_ = this->const_param_.CHANNELS_PER_BLOCK;
@@ -162,7 +162,7 @@ inline void DecoderMech<T_PointCloud>::print()
     << "echo_mode:\t\t" << this->echo_mode_ << std::endl
     << "blks_per_frame:\t\t" << this->blks_per_frame_ << std::endl
     << "split_blks_per_frame:\t" << this->split_blks_per_frame_ << std::endl
-    << "block_azi_diff:\t\t" << this->block_azi_diff_ << std::endl
+    << "block_az_diff:\t\t" << this->block_az_diff_ << std::endl
     << "fov_blind_ts_diff:\t" << this->fov_blind_ts_diff_ << std::endl
     << "angle_from_file:\t" << this->param_.config_from_file << std::endl
     << "angles_ready:\t\t" << this->angles_ready_ << std::endl;
@@ -186,7 +186,7 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   this->blks_per_frame_ = 1 / (this->rps_ * this->mech_const_param_.BLOCK_DURATION);
 
   // block diff of azimuth
-  this->block_azi_diff_ = 
+  this->block_az_diff_ = 
     std::round(RS_ONE_ROUND * this->rps_ * this->mech_const_param_.BLOCK_DURATION);
 
   // fov related

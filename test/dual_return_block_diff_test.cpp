@@ -68,9 +68,9 @@ TEST(TestDualPacketTraverser, toNext)
   // first block
   ASSERT_EQ(diff.ts(0), 0.0f);
   // still first block
-  ASSERT_EQ(diff.ts(1), 0.0f);
+  ASSERT_EQ(diff.ts(1), 0.5f);
   // second block
-  ASSERT_EQ(diff.ts(2), 0.5f);
+  ASSERT_EQ(diff.ts(2), 0.0f);
 
   // first block
   ASSERT_EQ(diff.azimuth(0), 20);

@@ -63,7 +63,7 @@ TEST(TestSingleReturnBlockDiff, ctor)
       const_param.base.BLOCKS_PER_PKT, const_param.BLOCK_DURATION);
 
   // first block
-  ASSERT_EQ(diff.ts(0), 0.0f);
+  ASSERT_EQ(diff.ts(0), 0.5f);
   // second block
   ASSERT_EQ(diff.ts(1), 0.5f);
 
