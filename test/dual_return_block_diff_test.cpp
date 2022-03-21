@@ -23,35 +23,8 @@ typedef struct
   MyBlock blocks[6];
 } MyPacket;
 
-TEST(TestDualPacketTraverser, toNext)
+TEST(TestDualPacketTraverser, ctor)
 {
-  RSDecoderMechConstParam const_param = 
-  {
-    0
-    , 0
-    , 0
-    , 0
-    , {0x00} // msop id
-    , {0x00} // difop id
-    , {0x00} // block id
-    , 6 // blocks per packet
-    , 2 // channels per block
-    , 0.0f // distance min
-    , 0.0f // distance max
-    , 0.25 // distance resolution
-    , 0.0 // temperature resolution
-
-    // lens center
-    , 0 // RX
-    , 0 // RY
-    , 0 // RZ
-
-    // firing_ts
-    , 0.50 // block_duration
-    , {0.0,  0.25} // chan_tss
-    , {0.0} // chan_azis
-  };
-
   MyPacket pkt = 
   {
           htons(1), 0x00, 0x00, 0x00, 0x00 
@@ -63,22 +36,89 @@ TEST(TestDualPacketTraverser, toNext)
   };
 
   DualReturnBlockDiff<MyPacket> diff(pkt, 
-      const_param.base.BLOCKS_PER_PKT, const_param.BLOCK_DURATION);
+      6,     // blocks per packet
+      0.5f,  // block_duration
+      25,    // block_az_duraton
+      2.0f); // fov_blind_duration
+
+  int32_t az_diff;
+  float ts;
 
   // first block
-  ASSERT_EQ(diff.ts(0), 0.0f);
-  // still first block
-  ASSERT_EQ(diff.ts(1), 0.5f);
+  diff.getDiff (0, az_diff, ts);
+  ASSERT_EQ(az_diff, 20);
+  ASSERT_EQ(ts, 0.0f);
+
   // second block
-  ASSERT_EQ(diff.ts(2), 0.0f);
+  diff.getDiff (1, az_diff, ts);
+  ASSERT_EQ(az_diff, 20);
+  ASSERT_EQ(ts, 0.0f);
+
+  // third block
+  diff.getDiff (2, az_diff, ts);
+  ASSERT_EQ(az_diff, 30);
+  ASSERT_EQ(ts, 0.5f);
+
+  // last block
+  diff.getDiff (4, az_diff, ts);
+  ASSERT_EQ(az_diff, 25);
+  ASSERT_EQ(ts, 1.0f);
+
+  // last block
+  diff.getDiff (5, az_diff, ts);
+  ASSERT_EQ(az_diff, 25);
+  ASSERT_EQ(ts, 1.0f);
+}
+
+TEST(TestDualPacketTraverser, ctor_fov)
+{
+  MyPacket pkt = 
+  {
+          htons(1), 0x00, 0x00, 0x00, 0x00 
+      ,   htons(1), 0x00, 0x00, 0x00, 0x00 
+      ,  htons(21), 0x00, 0x00, 0x00, 0x00
+      ,  htons(21), 0x00, 0x00, 0x00, 0x00
+      ,  htons(141), 0x00, 0x00, 0x00, 0x00
+      ,  htons(141), 0x00, 0x00, 0x00, 0x00
+  };
+
+  DualReturnBlockDiff<MyPacket> diff(pkt, 
+      6,     // blocks per packet
+      0.5f,  // block_duration
+      25,    // block_az_duraton
+      2.0f); // fov_blind_duration
+
+  int32_t az_diff;
+  float ts;
 
   // first block
-  ASSERT_EQ(diff.azimuth(0), 20);
-  // still frist block
-  ASSERT_EQ(diff.azimuth(1), 20);
+  diff.getDiff (0, az_diff, ts);
+  ASSERT_EQ(az_diff, 20);
+  ASSERT_EQ(ts, 0.0f);
+
+  // second block
+  diff.getDiff (1, az_diff, ts);
+  ASSERT_EQ(az_diff, 20);
+  ASSERT_EQ(ts, 0.0f);
+
+  // third block
+  diff.getDiff (2, az_diff, ts);
+  ASSERT_EQ(az_diff, 25);
+  ASSERT_EQ(ts, 0.5f);
+
+  // fourth block
+  diff.getDiff (2, az_diff, ts);
+  ASSERT_EQ(az_diff, 25);
+  ASSERT_EQ(ts, 0.5f);
+
   // last block
-  ASSERT_EQ(diff.azimuth(4), 30);
+  diff.getDiff (4, az_diff, ts);
+  ASSERT_EQ(az_diff, 25);
+  ASSERT_EQ(ts, 2.5f);
+
   // last block
-  ASSERT_EQ(diff.azimuth(5), 30);
+  diff.getDiff (5, az_diff, ts);
+  ASSERT_EQ(az_diff, 25);
+  ASSERT_EQ(ts, 2.5f);
 }
 

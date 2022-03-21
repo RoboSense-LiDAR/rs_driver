@@ -232,7 +232,8 @@ inline bool DecoderRS128<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
     }
   }
 
-  T_BlockDiff diff(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION);
+  T_BlockDiff diff(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION,
+      this->block_az_diff_, this->fov_blind_ts_diff_);
 
   double block_ts = pkt_ts;
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
@@ -246,7 +247,10 @@ inline bool DecoderRS128<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
     }
 
     int32_t block_az = ntohs(block.azimuth);
-    int32_t block_az_diff = diff.azimuth(blk);
+
+    int32_t block_az_diff;
+    float block_ts_off;
+    diff.getDiff(blk, block_az_diff, block_ts_off);
 
     if (this->split_strategy_->newBlock(block_az))
     {
@@ -258,7 +262,7 @@ inline bool DecoderRS128<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
     {
       const RSChannel& channel = block.channels[chan]; 
 
-      double chan_ts = block_ts + this->mech_const_param_.CHAN_TSS[chan];
+      double chan_ts = block_ts + block_ts_off + this->mech_const_param_.CHAN_TSS[chan];
       int32_t angle_horiz = block_az + 
         (int32_t)((float)block_az_diff * this->mech_const_param_.CHAN_AZIS[chan]);
 
@@ -298,8 +302,6 @@ inline bool DecoderRS128<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
 
       this->prev_point_ts_ = chan_ts;
     }
-
-    block_ts += diff.ts(blk);
   }
 
   this->prev_pkt_ts_ = pkt_ts;

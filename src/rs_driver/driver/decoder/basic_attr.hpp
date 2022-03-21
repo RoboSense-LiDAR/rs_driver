@@ -98,8 +98,6 @@ inline void createTimeUTCWithNs(uint64_t us, RSTimestampUTC* tsUtc)
   uint64_t sec  = us / 1000000;
   uint64_t nsec = (us % 1000000) * 1000;
 
-  std::cout << std::hex << "usec:" << nsec << std::endl;
-
   for (int i = 5; i >= 0; i--)
   {
     tsUtc->sec[i] = sec & 0xFF;

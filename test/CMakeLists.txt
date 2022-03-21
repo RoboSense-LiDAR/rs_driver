@@ -20,10 +20,10 @@ add_executable(rs_driver_test
               split_strategy_test.cpp
               single_return_block_diff_test.cpp
               dual_return_block_diff_test.cpp
+              ab_dual_return_block_diff_test.cpp
               decoder_test.cpp
               decoder_rsbp_test.cpp
               decoder_rs32_test.cpp)
-              
 
 target_link_libraries(rs_driver_test
                       ${GTEST_LIBRARIES}

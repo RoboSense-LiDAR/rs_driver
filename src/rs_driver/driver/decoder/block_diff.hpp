@@ -37,38 +37,20 @@ namespace lidar
 {
 
 template <typename T_Packet>
-class SingleReturnBlockDiff
+class BlockDiff
 {
 public:
 
-  float ts(uint16_t blk)
+  void getDiff(uint16_t blk, int32_t& az_diff, float& ts)
   {
-    return BLOCK_DURATION;
+    az_diff = az_diffs[blk];
+    ts = tss[blk];
   }
 
-  int32_t azimuth(uint16_t blk)
-  {
-    int32_t az = 0;
-
-    if (blk < (BLOCKS_PER_PKT - 1))
-    {
-      az = ntohs(this->pkt_.blocks[blk+1].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
-    }
-    else
-    {
-      az = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-1].azimuth);
-    }
-    
-    if (az < 0) 
-    {
-      az += 36000;
-    }
-
-    return az;
-  }
-
-  SingleReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
-    : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration)
+  BlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration, 
+      uint16_t block_az_duration, float fov_blind_duration)
+    : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration), 
+    BLOCK_AZ_DURATION(block_az_duration), FOV_BLIND_DURATION(fov_blind_duration) 
   {
   }
 
@@ -76,106 +58,123 @@ protected:
   const T_Packet& pkt_;
   const uint16_t BLOCKS_PER_PKT;
   const double BLOCK_DURATION;
+  const uint16_t BLOCK_AZ_DURATION;
+  const float FOV_BLIND_DURATION;
+  int32_t az_diffs[128];
+  float tss[128];
 };
 
 template <typename T_Packet>
-class DualReturnBlockDiff
+class SingleReturnBlockDiff : public BlockDiff<T_Packet>
 {
 public:
 
-  float ts(uint16_t blk)
+  SingleReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration, 
+      uint16_t block_az_duration, float fov_blind_duration)
+    : BlockDiff<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration) 
   {
-    if ((blk % 2) == 0)
+    float tss = 0;
+    uint16_t blk = 0;
+    for (; blk < (this->BLOCKS_PER_PKT - 1); blk++)
     {
-      return 0.0f;
+      float ts_diff = this->BLOCK_DURATION;
+      int32_t az_diff = ntohs(this->pkt_.blocks[blk+1].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
+      if (az_diff < 0) { az_diff += 36000; }
+
+      // Skip FOV blind zone 
+      if (az_diff > 100)
+      {
+        az_diff = this->BLOCK_AZ_DURATION;
+        ts_diff = this->FOV_BLIND_DURATION;
+      }
+
+      this->az_diffs[blk] = az_diff;
+      this->tss[blk] = tss;
+
+      tss += ts_diff;
     }
-    else
-    {
-      return BLOCK_DURATION;
-    }
+
+    this->az_diffs[blk] = this->BLOCK_AZ_DURATION;
+    this->tss[blk] = tss;
   }
-
-  int32_t azimuth(uint16_t blk)
-  {
-    int32_t az = 0;
-
-    if (blk >= (BLOCKS_PER_PKT - 2))
-    {
-      az = ntohs(this->pkt_.blocks[blk].azimuth) - ntohs(this->pkt_.blocks[blk-2].azimuth);
-    }
-    else
-    {
-      az = ntohs(this->pkt_.blocks[blk+2].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
-    }
-
-    if (az < 0) 
-    {
-      az += 36000;
-    }
-
-    return az;
-  }
-
-  DualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
-    : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration)
-  {
-  }
-
-protected:
-  const T_Packet& pkt_;
-  const uint16_t BLOCKS_PER_PKT;
-  const double BLOCK_DURATION;
 };
 
 template <typename T_Packet>
-class ABDualReturnBlockDiff
+class DualReturnBlockDiff : public BlockDiff<T_Packet>
 {
 public:
 
-  float ts(uint16_t blk)
+  DualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration,
+      uint16_t block_az_duration, float fov_blind_duration)
+    : BlockDiff<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration) 
   {
-    float ret = 0.0f;
-
-    if (ntohs(pkt_.blocks[0].azimuth) == ntohs(pkt_.blocks[1].azimuth)) // AAB
+    float tss = 0;
+    uint16_t blk = 0;
+    for (; blk < (this->BLOCKS_PER_PKT - 2); blk = blk + 2)
     {
-      if (blk == 1) 
+      float ts_diff = this->BLOCK_DURATION;
+      int32_t az_diff = ntohs(this->pkt_.blocks[blk+2].azimuth) - ntohs(this->pkt_.blocks[blk].azimuth);
+      if (az_diff < 0) { az_diff += 36000; }
+
+      //  Skip FOV blind zone
+      if (az_diff > 100)
       {
-        ret = BLOCK_DURATION;
+        az_diff = this->BLOCK_AZ_DURATION;
+        ts_diff = this->FOV_BLIND_DURATION;
       }
-    }
-    else  // ABB
-    {
-      if (blk == 0) 
-      {
-        ret = BLOCK_DURATION;
-      }
+
+      this->az_diffs[blk] = this->az_diffs[blk+1] = az_diff;
+      this->tss[blk] = this->tss[blk+1] = tss;
+
+      tss += ts_diff;
     }
 
-    return ret;
+    this->az_diffs[blk] = this->az_diffs[blk+1] = this->BLOCK_AZ_DURATION;
+    this->tss[blk] = this->tss[blk+1] = tss;
   }
+};
 
-  int32_t azimuth(uint16_t blk)
+template <typename T_Packet>
+class ABDualReturnBlockDiff : public BlockDiff<T_Packet>
+{
+public:
+
+  ABDualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration,
+      uint16_t block_az_duration, float fov_blind_duration)
+    : BlockDiff<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration) 
   {
-    int32_t az = 
-      ntohs(pkt_.blocks[2].azimuth) - ntohs(pkt_.blocks[0].azimuth);
+    float ts_diff = this->BLOCK_DURATION;
+    int32_t az_diff = ntohs(this->pkt_.blocks[2].azimuth) - ntohs(this->pkt_.blocks[0].azimuth);
+    if (az_diff < 0) { az_diff += 36000; }
 
-    if (az < 0) 
+    //  Skip FOV blind zone
+    if (az_diff > 100)
     {
-      az += 36000;
+      az_diff = this->BLOCK_AZ_DURATION;
+      ts_diff = this->FOV_BLIND_DURATION;
     }
 
-    return az;
-  }
+    if (ntohs(this->pkt_.blocks[0].azimuth) == ntohs(this->pkt_.blocks[1].azimuth)) // AAB
+    {
+      float tss = 0;
+      this->az_diffs[0] = this->az_diffs[1] = az_diff;
+      this->tss[0] = this->tss[1] = tss;
 
-  ABDualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration)
-    : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration)
-  {
-  }
+      tss += ts_diff;
+      this->az_diffs[2] = this->BLOCK_AZ_DURATION;
+      this->tss[2] = tss;
+    }
+    else // ABB
+    {
+      float tss = 0;
+      this->az_diffs[0] = az_diff;
+      this->tss[0] = tss;
 
-protected:
-  const T_Packet& pkt_;
-  const uint16_t BLOCKS_PER_PKT;
-  const double BLOCK_DURATION;
+      tss += ts_diff;
+      this->az_diffs[1] = this->az_diffs[2] = this->BLOCK_AZ_DURATION;
+      this->tss[1] = this->tss[2] = tss;
+    }
+  }
 };
 
 }  // namespace lidar
