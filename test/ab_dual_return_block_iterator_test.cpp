@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <rs_driver/driver/decoder/decoder.hpp>
-#include <rs_driver/driver/decoder/block_diff.hpp>
+#include <rs_driver/driver/decoder/block_iterator.hpp>
 
 using namespace robosense::lidar;
 
@@ -34,7 +34,7 @@ TEST(TestABDualPacketTraverser, ctor)
         ,  htons(21), 0x00, 0x00, 0x00, 0x00
     };
 
-    ABDualReturnBlockDiff<MyPacket> diff(pkt, 
+    ABDualReturnBlockIterator<MyPacket> iter(pkt, 
         3,     // blocks per packet
         0.5f,  // block_duration
         25,    // block_az_duraton
@@ -44,17 +44,17 @@ TEST(TestABDualPacketTraverser, ctor)
     float ts;
 
     // first block
-    diff.getDiff (0, az_diff, ts);
+    iter.get (0, az_diff, ts);
     ASSERT_EQ(az_diff, 20);
     ASSERT_EQ(ts, 0.0f);
 
     // second block
-    diff.getDiff (1, az_diff, ts);
+    iter.get (1, az_diff, ts);
     ASSERT_EQ(az_diff, 20);
     ASSERT_EQ(ts, 0.0f);
 
     // last block
-    diff.getDiff (2, az_diff, ts);
+    iter.get (2, az_diff, ts);
     ASSERT_EQ(az_diff, 25);
     ASSERT_EQ(ts, 0.5f);
   }
@@ -68,7 +68,7 @@ TEST(TestABDualPacketTraverser, ctor)
         ,  htons(21), 0x00, 0x00, 0x00, 0x00
     };
 
-    ABDualReturnBlockDiff<MyPacket> diff(pkt, 
+    ABDualReturnBlockIterator<MyPacket> iter(pkt, 
         3,     // blocks per packet
         0.5f,  // block_duration
         25,    // block_az_duraton
@@ -78,17 +78,17 @@ TEST(TestABDualPacketTraverser, ctor)
     float ts;
 
     // first block
-    diff.getDiff (0, az_diff, ts);
+    iter.get (0, az_diff, ts);
     ASSERT_EQ(az_diff, 20);
     ASSERT_EQ(ts, 0.0f);
 
     // second block
-    diff.getDiff (1, az_diff, ts);
+    iter.get (1, az_diff, ts);
     ASSERT_EQ(az_diff, 25);
     ASSERT_EQ(ts, 0.5f);
 
     // last block
-    diff.getDiff (2, az_diff, ts);
+    iter.get (2, az_diff, ts);
     ASSERT_EQ(az_diff, 25);
     ASSERT_EQ(ts, 0.5f);
   }
@@ -106,7 +106,7 @@ TEST(TestABDualPacketTraverser, ctor_fov)
         ,  htons(121), 0x00, 0x00, 0x00, 0x00
     };
 
-    ABDualReturnBlockDiff<MyPacket> diff(pkt, 
+    ABDualReturnBlockIterator<MyPacket> iter(pkt, 
         3,     // blocks per packet
         0.5f,  // block_duration
         25,    // block_az_duraton
@@ -116,17 +116,17 @@ TEST(TestABDualPacketTraverser, ctor_fov)
     float ts;
 
     // first block
-    diff.getDiff (0, az_diff, ts);
+    iter.get (0, az_diff, ts);
     ASSERT_EQ(az_diff, 25);
     ASSERT_EQ(ts, 0.0f);
 
     // second block
-    diff.getDiff (1, az_diff, ts);
+    iter.get (1, az_diff, ts);
     ASSERT_EQ(az_diff, 25);
     ASSERT_EQ(ts, 0.0f);
 
     // last block
-    diff.getDiff (2, az_diff, ts);
+    iter.get (2, az_diff, ts);
     ASSERT_EQ(az_diff, 25);
     ASSERT_EQ(ts, 2.0f);
   }

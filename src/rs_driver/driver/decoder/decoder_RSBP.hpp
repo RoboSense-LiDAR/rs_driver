@@ -100,7 +100,7 @@ protected:
   static RSDecoderMechConstParam& getConstParam();
   static RSEchoMode getEchoMode(uint8_t mode);
 
-  template <typename T_BlockDiff>
+  template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 };
 
@@ -187,16 +187,16 @@ inline bool DecoderRSBP<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t 
 {
   if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
   {
-    return internDecodeMsopPkt<SingleReturnBlockDiff<RSBPMsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<SingleReturnBlockIterator<RSBPMsopPkt>>(pkt, size);
   }
   else
   {
-    return internDecodeMsopPkt<DualReturnBlockDiff<RSBPMsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<DualReturnBlockIterator<RSBPMsopPkt>>(pkt, size);
   }
 }
 
 template <typename T_PointCloud>
-template <typename T_BlockDiff>
+template <typename T_BlockIterator>
 inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
   const RSBPMsopPkt& pkt = *(const RSBPMsopPkt*)(packet);
@@ -222,7 +222,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     }
   }
 
-  T_BlockDiff diff(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION, 
+  T_BlockIterator iter(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION, 
       this->block_az_diff_, this->fov_blind_ts_diff_);
 
   double block_ts = pkt_ts;
@@ -239,7 +239,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     int32_t block_az = ntohs(block.azimuth);
     int32_t block_az_diff;
     float block_ts_off;
-    diff.getDiff(blk, block_az_diff, block_ts_off);
+    iter.get(blk, block_az_diff, block_ts_off);
 
     if (this->split_strategy_->newBlock(block_az))
     {

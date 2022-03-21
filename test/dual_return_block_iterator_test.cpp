@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <rs_driver/driver/decoder/decoder_mech.hpp>
-#include <rs_driver/driver/decoder/block_diff.hpp>
+#include <rs_driver/driver/decoder/block_iterator.hpp>
 
 using namespace robosense::lidar;
 
@@ -35,7 +35,7 @@ TEST(TestDualPacketTraverser, ctor)
       ,  htons(51), 0x00, 0x00, 0x00, 0x00
   };
 
-  DualReturnBlockDiff<MyPacket> diff(pkt, 
+  DualReturnBlockIterator<MyPacket> iter(pkt, 
       6,     // blocks per packet
       0.5f,  // block_duration
       25,    // block_az_duraton
@@ -45,27 +45,27 @@ TEST(TestDualPacketTraverser, ctor)
   float ts;
 
   // first block
-  diff.getDiff (0, az_diff, ts);
+  iter.get (0, az_diff, ts);
   ASSERT_EQ(az_diff, 20);
   ASSERT_EQ(ts, 0.0f);
 
   // second block
-  diff.getDiff (1, az_diff, ts);
+  iter.get (1, az_diff, ts);
   ASSERT_EQ(az_diff, 20);
   ASSERT_EQ(ts, 0.0f);
 
   // third block
-  diff.getDiff (2, az_diff, ts);
+  iter.get (2, az_diff, ts);
   ASSERT_EQ(az_diff, 30);
   ASSERT_EQ(ts, 0.5f);
 
   // last block
-  diff.getDiff (4, az_diff, ts);
+  iter.get (4, az_diff, ts);
   ASSERT_EQ(az_diff, 25);
   ASSERT_EQ(ts, 1.0f);
 
   // last block
-  diff.getDiff (5, az_diff, ts);
+  iter.get (5, az_diff, ts);
   ASSERT_EQ(az_diff, 25);
   ASSERT_EQ(ts, 1.0f);
 }
@@ -82,7 +82,7 @@ TEST(TestDualPacketTraverser, ctor_fov)
       ,  htons(141), 0x00, 0x00, 0x00, 0x00
   };
 
-  DualReturnBlockDiff<MyPacket> diff(pkt, 
+  DualReturnBlockIterator<MyPacket> iter(pkt, 
       6,     // blocks per packet
       0.5f,  // block_duration
       25,    // block_az_duraton
@@ -92,32 +92,32 @@ TEST(TestDualPacketTraverser, ctor_fov)
   float ts;
 
   // first block
-  diff.getDiff (0, az_diff, ts);
+  iter.get (0, az_diff, ts);
   ASSERT_EQ(az_diff, 20);
   ASSERT_EQ(ts, 0.0f);
 
   // second block
-  diff.getDiff (1, az_diff, ts);
+  iter.get (1, az_diff, ts);
   ASSERT_EQ(az_diff, 20);
   ASSERT_EQ(ts, 0.0f);
 
   // third block
-  diff.getDiff (2, az_diff, ts);
+  iter.get (2, az_diff, ts);
   ASSERT_EQ(az_diff, 25);
   ASSERT_EQ(ts, 0.5f);
 
   // fourth block
-  diff.getDiff (2, az_diff, ts);
+  iter.get (2, az_diff, ts);
   ASSERT_EQ(az_diff, 25);
   ASSERT_EQ(ts, 0.5f);
 
   // last block
-  diff.getDiff (4, az_diff, ts);
+  iter.get (4, az_diff, ts);
   ASSERT_EQ(az_diff, 25);
   ASSERT_EQ(ts, 2.5f);
 
   // last block
-  diff.getDiff (5, az_diff, ts);
+  iter.get (5, az_diff, ts);
   ASSERT_EQ(az_diff, 25);
   ASSERT_EQ(ts, 2.5f);
 }

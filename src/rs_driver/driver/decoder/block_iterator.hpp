@@ -37,17 +37,17 @@ namespace lidar
 {
 
 template <typename T_Packet>
-class BlockDiff
+class BlockIterator
 {
 public:
 
-  void getDiff(uint16_t blk, int32_t& az_diff, float& ts)
+  void get(uint16_t blk, int32_t& az_diff, float& ts)
   {
     az_diff = az_diffs[blk];
     ts = tss[blk];
   }
 
-  BlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration, 
+  BlockIterator(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration, 
       uint16_t block_az_duration, float fov_blind_duration)
     : pkt_(pkt), BLOCKS_PER_PKT(blocks_per_pkt), BLOCK_DURATION(block_duration), 
     BLOCK_AZ_DURATION(block_az_duration), FOV_BLIND_DURATION(fov_blind_duration) 
@@ -65,13 +65,13 @@ protected:
 };
 
 template <typename T_Packet>
-class SingleReturnBlockDiff : public BlockDiff<T_Packet>
+class SingleReturnBlockIterator : public BlockIterator<T_Packet>
 {
 public:
 
-  SingleReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration, 
+  SingleReturnBlockIterator(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration, 
       uint16_t block_az_duration, float fov_blind_duration)
-    : BlockDiff<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration) 
+    : BlockIterator<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration) 
   {
     float tss = 0;
     uint16_t blk = 0;
@@ -100,13 +100,13 @@ public:
 };
 
 template <typename T_Packet>
-class DualReturnBlockDiff : public BlockDiff<T_Packet>
+class DualReturnBlockIterator : public BlockIterator<T_Packet>
 {
 public:
 
-  DualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration,
+  DualReturnBlockIterator(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration,
       uint16_t block_az_duration, float fov_blind_duration)
-    : BlockDiff<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration) 
+    : BlockIterator<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration) 
   {
     float tss = 0;
     uint16_t blk = 0;
@@ -135,13 +135,13 @@ public:
 };
 
 template <typename T_Packet>
-class ABDualReturnBlockDiff : public BlockDiff<T_Packet>
+class ABDualReturnBlockIterator : public BlockIterator<T_Packet>
 {
 public:
 
-  ABDualReturnBlockDiff(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration,
+  ABDualReturnBlockIterator(const T_Packet& pkt, uint16_t blocks_per_pkt, double block_duration,
       uint16_t block_az_duration, float fov_blind_duration)
-    : BlockDiff<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration) 
+    : BlockIterator<T_Packet>(pkt, blocks_per_pkt, block_duration, block_az_duration, fov_blind_duration) 
   {
     float ts_diff = this->BLOCK_DURATION;
     int32_t az_diff = ntohs(this->pkt_.blocks[2].azimuth) - ntohs(this->pkt_.blocks[0].azimuth);

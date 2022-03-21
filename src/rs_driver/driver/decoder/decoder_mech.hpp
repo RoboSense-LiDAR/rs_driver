@@ -32,6 +32,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/driver/decoder/decoder.hpp>
+#include <rs_driver/driver/decoder/split_strategy.hpp>
+#include <rs_driver/driver/decoder/block_iterator.hpp>
+#include <rs_driver/driver/decoder/chan_angles.hpp>
 
 namespace robosense
 {
