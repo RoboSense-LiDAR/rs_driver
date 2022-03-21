@@ -156,8 +156,9 @@ TEST(TestDecoder, processDifopPkt)
 
   ASSERT_EQ(decoder.rps_, 10);
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
+  ASSERT_EQ(decoder.block_az_diff_, 20);
   ASSERT_EQ(decoder.split_blks_per_frame_, 1801);
-  ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075f);
+  ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075f); // 0.1 * 3/4
   ASSERT_FALSE(decoder.angles_ready_);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 0);
@@ -171,8 +172,8 @@ TEST(TestDecoder, processDifopPkt)
   {
     0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 // difop id
     , 0x02, 0x58 // rpm
-    , 0x23, 0x28 // start angle = 9000
-    , 0x46, 0x50 // end angle = 18000 
+    , 0x00, 0x00 // start angle = 0
+    , 0x8C, 0xA0 // end angle = 36000
     , 0x00, 0x00, 0x10 // vert angles
     , 0x01, 0x00, 0x20
     , 0x00, 0x00, 0x01 // horiz angles
@@ -185,6 +186,8 @@ TEST(TestDecoder, processDifopPkt)
   decoder.processDifopPkt(pkt, sizeof(MyDifopPkt));
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
 
+  ASSERT_EQ(decoder.rps_, 10);
+  ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.0f); // 0.1 * 3/4
   ASSERT_TRUE(decoder.angles_ready_);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 16);
