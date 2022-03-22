@@ -238,15 +238,15 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     }
 
     int32_t block_az = ntohs(block.azimuth);
-    int32_t block_az_diff;
-    float block_ts_off;
-    iter.get(blk, block_az_diff, block_ts_off);
-
     if (this->split_strategy_->newBlock(block_az))
     {
       this->cb_split_frame_(this->height_, this->prev_point_ts_);
       ret = true;
     }
+
+    int32_t block_az_diff;
+    float block_ts_off;
+    iter.get(blk, block_az_diff, block_ts_off);
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
