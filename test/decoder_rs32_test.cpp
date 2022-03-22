@@ -23,6 +23,41 @@ TEST(TestDecoderRS32, getEchoMode)
   ASSERT_TRUE(DecoderRS32<PointCloud>::getEchoMode(2) == RSEchoMode::ECHO_SINGLE);
 }
 
+TEST(TestDecoderRS32, RS32DifopPkt2Adapter)
+{
+  RSCalibrationAngle v_angle_cali[32] = 
+  {
+    0x01, htons(0x2829), // -10.281
+    0x00, htons(0x091d)  //   2.333
+  };
+  
+  RSCalibrationAngle h_angle_cali[32] = 
+  {
+    0x00, htons(0x01f4), //  0.5
+    0x01, htons(0x01c2)  // -0.45
+  };
+
+  RS32DifopPkt src;
+  src.rpm = 0;
+  src.fov = {0};
+  src.return_mode = 0;
+  memcpy (src.vert_angle_cali, v_angle_cali, 32*sizeof(RSCalibrationAngle));
+  memcpy (src.horiz_angle_cali, h_angle_cali, 32*sizeof(RSCalibrationAngle));
+
+  AdapterDifopPkt dst;
+  RS32DifopPkt2Adapter(src, dst);
+
+  ASSERT_EQ(dst.vert_angle_cali[0].sign, 1);
+  ASSERT_EQ(ntohs(dst.vert_angle_cali[0].value), 1028);
+  ASSERT_EQ(dst.vert_angle_cali[1].sign, 0);
+  ASSERT_EQ(ntohs(dst.vert_angle_cali[1].value), 233);
+
+  ASSERT_EQ(dst.horiz_angle_cali[0].sign, 0);
+  ASSERT_EQ(ntohs(dst.horiz_angle_cali[0].value), 50);
+  ASSERT_EQ(dst.horiz_angle_cali[1].sign, 1);
+  ASSERT_EQ(ntohs(dst.horiz_angle_cali[1].value), 45);
+}
+
 TEST(TestDecoderRS32, decodeDifopPkt)
 {
   // const_param
