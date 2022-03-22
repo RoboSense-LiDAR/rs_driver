@@ -155,6 +155,9 @@ inline RSDecoderMechConstParam& DecoderRS16<T_PointCloud>::getConstParam()
       , 0.0f // RZ
   };
 
+  float blk_ts = 55.50f;
+  param.BLOCK_DURATION = blk_ts / 1000000;
+
   return param;
 }
 
@@ -202,6 +205,8 @@ inline DecoderRS16<T_PointCloud>::DecoderRS16(const RSDecoderParam& param,
   : DecoderMech<T_PointCloud>(getConstParam(), param, excb)
 {
   this->height_ = 16;
+  this->packet_duration_ = 
+    this->mech_const_param_.BLOCK_DURATION * this->const_param_.BLOCKS_PER_PKT * 2;
 
   calcParam();
 }
