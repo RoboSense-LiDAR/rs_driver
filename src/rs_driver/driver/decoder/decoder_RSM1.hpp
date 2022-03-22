@@ -171,6 +171,7 @@ inline RSDecoderConstParam& DecoderRSM1<T_PointCloud>::getConstParam()
       , {0x55, 0xAA, 0x5A, 0xA5} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0x00, 0x00}
+    , 0 // no meaning for M1
     , 25 // blocks per packet
       , 5 // channels per block
       , 0.2f // distance min

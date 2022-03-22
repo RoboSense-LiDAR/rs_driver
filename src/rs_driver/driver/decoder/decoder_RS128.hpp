@@ -113,6 +113,7 @@ inline RSDecoderMechConstParam& DecoderRS128<T_PointCloud>::getConstParam()
       , {0x55, 0xAA, 0x05, 0x5A} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0xFE} // block id
+    , 128 // laser number
     , 3 // blocks per packet
       , 128 // channels per block
       , 1.0f // distance min

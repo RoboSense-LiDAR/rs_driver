@@ -59,7 +59,7 @@ static void errCallback(const Error& err)
 TEST(TestDecoder, angles_from_file)
 {
   RSDecoderMechConstParam const_param;
-  const_param.base.CHANNELS_PER_BLOCK = 4;
+  const_param.base.LASER_NUM = 4;
 
   RSDecoderParam param;
   param.config_from_file = true;
@@ -75,7 +75,7 @@ TEST(TestDecoder, angles_from_file)
 TEST(TestDecoder, angles_from_file_fail)
 {
   RSDecoderMechConstParam const_param;
-  const_param.base.CHANNELS_PER_BLOCK = 4;
+  const_param.base.LASER_NUM = 4;
 
   RSDecoderParam param;
   param.config_from_file = true;
@@ -123,6 +123,7 @@ TEST(TestDecoder, processDifopPkt)
       , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0xFF, 0xEE} // block id
+    , 2 // laser number
     , 1000 // blocks per packet
     , 2 // channels per block
   };
@@ -206,6 +207,7 @@ TEST(TestDecoder, processDifopPkt_invalid_rpm)
       , {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0} // msop id
       , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
       , {0xFF, 0xEE} // block id
+      , 32 // laser number
       , 12 // blocks per packet
       , 32 // channels per block
     };

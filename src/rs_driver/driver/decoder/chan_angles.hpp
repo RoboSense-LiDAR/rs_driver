@@ -65,7 +65,7 @@ public:
   {
     std::vector<int32_t> vert_angles;
     std::vector<int32_t> horiz_angles;
-    int ret = loadFromFile (angle_path, vert_angles, horiz_angles);
+    int ret = loadFromFile (angle_path, chan_num_, vert_angles, horiz_angles);
     if (ret < 0)
       return ret;
 
@@ -81,19 +81,14 @@ public:
   }
 
   int loadFromDifop(const RSCalibrationAngle vert_angle_arr[], 
-      const RSCalibrationAngle horiz_angle_arr[], size_t size)
+      const RSCalibrationAngle horiz_angle_arr[])
   {
     std::vector<int32_t> vert_angles;
     std::vector<int32_t> horiz_angles;
     int ret = 
-      loadFromDifop (vert_angle_arr, horiz_angle_arr, size, vert_angles, horiz_angles);
+      loadFromDifop (vert_angle_arr, horiz_angle_arr, chan_num_, vert_angles, horiz_angles);
     if (ret < 0)
       return ret;
-
-    if (vert_angles.size() != chan_num_)
-    {
-      return -1;
-    }
 
     vert_angles_.swap(vert_angles);
     horiz_angles_.swap(horiz_angles);
@@ -157,7 +152,7 @@ private:
     }
   }
 
-  static int loadFromFile(const std::string& angle_path, 
+  static int loadFromFile(const std::string& angle_path, size_t size,
       std::vector<int32_t>& vert_angles, std::vector<int32_t>& horiz_angles)
   {
     vert_angles.clear();
@@ -171,8 +166,12 @@ private:
     }
 
     std::string line;
-    while (std::getline(fd, line))
+    for (size_t i = 0; i < size; i++)
+    //while (std::getline(fd, line))
     {
+      if (!std::getline(fd, line))
+        return -1;
+
       size_t pos_comma = 0;
       float vert = std::stof(line, &pos_comma);
       float horiz = std::stof(line.substr(pos_comma+1));
@@ -199,7 +198,7 @@ private:
       int32_t v;
 
       if (vert.sign == 0xFF)
-        break;
+        return -1;
 
       v = ntohs(vert.value);
       if (vert.sign != 0) v = -v;

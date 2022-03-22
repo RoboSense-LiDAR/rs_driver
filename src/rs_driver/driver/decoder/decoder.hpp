@@ -227,6 +227,7 @@ struct RSDecoderConstParam
   uint8_t BLOCK_ID[2];
 
   // packet structure
+  uint16_t LASER_NUM;
   uint16_t BLOCKS_PER_PKT;
   uint16_t CHANNELS_PER_BLOCK;
 

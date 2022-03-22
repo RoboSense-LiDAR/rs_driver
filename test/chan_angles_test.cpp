@@ -28,7 +28,7 @@ TEST(TestChanAngles, loadFromFile)
   std::vector<int32_t> vert_angles, horiz_angles;
 
   // load
-  ASSERT_EQ(ChanAngles::loadFromFile ("../rs_driver/test/res/angle.csv", vert_angles, horiz_angles), 0);
+  ASSERT_EQ(ChanAngles::loadFromFile ("../rs_driver/test/res/angle.csv", 4, vert_angles, horiz_angles), 0);
   ASSERT_EQ(vert_angles.size(), 4);
   ASSERT_EQ(horiz_angles.size(), 4);
   ASSERT_EQ(vert_angles[0], 500);
@@ -42,12 +42,12 @@ TEST(TestChanAngles, loadFromFile)
   ASSERT_EQ(horiz_angles[3], -100);
 
   // load again
-  ASSERT_EQ(ChanAngles::loadFromFile ("../rs_driver/test/res/angle.csv", vert_angles, horiz_angles), 0);
+  ASSERT_EQ(ChanAngles::loadFromFile ("../rs_driver/test/res/angle.csv", 4, vert_angles, horiz_angles), 0);
   ASSERT_EQ(vert_angles.size(), 4);
   ASSERT_EQ(horiz_angles.size(), 4);
 
   // load non-existing file
-  ASSERT_LT(ChanAngles::loadFromFile ("../rs_driver/test/res/non_exist.csv", vert_angles, horiz_angles), 0);
+  ASSERT_LT(ChanAngles::loadFromFile ("../rs_driver/test/res/non_exist.csv", 4, vert_angles, horiz_angles), 0);
   ASSERT_EQ(vert_angles.size(), 0);
   ASSERT_EQ(horiz_angles.size(), 0);
 }
@@ -98,7 +98,6 @@ TEST(TestChanAngles, loadFromDifop)
 
 TEST(TestChanAngles, memberLoadFromFile)
 {
-
   ChanAngles angles(4);
 
   // not loading yet
@@ -142,10 +141,7 @@ TEST(TestChanAngles, memberLoadFromDifop)
   ASSERT_EQ(angles.chan_num_, 4);
 
   // load
-  ASSERT_EQ(angles.loadFromDifop(
-        (const RSCalibrationAngle*)vert_angle_arr, 
-        (const RSCalibrationAngle*)horiz_angle_arr, 
-        4), 0);
+  ASSERT_EQ(angles.loadFromDifop((const RSCalibrationAngle*)vert_angle_arr, (const RSCalibrationAngle*)horiz_angle_arr), 0);
 
   ASSERT_EQ(angles.vert_angles_.size(), 4);
   ASSERT_EQ(angles.vert_angles_[0], 258);
@@ -180,10 +176,7 @@ TEST(TestChanAngles, memberLoadFromDifop_fail)
   ASSERT_EQ(angles.chan_num_, 4);
 
   // load invalid difop
-  ASSERT_LT(angles.loadFromDifop(
-        (const RSCalibrationAngle*)vert_angle_arr, 
-        (const RSCalibrationAngle*)horiz_angle_arr, 
-        4), 0);
+  ASSERT_LT(angles.loadFromDifop((const RSCalibrationAngle*)vert_angle_arr, (const RSCalibrationAngle*)horiz_angle_arr), 0);
   ASSERT_EQ(angles.vert_angles_.size(), 4);
   ASSERT_EQ(angles.vert_angles_[0], 0);
 }
@@ -210,10 +203,7 @@ TEST(TestChanAngles, memberLoadFromDifop_fail_angle)
     };
 
     // load
-    ASSERT_LT(angles.loadFromDifop(
-          (const RSCalibrationAngle*)vert_angle_arr, 
-          (const RSCalibrationAngle*)horiz_angle_arr, 
-          4), 0);
+    ASSERT_LT(angles.loadFromDifop((const RSCalibrationAngle*)vert_angle_arr, (const RSCalibrationAngle*)horiz_angle_arr), 0);
   }
 
   {
@@ -227,10 +217,7 @@ TEST(TestChanAngles, memberLoadFromDifop_fail_angle)
     };
 
     // load
-    ASSERT_LT(angles.loadFromDifop(
-          (const RSCalibrationAngle*)vert_angle_arr, 
-          (const RSCalibrationAngle*)horiz_angle_arr, 
-          4), 0);
+    ASSERT_LT(angles.loadFromDifop((const RSCalibrationAngle*)vert_angle_arr, (const RSCalibrationAngle*)horiz_angle_arr), 0);
   }
 }
 

@@ -108,7 +108,7 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& con
     const std::function<void(const Error&)>& excb)
   : Decoder<T_PointCloud>(const_param.base, param, excb)
   , mech_const_param_(const_param)
-  , chan_angles_(this->const_param_.CHANNELS_PER_BLOCK)
+  , chan_angles_(this->const_param_.LASER_NUM)
   , scan_section_(this->param_.start_angle * 100, this->param_.end_angle * 100)
   , rps_(10)
   , blks_per_frame_(1/(10*this->mech_const_param_.BLOCK_DURATION))
@@ -206,8 +206,7 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   // load angles
   if (!this->param_.config_from_file && !this->angles_ready_)
   {
-    int ret = this->chan_angles_.loadFromDifop(pkt.vert_angle_cali, pkt.horiz_angle_cali, 
-        this->const_param_.CHANNELS_PER_BLOCK);
+    int ret = this->chan_angles_.loadFromDifop(pkt.vert_angle_cali, pkt.horiz_angle_cali);
     this->angles_ready_ = (ret == 0);
   }
 }
