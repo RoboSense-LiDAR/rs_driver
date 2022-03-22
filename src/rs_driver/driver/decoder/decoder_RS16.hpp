@@ -87,7 +87,7 @@ inline void RS16DifopPkt2Adapter (const RS16DifopPkt& src, AdapterDifopPkt& dst)
   dst.fov = src.fov;
   dst.return_mode = src.return_mode;
 
-  for (uint16_t i = 0, j = 16; i < 16; i++, j++)
+  for (uint16_t i = 0; i < 16; i++)
   {
     uint32_t v = 0;
     v += src.pitch_cali[i*3];
@@ -102,11 +102,6 @@ inline void RS16DifopPkt2Adapter (const RS16DifopPkt& src, AdapterDifopPkt& dst)
     dst.vert_angle_cali[i].value = htons(v2);
     dst.horiz_angle_cali[i].sign = 0;
     dst.horiz_angle_cali[i].value = 0;
-
-    dst.vert_angle_cali[j].sign = dst.vert_angle_cali[i].sign;
-    dst.vert_angle_cali[j].value = dst.vert_angle_cali[i].value;
-    dst.horiz_angle_cali[j].sign = 0;
-    dst.horiz_angle_cali[j].value = 0;
   }
 }
 
@@ -129,6 +124,7 @@ protected:
   static RSDecoderMechConstParam& getConstParam();
   static RSEchoMode getEchoMode(uint8_t mode);
 
+  void calcParam();
   template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 };
@@ -159,9 +155,13 @@ inline RSDecoderMechConstParam& DecoderRS16<T_PointCloud>::getConstParam()
       , 0.0f // RZ
   };
 
-  INIT_ONLY_ONCE();
+  return param;
+}
 
-  float blk_ts = 55.5f * 2;
+template <typename T_PointCloud>
+inline void DecoderRS16<T_PointCloud>::calcParam()
+{
+  float blk_ts = 55.50f;
   float firing_tss[] = 
   {
     0.00f,  2.80f,  5.60f,  8.40f, 11.20f, 14.00f, 16.80f, 19.60f, 
@@ -170,14 +170,16 @@ inline RSDecoderMechConstParam& DecoderRS16<T_PointCloud>::getConstParam()
     77.90f, 80.70f, 83.50f, 86.30f, 89.10f, 91.90f, 94.70f, 97.50f
   };
 
-  param.BLOCK_DURATION = blk_ts / 1000000;
-  for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)
+  if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
   {
-    param.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
-    param.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
+    Rs16SingleReturnBlockIterator<RS16MsopPkt>::calcChannel(blk_ts, firing_tss, 
+       this->mech_const_param_.CHAN_AZIS, this->mech_const_param_.CHAN_TSS);
   }
-
-  return param;
+  else
+  {
+    Rs16DualReturnBlockIterator<RS16MsopPkt>::calcChannel(blk_ts, firing_tss, 
+       this->mech_const_param_.CHAN_AZIS, this->mech_const_param_.CHAN_TSS);
+  }
 }
 
 template <typename T_PointCloud>
@@ -200,6 +202,8 @@ inline DecoderRS16<T_PointCloud>::DecoderRS16(const RSDecoderParam& param,
   : DecoderMech<T_PointCloud>(getConstParam(), param, excb)
 {
   this->height_ = 16;
+
+  calcParam();
 }
 
 template <typename T_PointCloud>
@@ -211,9 +215,15 @@ inline void DecoderRS16<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
 
   this->template decodeDifopCommon<AdapterDifopPkt>(adapter);
 
-  this->echo_mode_ = getEchoMode (adapter.return_mode);
-  this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
-    (this->blks_per_frame_ << 1) : this->blks_per_frame_;
+  RSEchoMode echo_mode = getEchoMode (adapter.return_mode);
+  if (this->echo_mode_ != echo_mode)
+  {
+    this->echo_mode_ = echo_mode;
+    this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
+      (this->blks_per_frame_ << 1) : this->blks_per_frame_;
+
+    calcParam();
+  }
 }
 
 template <typename T_PointCloud>
@@ -221,11 +231,11 @@ inline bool DecoderRS16<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t 
 {
   if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
   {
-    return internDecodeMsopPkt<SingleReturnBlockIterator<RS16MsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<Rs16SingleReturnBlockIterator<RS16MsopPkt>>(pkt, size);
   }
   else
   {
-    return internDecodeMsopPkt<DualReturnBlockIterator<RS16MsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<Rs16DualReturnBlockIterator<RS16MsopPkt>>(pkt, size);
   }
 }
 

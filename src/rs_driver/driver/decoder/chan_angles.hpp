@@ -167,7 +167,6 @@ private:
 
     std::string line;
     for (size_t i = 0; i < size; i++)
-    //while (std::getline(fd, line))
     {
       if (!std::getline(fd, line))
         return -1;
