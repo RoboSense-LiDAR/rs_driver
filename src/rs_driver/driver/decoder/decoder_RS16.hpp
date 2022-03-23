@@ -304,8 +304,9 @@ inline bool DecoderRS16<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       int32_t angle_horiz = block_az + 
         (int32_t)((float)block_az_diff * this->mech_const_param_.CHAN_AZIS[chan]);
 
-      int32_t angle_vert = this->chan_angles_.vertAdjust(chan);
-      int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
+      uint16_t laser = chan % 16;
+      int32_t angle_vert = this->chan_angles_.vertAdjust(laser);
+      int32_t angle_horiz_final = this->chan_angles_.horizAdjust(laser, angle_horiz);
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
 
       if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
@@ -321,7 +322,7 @@ inline bool DecoderRS16<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
         setZ(point, z);
         setIntensity(point, channel.intensity);
         setTimestamp(point, chan_ts);
-        setRing(point, (this->chan_angles_.toUserChan(chan) >> 1));
+        setRing(point, (this->chan_angles_.toUserChan(laser)));
 
         this->point_cloud_->points.emplace_back(point);
       }
@@ -333,7 +334,7 @@ inline bool DecoderRS16<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
         setZ(point, NAN);
         setIntensity(point, 0);
         setTimestamp(point, chan_ts);
-        setRing(point, (this->chan_angles_.toUserChan(chan) >> 1));
+        setRing(point, (this->chan_angles_.toUserChan(laser)));
 
         this->point_cloud_->points.emplace_back(point);
       }
