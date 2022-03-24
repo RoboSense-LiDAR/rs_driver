@@ -89,10 +89,6 @@ inline void setConsoleColor(WORD c)
 /*Camera*/
 typedef std::pair<std::string, double> CameraTrigger;
 
-/*Packet Length*/
-const size_t MECH_PKT_LEN = 1248;
-const size_t MEMS_MSOP_LEN = 1210;
-const size_t MEMS_DIFOP_LEN = 256;
 /*Output style*/
 #ifndef RS_INFOL
 #if defined(_WIN32)

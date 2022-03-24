@@ -37,9 +37,13 @@ namespace robosense
 {
 namespace lidar
 {
+const size_t MEMS_MSOP_LEN = 1210;
+const size_t MEMS_DIFOP_LEN = 256;
+
 const uint32_t SINGLE_PKT_NUM = 630;
 const uint32_t DUAL_PKT_NUM = 1260;
 const int ANGLE_OFFSET = 32768;
+
 #pragma pack(push, 1)
 
 typedef struct

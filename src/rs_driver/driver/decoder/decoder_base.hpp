@@ -56,14 +56,20 @@ DEFINE_MEMBER_CHECKER(z)
 DEFINE_MEMBER_CHECKER(intensity)
 DEFINE_MEMBER_CHECKER(ring)
 DEFINE_MEMBER_CHECKER(timestamp)
+
 #define RS_SWAP_SHORT(x) ((((x)&0xFF) << 8) | (((x)&0xFF00) >> 8))
 #define RS_SWAP_LONG(x) ((((x)&0xFF) << 24) | (((x)&0xFF00) << 8) | (((x)&0xFF0000) >> 8) | (((x)&0xFF000000) >> 24))
 #define RS_TO_RADS(x) ((x) * (M_PI) / 180)
+
 constexpr float RS_ANGLE_RESOLUTION = 0.01;
 constexpr float MICRO = 1000000.0;
 constexpr float NANO = 1000000000.0;
 constexpr int RS_ONE_ROUND = 36000;
 constexpr uint16_t PROTOCOL_VER_0 = 0x00;
+
+/*Packet Length*/
+const size_t MECH_PKT_LEN = 1248;
+
 /* Echo mode definition */
 enum RSEchoMode
 {
