@@ -232,8 +232,8 @@ inline void SockInput::recvPacket()
     int max_fd = std::max(fds_[0], fds_[1]);
 
     struct timeval tv;
-    tv.tv_sec = 0;
-    tv.tv_usec = 1000000;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
     int retval = select(max_fd + 1, &rfds, NULL, NULL, &tv);
     if (retval == 0)
     {
