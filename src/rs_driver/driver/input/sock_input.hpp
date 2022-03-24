@@ -233,10 +233,11 @@ inline void SockInput::recvPacket()
 
     struct timeval tv;
     tv.tv_sec = 0;
-    tv.tv_usec = 500000;
+    tv.tv_usec = 1000000;
     int retval = select(max_fd + 1, &rfds, NULL, NULL, &tv);
     if (retval == 0)
     {
+      excb_(Error(ERRCODE_MSOPTIMEOUT));
       continue;
     }
     else if (retval == -1)
