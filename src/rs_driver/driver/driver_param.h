@@ -47,7 +47,8 @@ enum LidarType  ///< LiDAR type
   RS80,
   RSHELIOS,
   RSROCK,
-  RSM1 = 10
+  RSM1 = 10,
+  RSM2
 };
 
 enum SplitFrameMode
@@ -205,6 +206,9 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
       case LidarType::RSM1:
         str = "RSM1";
         break;
+      case LidarType::RSM2:
+        str = "RSM2";
+        break;
       case LidarType::RSHELIOS:
         str = "RSHELIOS";
         break;
@@ -242,6 +246,10 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
     else if (type == "RSM1")
     {
       return lidar::LidarType::RSM1;
+    }
+    else if (type == "RSM2")
+    {
+      return lidar::LidarType::RSM2;
     }
     else if (type == "RSHELIOS")
     {

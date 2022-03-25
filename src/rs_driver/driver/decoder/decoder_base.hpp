@@ -896,6 +896,7 @@ inline RSEchoMode DecoderBase<T_PointCloud>::getEchoMode(const LidarType& type, 
           return RSEchoMode::ECHO_SINGLE;
       }
     case LidarType::RSM1:
+    case LidarType::RSM2:
       switch (return_mode)
       {
         case 0x00:
