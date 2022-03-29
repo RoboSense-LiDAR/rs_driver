@@ -101,7 +101,17 @@ Here user may add new member variables, remove member variables, or change the o
 
   Here user may add new members, and change the order of these members, but should not change or remove them.
 
-### 3.3 Define the driver object
+### 3.3 Point in Point Cloud
+
+Here is an example of 5_lasers Lidar. 
+
+The Lidar scans block by block. It starts from b0c0(block 0 channel/laser 0), b0c1, b0c2, b0c3, b0c4, and then go to b1c0, b1c1, b1c2, b1c3, b1c4, and so on.
+![](../img/11_rs_driver_point_cloud.png)
+
+At the same time, it saves the points in a point vector, point by point, as below.
+![](../img/11_rs_driver_point_cloud_vector.png)
+
+### 3.4 Define the driver object
 
 Define a driver object.
 
@@ -113,7 +123,7 @@ int main()
 }
 ```
 
-### 3.4 Configure the driver parameter
+### 3.5 Configure the driver parameter
 
 Define a RSDriverParam variable and configure it.
 + `InputType::ONLINE_LIDAR` means that the driver get packets from a online Lidar.
@@ -133,7 +143,7 @@ int main()
 }
 ```
 
-### 3.5 Define and register Point Cloud callbacks
+### 3.6 Define and register Point Cloud callbacks
 
 As said above, user is supposed to provide free point cloud to the driver. 
 
@@ -168,7 +178,7 @@ int main()
 }
 ```
 
-### 3.6 Define and register exception callbacks
+### 3.7 Define and register exception callbacks
 
 When an error happens, the driver will inform user. User is supposed to get it via a callback function. 
 
@@ -192,7 +202,7 @@ driver.regExceptionCallback(exceptionCallback);  ///<Register the exception call
 }
 ```
 
-### 3.7 Initialize the driver
+### 3.8 Initialize the driver
 
 Call the initialization function with the the RSDriverParam object.
 
@@ -211,7 +221,7 @@ int main()
 
 Please **register call callback functions before call init()**, because errors may occur during the initialization.
 
-### 3.8 Start the driver
+### 3.9 Start the driver
 
 Start the driver.
 
