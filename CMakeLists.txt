@@ -18,10 +18,10 @@ option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
 #  Compile Features
 #=============================
 option(ENABLE_PCAP_PARSE "Enable PCAP file parse" ON) 
-option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
 option(ENABLE_PUBLISH_RAW_MSG "Publish raw messages" OFF)
 option(ENABLE_PUBLISH_CAM_MSG "Publish camera trigger messages" OFF)
 option(ENABLE_TRANSFORM "Enable transform functions" OFF)
+option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
 option(ENABLE_RECVMMSG "Enable recvmmsg() to receive MSOP message" OFF)
 
 #========================
@@ -115,14 +115,6 @@ if(${ENABLE_PCAP_PARSE})
   add_definitions("-DENABLE_PCAP_PARSE")
 endif(${ENABLE_PCAP_PARSE})
 
-if(${ENABLE_HIGH_PRIORITY_THREAD})
-  add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
-endif(${ENABLE_HIGH_PRIORITY_THREAD})
-
-if(${ENABLE_RECVMMSG})
-  add_definitions("-DENABLE_RECVMMSG")
-endif(${ENABLE_RECVMMSG})
-
 if(${ENABLE_PUBLISH_RAW_MSG})
   add_definitions("-DENABLE_PUBLISH_RAW_MSG")
 endif(${ENABLE_PUBLISH_RAW_MSG})
@@ -130,6 +122,14 @@ endif(${ENABLE_PUBLISH_RAW_MSG})
 if(${ENABLE_PUBLISH_CAM_MSG})
   add_definitions("-DENABLE_PUBLISH_CAM_MSG")
 endif(${ENABLE_PUBLISH_CAM_MSG})
+
+if(${ENABLE_HIGH_PRIORITY_THREAD})
+  add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
+endif(${ENABLE_HIGH_PRIORITY_THREAD})
+
+if(${ENABLE_RECVMMSG})
+  add_definitions("-DENABLE_RECVMMSG")
+endif(${ENABLE_RECVMMSG})
 
 #========================
 #  Build Demos

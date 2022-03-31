@@ -81,7 +81,7 @@ inline void SockInput::higherThreadPrioty(std::thread::native_handle_type handle
   sch.sched_priority = 63;
   if (pthread_setschedparam(handle, SCHED_RR, &sch))
   {
-    std::cout << "setschedparam failed: " << std::strerror(errno) << '\n';
+    std::cout << "setschedparam failed: " << std::strerror(errno) << std::endl;
   }
 #endif
 }
