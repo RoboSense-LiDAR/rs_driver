@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RS32.hpp>
 #include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
-#include <rs_driver/driver/decoder/decoder_RS128_40.hpp>
+#include <rs_driver/driver/decoder/decoder_RSRUBY_PLUS.hpp>
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
@@ -60,7 +60,7 @@ private:
   static const LidarConstantParameter getRSBPConstantParam();
   static const LidarConstantParameter getRS80ConstantParam();
   static const LidarConstantParameter getRS128ConstantParam();
-  static const LidarConstantParameter getRS128_40ConstantParam();
+  static const LidarConstantParameter getRSRUBY_PLUSConstantParam();
   static const LidarConstantParameter getRSM1ConstantParam();
   static const LidarConstantParameter getRSHELIOSConstantParam();
   static const LidarConstantParameter getRSROCKConstantParam();
@@ -84,8 +84,8 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDeco
     case LidarType::RS128:
       ret_ptr = std::make_shared<DecoderRS128<T_Point>>(param.decoder_param, getRS128ConstantParam());
       break;
-    case LidarType::RS128_40:
-      ret_ptr = std::make_shared<DecoderRS128_40<T_Point>>(param.decoder_param, getRS128_40ConstantParam());
+    case LidarType::RSRUBY_PLUS:
+      ret_ptr = std::make_shared<DecoderRSRUBY_PLUS<T_Point>>(param.decoder_param, getRSRUBY_PLUSConstantParam());
       break;
     case LidarType::RS80:
       ret_ptr = std::make_shared<DecoderRS80<T_Point>>(param.decoder_param, getRS80ConstantParam());
@@ -208,7 +208,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRS128ConstantPar
 }
 
 template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRS128_40ConstantParam()
+inline const LidarConstantParameter DecoderFactory<T_Point>::getRSRUBY_PLUSConstantParam()
 {
   LidarConstantParameter ret_param;
   ret_param.MSOP_ID = 0x5A05AA55;

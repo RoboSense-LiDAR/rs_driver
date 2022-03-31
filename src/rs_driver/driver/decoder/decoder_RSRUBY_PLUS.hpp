@@ -39,21 +39,21 @@ namespace lidar
 {
 
 template <typename T_Point>
-class DecoderRS128_40 : public DecoderRS128<T_Point>
+class DecoderRSRUBY_PLUS : public DecoderRS128<T_Point>
 {
 public:
-  explicit DecoderRS128_40(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
+  explicit DecoderRSRUBY_PLUS(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
   RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
 };
 
 template <typename T_Point>
-inline DecoderRS128_40<T_Point>::DecoderRS128_40(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
+inline DecoderRSRUBY_PLUS<T_Point>::DecoderRSRUBY_PLUS(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
   : DecoderRS128<T_Point>(param, lidar_const_param)
 {
 }
 
 template <typename T_Point>
-inline RSDecoderResult DecoderRS128_40<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
+inline RSDecoderResult DecoderRSRUBY_PLUS<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
                                                             int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
