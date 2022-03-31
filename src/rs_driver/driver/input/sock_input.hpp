@@ -251,6 +251,34 @@ inline void SockInput::recvPacket()
 
     if (FD_ISSET(fds_[0], &rfds))
     {
+#ifdef ENABLE_RECVMMSG
+#define VLEN 1
+        struct mmsghdr msgs[VLEN];
+        struct iovec iovecs[VLEN];
+        std::shared_ptr<Packet> pkts[VLEN];
+        int i, ret;
+
+        memset(msgs, 0, sizeof(msgs));
+        for (i = 0; i < VLEN; i++)
+        {
+          pkts[i] = cb_get_(MAX_PKT_LEN);
+          pkts[i]->resetData();
+          iovecs[i].iov_base = pkts[i]->data();
+          iovecs[i].iov_len = MAX_PKT_LEN;
+          msgs[i].msg_hdr.msg_iov = &iovecs[i];
+          msgs[i].msg_hdr.msg_iovlen = 1;
+        }
+
+        struct timespec timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_nsec = 0;
+        ret = recvmmsg(fds_[0], msgs, VLEN, 0, &timeout);
+        for (i = 0; i < ret; i++)
+        {
+          pkts[i]->setData(sock_offset_, msgs[i].msg_len - sock_offset_ - sock_tail_);
+          pushPacket(pkts[i]);
+        }
+#else
       std::shared_ptr<Packet> pkt = cb_get_(MAX_PKT_LEN);
       pkt->resetData();
       ssize_t ret = recvfrom(fds_[0], pkt->data(), MAX_PKT_LEN, 0, NULL, NULL);
@@ -264,6 +292,7 @@ inline void SockInput::recvPacket()
         pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
         pushPacket(pkt);
       }
+#endif
     }
     else if (FD_ISSET(fds_[1], &rfds))
     {
