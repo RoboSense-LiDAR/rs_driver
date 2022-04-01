@@ -744,12 +744,12 @@ template <typename T_Point>
 inline void DecoderBase<T_Point>::transformPoint(float& x, float& y, float& z)
 {
 #ifdef ENABLE_TRANSFORM
-  Eigen::AngleAxisd current_rotation_x(param_.transform_param.roll, Eigen::Vector3d::UnitX());
-  Eigen::AngleAxisd current_rotation_y(param_.transform_param.pitch, Eigen::Vector3d::UnitY());
-  Eigen::AngleAxisd current_rotation_z(param_.transform_param.yaw, Eigen::Vector3d::UnitZ());
-  Eigen::Translation3d current_translation(param_.transform_param.x, param_.transform_param.y,
-                                           param_.transform_param.z);
-  Eigen::Matrix4d trans = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
+  static Eigen::AngleAxisd current_rotation_x(param_.transform_param.roll, Eigen::Vector3d::UnitX());
+  static Eigen::AngleAxisd current_rotation_y(param_.transform_param.pitch, Eigen::Vector3d::UnitY());
+  static Eigen::AngleAxisd current_rotation_z(param_.transform_param.yaw, Eigen::Vector3d::UnitZ());
+  static Eigen::Translation3d current_translation(param_.transform_param.x, param_.transform_param.y,
+                                                  param_.transform_param.z);
+  static Eigen::Matrix4d trans = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
   Eigen::Vector4d target_ori(x, y, z, 1);
   Eigen::Vector4d target_rotate = trans * target_ori;
   x = target_rotate(0);
