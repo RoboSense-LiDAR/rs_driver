@@ -348,6 +348,9 @@ protected:
   std::function<void(const int&, const uint8_t*)> check_camera_trigger_func_;
   int lidar_alph0_;  // atan2(Ry, Rx) * 180 / M_PI * 100
   float lidar_Rxy_;  // sqrt(Rx*Rx + Ry*Ry)
+#ifdef ENABLE_TRANSFORM
+  Eigen::Matrix4d trans_;
+#endif
 
 private:
   std::vector<float> cos_lookup_table_;
@@ -447,6 +450,15 @@ inline DecoderBase<T_PointCloud>::DecoderBase(const RSDecoderParam& param,
   /*  Calulate the lidar_alph0 and lidar_Rxy */
   lidar_alph0_ = std::atan2(lidar_const_param_.RY, lidar_const_param_.RX) * 180 / M_PI * 100;
   lidar_Rxy_ = std::sqrt(lidar_const_param_.RX * lidar_const_param_.RX + lidar_const_param_.RY * lidar_const_param_.RY);
+  
+#ifdef ENABLE_TRANSFORM
+  Eigen::AngleAxisd current_rotation_x(param_.transform_param.roll, Eigen::Vector3d::UnitX());
+  Eigen::AngleAxisd current_rotation_y(param_.transform_param.pitch, Eigen::Vector3d::UnitY());
+  Eigen::AngleAxisd current_rotation_z(param_.transform_param.yaw, Eigen::Vector3d::UnitZ());
+  Eigen::Translation3d current_translation(param_.transform_param.x, param_.transform_param.y,
+                                           param_.transform_param.z);
+  trans_ = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();  
+#endif
 }
 
 template <typename T_PointCloud>
@@ -771,14 +783,8 @@ template <typename T_PointCloud>
 inline void DecoderBase<T_PointCloud>::transformPoint(float& x, float& y, float& z)
 {
 #ifdef ENABLE_TRANSFORM
-  static Eigen::AngleAxisd current_rotation_x(param_.transform_param.roll, Eigen::Vector3d::UnitX());
-  static Eigen::AngleAxisd current_rotation_y(param_.transform_param.pitch, Eigen::Vector3d::UnitY());
-  static Eigen::AngleAxisd current_rotation_z(param_.transform_param.yaw, Eigen::Vector3d::UnitZ());
-  static Eigen::Translation3d current_translation(param_.transform_param.x, param_.transform_param.y,
-                                                  param_.transform_param.z);
-  static Eigen::Matrix4d trans = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
   Eigen::Vector4d target_ori(x, y, z, 1);
-  Eigen::Vector4d target_rotate = trans * target_ori;
+  Eigen::Vector4d target_rotate = trans_ * target_ori;
   x = target_rotate(0);
   y = target_rotate(1);
   z = target_rotate(2);
