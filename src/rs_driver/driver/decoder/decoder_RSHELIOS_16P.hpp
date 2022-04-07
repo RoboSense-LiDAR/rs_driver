@@ -155,7 +155,7 @@ inline void DecoderRSHELIOS_16P<T_PointCloud>::decodeDifopPkt(const uint8_t* pac
   {
     this->echo_mode_ = echo_mode;
     this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
-      (this->blks_per_frame_ << 1) : this->blks_per_frame_;
+      this->blks_per_frame_ : (this->blks_per_frame_ >> 1);
 
     calcParam();
   }
