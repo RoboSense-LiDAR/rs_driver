@@ -284,7 +284,6 @@ protected:
 #define SIN(angle) this->trigon_.sin(angle)
 #define COS(angle) this->trigon_.cos(angle)
 
-  uint16_t height_; 
   double packet_duration_;
   DistanceSection distance_section_; // invalid section of distance
 
@@ -310,7 +309,6 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param,
   , param_(param)
   , excb_(excb)
   , write_pkt_ts_(false)
-  , height_(0)
   , packet_duration_(0)
   , distance_section_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, 
       param.min_distance, param.max_distance)

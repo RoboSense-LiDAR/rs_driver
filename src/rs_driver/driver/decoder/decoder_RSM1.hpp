@@ -171,7 +171,7 @@ inline RSDecoderConstParam& DecoderRSM1<T_PointCloud>::getConstParam()
       , {0x55, 0xAA, 0x5A, 0xA5} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0x00, 0x00}
-    , 0 // no meaning for M1
+    , 5  // laser number
     , 25 // blocks per packet
       , 5 // channels per block
       , 0.2f // distance min
@@ -190,7 +190,6 @@ inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param,
   , max_seq_(SINGLE_PKT_NUM)
   , split_strategy_(&max_seq_)
 {
-  this->height_ = this->const_param_.CHANNELS_PER_BLOCK;
   this->packet_duration_ = FRAME_DURATION / SINGLE_PKT_NUM;
   this->angles_ready_ = true;
 }
@@ -298,7 +297,7 @@ inline bool DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
   if (split_strategy_.newPacket(pkt_seq))
   {
-    this->cb_split_frame_(this->height_, this->prev_point_ts_);
+    this->cb_split_frame_(this->const_param_.LASER_NUM, this->prev_point_ts_);
     ret = true;
   }
 

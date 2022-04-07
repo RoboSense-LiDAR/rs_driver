@@ -116,7 +116,6 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& con
   , block_az_diff_(20)
   , fov_blind_ts_diff_(0)
 {
-  this->height_ = this->const_param_.CHANNELS_PER_BLOCK;
   this->packet_duration_ = 
     this->mech_const_param_.BLOCK_DURATION * this->const_param_.BLOCKS_PER_PKT;
 

@@ -138,7 +138,6 @@ inline DecoderRSHELIOS_16P<T_PointCloud>::DecoderRSHELIOS_16P(const RSDecoderPar
       const std::function<void(const Error&)>& excb)
   : DecoderMech<T_PointCloud>(getConstParam(), param, excb)
 {
-  this->height_ = 16;
   this->packet_duration_ = 
     this->mech_const_param_.BLOCK_DURATION * this->const_param_.BLOCKS_PER_PKT * 2;
 
@@ -219,7 +218,7 @@ inline bool DecoderRSHELIOS_16P<T_PointCloud>::internDecodeMsopPkt(const uint8_t
     int32_t block_az = ntohs(block.azimuth);
     if (this->split_strategy_->newBlock(block_az))
     {
-      this->cb_split_frame_(this->height_, this->prev_point_ts_);
+      this->cb_split_frame_(this->const_param_.LASER_NUM, this->prev_point_ts_);
       ret = true;
     }
 
