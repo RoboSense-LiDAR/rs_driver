@@ -109,7 +109,6 @@ template <typename T_PointCloud>
 class DecoderRS16 : public DecoderMech<T_PointCloud>
 {
 public: 
-
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
   virtual ~DecoderRS16() = default;
