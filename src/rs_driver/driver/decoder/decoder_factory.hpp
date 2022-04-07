@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
 #include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
+#include <rs_driver/driver/decoder/decoder_RSRUBY_PLUS.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
 
 namespace robosense
@@ -78,6 +79,9 @@ inline std::shared_ptr<Decoder<T_PointCloud>> DecoderFactory<T_PointCloud>::crea
       break;
     case LidarType::RS128:
       ret_ptr = std::make_shared<DecoderRS128<T_PointCloud>>(param, excb);
+      break;
+    case LidarType::RSRUBY_PLUS:
+      ret_ptr = std::make_shared<DecoderRSRUBY_PLUS<T_PointCloud>>(param, excb);
       break;
     case LidarType::RSM1:
       ret_ptr = std::make_shared<DecoderRSM1<T_PointCloud>>(param, excb);
