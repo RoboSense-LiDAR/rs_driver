@@ -71,6 +71,7 @@ inline long long msecToDelay(LidarType type, double replay_rate)
       duration = RS80_PCAP_SLEEP_DURATION;
       break;
     case LidarType::RSM1:
+    case LidarType::RSM2:
       duration = RSM1_PCAP_SLEEP_DURATION;
       break;
     case LidarType::RSHELIOS:
