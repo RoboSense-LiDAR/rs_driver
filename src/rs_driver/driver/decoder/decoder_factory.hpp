@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
-#include <rs_driver/driver/decoder/decoder_RSHELIOS_16.hpp>
+#include <rs_driver/driver/decoder/decoder_RSHELIOS_16P.hpp>
 #include <rs_driver/driver/decoder/decoder_RSROCK.hpp>
 #include <rs_driver/driver/input.hpp>
 #include <rs_driver/msg/packet_msg.h>
@@ -64,7 +64,7 @@ private:
   static const LidarConstantParameter getRSRUBY_PLUSConstantParam();
   static const LidarConstantParameter getRSM1ConstantParam();
   static const LidarConstantParameter getRSHELIOSConstantParam();
-  static const LidarConstantParameter getRSHELIOS_16ConstantParam();
+  static const LidarConstantParameter getRSHELIOS_16PConstantParam();
   static const LidarConstantParameter getRSROCKConstantParam();
 };
 
@@ -98,8 +98,8 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDeco
     case LidarType::RSHELIOS:
       ret_ptr = std::make_shared<DecoderRSHELIOS<T_Point>>(param.decoder_param, getRSHELIOSConstantParam());
       break;
-    case LidarType::RSHELIOS_16:
-      ret_ptr = std::make_shared<DecoderRSHELIOS_16<T_Point>>(param.decoder_param, getRSHELIOS_16ConstantParam());
+    case LidarType::RSHELIOS_16P:
+      ret_ptr = std::make_shared<DecoderRSHELIOS_16P<T_Point>>(param.decoder_param, getRSHELIOS_16PConstantParam());
       break;
     case LidarType::RSROCK:
       ret_ptr = std::make_shared<DecoderRSROCK<T_Point>>(param.decoder_param, getRSROCKConstantParam());
@@ -266,7 +266,7 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSHELIOSConstant
 }
 
 template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRSHELIOS_16ConstantParam()
+inline const LidarConstantParameter DecoderFactory<T_Point>::getRSHELIOS_16PConstantParam()
 {
   LidarConstantParameter ret_param;
   ret_param.MSOP_ID = 0x5A05AA55;

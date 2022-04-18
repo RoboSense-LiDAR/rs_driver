@@ -38,17 +38,17 @@ namespace lidar
 {
 
 template <typename T_Point>
-class DecoderRSHELIOS_16 : public DecoderBase<T_Point>
+class DecoderRSHELIOS_16P : public DecoderBase<T_Point>
 {
 public:
-  explicit DecoderRSHELIOS_16(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
+  explicit DecoderRSHELIOS_16P(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
   RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
   RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
   double getLidarTime(const uint8_t* pkt);
 };
 
 template <typename T_Point>
-inline DecoderRSHELIOS_16<T_Point>::DecoderRSHELIOS_16(const RSDecoderParam& param,
+inline DecoderRSHELIOS_16P<T_Point>::DecoderRSHELIOS_16P(const RSDecoderParam& param,
                                                  const LidarConstantParameter& lidar_const_param)
   : DecoderBase<T_Point>(param, lidar_const_param)
 {
@@ -66,13 +66,13 @@ inline DecoderRSHELIOS_16<T_Point>::DecoderRSHELIOS_16(const RSDecoderParam& par
 }
 
 template <typename T_Point>
-inline double DecoderRSHELIOS_16<T_Point>::getLidarTime(const uint8_t* pkt)
+inline double DecoderRSHELIOS_16P<T_Point>::getLidarTime(const uint8_t* pkt)
 {
   return this->template calculateTimeUTC<RSHELIOSMsopPkt>(pkt, LidarType::RSHELIOS);
 }
 
 template <typename T_Point>
-inline RSDecoderResult DecoderRSHELIOS_16<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec,
+inline RSDecoderResult DecoderRSHELIOS_16P<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec,
                                                                int& height, int& azimuth)
 {
   height = this->lidar_const_param_.LASER_NUM;
@@ -194,7 +194,7 @@ inline RSDecoderResult DecoderRSHELIOS_16<T_Point>::decodeMsopPkt(const uint8_t*
 }
 
 template <typename T_Point>
-inline RSDecoderResult DecoderRSHELIOS_16<T_Point>::decodeDifopPkt(const uint8_t* pkt)
+inline RSDecoderResult DecoderRSHELIOS_16P<T_Point>::decodeDifopPkt(const uint8_t* pkt)
 {
   RSHELIOSDifopPkt* dpkt_ptr = (RSHELIOSDifopPkt*)pkt;
   if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)

@@ -46,7 +46,7 @@ enum LidarType  ///< LiDAR type
   RSRUBY_PLUS,
   RS80,
   RSHELIOS,
-  RSHELIOS_16,
+  RSHELIOS_16P,
   RSROCK,
   RSM1 = 10
 };
@@ -211,8 +211,8 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
       case LidarType::RSHELIOS:
         str = "RSHELIOS";
         break;
-      case LidarType::RSHELIOS_16:
-        str = "RSHELIOS_16";
+      case LidarType::RSHELIOS_16P:
+        str = "RSHELIOS_16P";
         break;
       case LidarType::RSROCK:
         str = "RSROCK";
@@ -257,9 +257,9 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
     {
       return lidar::LidarType::RSHELIOS;
     }
-    else if (type == "RSHELIOS_16")
+    else if (type == "RSHELIOS_16P")
     {
-      return lidar::LidarType::RSHELIOS_16;
+      return lidar::LidarType::RSHELIOS_16P;
     }
     else if (type == "RSROCK")
     {
