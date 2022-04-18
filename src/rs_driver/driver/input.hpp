@@ -516,6 +516,7 @@ inline void Input::getPcapPacket()
         time2go += std::chrono::microseconds(static_cast<long long>(RSM1_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
         break;
       case LidarType::RSHELIOS:
+      case LidarType::RSHELIOS_16:
         time2go +=
             std::chrono::microseconds(static_cast<long long>(RSHELIOS_PCAP_SLEEP_DURATION / input_param_.pcap_rate));
       case LidarType::RSROCK:
