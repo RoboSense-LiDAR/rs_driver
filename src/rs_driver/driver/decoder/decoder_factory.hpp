@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
+#include <rs_driver/driver/decoder/decoder_RSHELIOS_16P.hpp>
 #include <rs_driver/driver/decoder/decoder_RSROCK.hpp>
 #include <rs_driver/driver/input.hpp>
 #include <rs_driver/msg/packet_msg.h>
@@ -63,6 +64,7 @@ private:
   static const LidarConstantParameter getRSRUBY_PLUSConstantParam();
   static const LidarConstantParameter getRSM1ConstantParam();
   static const LidarConstantParameter getRSHELIOSConstantParam();
+  static const LidarConstantParameter getRSHELIOS_16PConstantParam();
   static const LidarConstantParameter getRSROCKConstantParam();
 };
 
@@ -95,6 +97,9 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDeco
       break;
     case LidarType::RSHELIOS:
       ret_ptr = std::make_shared<DecoderRSHELIOS<T_Point>>(param.decoder_param, getRSHELIOSConstantParam());
+      break;
+    case LidarType::RSHELIOS_16P:
+      ret_ptr = std::make_shared<DecoderRSHELIOS_16P<T_Point>>(param.decoder_param, getRSHELIOS_16PConstantParam());
       break;
     case LidarType::RSROCK:
       ret_ptr = std::make_shared<DecoderRSROCK<T_Point>>(param.decoder_param, getRSROCKConstantParam());
@@ -251,6 +256,26 @@ inline const LidarConstantParameter DecoderFactory<T_Point>::getRSHELIOSConstant
   ret_param.BLOCKS_PER_PKT = 12;
   ret_param.CHANNELS_PER_BLOCK = 32;
   ret_param.LASER_NUM = 32;
+  ret_param.DSR_TOFFSET = 1.0;
+  ret_param.FIRING_FREQUENCY = 0.018;
+  ret_param.DIS_RESOLUTION = 0.0025;
+  ret_param.RX = 0.03498;
+  ret_param.RY = -0.015;
+  ret_param.RZ = 0.0;
+  return ret_param;
+}
+
+template <typename T_Point>
+inline const LidarConstantParameter DecoderFactory<T_Point>::getRSHELIOS_16PConstantParam()
+{
+  LidarConstantParameter ret_param;
+  ret_param.MSOP_ID = 0x5A05AA55;
+  ret_param.DIFOP_ID = 0x555511115A00FFA5;
+  ret_param.BLOCK_ID = 0xEEFF;
+  ret_param.PKT_RATE = 750;
+  ret_param.BLOCKS_PER_PKT = 12;
+  ret_param.CHANNELS_PER_BLOCK = 32;
+  ret_param.LASER_NUM = 16;
   ret_param.DSR_TOFFSET = 1.0;
   ret_param.FIRING_FREQUENCY = 0.018;
   ret_param.DIS_RESOLUTION = 0.0025;
