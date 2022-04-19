@@ -88,7 +88,6 @@ private:
   void packetPut(std::shared_ptr<Buffer> pkt);
 
   void processMsop();
-  void processDifop();
 
   std::shared_ptr<T_PointCloud> getPointCloud();
   void splitFrame(uint16_t height, double ts);
@@ -105,9 +104,7 @@ private:
   std::shared_ptr<Decoder<T_PointCloud>> decoder_ptr_;
   SyncQueue<std::shared_ptr<Buffer>> free_pkt_queue_;
   SyncQueue<std::shared_ptr<Buffer>> msop_pkt_queue_;
-  SyncQueue<std::shared_ptr<Buffer>> difop_pkt_queue_;
   std::thread msop_handle_thread_;
-  std::thread difop_handle_thread_;
   uint32_t pkt_seq_;
   uint32_t point_cloud_seq_;
   bool to_exit_handle_;
@@ -193,7 +190,6 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   //
   // input
   //
-
   input_ptr_ = InputFactory::createInput(param.input_type, param.input_param, packet_duration, cb_feed_pkt_);
 
   input_ptr_->regCallback(
@@ -230,10 +226,7 @@ inline bool LidarDriverImpl<T_PointCloud>::start()
   }
 
   to_exit_handle_ = false;
-  msop_handle_thread_ = 
-    std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processMsop, this));
-  difop_handle_thread_ = 
-    std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processDifop, this));
+  msop_handle_thread_ = std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processMsop, this));
 
   input_ptr_->start();
 
@@ -253,7 +246,6 @@ inline void LidarDriverImpl<T_PointCloud>::stop()
 
   to_exit_handle_ = true;
   msop_handle_thread_.join();
-  difop_handle_thread_.join();
 
   start_flag_ = false;
 }
@@ -318,30 +310,12 @@ inline std::shared_ptr<Buffer> LidarDriverImpl<T_PointCloud>::packetGet(size_t s
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt)
 {
-  SyncQueue<std::shared_ptr<Buffer>>* queue; 
-
-  uint8_t* id = pkt->data();
-  if (*id == 0x55)
-  {
-    queue = &msop_pkt_queue_;
-  }
-  else if (*id == 0xA5)
-  {
-    queue = &difop_pkt_queue_;
-  }
-  else
-  {
-    free_pkt_queue_.push(pkt);
-    return;
-  }
-
   constexpr static int PACKET_POOL_MAX = 1024;
-
-  size_t sz = queue->push(pkt);
+  size_t sz = msop_pkt_queue_.push(pkt);
   if (sz > PACKET_POOL_MAX)
   {
     LIMIT_CALL(runExceptionCallback(Error(ERRCODE_PKTBUFOVERFLOW)), 1);
-    queue->clear();
+    msop_pkt_queue_.clear();
   }
 }
 
@@ -369,26 +343,17 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
     }
 #endif
 
-    bool pkt_to_split = decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
-    runPacketCallBack(pkt->data(), pkt->dataSize(), decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
-
-    free_pkt_queue_.push(pkt);
-  }
-}
-
-template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::processDifop()
-{
-  while (!to_exit_handle_)
-  {
-    std::shared_ptr<Buffer> pkt = difop_pkt_queue_.popWait(500000);
-    if (pkt.get() == NULL)
+    uint8_t* id = pkt->data();
+    if (*id == 0x55)
     {
-      continue;
+      bool pkt_to_split = decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
+      runPacketCallBack(pkt->data(), pkt->dataSize(), decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
     }
-
-    decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
-    runPacketCallBack(pkt->data(), pkt->dataSize(), 0, true, false); // difop packet
+    else if (*id == 0xA5)
+    {
+      decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
+      runPacketCallBack(pkt->data(), pkt->dataSize(), 0, true, false); // difop packet
+    }
 
     free_pkt_queue_.push(pkt);
   }
