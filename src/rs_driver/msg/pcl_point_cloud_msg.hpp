@@ -47,7 +47,7 @@ struct PointXYZIRT
 } EIGEN_ALIGN16;
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRT, (float, x, x)(float, y, y)(float, z, z)
-    (uint8_t, intensity, intensity)(uint16_t, ring, ring)(double, timestamp, timestamp))
+    (std::uint8_t, intensity, intensity)(std::uint16_t, ring, ring)(double, timestamp, timestamp))
 
 template <typename T_Point>
 class PointCloudT : public pcl::PointCloud<T_Point>
