@@ -53,7 +53,7 @@ public:
     }
 
     pcap_offset_ += input_param.user_layer_bytes;
-    pcap_tail_ += input_param.tail_layer_bytes;
+    pcap_tail_   += input_param.tail_layer_bytes;
 
     std::stringstream msop_stream, difop_stream;
     if (input_param_.use_vlan)

@@ -33,8 +33,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #include <rs_driver/driver/input/input.hpp>
 #include <rs_driver/driver/input/input_sock.hpp>
-#include <rs_driver/driver/input/input_pcap.hpp>
 #include <rs_driver/driver/input/input_raw.hpp>
+#ifdef ENABLE_PCAP_PARSE
+#include <rs_driver/driver/input/input_pcap.hpp>
+#endif
 
 namespace robosense
 {
@@ -63,11 +65,13 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type,
       }
       break;
 
+#ifdef ENABLE_PCAP_PARSE
     case InputType::PCAP_FILE:
       {
         input = std::make_shared<InputPcap>(param, excb, sec_to_delay);
       }
       break;
+#endif
 
     case InputType::RAW_PACKET:
       {

@@ -51,7 +51,8 @@ enum LidarType  ///< LiDAR type
   RSHELIOS,
   RSHELIOS_16P,
   RSROCK,
-  RSM1 = 10
+  RSM1 = 0x20,
+  RSM2
 };
 
 inline std::string lidarTypeToStr(const LidarType& type)

@@ -64,7 +64,7 @@ public:
     : Input(input_param, excb), sock_offset_(0), sock_tail_(0)
   {
     sock_offset_ += input_param.user_layer_bytes;
-    sock_tail_ += input_param.tail_layer_bytes;
+    sock_tail_   += input_param.tail_layer_bytes;
   }
 
   virtual bool init();
@@ -92,7 +92,7 @@ inline void InputSock::higherThreadPrioty(std::thread::native_handle_type handle
   sch.sched_priority = 63;
   if (pthread_setschedparam(handle, SCHED_RR, &sch))
   {
-    std::cout << "setschedparam failed: " << std::strerror(errno) << '\n';
+    std::cout << "setschedparam failed: " << std::strerror(errno) << std::endl;
   }
 #endif
 }
@@ -245,11 +245,12 @@ inline void InputSock::recvPacket()
     int max_fd = std::max(fds_[0], fds_[1]);
 
     struct timeval tv;
-    tv.tv_sec = 0;
-    tv.tv_usec = 500000;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
     int retval = select(max_fd + 1, &rfds, NULL, NULL, &tv);
     if (retval == 0)
     {
+      excb_(Error(ERRCODE_MSOPTIMEOUT));
       continue;
     }
     else if (retval == -1)
@@ -263,6 +264,36 @@ inline void InputSock::recvPacket()
 
     if (FD_ISSET(fds_[0], &rfds))
     {
+#ifdef ENABLE_RECVMMSG
+
+#define VLEN 1
+      struct mmsghdr msgs[VLEN];
+      struct iovec iovecs[VLEN];
+      std::shared_ptr<Buffer> pkts[VLEN];
+      int i, ret;
+
+      memset(msgs, 0, sizeof(msgs));
+      for (i = 0; i < VLEN; i++)
+      {
+        pkts[i] = cb_get_(MAX_PKT_LEN);
+        iovecs[i].iov_base = pkts[i]->buf();
+        iovecs[i].iov_len = pkts[i]->bufSize();
+        msgs[i].msg_hdr.msg_iov = &iovecs[i];
+        msgs[i].msg_hdr.msg_iovlen = 1;
+      }
+
+      struct timespec timeout;
+      timeout.tv_sec = 0;
+      timeout.tv_nsec = 0;
+      ret = recvmmsg(fds_[0], msgs, VLEN, 0, &timeout);
+      for (i = 0; i < ret; i++)
+      {
+        pkts[i]->setData(sock_offset_, msgs[i].msg_len - sock_offset_ - sock_tail_);
+        pushPacket(pkts[i]);
+      }
+
+#else
+
       std::shared_ptr<Buffer> pkt = cb_get_(MAX_PKT_LEN);
       ssize_t ret = recvfrom(fds_[0], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
       if (ret <= 0)
@@ -275,6 +306,8 @@ inline void InputSock::recvPacket()
         pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
         pushPacket(pkt);
       }
+
+#endif
     }
     else if (FD_ISSET(fds_[1], &rfds))
     {

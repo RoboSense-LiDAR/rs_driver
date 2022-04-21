@@ -83,7 +83,7 @@ int main(int argc, char* argv[])
   param.input_type = InputType::ONLINE_LIDAR;
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
-  param.lidar_type = LidarType::RS32;   ///< Set the lidar type. Make sure this type is correct
+  param.lidar_type = LidarType::RSM1;   ///< Set the lidar type. Make sure this type is correct
   param.print();
 
   LidarDriver<PointCloudMsg> driver;

@@ -18,8 +18,10 @@ endif()
 #=============================
 #  Compile Features
 #=============================
-option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
+option(ENABLE_PCAP_PARSE "Enable PCAP file parse" ON) 
 option(ENABLE_TRANSFORM "Enable transform functions" OFF)
+option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
+option(ENABLE_RECVMMSG "Enable recvmmsg() to receive MSOP message" OFF)
 
 #=============================
 #  Compile Demos, Tools, Tests
@@ -113,6 +115,15 @@ if(${ENABLE_HIGH_PRIORITY_THREAD})
   add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
 endif(${ENABLE_HIGH_PRIORITY_THREAD})
 
+if(${ENABLE_PCAP_PARSE})
+
+  message(=============================================================)
+  message("-- Enable PCAP parse")
+  message(=============================================================)
+
+  add_definitions("-DENABLE_PCAP_PARSE")
+endif(${ENABLE_PCAP_PARSE})
+
 if(${ENABLE_TRANSFORM})
 
   message(=============================================================)
@@ -130,6 +141,11 @@ endif(${ENABLE_TRANSFORM})
 #============================
 #  Build Demos, Tools, Tests
 #============================
+
+if(${ENABLE_RECVMMSG})
+  add_definitions("-DENABLE_RECVMMSG")
+endif(${ENABLE_RECVMMSG})
+
 if(${COMPILE_DEMOS})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/demo)
 endif(${COMPILE_DEMOS})

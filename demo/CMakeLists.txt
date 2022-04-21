@@ -10,6 +10,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 include_directories(${DRIVER_INCLUDE_DIRS})
+
 add_executable(demo_online
               demo_online.cpp
               )
@@ -17,6 +18,9 @@ target_link_libraries(demo_online
                     pthread
                     ${EXTERNAL_LIBS}       
 )
+
+if(${ENABLE_PCAP_PARSE})
+
 add_executable(demo_pcap
               demo_pcap.cpp
               )
@@ -24,5 +28,7 @@ target_link_libraries(demo_pcap
                     pthread
                 ${EXTERNAL_LIBS}       
 )
+
+endif(${ENABLE_PCAP_PARSE})
 
         
