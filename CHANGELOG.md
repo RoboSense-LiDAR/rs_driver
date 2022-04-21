@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.4.6 - 2022-04-21
+
+### Added
+- Check msop timeout
+- Support M2
+- add cmake option ENABLE_RECVMMSG
+
+### Changed
+- Optimize point cloud transform
+
 ## v1.4.5 - 2022-03-09
 
 ### Added
