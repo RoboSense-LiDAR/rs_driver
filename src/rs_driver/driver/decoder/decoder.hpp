@@ -257,9 +257,7 @@ public:
   void processDifopPkt(const uint8_t* pkt, size_t size);
   bool processMsopPkt(const uint8_t* pkt, size_t size);
 
-  explicit Decoder(const RSDecoderConstParam& const_param, 
-      const RSDecoderParam& param, 
-      const std::function<void(const Error&)>& excb);
+  explicit Decoder(const RSDecoderConstParam& const_param, const RSDecoderParam& param);
 
   float getTemperature();
   double getPacketDuration();
@@ -267,7 +265,10 @@ public:
   double prevPktTs();
   void transformPoint(float& x, float& y, float& z);
 
-  void setSplitCallback(const std::function<void(uint16_t, double)>& cb_split_frame);
+  void regCallback(
+      const std::function<void(const Error&)>& cb_excep,
+      const std::function<void(uint16_t, double)>& cb_split_frame);
+
   std::shared_ptr<T_PointCloud> point_cloud_; // accumulated point cloud currently
 
 #ifndef UNIT_TEST
@@ -277,7 +278,7 @@ protected:
   RSDecoderConstParam const_param_; // const param
   RSDecoderParam param_; // user param
   std::function<void(uint16_t, double)> cb_split_frame_;
-  std::function<void(const Error&)> excb_;
+  std::function<void(const Error&)> cb_excep_;
   bool write_pkt_ts_;
 
   Trigon trigon_;
@@ -296,22 +297,21 @@ protected:
 };
 
 template <typename T_PointCloud>
-inline void Decoder<T_PointCloud>::setSplitCallback(const std::function<void(uint16_t, double)>& cb_split_frame)
+inline void Decoder<T_PointCloud>::regCallback(
+    const std::function<void(const Error&)>& cb_excep,
+    const std::function<void(uint16_t, double)>& cb_split_frame)
 {
+  cb_excep_ = cb_excep;
   cb_split_frame_ = cb_split_frame;
 }
 
 template <typename T_PointCloud>
-inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param, 
-    const RSDecoderParam& param, 
-    const std::function<void(const Error&)>& excb)
+inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param, const RSDecoderParam& param)
   : const_param_(const_param)
   , param_(param)
-  , excb_(excb)
   , write_pkt_ts_(false)
   , packet_duration_(0)
-  , distance_section_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, 
-      param.min_distance, param.max_distance)
+  , distance_section_(const_param.DISTANCE_MIN, const_param.DISTANCE_MAX, param.min_distance, param.max_distance)
   , echo_mode_(ECHO_SINGLE)
   , temperature_(0.0)
   , angles_ready_(false)
@@ -367,13 +367,13 @@ inline void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t si
 {
   if (size != this->const_param_.DIFOP_LEN)
   {
-     this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
+     this->cb_excep_(Error(ERRCODE_WRONGPKTLENGTH));
      return;
   }
 
   if (memcmp(pkt, this->const_param_.DIFOP_ID, const_param_.DIFOP_ID_LEN) != 0)
   {
-    this->excb_(Error(ERRCODE_WRONGPKTHEADER));
+    this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER));
     return;
   }
 
@@ -385,19 +385,19 @@ inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t siz
 {
   if (param_.wait_for_difop && !angles_ready_)
   {
-     excb_(Error(ERRCODE_NODIFOPRECV));
+     cb_excep_(Error(ERRCODE_NODIFOPRECV));
      return false;
   }
 
   if (size != this->const_param_.MSOP_LEN)
   {
-     this->excb_(Error(ERRCODE_WRONGPKTLENGTH));
+     this->cb_excep_(Error(ERRCODE_WRONGPKTLENGTH));
      return false;
   }
 
   if (memcmp(pkt, this->const_param_.MSOP_ID, const_param_.MSOP_ID_LEN) != 0)
   {
-    this->excb_(Error(ERRCODE_WRONGPKTHEADER));
+    this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER));
     return false;
   }
 

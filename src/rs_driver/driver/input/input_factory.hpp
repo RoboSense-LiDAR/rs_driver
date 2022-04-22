@@ -46,13 +46,11 @@ namespace lidar
 class InputFactory
 {
 public:
-  static std::shared_ptr<Input> createInput(InputType type, 
-      const RSInputParam& param, const std::function<void(const Error&)>& excb,
+  static std::shared_ptr<Input> createInput(InputType type, const RSInputParam& param,
       double sec_to_delay, std::function<void(const uint8_t*, size_t)>& cb_feed_pkt);
 };
 
-inline std::shared_ptr<Input> InputFactory::createInput(InputType type, 
-    const RSInputParam& param, const std::function<void(const Error&)>& excb, 
+inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RSInputParam& param, 
     double sec_to_delay, std::function<void(const uint8_t*, size_t)>& cb_feed_pkt)
 {
   std::shared_ptr<Input> input;
@@ -61,21 +59,21 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type,
   {
     case InputType::ONLINE_LIDAR:
       {
-        input = std::make_shared<InputSock>(param, excb);
+        input = std::make_shared<InputSock>(param);
       }
       break;
 
 #ifdef ENABLE_PCAP_PARSE
     case InputType::PCAP_FILE:
       {
-        input = std::make_shared<InputPcap>(param, excb, sec_to_delay);
+        input = std::make_shared<InputPcap>(param, sec_to_delay);
       }
       break;
 #endif
 
     case InputType::RAW_PACKET:
       {
-        std::shared_ptr<InputRaw> inputRaw = std::make_shared<InputRaw>(param, excb);
+        std::shared_ptr<InputRaw> inputRaw = std::make_shared<InputRaw>(param);
         cb_feed_pkt = std::bind(&InputRaw::feedPacket, inputRaw, 
             std::placeholders::_1, std::placeholders::_2);
         input = inputRaw;

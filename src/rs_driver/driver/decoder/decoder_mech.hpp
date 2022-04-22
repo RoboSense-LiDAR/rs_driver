@@ -74,9 +74,7 @@ public:
 
   virtual ~DecoderMech() = default;
 
-  explicit DecoderMech(const RSDecoderMechConstParam& const_param, 
-      const RSDecoderParam& param, 
-      const std::function<void(const Error&)>& excb);
+  explicit DecoderMech(const RSDecoderMechConstParam& const_param, const RSDecoderParam& param);
 
   void print();
 
@@ -104,9 +102,8 @@ protected:
 
 template <typename T_PointCloud>
 inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& const_param, 
-    const RSDecoderParam& param, 
-    const std::function<void(const Error&)>& excb)
-  : Decoder<T_PointCloud>(const_param.base, param, excb)
+    const RSDecoderParam& param)
+  : Decoder<T_PointCloud>(const_param.base, param)
   , mech_const_param_(const_param)
   , chan_angles_(this->const_param_.LASER_NUM)
   , scan_section_(this->param_.start_angle * 100, this->param_.end_angle * 100)

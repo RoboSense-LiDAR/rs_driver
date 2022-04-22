@@ -60,8 +60,8 @@ namespace lidar
 class InputSock : public Input
 {
 public:
-  InputSock(const RSInputParam& input_param, const std::function<void(const Error&)>& excb)
-    : Input(input_param, excb), sock_offset_(0), sock_tail_(0)
+  InputSock(const RSInputParam& input_param)
+    : Input(input_param), sock_offset_(0), sock_tail_(0)
   {
     sock_offset_ += input_param.user_layer_bytes;
     sock_tail_   += input_param.tail_layer_bytes;
@@ -100,7 +100,9 @@ inline void InputSock::higherThreadPrioty(std::thread::native_handle_type handle
 inline bool InputSock::init()
 {
   if (init_flag_)
+  {
     return true;
+  }
 
   int msop_fd = -1, difop_fd = -1;
 
@@ -130,11 +132,13 @@ failMsop:
 inline bool InputSock::start()
 {
   if (start_flag_)
+  {
     return true;
+  }
 
   if (!init_flag_)
   {
-    excb_(Error(ERRCODE_STARTBEFOREINIT));
+    cb_excep_(Error(ERRCODE_STARTBEFOREINIT));
     return false;
   }
 
@@ -250,7 +254,7 @@ inline void InputSock::recvPacket()
     int retval = select(max_fd + 1, &rfds, NULL, NULL, &tv);
     if (retval == 0)
     {
-      excb_(Error(ERRCODE_MSOPTIMEOUT));
+      cb_excep_(Error(ERRCODE_MSOPTIMEOUT));
       continue;
     }
     else if (retval == -1)
@@ -275,7 +279,7 @@ inline void InputSock::recvPacket()
       memset(msgs, 0, sizeof(msgs));
       for (i = 0; i < VLEN; i++)
       {
-        pkts[i] = cb_get_(MAX_PKT_LEN);
+        pkts[i] = cb_get_pkt_(MAX_PKT_LEN);
         iovecs[i].iov_base = pkts[i]->buf();
         iovecs[i].iov_len = pkts[i]->bufSize();
         msgs[i].msg_hdr.msg_iov = &iovecs[i];
@@ -294,7 +298,7 @@ inline void InputSock::recvPacket()
 
 #else
 
-      std::shared_ptr<Buffer> pkt = cb_get_(MAX_PKT_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
       ssize_t ret = recvfrom(fds_[0], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
       if (ret <= 0)
       {
@@ -311,7 +315,7 @@ inline void InputSock::recvPacket()
     }
     else if (FD_ISSET(fds_[1], &rfds))
     {
-      std::shared_ptr<Buffer> pkt = cb_get_(MAX_PKT_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
       ssize_t ret = recvfrom(fds_[1], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
       if (ret < 0)
       {

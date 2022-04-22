@@ -52,47 +52,47 @@ class DecoderFactory
 {
 public:
 
-  static std::shared_ptr<Decoder<T_PointCloud>> createDecoder(LidarType type, 
-      const RSDecoderParam& param, const std::function<void(const Error&)>& excb);
+  static std::shared_ptr<Decoder<T_PointCloud>> createDecoder(
+      LidarType type, const RSDecoderParam& param);
 };
 
 template <typename T_PointCloud>
-inline std::shared_ptr<Decoder<T_PointCloud>> DecoderFactory<T_PointCloud>::createDecoder(LidarType type, 
-    const RSDecoderParam& param, const std::function<void(const Error&)>& excb)
+inline std::shared_ptr<Decoder<T_PointCloud>> DecoderFactory<T_PointCloud>::createDecoder(
+    LidarType type, const RSDecoderParam& param)
 {
   std::shared_ptr<Decoder<T_PointCloud>> ret_ptr;
 
   switch (type)
   {
     case LidarType::RS16:
-      ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param);
       break;
     case LidarType::RS32:
-      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param);
       break;
     case LidarType::RSBP:
-      ret_ptr = std::make_shared<DecoderRSBP<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRSBP<T_PointCloud>>(param);
       break;
     case LidarType::RSHELIOS:
-      ret_ptr = std::make_shared<DecoderRSHELIOS<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRSHELIOS<T_PointCloud>>(param);
       break;
     case LidarType::RSHELIOS_16P:
-      ret_ptr = std::make_shared<DecoderRSHELIOS_16P<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRSHELIOS_16P<T_PointCloud>>(param);
       break;
     case LidarType::RS80:
-      ret_ptr = std::make_shared<DecoderRS80<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRS80<T_PointCloud>>(param);
       break;
     case LidarType::RS128:
-      ret_ptr = std::make_shared<DecoderRS128<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRS128<T_PointCloud>>(param);
       break;
     case LidarType::RSRUBY_PLUS:
-      ret_ptr = std::make_shared<DecoderRSRUBY_PLUS<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRSRUBY_PLUS<T_PointCloud>>(param);
       break;
     case LidarType::RSM1:
-      ret_ptr = std::make_shared<DecoderRSM1<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRSM1<T_PointCloud>>(param);
       break;
     case LidarType::RSM2:
-      ret_ptr = std::make_shared<DecoderRSM2<T_PointCloud>>(param, excb);
+      ret_ptr = std::make_shared<DecoderRSM2<T_PointCloud>>(param);
       break;
     default:
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;

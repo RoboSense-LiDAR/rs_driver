@@ -40,9 +40,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 #define MAX_PKT_LEN 1500
-#define ETH_HDR_LEN 42
-#define VLAN_LEN 4
-#define SOME_IP_LEN 16
 
 namespace robosense
 {
@@ -51,10 +48,12 @@ namespace lidar
 class Input
 {
 public:
-  Input(const RSInputParam& input_param, const std::function<void(const Error&)>& excb);
+  Input(const RSInputParam& input_param);
 
-  inline void regRecvCallback(const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get,
-                    const std::function<void(std::shared_ptr<Buffer>)>& cb_put);
+  inline void regCallback(
+      const std::function<void(const Error&)>& cb_excep,
+      const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
+      const std::function<void(std::shared_ptr<Buffer>)>& cb_put_pkt);
 
   virtual bool init() = 0;
   virtual bool start() = 0;
@@ -67,27 +66,29 @@ protected:
   inline void pushPacket(std::shared_ptr<Buffer> pkt);
 
   RSInputParam input_param_;
-  std::function<std::shared_ptr<Buffer>(size_t size)> cb_get_;
-  std::function<void(std::shared_ptr<Buffer>)> cb_put_;
-  std::function<void(const Error&)> excb_;
+  std::function<std::shared_ptr<Buffer>(size_t size)> cb_get_pkt_;
+  std::function<void(std::shared_ptr<Buffer>)> cb_put_pkt_;
+  std::function<void(const Error&)> cb_excep_;
   std::thread recv_thread_;
   bool to_exit_recv_;
   bool init_flag_;
   bool start_flag_;
 };
 
-inline Input::Input(const RSInputParam& input_param, 
-    const std::function<void(const Error&)>& excb)
-  : input_param_(input_param), excb_(excb), to_exit_recv_(false), 
+inline Input::Input(const RSInputParam& input_param)
+  : input_param_(input_param), to_exit_recv_(false), 
   init_flag_(false), start_flag_(false)
 {
 }
 
-inline void Input::regRecvCallback(const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get,
-                                   const std::function<void(std::shared_ptr<Buffer>)>& cb_put)
+inline void Input::regCallback(
+    const std::function<void(const Error&)>& cb_excep,
+    const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt, 
+    const std::function<void(std::shared_ptr<Buffer>)>& cb_put_pkt)
 {
-  cb_get_ = cb_get;
-  cb_put_ = cb_put;
+  cb_excep_   = cb_excep;
+  cb_get_pkt_ = cb_get_pkt;
+  cb_put_pkt_ = cb_put_pkt;
 }
 
 inline void Input::stop()
@@ -103,7 +104,7 @@ inline void Input::stop()
 
 inline void Input::pushPacket(std::shared_ptr<Buffer> pkt)
 {
-  cb_put_(pkt);
+  cb_put_pkt_(pkt);
 }
 
 }  // namespace lidar

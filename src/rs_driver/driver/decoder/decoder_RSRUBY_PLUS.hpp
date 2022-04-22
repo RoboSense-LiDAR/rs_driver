@@ -47,8 +47,7 @@ public:
   //virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
   virtual ~DecoderRSRUBY_PLUS() = default;
 
-  explicit DecoderRSRUBY_PLUS(const RSDecoderParam& param, 
-      const std::function<void(const Error&)>& excb);
+  explicit DecoderRSRUBY_PLUS(const RSDecoderParam& param);
 
 #ifndef UNIT_TEST
 protected:
@@ -153,9 +152,8 @@ inline void DecoderRSRUBY_PLUS<T_PointCloud>::decodeDifopPkt(const uint8_t* pack
 
 
 template <typename T_PointCloud>
-inline DecoderRSRUBY_PLUS<T_PointCloud>::DecoderRSRUBY_PLUS(const RSDecoderParam& param,
-      const std::function<void(const Error&)>& excb)
-  : DecoderRS128<T_PointCloud>(getConstParam(), param, excb)
+inline DecoderRSRUBY_PLUS<T_PointCloud>::DecoderRSRUBY_PLUS(const RSDecoderParam& param)
+  : DecoderRS128<T_PointCloud>(getConstParam(), param)
 {
 }
 

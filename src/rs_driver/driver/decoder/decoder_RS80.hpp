@@ -89,8 +89,7 @@ public:
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
   virtual ~DecoderRS80() = default;
 
-  explicit DecoderRS80(const RSDecoderParam& param, 
-      const std::function<void(const Error&)>& excb);
+  explicit DecoderRS80(const RSDecoderParam& param);
 
 #ifndef UNIT_TEST
 protected:
@@ -172,9 +171,8 @@ inline RSEchoMode DecoderRS80<T_PointCloud>::getEchoMode(uint8_t mode)
 }
 
 template <typename T_PointCloud>
-inline DecoderRS80<T_PointCloud>::DecoderRS80(const RSDecoderParam& param,
-      const std::function<void(const Error&)>& excb)
-  : DecoderMech<T_PointCloud>(getConstParam(), param, excb)
+inline DecoderRS80<T_PointCloud>::DecoderRS80(const RSDecoderParam& param)
+  : DecoderMech<T_PointCloud>(getConstParam(), param)
 {
 }
 
@@ -239,7 +237,7 @@ inline bool DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 1) != 0)
     {
-      this->excb_(Error(ERRCODE_WRONGPKTHEADER));
+      this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER));
       break;
     }
 

@@ -36,6 +36,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sstream>
 #include <pcap.h>
 
+#define ETH_HDR_LEN  42
+#define VLAN_HDR_LEN  4
+
 namespace robosense
 {
 namespace lidar
@@ -43,13 +46,13 @@ namespace lidar
 class InputPcap : public Input
 {
 public:
-  InputPcap(const RSInputParam& input_param, const std::function<void(const Error&)>& excb, double sec_to_delay)
-    : Input(input_param, excb), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), pcap_tail_(0), difop_filter_valid_(false), 
+  InputPcap(const RSInputParam& input_param, double sec_to_delay)
+    : Input(input_param), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), pcap_tail_(0), difop_filter_valid_(false), 
     msec_to_delay_(sec_to_delay*1000000)
   {
     if (input_param.use_vlan)
     {
-      pcap_offset_ += VLAN_LEN;
+      pcap_offset_ += VLAN_HDR_LEN;
     }
 
     pcap_offset_ += input_param.user_layer_bytes;
@@ -97,7 +100,7 @@ inline bool InputPcap::init()
   pcap_ = pcap_open_offline(input_param_.pcap_path.c_str(), errbuf);
   if (pcap_ == NULL)
   {
-    excb_(Error(ERRCODE_PCAPWRONGPATH));
+    cb_excep_(Error(ERRCODE_PCAPWRONGPATH));
     return false;
   }
 
@@ -120,7 +123,7 @@ inline bool InputPcap::start()
 
   if (!init_flag_)
   {
-    excb_(Error(ERRCODE_STARTBEFOREINIT));
+    cb_excep_(Error(ERRCODE_STARTBEFOREINIT));
     return false;
   }
 
@@ -154,7 +157,7 @@ inline void InputPcap::recvPacket()
 
       if (input_param_.pcap_repeat)
       {
-        excb_(Error(ERRCODE_PCAPREPEAT));
+        cb_excep_(Error(ERRCODE_PCAPREPEAT));
 
         char errbuf[PCAP_ERRBUF_SIZE];
         pcap_ = pcap_open_offline(input_param_.pcap_path.c_str(), errbuf);
@@ -162,21 +165,21 @@ inline void InputPcap::recvPacket()
       }
       else
       {
-        excb_(Error(ERRCODE_PCAPEXIT));
+        cb_excep_(Error(ERRCODE_PCAPEXIT));
         break;
       }
     }
 
     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
     {
-      std::shared_ptr<Buffer> pkt = cb_get_(MAX_PKT_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
       memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_ - pcap_tail_);
       pkt->setData(0, header->len - pcap_offset_ - pcap_tail_);
       pushPacket(pkt);
     }
     else if (difop_filter_valid_ && (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
     {
-      std::shared_ptr<Buffer> pkt = cb_get_(MAX_PKT_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
       memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_ - pcap_tail_);
       pkt->setData(0, header->len - pcap_offset_ - pcap_tail_);
       pushPacket(pkt);

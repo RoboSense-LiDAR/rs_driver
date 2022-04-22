@@ -147,8 +147,7 @@ public:
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
   virtual ~DecoderRSM1() = default;
 
-  explicit DecoderRSM1(const RSDecoderParam& param, 
-      const std::function<void(const Error&)>& excb);
+  explicit DecoderRSM1(const RSDecoderParam& param);
 
 private:
 
@@ -184,9 +183,8 @@ inline RSDecoderConstParam& DecoderRSM1<T_PointCloud>::getConstParam()
 }
 
 template <typename T_PointCloud>
-inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param, 
-      const std::function<void(const Error&)>& excb)
-  : Decoder<T_PointCloud>(getConstParam(), param, excb)
+inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param)
+  : Decoder<T_PointCloud>(getConstParam(), param)
   , max_seq_(SINGLE_PKT_NUM)
   , split_strategy_(&max_seq_)
 {

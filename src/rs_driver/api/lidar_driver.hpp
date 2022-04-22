@@ -63,10 +63,10 @@ public:
    * called
    * @param callback The callback function
    */
-  inline void regPointCloudCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get_pc,
-      const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put_pc)
+  inline void regPointCloudCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get_cloud,
+      const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put_cloud)
   {
-    driver_ptr_->regPointCloudCallback(cb_get_pc, cb_put_pc);
+    driver_ptr_->regPointCloudCallback(cb_get_cloud, cb_put_cloud);
   }
 
   /**
@@ -83,9 +83,9 @@ public:
    * @brief Register the exception message callback function to driver. When error occurs, this function will be called
    * @param callback The callback function
    */
-  inline void regExceptionCallback(const std::function<void(const Error&)>& cb_excp)
+  inline void regExceptionCallback(const std::function<void(const Error&)>& cb_excep)
   {
-    driver_ptr_->regExceptionCallback(cb_excp);
+    driver_ptr_->regExceptionCallback(cb_excep);
   }
 
   /**
