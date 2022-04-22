@@ -69,11 +69,17 @@ inline std::string lidarTypeToStr(const LidarType& type)
     case LidarType::RSBP:
       str = "RSBP";
       break;
-    case LidarType::RS128:
-      str = "RS128";
+    case LidarType::RSHELIOS:
+      str = "RSHELIOS";
+      break;
+    case LidarType::RSHELIOS_16P:
+      str = "RSHELIOS_16P";
       break;
     case LidarType::RS80:
       str = "RS80";
+      break;
+    case LidarType::RS128:
+      str = "RS128";
       break;
     case LidarType::RSRUBY_PLUS:
       str = "RSRUBY_PLUS";
@@ -81,14 +87,8 @@ inline std::string lidarTypeToStr(const LidarType& type)
     case LidarType::RSM1:
       str = "RSM1";
       break;
-    case LidarType::RSHELIOS:
-      str = "RSHELIOS";
-      break;
-    case LidarType::RSHELIOS_16P:
-      str = "RSHELIOS_16P";
-      break;
-    case LidarType::RSROCK:
-      str = "RSROCK";
+    case LidarType::RSM2:
+      str = "RSM2";
       break;
     default:
       str = "ERROR";
@@ -111,13 +111,21 @@ inline LidarType strToLidarType(const std::string& type)
   {
     return lidar::LidarType::RSBP;
   }
-  else if (type == "RS128")
+  else if (type == "RSHELIOS")
   {
-    return lidar::LidarType::RS128;
+    return lidar::LidarType::RSHELIOS;
+  }
+  else if (type == "RSHELIOS_16P")
+  {
+    return lidar::LidarType::RSHELIOS_16P;
   }
   else if (type == "RS80")
   {
     return lidar::LidarType::RS80;
+  }
+  else if (type == "RS128")
+  {
+    return lidar::LidarType::RS128;
   }
   else if (type == "RSRUBY_PLUS")
   {
@@ -127,22 +135,15 @@ inline LidarType strToLidarType(const std::string& type)
   {
     return lidar::LidarType::RSM1;
   }
-  else if (type == "RSHELIOS")
+  else if (type == "RSM2")
   {
-    return lidar::LidarType::RSHELIOS;
-  }
-  else if (type == "RSHELIOS_16P")
-  {
-    return lidar::LidarType::RSHELIOS_16P;
-  }
-  else if (type == "RSROCK")
-  {
-    return lidar::LidarType::RSROCK;
+    return lidar::LidarType::RSM2;
   }
   else
   {
     RS_ERROR << "Wrong lidar type: " << type << RS_REND;
-    RS_ERROR << "Please give correct type: RS16, RS32, RSBP, RSHELIOS, RSHELIOS_16P, RS128, RS80, RSRUBY_PLUS, RSM1." << RS_REND;
+    RS_ERROR << "Please give correct type: RS16, RS32, RSBP, RSHELIOS, RSHELIOS_16P, RS80, RS128, RSRUBY_PLUS, RSM1, RSM2." 
+      << RS_REND;
     exit(-1);
   }
 }
