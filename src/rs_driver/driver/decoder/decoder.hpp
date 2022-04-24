@@ -48,8 +48,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Eigen/Dense>
 #endif
 
-#include <cmath>
+#ifdef __linux__
 #include <arpa/inet.h>
+#elif _WIN32
+#include <winsock2.h>
+#endif
+
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <iomanip>
