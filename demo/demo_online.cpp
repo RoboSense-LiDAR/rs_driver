@@ -32,9 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rs_driver/api/lidar_driver.hpp>
 
-#define PCL_POINTCLOUD
-
-#ifdef PCL_POINTCLOUD
+#ifdef ENABLE_PCL_POINTCLOUD
 #include <rs_driver/msg/pcl_point_cloud_msg.hpp>
 #else
 #include <rs_driver/msg/point_cloud_msg.hpp>

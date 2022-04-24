@@ -22,6 +22,7 @@ option(ENABLE_PCAP_PARSE "Enable PCAP file parse" ON)
 option(ENABLE_TRANSFORM "Enable transform functions" OFF)
 option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
 option(ENABLE_RECVMMSG "Enable recvmmsg() to receive MSOP message" OFF)
+option(ENABLE_PCL_POINTCLOUD "Enable PCL Point Cloud" OFF)
 
 #=============================
 #  Compile Demos, Tools, Tests

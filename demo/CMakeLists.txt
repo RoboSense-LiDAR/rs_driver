@@ -4,10 +4,14 @@ message(=============================================================)
 message("-- Ready to compile demos")
 message(=============================================================)
 
-find_package(PCL QUIET REQUIRED)
+if(${ENABLE_PCL_POINTCLOUD})
+
+find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
+
+endif(${ENABLE_PCL_POINTCLOUD})
 
 include_directories(${DRIVER_INCLUDE_DIRS})
 
