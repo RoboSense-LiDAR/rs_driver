@@ -87,21 +87,6 @@ else()
   list(APPEND EXTERNAL_LIBS pthread)
 endif(WIN32)
 
-#========================
-#  PCAP
-#========================
-if(WIN32)
-
-  set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-  find_package(PCAP REQUIRED)
-  include_directories(${PCAP_INCLUDE_DIR})
-  list(APPEND EXTERNAL_LIBS ${PCAP_LIBRARY})
-
-else()
-
-  list(APPEND EXTERNAL_LIBS pcap)
-
-endif(WIN32)
 
 #========================
 #  Build Features
@@ -122,6 +107,16 @@ if(${ENABLE_PCAP_PARSE})
   message(=============================================================)
 
   add_definitions("-DENABLE_PCAP_PARSE")
+
+  if(WIN32)
+    set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+    find_package(PCAP REQUIRED)
+    include_directories(${PCAP_INCLUDE_DIR})
+    list(APPEND EXTERNAL_LIBS ${PCAP_LIBRARY})
+  else()
+    list(APPEND EXTERNAL_LIBS pcap)
+  endif(WIN32)
+
 endif(${ENABLE_PCAP_PARSE})
 
 if(${ENABLE_TRANSFORM})
