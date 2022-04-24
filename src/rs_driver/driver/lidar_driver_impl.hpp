@@ -139,7 +139,7 @@ std::shared_ptr<T_PointCloud> LidarDriverImpl<T_PointCloud>::getPointCloud()
       return cloud;
     }
 
-    runExceptionCallback(Error(ERRCODE_POINTCLOUDNULL));
+    LIMIT_CALL(runExceptionCallback(Error(ERRCODE_POINTCLOUDNULL)), 1);
   }
 }
 
@@ -340,7 +340,7 @@ inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt
   size_t sz = queue->push(pkt);
   if (sz > PACKET_POOL_MAX)
   {
-    runExceptionCallback(Error(ERRCODE_PKTBUFOVERFLOW));
+    LIMIT_CALL(runExceptionCallback(Error(ERRCODE_PKTBUFOVERFLOW)), 1);
     queue->clear();
   }
 }

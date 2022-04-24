@@ -373,13 +373,13 @@ inline void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t si
 {
   if (size != this->const_param_.DIFOP_LEN)
   {
-     this->cb_excep_(Error(ERRCODE_WRONGPKTLENGTH));
+     LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGPKTLENGTH)), 1);
      return;
   }
 
   if (memcmp(pkt, this->const_param_.DIFOP_ID, const_param_.DIFOP_ID_LEN) != 0)
   {
-    this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER));
+    LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER)), 1);
     return;
   }
 
@@ -391,19 +391,19 @@ inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t siz
 {
   if (param_.wait_for_difop && !angles_ready_)
   {
-     cb_excep_(Error(ERRCODE_NODIFOPRECV));
+     LIMIT_CALL(cb_excep_(Error(ERRCODE_NODIFOPRECV)), 1);
      return false;
   }
 
   if (size != this->const_param_.MSOP_LEN)
   {
-     this->cb_excep_(Error(ERRCODE_WRONGPKTLENGTH));
+     LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGPKTLENGTH)), 1);
      return false;
   }
 
   if (memcmp(pkt, this->const_param_.MSOP_ID, const_param_.MSOP_ID_LEN) != 0)
   {
-    this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER));
+    LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER)), 1);
     return false;
   }
 
