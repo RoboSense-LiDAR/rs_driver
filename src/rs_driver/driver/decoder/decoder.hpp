@@ -32,12 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#ifdef __linux__
-#include <arpa/inet.h>
-#elif _WIN32
-#include <winsock2.h>
-#endif
-
 #include <rs_driver/common/error_code.hpp>
 #include <rs_driver/driver/driver_param.hpp>
 #include <rs_driver/driver/decoder/member_checker.hpp>

@@ -30,9 +30,8 @@ class MyDecoder : public DecoderMech<PointCloud>
 {
 public:
   MyDecoder(const RSDecoderMechConstParam& const_param,
-      const RSDecoderParam& param, 
-    const std::function<void(const Error&)>& excb)
-  : DecoderMech<PointCloud>(const_param, param, excb)
+      const RSDecoderParam& param)
+  : DecoderMech<PointCloud>(const_param, param)
   {
   }
 
@@ -66,7 +65,8 @@ TEST(TestDecoder, angles_from_file)
   param.angle_path = "../rs_driver/test/res/angle.csv";
 
   errCode = ERRCODE_SUCCESS;
-  MyDecoder decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param);
+  decoder.regCallback(errCallback, nullptr);
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
 
   ASSERT_TRUE(decoder.angles_ready_);
@@ -81,7 +81,8 @@ TEST(TestDecoder, angles_from_file_fail)
   param.config_from_file = true;
   param.angle_path = "../rs_driver/test/res/non_exist.csv";
 
-  MyDecoder decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param);
+  decoder.regCallback(errCallback, nullptr);
   ASSERT_FALSE(decoder.angles_ready_);
 }
 
@@ -98,7 +99,8 @@ TEST(TestDecoder, processDifopPkt_fail)
     };
 
   RSDecoderParam param;
-  MyDecoder decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param);
+  decoder.regCallback(errCallback, nullptr);
 
   // wrong difop length
   MyDifopPkt pkt = {0};
@@ -132,7 +134,8 @@ TEST(TestDecoder, processDifopPkt)
 
   RSDecoderParam param;
   param.config_from_file = false;
-  MyDecoder decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param);
+  decoder.regCallback(errCallback, nullptr);
   ASSERT_FALSE(decoder.angles_ready_);
 
   //
@@ -213,7 +216,8 @@ TEST(TestDecoder, processDifopPkt_invalid_rpm)
     };
 
   RSDecoderParam param;
-  MyDecoder decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param);
+  decoder.regCallback(errCallback, nullptr);
 
   uint8_t pkt[] = 
   {
@@ -241,7 +245,8 @@ TEST(TestDecoder, processMsopPkt)
 
   MyMsopPkt pkt;
   RSDecoderParam param;
-  MyDecoder decoder(const_param, param, errCallback);
+  MyDecoder decoder(const_param, param);
+  decoder.regCallback(errCallback, nullptr);
 
   // wait_for_difop = true, angles not ready
   decoder.param_.wait_for_difop = true;
