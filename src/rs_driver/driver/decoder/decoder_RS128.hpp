@@ -263,7 +263,7 @@ inline bool DecoderRS128<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
     }
 
     int32_t block_az_diff;
-    float block_ts_off;
+    double block_ts_off;
     iter.get(blk, block_az_diff, block_ts_off);
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)

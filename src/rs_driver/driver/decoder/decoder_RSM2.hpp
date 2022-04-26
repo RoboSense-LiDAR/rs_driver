@@ -86,6 +86,7 @@ public:
   constexpr static double FRAME_DURATION = 0.1;
   constexpr static uint32_t SINGLE_PKT_NUM = 1260;
   constexpr static uint32_t DUAL_PKT_NUM = 2520;
+  constexpr static int VECTOR_BASE = 32768;
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
@@ -197,13 +198,13 @@ inline bool DecoderRSM2<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
     }
   }
   
-  for (size_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
+  for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
     const RSM2Block& block = pkt.blocks[blk];
 
     double point_time = pkt_ts + block.time_offset * 1e-6;
 
-    for (size_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
+    for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
       const RSM2Channel& channel = block.channel[chan];
 
@@ -211,9 +212,9 @@ inline bool DecoderRSM2<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
 
       if (this->distance_section_.in(distance))
       {
-        float x = RS_SWAP_INT16(channel.x) / 32768.0 * distance;
-        float y = RS_SWAP_INT16(channel.y) / 32768.0 * distance;
-        float z = RS_SWAP_INT16(channel.z) / 32768.0 * distance;
+        float x = RS_SWAP_INT16(channel.x) * distance / VECTOR_BASE;
+        float y = RS_SWAP_INT16(channel.y) * distance / VECTOR_BASE;
+        float z = RS_SWAP_INT16(channel.z) * distance / VECTOR_BASE;
         this->transformPoint(x, y, z);
 
         typename T_PointCloud::PointT point;

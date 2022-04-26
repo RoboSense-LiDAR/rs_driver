@@ -42,7 +42,7 @@ TEST(TestDualPacketTraverser, ctor)
       2.0f); // fov_blind_duration
 
   int32_t az_diff;
-  float ts;
+  double ts;
 
   // first block
   iter.get (0, az_diff, ts);
@@ -89,7 +89,7 @@ TEST(TestDualPacketTraverser, ctor_fov)
       2.0f); // fov_blind_duration
 
   int32_t az_diff;
-  float ts;
+  double ts;
 
   // first block
   iter.get (0, az_diff, ts);

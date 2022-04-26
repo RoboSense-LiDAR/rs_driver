@@ -94,7 +94,7 @@ protected:
   uint16_t blks_per_frame_; // blocks per frame/round
   uint16_t split_blks_per_frame_; // blocks in msop pkt per frame/round. 
   uint16_t block_az_diff_; // azimuth difference between adjacent blocks.
-  float fov_blind_ts_diff_; // timestamp difference across blind section(defined by fov)
+  double fov_blind_ts_diff_; // timestamp difference across blind section(defined by fov)
 
   int lidar_alph0_;  // lens center related
   float lidar_Rxy_;  // lens center related
@@ -106,12 +106,12 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& con
   : Decoder<T_PointCloud>(const_param.base, param)
   , mech_const_param_(const_param)
   , chan_angles_(this->const_param_.LASER_NUM)
-  , scan_section_(this->param_.start_angle * 100, this->param_.end_angle * 100)
+  , scan_section_((int32_t)(this->param_.start_angle * 100), (int32_t)(this->param_.end_angle * 100))
   , rps_(10)
-  , blks_per_frame_(1/(10*this->mech_const_param_.BLOCK_DURATION))
+  , blks_per_frame_((uint16_t)(1 / (10 * this->mech_const_param_.BLOCK_DURATION)))
   , split_blks_per_frame_(blks_per_frame_)
   , block_az_diff_(20)
-  , fov_blind_ts_diff_(0)
+  , fov_blind_ts_diff_(0.0)
 {
   this->packet_duration_ = 
     this->mech_const_param_.BLOCK_DURATION * this->const_param_.BLOCKS_PER_PKT;
@@ -134,7 +134,7 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& con
   }
 
   // lens center: (alph0, Rxy)
-  lidar_alph0_ = std::atan2(mech_const_param_.RY, mech_const_param_.RX) * 180 / M_PI * 100;
+  lidar_alph0_ = (int)(std::atan2(mech_const_param_.RY, mech_const_param_.RX) * 180 / M_PI * 100);
   lidar_Rxy_ = std::sqrt(mech_const_param_.RX * mech_const_param_.RX + 
       mech_const_param_.RY * mech_const_param_.RY);
 
@@ -182,11 +182,11 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   }
 
   // blocks per frame
-  this->blks_per_frame_ = 1 / (this->rps_ * this->mech_const_param_.BLOCK_DURATION);
+  this->blks_per_frame_ = (uint16_t)(1 / (this->rps_ * this->mech_const_param_.BLOCK_DURATION));
 
   // block diff of azimuth
   this->block_az_diff_ = 
-    std::round(RS_ONE_ROUND * this->rps_ * this->mech_const_param_.BLOCK_DURATION);
+    (uint16_t)std::round(RS_ONE_ROUND * this->rps_ * this->mech_const_param_.BLOCK_DURATION);
 
   // fov related
   uint16_t fov_start_angle = ntohs(pkt.fov.start_angle);
@@ -197,7 +197,7 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
 
   // fov blind diff of timestamp
   this->fov_blind_ts_diff_ = 
-    (float)fov_blind_range / ((float)RS_ONE_ROUND * (float)this->rps_);
+    (double)fov_blind_range / ((double)RS_ONE_ROUND * (double)this->rps_);
 
   // load angles
   if (!this->param_.config_from_file && !this->angles_ready_)

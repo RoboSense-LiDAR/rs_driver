@@ -241,13 +241,13 @@ inline bool DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
     }
   }
   
-  for (size_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
+  for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
     const RSM1Block& block = pkt.blocks[blk];
 
     double point_time = pkt_ts + block.time_offset * 1e-6;
 
-    for (size_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
+    for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
       const RSM1Channel& channel = block.channel[chan];
 

@@ -32,101 +32,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <rs_driver/common/rs_common.hpp>
-
-namespace robosense
-{
-namespace lidar
-{
-
-//#define DBG
-
-class Trigon
-{
-public:
-
-  constexpr static int32_t MIN = -9000;
-  constexpr static int32_t MAX = 45000;
-
-  Trigon()
-  {
-    int32_t range = MAX - MIN;
-#ifdef DBG
-    o_angles_ = (int32_t*)malloc(range * sizeof(int32_t));
+//
+// define ntohs()
+// 
+#ifdef __linux__
+#include <arpa/inet.h>
+#elif _WIN32
+#include <ws2tcpip.h>
 #endif
-    o_sins_ = (float*)malloc(range * sizeof(float));
-    o_coss_ = (float*)malloc(range * sizeof(float));
 
-    for (int32_t i = MIN, j = 0; i < MAX; i++, j++)
-    {
-      double rads = static_cast<double>(i) * 0.01;
-      rads = rads * M_PI / 180;
-
-#ifdef DBG
-      o_angles_[j] = i;
+//
+// define M_PI
+// 
+#if 0
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
 #endif
-      o_sins_[j] = (float)std::sin(rads);
-      o_coss_[j] = (float)std::cos(rads);
-    }
-
-#ifdef DBG
-    angles_ = o_angles_ - MIN;
 #endif
-    sins_ = o_sins_ - MIN;
-    coss_ = o_coss_ - MIN;
-  }
 
-  ~Trigon()
-  {
-    free(o_coss_);
-    free(o_sins_);
-#ifdef DBG
-    free(o_angles_);
-#endif
-  }
+#include <math.h>
 
-  float sin(int32_t angle)
-  {
-    if (angle < MIN || angle >= MAX)
-    {
-      angle = 0;
-    }
-
-    return sins_[angle];
-  }
-
-  float cos(int32_t angle)
-  {
-    if (angle < MIN || angle >= MAX)
-    {
-      angle = 0;
-    }
-
-    return coss_[angle];
-  }
-
-  void print()
-  {
-    for (int32_t i = -10; i < 10; i++)
-    {
-      std::cout << 
-#ifdef DBG 
-        angles_[i] << "\t" << 
-#endif
-        sins_[i] << "\t" << coss_[i] << std::endl;
-    }
-  }
-
-private:
-#ifdef DBG 
-  int32_t* o_angles_;
-  int32_t* angles_;
-#endif
-  float* o_sins_;
-  float* o_coss_;
-  float* sins_;
-  float* coss_;
-};
-
-}  // namespace lidar
-}  // namespace robosense

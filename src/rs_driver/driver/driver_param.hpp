@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <rs_driver/common/common_header.hpp>
+#include <rs_driver/common/rs_log.hpp>
 #include <string>
 #include <map>
 
@@ -289,7 +289,7 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
   void print() const
   {
     RS_INFO << "------------------------------------------------------" << RS_REND;
-    RS_INFOL << "             RoboSense Driver Parameters " << RS_REND;
+    RS_INFO << "             RoboSense Driver Parameters " << RS_REND;
     RS_INFOL << "input type: " << inputTypeToStr(input_type) << RS_REND;
     RS_INFOL << "lidar_type: " << lidarTypeToStr(lidar_type) << RS_REND;
     RS_INFOL << "------------------------------------------------------" << RS_REND;

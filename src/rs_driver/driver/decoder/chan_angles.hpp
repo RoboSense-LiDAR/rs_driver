@@ -32,7 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <arpa/inet.h>
+#include <rs_driver/common/rs_common.hpp>
+
 #include <fstream>
 #include <cmath>
 

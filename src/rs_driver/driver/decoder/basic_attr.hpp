@@ -32,11 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#ifdef __linux__
-#include <arpa/inet.h>
-#elif _WIN32
-#include <winsock2.h>
-#endif
+#include <rs_driver/common/rs_common.hpp>
 
 #include <fstream>
 #include <cmath>
