@@ -407,12 +407,12 @@ void LidarDriverImpl<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointC
   if (msg->is_dense)
   {
     msg->height = 1;
-    msg->width = msg->points.size();
+    msg->width = (uint32_t)msg->points.size();
   }
   else
   {
     msg->height = height;
-    msg->width = msg->points.size() / msg->height;
+    msg->width = (uint32_t)msg->points.size() / msg->height;
   }
 }
 

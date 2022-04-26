@@ -44,10 +44,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // define M_PI
 // 
-#if 0
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
-#endif
 #endif
 
 #include <math.h>
