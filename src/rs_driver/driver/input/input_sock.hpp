@@ -150,21 +150,20 @@ inline InputSock::~InputSock()
 inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp)
 {
   int fd;
-  int flags;
   int ret;
   int reuse = 1;
 
   fd = socket(PF_INET, SOCK_DGRAM, 0);
   if (fd < 0)
   {
-    std::cerr << "socket: " << std::strerror(errno) << std::endl;
+    perror("socket: ");
     goto failSocket;
   }
 
   ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
   if (ret < 0)
   {
-    std::cerr << "setsockopt: " << std::strerror(errno) << std::endl;
+    perror("setsockopt: ");
     goto failOption;
   }
 
@@ -181,7 +180,7 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
   ret = bind(fd, (struct sockaddr*)&host_addr, sizeof(host_addr));
   if (ret < 0)
   {
-    std::cerr << "bind: " << std::strerror(errno) << std::endl;
+    perror("bind: ");
     goto failBind;
   }
 
@@ -200,17 +199,19 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
     ret = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ipm, sizeof(ipm));
     if (ret < 0)
     {
-      std::cerr << "setsockopt: " << std::strerror(errno) << std::endl;
+      perror("setsockopt: ");
       goto failGroup;
     }
   }
 
-  flags = fcntl(fd, F_GETFL, 0);
-  ret = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-  if (ret < 0)
   {
-    std::cerr << "setsockopt: " << std::strerror(errno) << std::endl;
-    goto failNonBlock;
+    int flags = fcntl(fd, F_GETFL, 0);
+    ret = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    if (ret < 0)
+    {
+      perror("fcntl: ");
+      goto failNonBlock;
+    }
   }
 
   return fd;
@@ -234,7 +235,7 @@ inline void InputSock::recvPacket()
     FD_SET(fds_[0], &rfds);
     if (fds_[1] >= 0)
       FD_SET(fds_[1], &rfds);
-    int max_fd = std::max(fds_[0], fds_[1]);
+    int max_fd = ((fds_[0] > fds_[1]) ? fds_[0] : fds_[1]);
 
     struct timeval tv;
     tv.tv_sec = 1;
@@ -250,7 +251,7 @@ inline void InputSock::recvPacket()
       if (errno == EINTR)
         continue;
 
-      std::cerr << "select: " << std::strerror(errno) << std::endl;
+      perror("select: ");
       break;
     }
 
@@ -290,7 +291,7 @@ inline void InputSock::recvPacket()
       ssize_t ret = recvfrom(fds_[0], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
       if (ret <= 0)
       {
-        std::cout << "recv packet failed" << std::endl;
+        perror("recvfrom: ");
         break;
       }
       else if (ret > 0)
@@ -307,7 +308,7 @@ inline void InputSock::recvPacket()
       ssize_t ret = recvfrom(fds_[1], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
       if (ret < 0)
       {
-        std::cout << "recv packet failed" << std::endl;
+        perror("recvfrom: ");
         break;
       }
       else if (ret > 0)
