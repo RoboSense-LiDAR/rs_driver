@@ -1,9 +1,16 @@
 # Changelog
 
-## v1.5.1 - 2022-04-21
+## v1.5.1 - 2022-04-28
 
 ### Changed
-- refactory the decoder part
+- When replay MSOP/DIFOP file, use the timestamp when it is recording.
+For Mechanical LiDARs,
+- Split frame by block instead of by packet
+- Let every point has its own timestamp, instead of using the block's one.
+- 
+
+## v1.5.0 - 2022-04-21
+-- Refactory the coder part
 
 ## v1.4.6 - 2022-04-21
 
