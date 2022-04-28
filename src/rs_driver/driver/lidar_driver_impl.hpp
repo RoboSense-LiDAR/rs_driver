@@ -350,11 +350,24 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
 {
   while (!to_exit_handle_)
   {
+    //
+    // Low latency, or low CPU usage, that is the question. 
+    //                                            -- Hamlet
+    //
+#if 1
     std::shared_ptr<Buffer> pkt = msop_pkt_queue_.popWait(1000);
     if (pkt.get() == NULL)
     {
       continue;
     }
+#else
+    std::shared_ptr<Buffer> pkt = msop_pkt_queue_.pop();
+    if (pkt.get() == NULL)
+    {
+      usleep(1000);
+      continue;
+    }
+#endif
 
     bool pkt_to_split = decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
     runPacketCallBack(pkt, decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
