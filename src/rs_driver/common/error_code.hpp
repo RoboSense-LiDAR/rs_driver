@@ -145,5 +145,16 @@ struct Error
   }                             \
 }
 
+#define DELAY_LIMIT_CALL(func, sec)   \
+{                                     \
+  static time_t prev_tm = time(NULL); \
+  time_t cur_tm = time(NULL);   \
+  if ((cur_tm - prev_tm) > sec) \
+  {                             \
+    func;                       \
+    prev_tm = cur_tm;           \
+  }                             \
+}
+
 }  // namespace lidar
 }  // namespace robosense

@@ -390,7 +390,7 @@ inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t siz
 {
   if (param_.wait_for_difop && !angles_ready_)
   {
-     LIMIT_CALL(cb_excep_(Error(ERRCODE_NODIFOPRECV)), 1);
+     DELAY_LIMIT_CALL(cb_excep_(Error(ERRCODE_NODIFOPRECV)), 1);
      return false;
   }
 
