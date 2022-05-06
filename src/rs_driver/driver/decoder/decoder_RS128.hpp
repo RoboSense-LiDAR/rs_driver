@@ -89,9 +89,6 @@ public:
 
   explicit DecoderRS128(const RSDecoderParam& param);
 
-  explicit DecoderRS128(const RSDecoderMechConstParam& const_param, 
-      const RSDecoderParam& param);
-
 #ifndef UNIT_TEST
 protected:
 #endif
@@ -180,13 +177,6 @@ inline RSEchoMode DecoderRS128<T_PointCloud>::getEchoMode(uint8_t mode)
 template <typename T_PointCloud>
 inline DecoderRS128<T_PointCloud>::DecoderRS128(const RSDecoderParam& param)
   : DecoderMech<T_PointCloud>(getConstParam(), param)
-{
-}
-
-template <typename T_PointCloud>
-inline DecoderRS128<T_PointCloud>::DecoderRS128(const RSDecoderMechConstParam& const_param, 
-    const RSDecoderParam& param)
-  : DecoderMech<T_PointCloud>(const_param, param)
 {
 }
 
