@@ -50,7 +50,7 @@ typedef struct
 {
   RSMsopHeaderV2 header;
   RS128MsopBlock blocks[3];
-  unsigned int index;
+  uint8_t reserved[4];
 } RS128MsopPkt;
 
 typedef struct

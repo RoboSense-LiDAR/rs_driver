@@ -51,8 +51,7 @@ typedef struct
 {
   RSMsopHeaderV2 header;
   RSP80MsopBlock blocks[4];
-  unsigned int index;
-  unsigned char tail[188];
+  uint8_t reserved[192];
 } RSP80MsopPkt;
 
 typedef struct
