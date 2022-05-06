@@ -44,16 +44,15 @@ typedef struct
   uint8_t id[1];
   uint8_t ret_id;
   uint16_t azimuth;
-  RSChannel channels[80];
-} RSP80MsopBlock;
+  RSChannel channels[48];
+} RSP48MsopBlock;
 
 typedef struct
 {
   RSMsopHeaderV2 header;
-  RSP80MsopBlock blocks[4];
+  RSP48MsopBlock blocks[8];
   unsigned int index;
-  unsigned char tail[188];
-} RSP80MsopPkt;
+} RSP48MsopPkt;
 
 typedef struct
 {
@@ -77,19 +76,19 @@ typedef struct
   RSCalibrationAngle horiz_angle_cali[128];
   uint8_t reserved4[10];
   uint16_t tail;
-} RSP80DifopPkt;
+} RSP48DifopPkt;
 
 #pragma pack(pop)
 
 template <typename T_PointCloud>
-class DecoderRSP80 : public DecoderMech<T_PointCloud>
+class DecoderRSP48 : public DecoderMech<T_PointCloud>
 {
 public:
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
-  virtual ~DecoderRSP80() = default;
+  virtual ~DecoderRSP48() = default;
 
-  explicit DecoderRSP80(const RSDecoderParam& param);
+  explicit DecoderRSP48(const RSDecoderParam& param);
 
 #ifndef UNIT_TEST
 protected:
@@ -98,28 +97,25 @@ protected:
   static RSDecoderMechConstParam& getConstParam();
   static RSEchoMode getEchoMode(uint8_t mode);
 
-  void calcParam();
   template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
-
-  uint8_t lidar_type_;
 };
 
 template <typename T_PointCloud>
-inline RSDecoderMechConstParam& DecoderRSP80<T_PointCloud>::getConstParam()
+inline RSDecoderMechConstParam& DecoderRSP48<T_PointCloud>::getConstParam()
 {
   static RSDecoderMechConstParam param = 
   {
-    1248 // msop len
+    1268 // msop len
       , 1248 // difop len
       , 4 // msop id len
       , 8 // difop id len
       , {0x55, 0xAA, 0x05, 0x5A} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0xFE} // block id
-    , 80 // laser number
-    , 4 // blocks per packet
-      , 80 // channels per block
+    , 48 // laser number
+    , 8 // blocks per packet
+      , 48 // channels per block
       , 1.0f // distance min
       , 250.0f // distance max
       , 0.005f // distance resolution
@@ -131,65 +127,32 @@ inline RSDecoderMechConstParam& DecoderRSP80<T_PointCloud>::getConstParam()
       , 0.0f // RZ
   };
 
+  INIT_ONLY_ONCE();
+
   float blk_ts = 55.56f;
+  float firing_tss[48] = 
+  {
+    0.0f,    0.0f,    1.217f,  1.217f,  2.434f,  2.434f,  3.652f,  3.652f,  
+    4.869f,  4.869f,  6.086f,  6.086f,  7.304f,  7.304f,  8.521f,  8.521f,
+    9.739f,  9.739f,  11.323f, 11.323f, 12.907f, 12.907f, 14.924f, 14.924f, 
+    16.941f, 16.941f, 18.959f, 18.959f, 20.976f, 20.976f, 23.127f, 23.127f, 
+
+    25.278f, 25.278f, 27.428f, 27.428f, 29.579f, 29.579f, 31.963f, 31.963f, 
+    34.347f, 34.347f, 36.498f, 36.498f, 38.648f, 38.648f, 40.666f, 40.666f, 
+  };
+
   param.BLOCK_DURATION = blk_ts / 1000000;
+  for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)
+  {
+    param.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
+    param.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
+  }
 
   return param;
 }
 
 template <typename T_PointCloud>
-inline void DecoderRSP80<T_PointCloud>::calcParam()
-{
-  float blk_ts = 55.56f;
-
-  float firing_tss_80[80] = 
-  {
-    0.0f,    0.0f,    0.0f,    0.0f,    1.217f,  1.217f,  1.217f,  1.217f, 
-    2.434f,  2.434f,  3.652f,  3.652f,  3.652f,  4.869f,  4.869f,  6.086f,  
-    6.086f,  7.304f,  7.304f,  8.521f,  8.521f,  9.739f,  9.739f,  11.323f, 
-    11.323f, 12.907f, 12.907f, 14.924f, 14.924f, 16.941f, 16.941f, 16.941f, 
-
-    16.941f, 18.959f, 18.959f, 18.959f, 18.959f, 20.976f, 20.976f, 20.976f, 
-    20.976f, 23.127f, 23.127f, 23.127f, 23.127f, 25.278f, 25.278f, 25.278f, 
-    25.278f, 27.428f, 27.428f, 27.428f, 27.428f, 29.579f, 29.579f, 29.579f, 
-    29.579f, 31.963f, 31.963f, 31.963f, 31.963f, 34.347f, 34.347f, 34.347f, 
-
-    34.347f, 36.498f, 36.498f, 36.498f, 36.498f, 38.648f, 38.648f, 40.666f, 
-    40.666f, 42.683f, 50.603f, 52.187f, 52.187f, 52.187f, 53.771f, 53.771f,
-  };
-
-  float firing_tss_80v[80] = 
-  {
-    0.0f,    0.0f,    0.0f,    0.0f,    1.217f,  1.217f,  1.217f,  1.217f, 
-    2.434f,  2.434f,  2.434f,  2.434f,  3.652f,  3.652f,  3.652f,  3.652f,
-    4.869f,  4.869f,  4.869f,  4.869f,  6.086f,  6.086f,  6.086f,  6.086f, 
-    7.304f,  7.304f,  7.304f,  7.304f,  8.521f,  8.521f,  8.521f,  8.521f,
-
-    9.739f,  9.739f,  9.739f,  9.739f, 11.323f, 11.323f, 11.323f, 11.323f,
-    12.907f, 12.907f, 12.907f, 12.907f, 14.924f, 14.924f, 14.924f, 14.924f, 
-    16.941f, 16.941f, 16.941f, 16.941f, 18.959f, 18.959f, 18.959f, 18.959f, 
-    20.976f, 20.976f, 20.976f, 20.976f, 23.127f, 23.127f, 23.127f, 23.127f, 
-
-    25.278f, 25.278f, 25.278f, 25.278f, 27.428f, 27.428f, 27.428f, 27.428f, 
-    29.579f, 29.579f, 29.579f, 29.579f, 31.963f, 31.963f, 31.963f, 31.963f, 
-  };
-
-  float* firing_tss = firing_tss_80; // 80  - lidar_type = 0x07
-  if (lidar_type_ == 0x08)           // 80v - lidar_type = 0x08
-  {
-    firing_tss = firing_tss_80v;
-  }
-
-  RSDecoderMechConstParam& param = this->mech_const_param_;
-  for (uint16_t i = 0; i < 80; i++)
-  {
-    param.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
-    param.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
-  }
-}
-
-template <typename T_PointCloud>
-inline RSEchoMode DecoderRSP80<T_PointCloud>::getEchoMode(uint8_t mode)
+inline RSEchoMode DecoderRSP48<T_PointCloud>::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
@@ -206,10 +169,10 @@ inline RSEchoMode DecoderRSP80<T_PointCloud>::getEchoMode(uint8_t mode)
 }
 
 template <typename T_PointCloud>
-inline void DecoderRSP80<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRSP48<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
-  const RSP80DifopPkt& pkt = *(const RSP80DifopPkt*)(packet);
-  this->template decodeDifopCommon<RSP80DifopPkt>(pkt);
+  const RSP48DifopPkt& pkt = *(const RSP48DifopPkt*)(packet);
+  this->template decodeDifopCommon<RSP48DifopPkt>(pkt);
 
   this->echo_mode_ = getEchoMode (pkt.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
@@ -217,38 +180,30 @@ inline void DecoderRSP80<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, si
 }
 
 template <typename T_PointCloud>
-inline DecoderRSP80<T_PointCloud>::DecoderRSP80(const RSDecoderParam& param)
-  : DecoderMech<T_PointCloud>(getConstParam(), param), 
-    lidar_type_(0)
+inline DecoderRSP48<T_PointCloud>::DecoderRSP48(const RSDecoderParam& param)
+  : DecoderMech<T_PointCloud>(getConstParam(), param)
 {
 }
 
 template <typename T_PointCloud>
-inline bool DecoderRSP80<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
+inline bool DecoderRSP48<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
 {
   if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
   {
-    return internDecodeMsopPkt<SingleReturnBlockIterator<RSP80MsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<SingleReturnBlockIterator<RSP48MsopPkt>>(pkt, size);
   }
   else
   {
-    return internDecodeMsopPkt<DualReturnBlockIterator<RSP80MsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<DualReturnBlockIterator<RSP48MsopPkt>>(pkt, size);
   }
 }
 
 template <typename T_PointCloud>
 template <typename T_BlockIterator>
-inline bool DecoderRSP80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
+inline bool DecoderRSP48<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
-  const RSP80MsopPkt& pkt = *(const RSP80MsopPkt*)(packet);
+  const RSP48MsopPkt& pkt = *(const RSP48MsopPkt*)(packet);
   bool ret = false;
-
-  uint8_t lidar_type = pkt.header.lidar_type;
-  if (lidar_type_ != lidar_type)
-  {
-    lidar_type_ = lidar_type;
-    calcParam();
-  }
 
   this->temperature_ = parseTempInBe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
@@ -276,7 +231,7 @@ inline bool DecoderRSP80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
   double block_ts = pkt_ts;
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
-    const RSP80MsopBlock& block = pkt.blocks[blk];
+    const RSP48MsopBlock& block = pkt.blocks[blk];
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 1) != 0)
     {
