@@ -81,7 +81,7 @@ public:
 
 private:
 
-  void runPacketCallBack(std::shared_ptr<Buffer> buf, double timestamp, uint8_t is_difop, uint8_t is_frame_begin);
+  void runPacketCallBack(uint8_t* data, size_t data_size, double timestamp, uint8_t is_difop, uint8_t is_frame_begin);
   void runExceptionCallback(const Error& error);
 
   std::shared_ptr<Buffer> packetGet(size_t size);
@@ -277,7 +277,7 @@ inline bool LidarDriverImpl<T_PointCloud>::getTemperature(float& temp)
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::runPacketCallBack(std::shared_ptr<Buffer> buf, 
+inline void LidarDriverImpl<T_PointCloud>::runPacketCallBack(uint8_t* data, size_t data_size,
     double timestamp, uint8_t is_difop, uint8_t is_frame_begin)
 {
   if (cb_put_pkt_)
@@ -288,8 +288,8 @@ inline void LidarDriverImpl<T_PointCloud>::runPacketCallBack(std::shared_ptr<Buf
     pkt.is_frame_begin = is_frame_begin;
     pkt.seq = pkt_seq_++;
 
-    pkt.buf_.resize(buf->dataSize());
-    memcpy (pkt.buf_.data(), buf->data(), buf->dataSize());
+    pkt.buf_.resize(data_size);
+    memcpy (pkt.buf_.data(), data, data_size);
     cb_put_pkt_(pkt);
   }
 }
@@ -370,7 +370,7 @@ inline void LidarDriverImpl<T_PointCloud>::processMsop()
 #endif
 
     bool pkt_to_split = decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
-    runPacketCallBack(pkt, decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
+    runPacketCallBack(pkt->data(), pkt->dataSize(), decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
 
     free_pkt_queue_.push(pkt);
   }
@@ -388,7 +388,7 @@ inline void LidarDriverImpl<T_PointCloud>::processDifop()
     }
 
     decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
-    runPacketCallBack(pkt, 0, true, false); // difop packet
+    runPacketCallBack(pkt->data(), pkt->dataSize(), 0, true, false); // difop packet
 
     free_pkt_queue_.push(pkt);
   }
