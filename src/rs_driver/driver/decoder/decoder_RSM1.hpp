@@ -240,14 +240,7 @@ inline bool DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
       createTimeUTCWithUs (ts, (RSTimestampUTC*)&pkt.header.timestamp);
     }
   }
-
-  uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
-  if (split_strategy_.newPacket(pkt_seq))
-  {
-    this->cb_split_frame_(this->const_param_.LASER_NUM, this->prev_point_ts_);
-    ret = true;
-  }
-
+  
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
     const RSM1Block& block = pkt.blocks[blk];
@@ -298,6 +291,14 @@ inline bool DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   }
 
   this->prev_pkt_ts_ = pkt_ts;
+
+  uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
+  if (split_strategy_.newPacket(pkt_seq))
+  {
+    this->cb_split_frame_(this->const_param_.LASER_NUM, this->prev_point_ts_);
+    ret = true;
+  }
+
   return ret;
 }
 
