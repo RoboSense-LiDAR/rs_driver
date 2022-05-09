@@ -113,8 +113,8 @@ class SplitStrategyBySeq
 {
 public:
 
-  SplitStrategyBySeq(uint16_t* max_seq)
-    : max_seq_(max_seq), prev_seq_(0)
+  SplitStrategyBySeq()
+    : prev_seq_(0)
   {
     setSafeRange();
   }
@@ -123,30 +123,25 @@ public:
   {
     bool split = false;
 
-    if (seq > safe_seq_max_)
-    {
-      // do nothing. drop it.
-    }
-    else if (seq > prev_seq_)
-    {
-      if (seq == *max_seq_) // reach end
-      {
-        prev_seq_ = 0;
-        split = true;
-      }
-      else
-      {
-        prev_seq_ = seq;
-      }
-    }
-    else if (seq > safe_seq_min_)
-    {
-      // do nothing. save it.
-    }
-    else // rewind
+    if (seq < safe_seq_min_) // rewind
     {
       prev_seq_ = seq;
       split = true;
+    }
+    else if (seq < prev_seq_)
+    {
+      // do nothing.
+    }
+    else if (seq <= safe_seq_max_)
+    {
+      prev_seq_ = seq;
+    }
+    else
+    {
+      if (prev_seq_ == 0) 
+        prev_seq_ = seq;
+
+      //do nothing.
     }
 
     setSafeRange();
@@ -165,7 +160,6 @@ private:
     safe_seq_max_ = prev_seq_ + RANGE;
   }
 
-  uint16_t* max_seq_;
   uint16_t prev_seq_;
   uint16_t safe_seq_min_;
   uint16_t safe_seq_max_;

@@ -85,7 +85,6 @@ public:
 
   constexpr static double FRAME_DURATION = 0.1;
   constexpr static uint32_t SINGLE_PKT_NUM = 1260;
-  constexpr static uint32_t DUAL_PKT_NUM = 2520;
   constexpr static int VECTOR_BASE = 32768;
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
@@ -99,7 +98,6 @@ private:
   static RSDecoderConstParam& getConstParam();
   RSEchoMode getEchoMode(uint8_t mode);
 
-  uint16_t max_seq_;
   SplitStrategyBySeq split_strategy_;
 };
 
@@ -130,8 +128,6 @@ inline RSDecoderConstParam& DecoderRSM2<T_PointCloud>::getConstParam()
 template <typename T_PointCloud>
 inline DecoderRSM2<T_PointCloud>::DecoderRSM2(const RSDecoderParam& param)
   : Decoder<T_PointCloud>(getConstParam(), param)
-  , max_seq_(SINGLE_PKT_NUM)
-  , split_strategy_(&max_seq_)
 {
   this->packet_duration_ = FRAME_DURATION / SINGLE_PKT_NUM;
   this->angles_ready_ = true;
@@ -157,7 +153,6 @@ inline void DecoderRSM2<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
 {
   const RSM1DifopPkt& pkt = *(RSM1DifopPkt*)packet;
   this->echo_mode_ = this->getEchoMode(pkt.return_mode);
-  max_seq_ = (this->echo_mode_ == ECHO_SINGLE) ? SINGLE_PKT_NUM : DUAL_PKT_NUM;
 }
 
 inline int16_t RS_SWAP_INT16(int16_t value)
@@ -197,7 +192,14 @@ inline bool DecoderRSM2<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
       createTimeUTCWithUs (ts, (RSTimestampUTC*)&pkt.header.timestamp);
     }
   }
-  
+
+  uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
+  if (split_strategy_.newPacket(pkt_seq))
+  {
+    this->cb_split_frame_(this->const_param_.LASER_NUM, this->prev_point_ts_);
+    ret = true;
+  }
+
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
     const RSM2Block& block = pkt.blocks[blk];
@@ -245,14 +247,6 @@ inline bool DecoderRSM2<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   }
 
   this->prev_pkt_ts_ = pkt_ts;
-
-  uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
-  if (split_strategy_.newPacket(pkt_seq))
-  {
-    this->cb_split_frame_(this->const_param_.LASER_NUM, this->prev_point_ts_);
-    ret = true;
-  }
-
   return ret;
 }
 

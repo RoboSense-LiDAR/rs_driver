@@ -65,10 +65,9 @@ TEST(TestSplitStrategyByNum, newBlock)
   ASSERT_TRUE(sn.newBlock(0));
 }
 
-TEST(TestSplitStrategyBySeq, newPacket_max_seq)
+TEST(TestSplitStrategyBySeq, newPacket_by_seq)
 {
-  uint16_t max_seq = 15;
-  SplitStrategyBySeq sn(&max_seq);
+  SplitStrategyBySeq sn;
   ASSERT_EQ(sn.prev_seq_, 0);
   ASSERT_EQ(sn.safe_seq_min_, 0);
   ASSERT_EQ(sn.safe_seq_max_, 10);
@@ -96,17 +95,25 @@ TEST(TestSplitStrategyBySeq, newPacket_max_seq)
   ASSERT_EQ(sn.prev_seq_, 12);
   ASSERT_EQ(sn.safe_seq_min_, 2);
   ASSERT_EQ(sn.safe_seq_max_, 22);
+}
 
-  ASSERT_TRUE(sn.newPacket(15));
+TEST(TestSplitStrategyBySeq, newPacket_prev_seq)
+{
+  SplitStrategyBySeq sn;
   ASSERT_EQ(sn.prev_seq_, 0);
   ASSERT_EQ(sn.safe_seq_min_, 0);
   ASSERT_EQ(sn.safe_seq_max_, 10);
+
+  // init value
+  ASSERT_FALSE(sn.newPacket(15));
+  ASSERT_EQ(sn.prev_seq_, 15);
+  ASSERT_EQ(sn.safe_seq_min_, 5);
+  ASSERT_EQ(sn.safe_seq_max_, 25);
 }
 
 TEST(TestSplitStrategyBySeq, newPacket_rewind)
 {
-  uint16_t max_seq = 15;
-  SplitStrategyBySeq sn(&max_seq);
+  SplitStrategyBySeq sn;
   ASSERT_EQ(sn.prev_seq_, 0);
   ASSERT_EQ(sn.safe_seq_min_, 0);
   ASSERT_EQ(sn.safe_seq_max_, 10);
@@ -128,4 +135,3 @@ TEST(TestSplitStrategyBySeq, newPacket_rewind)
   ASSERT_EQ(sn.safe_seq_min_, 0);
   ASSERT_EQ(sn.safe_seq_max_, 11);
 }
-
