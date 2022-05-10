@@ -31,23 +31,64 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
+
 #include <rs_driver/driver/decoder/decoder.hpp>
-#include <rs_driver/driver/decoder/decoder_RS128.hpp>
 
 namespace robosense
 {
 namespace lidar
 {
+#pragma pack(push, 1)
+typedef struct
+{
+  uint8_t id[1];
+  uint8_t ret_id;
+  uint16_t azimuth;
+  RSChannel channels[80];
+} RSP80MsopBlock;
+
+typedef struct
+{
+  RSMsopHeaderV2 header;
+  RSP80MsopBlock blocks[4];
+  uint8_t reserved[192];
+} RSP80MsopPkt;
+
+typedef struct
+{
+  uint8_t id[8];
+  uint16_t rpm;
+  RSEthNetV2 eth;
+  RSFOV fov;
+  uint8_t reserved1[2];
+  uint16_t phase_lock_angle;
+  RSVersionV2 version;
+  uint8_t reserved2[229];
+  RSSN sn;
+  uint16_t zero_cali;
+  uint8_t return_mode;
+  RSTimeInfo time_info;
+  RSStatusV1 status;
+  uint8_t reserved3[5];
+  RSDiagnoV1 diagno;
+  uint8_t gprmc[86];
+  RSCalibrationAngle vert_angle_cali[128];
+  RSCalibrationAngle horiz_angle_cali[128];
+  uint8_t reserved4[10];
+  uint16_t tail;
+} RSP80DifopPkt;
+
+#pragma pack(pop)
 
 template <typename T_PointCloud>
-class DecoderRSRUBY_PLUS : public DecoderRS128<T_PointCloud>
+class DecoderRSP80 : public DecoderMech<T_PointCloud>
 {
 public:
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
-  //virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
-  virtual ~DecoderRSRUBY_PLUS() = default;
+  virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
+  virtual ~DecoderRSP80() = default;
 
-  explicit DecoderRSRUBY_PLUS(const RSDecoderParam& param);
+  explicit DecoderRSP80(const RSDecoderParam& param);
 
 #ifndef UNIT_TEST
 protected:
@@ -56,12 +97,15 @@ protected:
   static RSDecoderMechConstParam& getConstParam();
   static RSEchoMode getEchoMode(uint8_t mode);
 
+  void calcParam();
   template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
+
+  uint8_t lidar_type_;
 };
 
 template <typename T_PointCloud>
-inline RSDecoderMechConstParam& DecoderRSRUBY_PLUS<T_PointCloud>::getConstParam()
+inline RSDecoderMechConstParam& DecoderRSP80<T_PointCloud>::getConstParam()
 {
   static RSDecoderMechConstParam param = 
   {
@@ -72,9 +116,9 @@ inline RSDecoderMechConstParam& DecoderRSRUBY_PLUS<T_PointCloud>::getConstParam(
       , {0x55, 0xAA, 0x05, 0x5A} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0xFE} // block id
-    , 128 // laser number
-    , 3 // blocks per packet
-      , 128 // channels per block
+    , 80 // laser number
+    , 4 // blocks per packet
+      , 80 // channels per block
       , 1.0f // distance min
       , 250.0f // distance max
       , 0.005f // distance resolution
@@ -86,10 +130,34 @@ inline RSDecoderMechConstParam& DecoderRSRUBY_PLUS<T_PointCloud>::getConstParam(
       , 0.0f // RZ
   };
 
-  INIT_ONLY_ONCE();
-
   float blk_ts = 55.56f;
-  float firing_tss[] = 
+  param.BLOCK_DURATION = blk_ts / 1000000;
+
+  return param;
+}
+
+template <typename T_PointCloud>
+inline void DecoderRSP80<T_PointCloud>::calcParam()
+{
+  float blk_ts = 55.56f;
+
+  float firing_tss_80[80] = 
+  {
+    0.0f,    0.0f,    0.0f,    0.0f,    1.217f,  1.217f,  1.217f,  1.217f, 
+    2.434f,  2.434f,  3.652f,  3.652f,  3.652f,  4.869f,  4.869f,  6.086f,  
+    6.086f,  7.304f,  7.304f,  8.521f,  8.521f,  9.739f,  9.739f,  11.323f, 
+    11.323f, 12.907f, 12.907f, 14.924f, 14.924f, 16.941f, 16.941f, 16.941f, 
+
+    16.941f, 18.959f, 18.959f, 18.959f, 18.959f, 20.976f, 20.976f, 20.976f, 
+    20.976f, 23.127f, 23.127f, 23.127f, 23.127f, 25.278f, 25.278f, 25.278f, 
+    25.278f, 27.428f, 27.428f, 27.428f, 27.428f, 29.579f, 29.579f, 29.579f, 
+    29.579f, 31.963f, 31.963f, 31.963f, 31.963f, 34.347f, 34.347f, 34.347f, 
+
+    34.347f, 36.498f, 36.498f, 36.498f, 36.498f, 38.648f, 38.648f, 40.666f, 
+    40.666f, 42.683f, 50.603f, 52.187f, 52.187f, 52.187f, 53.771f, 53.771f,
+  };
+
+  float firing_tss_80v[80] = 
   {
     0.0f,    0.0f,    0.0f,    0.0f,    1.217f,  1.217f,  1.217f,  1.217f, 
     2.434f,  2.434f,  2.434f,  2.434f,  3.652f,  3.652f,  3.652f,  3.652f,
@@ -103,27 +171,24 @@ inline RSDecoderMechConstParam& DecoderRSRUBY_PLUS<T_PointCloud>::getConstParam(
 
     25.278f, 25.278f, 25.278f, 25.278f, 27.428f, 27.428f, 27.428f, 27.428f, 
     29.579f, 29.579f, 29.579f, 29.579f, 31.963f, 31.963f, 31.963f, 31.963f, 
-    34.347f, 34.347f, 34.347f, 34.347f, 36.498f, 36.498f, 36.498f, 36.498f, 
-    38.648f, 38.648f, 38.648f, 38.648f, 40.666f, 40.666f, 40.666f, 40.666f, 
-
-    42.683f, 42.683f, 42.683f, 42.683f, 44.267f, 44.267f, 44.267f, 44.267f, 
-    45.851f, 45.851f, 45.851f, 45.851f, 47.435f, 47.435f, 47.435f, 47.435f, 
-    49.019f, 49.019f, 49.019f, 49.019f, 50.603f, 50.603f, 50.603f, 50.603f, 
-    52.187f, 52.187f, 52.187f, 52.187f, 53.771f, 53.771f, 53.771f, 53.771f,
   };
 
-  param.BLOCK_DURATION = blk_ts / 1000000;
-  for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)
+  float* firing_tss = firing_tss_80; // 80  - lidar_type = 0x07
+  if (lidar_type_ == 0x08)           // 80v - lidar_type = 0x08
+  {
+    firing_tss = firing_tss_80v;
+  }
+
+  RSDecoderMechConstParam& param = this->mech_const_param_;
+  for (uint16_t i = 0; i < 80; i++)
   {
     param.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
     param.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
   }
-
-  return param;
 }
 
 template <typename T_PointCloud>
-inline RSEchoMode DecoderRSRUBY_PLUS<T_PointCloud>::getEchoMode(uint8_t mode)
+inline RSEchoMode DecoderRSP80<T_PointCloud>::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
@@ -140,43 +205,49 @@ inline RSEchoMode DecoderRSRUBY_PLUS<T_PointCloud>::getEchoMode(uint8_t mode)
 }
 
 template <typename T_PointCloud>
-inline void DecoderRSRUBY_PLUS<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRSP80<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
-  const RS128DifopPkt& pkt = *(const RS128DifopPkt*)(packet);
-  this->template decodeDifopCommon<RS128DifopPkt>(pkt);
+  const RSP80DifopPkt& pkt = *(const RSP80DifopPkt*)(packet);
+  this->template decodeDifopCommon<RSP80DifopPkt>(pkt);
 
   this->echo_mode_ = getEchoMode (pkt.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
 }
 
-
 template <typename T_PointCloud>
-inline DecoderRSRUBY_PLUS<T_PointCloud>::DecoderRSRUBY_PLUS(const RSDecoderParam& param)
-  : DecoderRS128<T_PointCloud>(getConstParam(), param)
+inline DecoderRSP80<T_PointCloud>::DecoderRSP80(const RSDecoderParam& param)
+  : DecoderMech<T_PointCloud>(getConstParam(), param), 
+    lidar_type_(0)
 {
 }
 
-#if 0
 template <typename T_PointCloud>
-inline bool DecoderRSRUBY_PLUS<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
+inline bool DecoderRSP80<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
 {
   if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
   {
-    return internDecodeMsopPkt<SingleReturnBlockIterator<RS128MsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<SingleReturnBlockIterator<RSP80MsopPkt>>(pkt, size);
   }
   else
   {
-    return internDecodeMsopPkt<ABDualReturnBlockIterator<RS128MsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<DualReturnBlockIterator<RSP80MsopPkt>>(pkt, size);
   }
 }
 
 template <typename T_PointCloud>
 template <typename T_BlockIterator>
-inline bool DecoderRSRUBY_PLUS<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
+inline bool DecoderRSP80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
-  const RS128MsopPkt& pkt = *(const RS128MsopPkt*)(packet);
+  const RSP80MsopPkt& pkt = *(const RSP80MsopPkt*)(packet);
   bool ret = false;
+
+  uint8_t lidar_type = pkt.header.lidar_type;
+  if (lidar_type_ != lidar_type)
+  {
+    lidar_type_ = lidar_type;
+    calcParam();
+  }
 
   this->temperature_ = parseTempInBe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
@@ -204,23 +275,23 @@ inline bool DecoderRSRUBY_PLUS<T_PointCloud>::internDecodeMsopPkt(const uint8_t*
   double block_ts = pkt_ts;
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
-    const RS128MsopBlock& block = pkt.blocks[blk];
+    const RSP80MsopBlock& block = pkt.blocks[blk];
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 1) != 0)
     {
-      this->excb_(Error(ERRCODE_WRONGPKTHEADER));
+      this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER));
       break;
     }
 
     int32_t block_az = ntohs(block.azimuth);
     if (this->split_strategy_->newBlock(block_az))
     {
-      this->cb_split_frame_(this->height_, this->prev_point_ts_);
+      this->cb_split_frame_(this->const_param_.LASER_NUM, this->prev_point_ts_);
       ret = true;
     }
 
     int32_t block_az_diff;
-    float block_ts_off;
+    double block_ts_off;
     iter.get(blk, block_az_diff, block_ts_off);
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
@@ -272,7 +343,6 @@ inline bool DecoderRSRUBY_PLUS<T_PointCloud>::internDecodeMsopPkt(const uint8_t*
   this->prev_pkt_ts_ = pkt_ts;
   return ret;
 }
-#endif
 
 }  // namespace lidar
 }  // namespace robosense
