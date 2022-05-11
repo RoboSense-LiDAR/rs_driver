@@ -87,7 +87,7 @@ private:
   std::shared_ptr<Buffer> packetGet(size_t size);
   void packetPut(std::shared_ptr<Buffer> pkt);
 
-  void processMsop();
+  void processPacket();
 
   std::shared_ptr<T_PointCloud> getPointCloud();
   void splitFrame(uint16_t height, double ts);
@@ -103,8 +103,8 @@ private:
   std::shared_ptr<Input> input_ptr_;
   std::shared_ptr<Decoder<T_PointCloud>> decoder_ptr_;
   SyncQueue<std::shared_ptr<Buffer>> free_pkt_queue_;
-  SyncQueue<std::shared_ptr<Buffer>> msop_pkt_queue_;
-  std::thread msop_handle_thread_;
+  SyncQueue<std::shared_ptr<Buffer>> pkt_queue_;
+  std::thread handle_thread_;
   uint32_t pkt_seq_;
   uint32_t point_cloud_seq_;
   bool to_exit_handle_;
@@ -226,7 +226,7 @@ inline bool LidarDriverImpl<T_PointCloud>::start()
   }
 
   to_exit_handle_ = false;
-  msop_handle_thread_ = std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processMsop, this));
+  handle_thread_ = std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processPacket, this));
 
   input_ptr_->start();
 
@@ -245,7 +245,7 @@ inline void LidarDriverImpl<T_PointCloud>::stop()
   input_ptr_->stop();
 
   to_exit_handle_ = true;
-  msop_handle_thread_.join();
+  handle_thread_.join();
 
   start_flag_ = false;
 }
@@ -311,31 +311,32 @@ template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt)
 {
   constexpr static int PACKET_POOL_MAX = 1024;
-  size_t sz = msop_pkt_queue_.push(pkt);
+
+  size_t sz = pkt_queue_.push(pkt);
   if (sz > PACKET_POOL_MAX)
   {
     LIMIT_CALL(runExceptionCallback(Error(ERRCODE_PKTBUFOVERFLOW)), 1);
-    msop_pkt_queue_.clear();
+    pkt_queue_.clear();
   }
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::processMsop()
+inline void LidarDriverImpl<T_PointCloud>::processPacket()
 {
   while (!to_exit_handle_)
   {
     //
     // Low latency, or low CPU usage, that is the question. 
     //                                            -- Hamlet
-    //
+
 #if 1
-    std::shared_ptr<Buffer> pkt = msop_pkt_queue_.popWait(1000);
+    std::shared_ptr<Buffer> pkt = pkt_queue_.popWait(1000);
     if (pkt.get() == NULL)
     {
       continue;
     }
 #else
-    std::shared_ptr<Buffer> pkt = msop_pkt_queue_.pop();
+    std::shared_ptr<Buffer> pkt = pkt_queue_.pop();
     if (pkt.get() == NULL)
     {
       usleep(1000);
