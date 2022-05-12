@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <thread>
 
 namespace robosense
 {
@@ -74,11 +75,15 @@ public:
 
   inline T popWait(unsigned int usec)
   {
+    //
+    // Low latency, or low CPU usage, that is the question. 
+    //                                            -- Hamlet
+
+#if 1
     T value;
 
-    std::unique_lock<std::mutex> lck(mtx_);
-
-    cv_.wait_for(lck, std::chrono::microseconds(usec), [this] { return (!queue_.empty()); });
+    std::unique_lock<std::mutex> ul(mtx_);
+    cv_.wait_for(ul, std::chrono::microseconds(usec), [this] { return (!queue_.empty()); });
 
     if (!queue_.empty())
     {
@@ -87,6 +92,22 @@ public:
     }
 
     return value;
+#else
+    T value;
+
+    {
+      std::lock_guard<std::mutex> lg(mtx_);
+      if (!queue_.empty())
+      {
+        value = queue_.front();
+        queue_.pop();
+        return value;
+      }
+    }
+
+    std::this_thread::sleep_for(std::chrono::microseconds(1000));
+    return value;
+#endif
   }
 
   inline void clear()

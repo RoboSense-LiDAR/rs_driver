@@ -325,24 +325,11 @@ inline void LidarDriverImpl<T_PointCloud>::processPacket()
 {
   while (!to_exit_handle_)
   {
-    //
-    // Low latency, or low CPU usage, that is the question. 
-    //                                            -- Hamlet
-
-#if 1
     std::shared_ptr<Buffer> pkt = pkt_queue_.popWait(1000);
     if (pkt.get() == NULL)
     {
       continue;
     }
-#else
-    std::shared_ptr<Buffer> pkt = pkt_queue_.pop();
-    if (pkt.get() == NULL)
-    {
-      usleep(1000);
-      continue;
-    }
-#endif
 
     uint8_t* id = pkt->data();
     if (*id == 0x55)
