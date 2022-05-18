@@ -400,7 +400,7 @@ inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t siz
      return false;
   }
 
-  if (memcmp(pkt, this->const_param_.MSOP_ID, const_param_.MSOP_ID_LEN) != 0)
+  if (memcmp(pkt, this->const_param_.MSOP_ID, this->const_param_.MSOP_ID_LEN) != 0)
   {
     LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER)), 1);
     return false;

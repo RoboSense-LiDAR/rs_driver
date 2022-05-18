@@ -34,6 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rs_driver/common/rs_common.hpp>
 
+#include <cmath>
+
 namespace robosense
 {
 namespace lidar

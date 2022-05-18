@@ -162,7 +162,7 @@ TEST(TestDecoder, processDifopPkt)
   ASSERT_EQ(decoder.blks_per_frame_, 1801);
   ASSERT_EQ(decoder.block_az_diff_, 20);
   ASSERT_EQ(decoder.split_blks_per_frame_, 1801);
-  ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075f); // 0.1 * 3/4
+  ASSERT_EQ(decoder.fov_blind_ts_diff_, 0.075); // 0.1 * 3/4
   ASSERT_FALSE(decoder.angles_ready_);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_.size(), 2);
   ASSERT_EQ(decoder.chan_angles_.vert_angles_[0], 0);
@@ -253,7 +253,14 @@ TEST(TestDecoder, processMsopPkt)
   decoder.angles_ready_ = false;
   errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, 2);
+  ASSERT_EQ(errCode, 0);
+
+#if 0
+  sleep(2);
+  errCode = ERRCODE_SUCCESS;
+  decoder.processMsopPkt((const uint8_t*)&pkt, 2);
   ASSERT_EQ(errCode, ERRCODE_NODIFOPRECV);
+#endif
 
   decoder.param_.wait_for_difop = true;
   decoder.angles_ready_ = true;

@@ -41,6 +41,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ws2tcpip.h>
 #endif
 
+inline int16_t RS_SWAP_INT16(int16_t value)
+{
+  uint8_t* v = (uint8_t*)&value;
+
+  uint8_t temp;
+  temp = v[0];
+  v[0] = v[1];
+  v[1] = temp;
+
+  return value;
+}
+
+
 //
 // define M_PI
 // 

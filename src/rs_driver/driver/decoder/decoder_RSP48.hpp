@@ -31,28 +31,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
+
 #include <rs_driver/driver/decoder/decoder.hpp>
 
 namespace robosense
 {
 namespace lidar
 {
-
 #pragma pack(push, 1)
 typedef struct
 {
   uint8_t id[1];
   uint8_t ret_id;
   uint16_t azimuth;
-  RSChannel channels[80];
-} RS80MsopBlock;
+  RSChannel channels[48];
+} RSP48MsopBlock;
 
 typedef struct
 {
   RSMsopHeaderV2 header;
-  RS80MsopBlock blocks[4];
-  uint8_t reserved[192];
-} RS80MsopPkt;
+  RSP48MsopBlock blocks[8];
+  uint8_t reserved[4];
+} RSP48MsopPkt;
 
 typedef struct
 {
@@ -76,19 +76,19 @@ typedef struct
   RSCalibrationAngle horiz_angle_cali[128];
   uint8_t reserved4[10];
   uint16_t tail;
-} RS80DifopPkt;
+} RSP48DifopPkt;
 
 #pragma pack(pop)
 
 template <typename T_PointCloud>
-class DecoderRS80 : public DecoderMech<T_PointCloud>
+class DecoderRSP48 : public DecoderMech<T_PointCloud>
 {
 public:
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
-  virtual ~DecoderRS80() = default;
+  virtual ~DecoderRSP48() = default;
 
-  explicit DecoderRS80(const RSDecoderParam& param);
+  explicit DecoderRSP48(const RSDecoderParam& param);
 
 #ifndef UNIT_TEST
 protected:
@@ -102,47 +102,43 @@ protected:
 };
 
 template <typename T_PointCloud>
-inline RSDecoderMechConstParam& DecoderRS80<T_PointCloud>::getConstParam()
+inline RSDecoderMechConstParam& DecoderRSP48<T_PointCloud>::getConstParam()
 {
   static RSDecoderMechConstParam param = 
   {
-    1248 // msop len
+    1268 // msop len
       , 1248 // difop len
       , 4 // msop id len
       , 8 // difop id len
       , {0x55, 0xAA, 0x05, 0x5A} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0xFE} // block id
-    , 80 // laser number
-    , 4 // blocks per packet
-      , 80 // channels per block
+    , 48 // laser number
+    , 8 // blocks per packet
+      , 48 // channels per block
       , 1.0f // distance min
-      , 230.0f // distance max
+      , 250.0f // distance max
       , 0.005f // distance resolution
       , 0.0625f // temperature resolution
 
       // lens center
-      , 0.03615f // RX
-      , -0.017f // RY
+      , 0.02892f // RX
+      , -0.013f // RY
       , 0.0f // RZ
   };
 
   INIT_ONLY_ONCE();
 
-  float blk_ts = 55.552f;
-  float firing_tss[] = 
+  float blk_ts = 55.56f;
+  float firing_tss[48] = 
   {
-    0.00f,  0.00f,  0.00f,  3.236f,  3.236f,  6.472f,  6.472f, 6.472f, 
-    6.472f, 9.708f, 9.708f, 9.708f, 12.944f, 12.944f, 12.944f, 16.18f, 
-    16.18f, 16.18f, 19.416f, 19.416f, 19.416f, 22.652f, 22.652f, 25.888f, 
-    25.888f, 29.124f, 29.124f, 32.36f, 32.36f, 35.596f, 35.596f, 38.832f, 
-    38.832f, 42.068f, 42.068f, 45.304f, 45.304f, 48.54f, 48.54f, 48.54f,
+    0.0f,    0.0f,    1.217f,  1.217f,  2.434f,  2.434f,  3.652f,  3.652f,  
+    4.869f,  4.869f,  6.086f,  6.086f,  7.304f,  7.304f,  8.521f,  8.521f,
+    9.739f,  9.739f,  11.323f, 11.323f, 12.907f, 12.907f, 14.924f, 14.924f, 
+    16.941f, 16.941f, 18.959f, 18.959f, 20.976f, 20.976f, 23.127f, 23.127f, 
 
-    0.00f,  0.00f,  0.00f,  3.236f, 3.236f,  3.236f,  6.472f,  6.472f, 
-    6.472f, 9.708f, 9.708f, 12.944f, 12.944f, 12.944f, 12.944f, 16.18f, 
-    16.18f, 19.416f, 19.416f, 19.416f, 22.652f, 22.652f, 22.652f, 25.888f, 
-    25.888f, 29.124f, 29.124f, 32.36f, 32.36f, 35.596f, 35.596f, 35.596f, 
-    38.832f, 38.832f, 42.068f, 45.304f, 45.304f, 48.54f, 48.54f, 48.54f,
+    25.278f, 25.278f, 27.428f, 27.428f, 29.579f, 29.579f, 31.963f, 31.963f, 
+    34.347f, 34.347f, 36.498f, 36.498f, 38.648f, 38.648f, 40.666f, 40.666f, 
   };
 
   param.BLOCK_DURATION = blk_ts / 1000000;
@@ -156,30 +152,27 @@ inline RSDecoderMechConstParam& DecoderRS80<T_PointCloud>::getConstParam()
 }
 
 template <typename T_PointCloud>
-inline RSEchoMode DecoderRS80<T_PointCloud>::getEchoMode(uint8_t mode)
+inline RSEchoMode DecoderRSP48<T_PointCloud>::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
-    case 0x03: // dual return
-      return RSEchoMode::ECHO_DUAL;
-    case 0x01: // strongest return
-    case 0x02: // last return
-    default:
+    case 0x00:
+    case 0x01:
+    case 0x02:
       return RSEchoMode::ECHO_SINGLE;
+    case 0x03:
+    case 0x04:
+    case 0x05:
+    default:
+      return RSEchoMode::ECHO_DUAL;
   }
 }
 
 template <typename T_PointCloud>
-inline DecoderRS80<T_PointCloud>::DecoderRS80(const RSDecoderParam& param)
-  : DecoderMech<T_PointCloud>(getConstParam(), param)
+inline void DecoderRSP48<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
-}
-
-template <typename T_PointCloud>
-inline void DecoderRS80<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
-{
-  const RS80DifopPkt& pkt = *(const RS80DifopPkt*)(packet);
-  this->template decodeDifopCommon<RS80DifopPkt>(pkt);
+  const RSP48DifopPkt& pkt = *(const RSP48DifopPkt*)(packet);
+  this->template decodeDifopCommon<RSP48DifopPkt>(pkt);
 
   this->echo_mode_ = getEchoMode (pkt.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
@@ -187,23 +180,29 @@ inline void DecoderRS80<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
 }
 
 template <typename T_PointCloud>
-inline bool DecoderRS80<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
+inline DecoderRSP48<T_PointCloud>::DecoderRSP48(const RSDecoderParam& param)
+  : DecoderMech<T_PointCloud>(getConstParam(), param)
+{
+}
+
+template <typename T_PointCloud>
+inline bool DecoderRSP48<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
 {
   if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
   {
-    return internDecodeMsopPkt<SingleReturnBlockIterator<RS80MsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<SingleReturnBlockIterator<RSP48MsopPkt>>(pkt, size);
   }
   else
   {
-    return internDecodeMsopPkt<DualReturnBlockIterator<RS80MsopPkt>>(pkt, size);
+    return internDecodeMsopPkt<DualReturnBlockIterator<RSP48MsopPkt>>(pkt, size);
   }
 }
 
 template <typename T_PointCloud>
 template <typename T_BlockIterator>
-inline bool DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
+inline bool DecoderRSP48<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
-  const RS80MsopPkt& pkt = *(const RS80MsopPkt*)(packet);
+  const RSP48MsopPkt& pkt = *(const RSP48MsopPkt*)(packet);
   bool ret = false;
 
   this->temperature_ = parseTempInBe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
@@ -226,13 +225,13 @@ inline bool DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     }
   }
 
-  T_BlockIterator iter(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION, 
+  T_BlockIterator iter(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION,
       this->block_az_diff_, this->fov_blind_ts_diff_);
 
   double block_ts = pkt_ts;
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
-    const RS80MsopBlock& block = pkt.blocks[blk];
+    const RSP48MsopBlock& block = pkt.blocks[blk];
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 1) != 0)
     {

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Support RSP128/RSP80/RSP48 lidars
+- Support EOS lidar
+- Add option to usleep() when no packets to be handled
+
+### Changed
+- Limit error information when error happens
+- Use raw buffer for packet callback
+- Split frame by seq 1 (for MEMS lidars)
+- Remove difop handle thread
+
 ## v1.5.1 - 2022-04-28
 
 ### Changed

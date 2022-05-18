@@ -51,7 +51,7 @@ typedef struct
   uint8_t reserved[10];
   uint8_t lidar_type;
   int8_t temperature;
-} RSM2MsopHeader;
+} RSEOSMsopHeader;
 
 typedef struct
 {
@@ -61,38 +61,37 @@ typedef struct
   int16_t z;
   uint8_t intensity;
   uint8_t point_attribute;
-} RSM2Channel;
+} RSEOSChannel;
 
 typedef struct
 {
-  uint8_t time_offset;
-  uint8_t return_seq;
-  RSM2Channel channel[5];
-} RSM2Block;
+  uint16_t time_offset;
+  RSEOSChannel channel[1];
+} RSEOSBlock;
 
 typedef struct
 {
-  RSM2MsopHeader header;
-  RSM2Block blocks[25];
-  uint8_t reserved[4];
-} RSM2MsopPkt;
+  RSEOSMsopHeader header;
+  RSEOSBlock blocks[96];
+  uint8_t reserved[16];
+} RSEOSMsopPkt;
 
 #pragma pack(pop)
 
 template <typename T_PointCloud>
-class DecoderRSM2 : public Decoder<T_PointCloud>
+class DecoderRSEOS : public Decoder<T_PointCloud>
 {
 public:
 
   constexpr static double FRAME_DURATION = 0.1;
-  constexpr static uint32_t SINGLE_PKT_NUM = 1260;
+  constexpr static uint32_t SINGLE_PKT_NUM = 112; //126
   constexpr static int VECTOR_BASE = 32768;
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
-  virtual ~DecoderRSM2() = default;
+  virtual ~DecoderRSEOS() = default;
 
-  explicit DecoderRSM2(const RSDecoderParam& param);
+  explicit DecoderRSEOS(const RSDecoderParam& param);
 
 private:
 
@@ -103,20 +102,20 @@ private:
 };
 
 template <typename T_PointCloud>
-inline RSDecoderConstParam& DecoderRSM2<T_PointCloud>::getConstParam()
+inline RSDecoderConstParam& DecoderRSEOS<T_PointCloud>::getConstParam()
 {
   static RSDecoderConstParam param = 
   {
-    1336 // msop len
+    1200 // msop len
       , 256 // difop len
       , 4 // msop id len
       , 8 // difop id len
       , {0x55, 0xAA, 0x5A, 0xA5} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0x00, 0x00}
-    , 5  // laser number
-    , 25 // blocks per packet
-      , 5 // channels per block
+    , 1  // laser number
+    , 96 // blocks per packet
+      , 1 // channels per block
       , 0.2f // distance min
       , 200.0f // distance max
       , 0.005f // distance resolution
@@ -127,7 +126,7 @@ inline RSDecoderConstParam& DecoderRSM2<T_PointCloud>::getConstParam()
 }
 
 template <typename T_PointCloud>
-inline DecoderRSM2<T_PointCloud>::DecoderRSM2(const RSDecoderParam& param)
+inline DecoderRSEOS<T_PointCloud>::DecoderRSEOS(const RSDecoderParam& param)
   : Decoder<T_PointCloud>(getConstParam(), param)
 {
   this->packet_duration_ = FRAME_DURATION / SINGLE_PKT_NUM;
@@ -135,7 +134,7 @@ inline DecoderRSM2<T_PointCloud>::DecoderRSM2(const RSDecoderParam& param)
 }
 
 template <typename T_PointCloud>
-inline RSEchoMode DecoderRSM2<T_PointCloud>::getEchoMode(uint8_t mode)
+inline RSEchoMode DecoderRSEOS<T_PointCloud>::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
@@ -143,23 +142,21 @@ inline RSEchoMode DecoderRSM2<T_PointCloud>::getEchoMode(uint8_t mode)
       return RSEchoMode::ECHO_DUAL;
     case 0x04: // strongest return
     case 0x05: // last return
-    case 0x06: // first return
+    case 0x06: // nearest return
     default:
       return RSEchoMode::ECHO_SINGLE;
   }
 }
 
 template <typename T_PointCloud>
-inline void DecoderRSM2<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRSEOS<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
-  const RSM1DifopPkt& pkt = *(RSM1DifopPkt*)packet;
-  this->echo_mode_ = this->getEchoMode(pkt.return_mode);
 }
 
 template <typename T_PointCloud>
-inline bool DecoderRSM2<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
+inline bool DecoderRSEOS<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
 {
-  const RSM2MsopPkt& pkt = *(RSM2MsopPkt*)packet;
+  const RSEOSMsopPkt& pkt = *(RSEOSMsopPkt*)packet;
   bool ret = false;
 
   this->temperature_ = static_cast<float>(pkt.header.temperature - this->const_param_.TEMPERATURE_RES);
@@ -191,13 +188,13 @@ inline bool DecoderRSM2<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
 
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
-    const RSM2Block& block = pkt.blocks[blk];
+    const RSEOSBlock& block = pkt.blocks[blk];
 
-    double point_time = pkt_ts + block.time_offset * 1e-6;
+    double point_time = pkt_ts + ntohs(block.time_offset) * 1e-6;
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
-      const RSM2Channel& channel = block.channel[chan];
+      const RSEOSChannel& channel = block.channel[chan];
 
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
 
