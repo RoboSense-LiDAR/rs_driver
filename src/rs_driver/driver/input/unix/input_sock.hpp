@@ -289,7 +289,7 @@ inline void InputSock::recvPacket()
 
       std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
       ssize_t ret = recvfrom(fds_[0], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
-      if (ret <= 0)
+      if (ret < 0)
       {
         perror("recvfrom: ");
         break;
