@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.5.2 2022-05-20
+
 ### Added
 - Support RSP128/RSP80/RSP48 lidars
 - Support EOS lidar

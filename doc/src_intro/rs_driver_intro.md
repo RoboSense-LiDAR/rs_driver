@@ -1,4 +1,4 @@
-# rs_driver v1.5.1 源代码解析
+# rs_driver v1.5.2 源代码解析
 
 ## 1 基本概念
 
@@ -8,12 +8,12 @@ rs_driver支持RoboSense的两种雷达：
 + 机械式激光雷达。如RS16/RS32/RSBP/RSHELIOS/RS80/RS128。机械式激光雷达有控制激光发射角度的旋转部件，有360°扫描视场。
 + MEMS激光雷达。如RSM1。MEMS激光雷达是单轴、谐振式的MEMS扫描镜，其水平扫描角度可达120°。
 
-### 1.2 线/通道 Channel
+### 1.2 通道 Channel
 
-线(或通道)是机械式雷达的概念，指的是雷达垂直方向上扫描的角度数。
+对于机械式雷达，通道指的是垂直方向上扫描的点数，每个通道上的点连成一条线。
 + 比如，RS16是16线雷达，也就是16个通道； RSBP是32线雷达，RS128是128线雷达。
 
-MEMS雷达淡化了通道概念。
+MEMS雷达的通道与机械式不同，它的每个通道可能对应一块区域，比如一个矩形。
 
 ### 1.3 MSOP/DIFOP
 
@@ -43,8 +43,8 @@ rs_driver主要由三部分组成： Input、Decoder、LidarDriverImpl。
 + Input部分负责从Socket、或PCAP文件等源，获取MSOP/DIFOP Packet。Input类一般有自己的接收线程。
 + Decoder部分负责解析MSOP/DIFOP Packet，得到点云。Decoder没有自己的线程，它运行在LiarDriverImpl的Packet处理线程中。
 + LidarDrvierImpl将Input和Decoder组合到一起。它从Input得到Packet，根据Packet的类型将它派发到Decoder。得到点云后，通过用户的回调函数传递给用户。
-  + LidarDriverImpl提供Packet队列。Input收到MSOP/DIFOP Packet后，调用LidarDriverImpl的回调函数。回调函数根据Packet的类型，将它保存到MSOP Packet Queue或DIFOP Packet Queue。
-  + LidarDriverImpl提供MSOP/DIFOP Packet处理线程。在MSOP处理线程中，从MSOP Packet Queue得到MSOP Packet，派发给Decoder；在DIFOP处理线程中，从DIFOP Packet Queue得到DIFOP Packet，派发给Decoder。
+  + LidarDriverImpl提供Packet队列。Input收到MSOP/DIFOP Packet后，调用LidarDriverImpl的回调函数。回调函数将它保存到Packet Queue。
+  + LidarDriverImpl提供Packet处理线程。在Packet处理线程中，将MSOP Packet和DIFOP Packet分别派发给Decoder相应的处理函数。
   + Decoder解析完一帧点云时，通知LidarDriverImpl。后者再将点云传递给用户。
 
 ## 3 Packet接收
@@ -71,7 +71,7 @@ Input定义接收MSOP/DIFOP Packet的接口。
 
 ### 3.2 InputSock
 
-InputSockt类从UDP Socket接收MSOP/DIFOP Packet。雷达将MSOP/DIFOP Packet发送到这个Socket上。
+InputSock类从UDP Socket接收MSOP/DIFOP Packet。雷达将MSOP/DIFOP Packet发送到这个Socket上。
 
 ![InputSock](./img/class_input_sock.png)
 
@@ -194,7 +194,7 @@ recvPacket()解析PCAP文件。
 
 如果是DIFOP Packet，处理与MSOP Packet一样。
 
-+ 调用this_thread::sleep_for()让解析线程睡眠一小会。这是为了模拟雷达发送MSOP Packet的间隔。这个间隔时间来自`Decoder`，每个雷达有自己的值。在`Decoder`部分会说明如何算这个值。
++ 调用this_thread::sleep_for()让解析线程睡眠一小会。这是为了模拟雷达发送MSOP Packet的间隔。这个间隔时间来自`Decoder`，每个雷达有自己的值。在`Decoder`部分，会说明如何计算这个值。
 
 如果pcap_next_ex()不能读出Packet，一般意味着到了文件结尾，则：
 + 调用pcap_close()关闭pcap文件指针 `pcap_` 。
@@ -371,7 +371,7 @@ MSOP格式中用一个字节表示：
 int8_t return_mode;
 ```
 
-但驱动并不在意是回波是“最强的”，还是“最后的”。因为影响MSOP解析的只是：有几个回波？
+但rs_driver并不在意是回波是“最强的”，还是“最后的”。因为影响MSOP解析的只是：有几个回波？
 
 如下是才是rs_driver关心的回波模式。
 
@@ -667,7 +667,7 @@ Channel的时间戳 = 所在Block的时间戳  + Channel对Block的相对时间�
 
 在MSOP格式中，Block的成员中包括水平角`azimuth`。
 
-雷达的旋转当然不是匀速的。但放到一个Block这么短时间内来看，认为旋转是匀速的，还是合理的。
+雷达的旋转当然不是匀速的，但放到一个Block这么短时间内来看，认为旋转是匀速的，还是合理的。
 
 所以，通过Channel占Block的时间比例，可以估计Channel对Block的相对水平角。
 
@@ -921,7 +921,6 @@ MEMS雷达的分帧是在雷达内部确定的。
 
 SplitStrategyBySeq按Packet编号分帧。
 + 注意SplitStrategyBySeq的接口与SplitStrategy不同，不是后者的派生类。
-+ 成员变量`max_seq_`是Packet编号的最大值。
 + 成员变量`prev_seq_`是前一个Packet的编号。
 + 成员变量`safe_seq_min_`和`safe_seq_max`，是基于`prev_seq_`的一个安全区间。稍后说明它的用处。
 
@@ -934,8 +933,8 @@ SplitStrategyBySeq按Packet编号分帧。
 MSOP使用UDP协议，理论上Packet可能丢包、乱序。
 
 先讨论没有安全区间时，如何处理丢包、乱序。
-+ 理想情况下，如果不丢包不乱序，Packet编号从`1`到`630`, 只需要检查Packet编号是不是`630`。如果是就分帧。
-+ 那假如只有丢包呢？举个例子，如果编号为`630`的Packet丢了，则可以加入检查条件，就是当前Packet编号小于`prev_seq_`，就分帧。
++ 理想情况下，如果不丢包不乱序，Packet编号从`1`到`630`, 只需要检查Packet编号是不是`1`。如果是就分帧。
++ 那假如只有丢包呢？举个例子，如果编号为`1`的Packet丢了，则可以加入检查条件，就是当前Packet编号小于`prev_seq_`，就分帧。
 + 在乱序的情况下，这个检查条件会导致另一个困境。举个例子，如果编号为`300`和`301`的两个Packet乱序，那么这个位置分帧，会导致原本的一帧拆分成两帧。
 
 为了一定程度上，包容可能的Packet丢包、乱序情况，引入安全区间的概念。
@@ -1008,7 +1007,6 @@ DecoderFactory根据指定的雷达类型，生成Decoder实例。
 + 成员`temperature_`是雷达温度。Decoder的 派生类解析MSOP Packet时，应该保存这个值。
 + 成员`angles_ready_`是当前的配置信息是否已经就绪。不管这些信息是来自于DIFOP Packet，还是来自外部文件。
 + 成员`point_cloud_`是当前累积的点云。
-+ 成员`height_`是点云的高度。Decoder的派生类设置这个值。
 + 成员`prev_pkt_ts_`是最后一个MSOP Packet的时间戳，成员`prev_point_ts_`则是最后一个点的时间戳。
 + 成员`cb_split_frame_`是点云分帧时，要调用的回调函数。由使用者通过成员函数setSplitCallback()设置。
 
@@ -1176,6 +1174,7 @@ Block间的角度差 = 360 / 每帧Block数
 | DIFOP_ID[]   |    {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55}   | DIFOP Packet标志字节，长度为8 |
 | DIFOP_ID_LEN |    8     | DIFOP_LEN[]中的字节长度 |
 | BLOCK_ID[]   |    {0xFF, 0xEE}   | block标志字节，长度为2 |
+| LASER_NUM    |    32  | 32通道 |
 | BLOCKS_PER_PKT |    12  | 每Packet中12个Block |
 | CHANNEL_PER_BLOCK | 32  | RSBP为32线雷达 |
 | DISTANCE_MIN |    0.1   | 测距最小值，单位米 |
@@ -1257,7 +1256,6 @@ RS16的处理与别的机械式雷达不同。请参考前面的“RS16的Packet
 RSM1是MEMS雷达。这里说明RSM1的Decoder。
 + DecoderRSM1的常量配置由成员函数getConstParam()生成。这个配置定义为静态本地变量。
 + 成员`split_strategy_`是SplitStrategyBy类的实例，保存分帧策略。
-+ 成员`max_seq_`是一帧内的Packet的最大编号。`split_strategy_`引用它。
 
 ![decoder rsm1](./img/class_decoder_rsm1.png)
 
@@ -1272,6 +1270,7 @@ RSM1是MEMS雷达。这里说明RSM1的Decoder。
 | DIFOP_ID[]   |    {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55}   | DIFOP Packet标志字节，长度为8 |
 | DIFOP_ID_LEN |    8     | DIFOP_LEN[]中的字节长度 |
 | BLOCK_ID[]   |    {0xFF, 0xEE}   | block标志字节，长度为2 |
+| LASER_NUM    |    5  | 5通道 |
 | BLOCKS_PER_PKT |    25  | 每Packet中12个Block |
 | CHANNEL_PER_BLOCK | 5  | RSBP为32线雷达 |
 | DISTANCE_MIN |    0.2   | 测距最小值，单位米 |
@@ -1289,10 +1288,16 @@ decodeDifopPkt() 解析DIFOP Packet。
 
 decodeMsopPkt()解析MSOP Packet。
 + 解析Packet中的`temperature`字段，得到雷达温度，保存到`temperature_`。
-+ 调用parseTimeUTCWithUs()得到Packet的时间戳，保存到本地变量`pkt_ts`。
-+ 遍历Packet内所有的Block。
-  + 从Block相对于Packet的偏移，得到Block的时间戳。对于RSM1, Block内的所有Channel的时间戳都是这个时间戳。
 
++ 调用parseTimeUTCWithUs()得到Packet的时间戳，保存到本地变量`pkt_ts`。
+
++ 调用SplitStrategyBySeq::newPacket()，检查是否分帧。如果是，调用回调函数`cb_split_frame_`，通知使用者。
+  `cb_split_frame_`应该转移点云`pont_cloud_`，并重置它。
+
++ 遍历Packet内所有的Block。
+  
+  + 从Block相对于Packet的偏移，得到Block的时间戳。对于RSM1, Block内的所有Channel的时间戳都是这个时间戳。
+  
 + 遍历Block内所有的Channel。
   + 解析Channel的distance。
   + 调用DistanceSection::in()校验`distance`。
@@ -1307,10 +1312,8 @@ decodeMsopPkt()解析MSOP Packet。
      + 将`NAN`点保存到点云`point_cloud_`尾部。
 
 + 当前点的时间戳保存到成员`prev_point_ts_`。如果下一个Block分包，那么这个时间戳就是点云的时间戳。
-+ 将当前Packet的时间戳保存到成员`prev_pkt_ts_`。这样，Decoder的使用者不需要重新解析Packet来得到它。
 
-+ 调用SplitStrategyBySeq::newPacket()，检查是否分帧。如果是，调用回调函数`cb_split_frame_`，通知使用者。
-  `cb_split_frame_`应该转移点云`pont_cloud_`，并重置它。
++ 将当前Packet的时间戳保存到成员`prev_pkt_ts_`。这样，Decoder的使用者不需要重新解析Packet来得到它。
 
 #### 4.8.6 DecoderFactory
 
@@ -1343,9 +1346,9 @@ createDecoder() 根据指定的雷达类型，创建Decdoer实例。
 LidarDriverImpl组合Input部分和Decoder部分。
 + 成员`input_ptr_`是Input实例。成员`decoder_ptr_`是Decoder实例。
   + LidarDriverImpl只有一个Input实例和一个Decoder实例，所以一个LidarDriverImpl实例只支持一个雷达。如果需要支持多个雷达，就需要分别创建多个LidarDriverImpl实例。
-+ 成员`msop_handle_thread_`，`difop_handle_thread_`分别是MSOP/DIFOP Packet的处理线程。
-+ 成员`driver_param_`是RSDriverParam的实例，`difop_handle_thread_`分别是MSOP/DIFOP Packet的处理线程。
-  + RSDriverParam打包了RSInputParam和RSDecoderParam，它们分别是Input和Decoder部分的参数。  
++ 成员`handle_thread_`是MSOP/DIFOP Packet的处理线程。
++ 成员`driver_param_`是RSDriverParam的实例。
+  + RSDriverParam打包了RSInputParam和RSDecoderParam，它们分别是Input部分和Decoder部分的参数。  
   
 ```
 typedef struct RSDriverParam
@@ -1360,8 +1363,8 @@ typedef struct RSDriverParam
 ![lidar driver impl](./img/class_lidar_driver_impl.png)
 
 组合Input,
-+ 成员`free_pkt_queue_`、`msop_pkt_queue_`、和`difop_pkt_queue_`三个队列分别保存空闲的Packet， 待处理的MSOP Pcket， 待处理的DIFOP Packet。
-  + 这3个队列是SyncQueue类的实例。SyncQueue提供多线程访问的互斥保护。
++ 成员`free_pkt_queue_`、`pkt_queue_`分别保存空闲的Packet， 待处理的MSOP/DIFOP Packet。
+  + 这2个队列是SyncQueue类的实例。SyncQueue提供多线程访问的互斥保护。
 + 函数packetGet()和packetPut()用来向input_ptr_注册。`input_ptr_`调用前者得到空闲的Buffer，和调用后者派发填充好Packet的Buffer。
 
 组合Decoder,
@@ -1387,19 +1390,18 @@ init()初始化LidarDriverImpl实例。
 初始化Decoder部分，
 + 调用DecoderFactory::createDecoder()，创建Decoder实例。
 + 调用getPointCloud()得到空闲的点云，设置`decoder_ptr_`的成员`point_cloud_`。
-+ 调用Decoder::setSplitCallback()， 传递成员函数splitFrame()作为参数。这样Decoder分帧时，会调用splitFrame()通知。
++ 调用Decoder::regCallback()， 传递成员函数splitFrame()作为参数。这样Decoder分帧时，会调用splitFrame()通知。
 + 调用Decoder::getPacketDuration()得到Decoder的Packet持续时间。
 
 初始化Input部分，
 + 调用InputFactory::createInput()，创建Input实例。
-+ 调用Input::regRecvCallback()，传递成员函数packetGet()和packetPut()。这样Input可以得到Buffer， 和派发填充好Packet的Buffer。
++ 调用Input::regCallback()，传递成员函数packetGet()和packetPut()。这样Input可以得到Buffer， 和派发填充好Packet的Buffer。
 + 调用Input::init()，初始化Input实例。
 
 #### 4.9.3 LidarDriverImpl::start()
 
 start()开始处理MSOP/DIFOP Packet。
-+ 启动MOSP处理线程`msop_handle_thread_`， 线程函数为processMsop()。
-+ 启动DIFOP线程`difop_handle_thread_`， 线程函数为processDifop()。
++ 启动Packet处理线程`handle_thread_`， 线程函数为processPacket()。
 + 调用Input::start()， 其中启动接收线程，接收MSOP/DIFOP Packet。
 
 #### 4.9.4 LidarDriverImpl::packetGet()
@@ -1410,27 +1412,19 @@ packetGet()分配空闲的Buffer。
 
 #### 4.9.5 LidarDriverImpl::packetPut()
 
-packetPut()将收到的Packet，按照Packet类型，放入相应队列。
-+ 检查Packet的标志字节。
-  + 如果是MSOP Packet，派发到`msop_pkt_queue_`；如果是DIFOP Packet， 派发到`difop_pkt_queue_`；否则，回收到`free_pkt_queue_`，等待下次使用。
+packetPut()将收到的Packet，放入队列`pkt_queue_`。
 + 检查`msop_pkt_queue_`/`difop_pkt_queue`中的Packet数。如果处理线程太忙，不能及时处理， 则释放队列中所有Buffer。
 
-#### 4.9.6 LidarDriverImpl::processDifop()
-
-processDifop()是DIFOP处理线程的函数。在循环中，
-+ 调用SyncQueue::popWait()从`difop_pkt_queue_`获得Packet，
-+ 调用Decoder::processDifopPkt()，处理Difop Packet。
-+ 将Packet的Buffer回收到`free_pkt_queue_`，等待下次使用。
-
-#### 4.9.7 LidarDriverImpl::processMsop()
+#### 4.9.6 LidarDriverImpl::processPacket()
 
 processMsop()是MSOP Packet处理线程的函数。在循环中,
 + 调用SyncQueue::popWait()获得Packet，
-+ 调用Decoder::processMsopPkt()，处理MSOP Packet。
-  + 如果Packet触发了分帧，则Decoder会调用回调函数，也就是DriverImpl::splitFrame()。
++ 检查Packet的标志字节。
+  + 如果是MSOP Packet，调用Decoder::processMsopPkt()，处理MSOP Packet。如果Packet触发了分帧，则Decoder会调用回调函数，也就是DriverImpl::splitFrame()。
+  + 如果是DIFOP Packet， 调用Decoder::processDifopPkt()，处理Difop Packet。
 + 将Packet的Buffer回收到`free_pkt_queue_`，等待下次使用。
 
-#### 4.9.8 LidarDriverImpl::splitFrame()
+#### 4.9.7 LidarDriverImpl::splitFrame()
 
 splitFrame()在Decoder通知分帧时，派发点云。
 + 得到点云，也就是成员`decoder_ptr`的`point_cloud_`。
@@ -1440,7 +1434,7 @@ splitFrame()在Decoder通知分帧时，派发点云。
 + 调用`cb_put_pc_`，将点云传给驱动的使用者。
 + 调用getPointCloud()得到空闲点云，重新设置成员`decoder_ptr`的`point_cloud_`。
 
-#### 4.9.9 LidarDriverImpl::getTemperature()
+#### 4.9.8 LidarDriverImpl::getTemperature()
 
 getTemperature()调用Decoder::getTemperature()， 得到雷达温度。
 
