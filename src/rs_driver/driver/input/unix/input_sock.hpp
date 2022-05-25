@@ -270,7 +270,7 @@ inline void InputSock::recvPacket()
       memset(msgs, 0, sizeof(msgs));
       for (i = 0; i < VLEN; i++)
       {
-        pkts[i] = cb_get_pkt_(MAX_PKT_LEN);
+        pkts[i] = cb_get_pkt_(pkt_buf_len_);
         iovecs[i].iov_base = pkts[i]->buf();
         iovecs[i].iov_len = pkts[i]->bufSize();
         msgs[i].msg_hdr.msg_iov = &iovecs[i];

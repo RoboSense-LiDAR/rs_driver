@@ -275,9 +275,12 @@ inline void InputPcapJumbo::recvPacket()
         if (dst_port == input_param_.msop_port)
         {
 #if 0
-          for (uint16_t off = UDP_HDR_LEN; off < jumbo_packet_.buf_len(); off += 984)
+          int i = 0;
+          for (uint16_t off = UDP_HDR_LEN; off < jumbo_packet_.buf_len(); i++, off += 984)
           {
-            hexdump (jumbo_packet_.buf() + off, 32, "jumbo_buf");
+            char buf[32];
+            sprintf (buf, "jumbo_buf %d", i);
+            hexdump (jumbo_packet_.buf() + off, 32, buf);
           }
 #endif
           std::shared_ptr<Buffer> pkt = cb_get_pkt_(IP_LEN);

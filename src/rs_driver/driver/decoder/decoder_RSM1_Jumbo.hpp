@@ -51,15 +51,22 @@ typedef struct
 {
   uint8_t time_offset;
   uint8_t return_seq;
-  RSM1Channel channel[5];
+  RSM1_Jumbo_Channel channel[5];
 } RSM1_Jumbo_Block;
 
 typedef struct
 {
   RSM1MsopHeader header;
-  RSM1Block blocks[25];
-  uint8_t reserved[11];
+  RSM1_Jumbo_Block blocks[25];
+  uint8_t reserved1[11];
+  uint8_t reserved2[16];
 } RSM1_Jumbo_MsopPkt;
+
+typedef struct
+{
+  RSM1_Jumbo_MsopPkt pkts[63];
+  uint8_t reserved[160];
+} RSM1_Jumbo;
 
 #pragma pack(pop)
 
@@ -144,18 +151,17 @@ inline void DecoderRSM1_Jumbo<T_PointCloud>::decodeDifopPkt(const uint8_t* packe
 template <typename T_PointCloud>
 inline bool DecoderRSM1_Jumbo<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
 {
-  static const size_t JUMBO_SIZE = 62152;
-  static const size_t PACKET_SIZE = 984;
-  static const size_t PACKET_NUM = 63;
-  bool ret = false;
-
-  if (size != JUMBO_SIZE)
+  if (size != sizeof(RSM1_Jumbo))
     return false;
 
-  size_t off = 0;
-  for (size_t i = 0; i < PACKET_NUM; i++, off += PACKET_SIZE)
+  constexpr static int PACKET_NUM = 63;
+
+  const RSM1_Jumbo* jumbo = (const RSM1_Jumbo *)packet;
+  bool ret = false;
+
+  for (size_t i = 0; i < PACKET_NUM; i++)
   {
-    bool r = internDecodeMsopPkt(packet+off, PACKET_SIZE);
+    bool r = internDecodeMsopPkt((const uint8_t*)&(jumbo->pkts[i]), sizeof(RSM1_Jumbo_MsopPkt));
     ret = (ret || r);
   }
 
@@ -165,7 +171,7 @@ inline bool DecoderRSM1_Jumbo<T_PointCloud>::decodeMsopPkt(const uint8_t* packet
 template <typename T_PointCloud>
 inline bool DecoderRSM1_Jumbo<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
-  const RSM1MsopPkt& pkt = *(RSM1MsopPkt*)packet;
+  const RSM1_Jumbo_MsopPkt& pkt = *(RSM1_Jumbo_MsopPkt*)packet;
   bool ret = false;
 
   if (memcmp(packet, this->const_param_.MSOP_ID, this->const_param_.MSOP_ID_LEN) != 0)
@@ -200,13 +206,13 @@ inline bool DecoderRSM1_Jumbo<T_PointCloud>::internDecodeMsopPkt(const uint8_t* 
 
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
-    const RSM1Block& block = pkt.blocks[blk];
+    const RSM1_Jumbo_Block& block = pkt.blocks[blk];
 
     double point_time = pkt_ts + block.time_offset * 1e-6;
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
-      const RSM1Channel& channel = block.channel[chan];
+      const RSM1_Jumbo_Channel& channel = block.channel[chan];
 
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
 
