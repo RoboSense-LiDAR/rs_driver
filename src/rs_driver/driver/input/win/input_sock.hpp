@@ -46,8 +46,9 @@ namespace lidar
 class InputSock : public Input
 {
 public:
-  InputSock(const RSInputParam& input_param) 
-    : Input(input_param), sock_offset_(0), sock_tail_(0)
+  InputSock(const RSInputParam& input_param, bool isJumbo) 
+    : Input(input_param), pkt_buf_len_(isJumbo ? IP_LEN : ETH_LEN), 
+      sock_offset_(0), sock_tail_(0)
   {
     sock_offset_ += input_param.user_layer_bytes;
     sock_tail_   += input_param.tail_layer_bytes;
@@ -62,6 +63,7 @@ private:
   inline int createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp);
 
 private:
+  const size_t pkt_buf_len_;
   int fds_[2];
   size_t sock_offset_;
   size_t sock_tail_;
@@ -246,7 +248,7 @@ inline void InputSock::recvPacket()
 
     if (FD_ISSET(fds_[0], &rfds))
     {
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
       int ret = recvfrom(fds_[0], (char*)pkt->buf(), (int)pkt->bufSize(), 0, NULL, NULL);
       if (ret < 0)
       {
@@ -261,7 +263,7 @@ inline void InputSock::recvPacket()
     }
     else if (FD_ISSET(fds_[1], &rfds))
     {
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
       int ret = recvfrom(fds_[1], (char*)pkt->buf(), (int)pkt->bufSize(), 0, NULL, NULL);
       if (ret < 0)
       {
