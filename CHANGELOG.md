@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+- Check overflow of point cloud
+- Add option to receive packet with epoll() instead of select()
+
 ## v1.5.2 2022-05-20
 
 ### Added

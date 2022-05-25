@@ -325,7 +325,7 @@ inline void LidarDriverImpl<T_PointCloud>::processPacket()
 {
   while (!to_exit_handle_)
   {
-    std::shared_ptr<Buffer> pkt = pkt_queue_.popWait(1000);
+    std::shared_ptr<Buffer> pkt = pkt_queue_.popWait(500000);
     if (pkt.get() == NULL)
     {
       continue;
