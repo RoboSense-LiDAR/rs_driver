@@ -55,23 +55,27 @@ enum class ErrCodeType
 
 enum ErrCode
 {
-  ERRCODE_SUCCESS         = 0x00,  ///< Normal
-  ERRCODE_PCAPREPEAT      = 0x01,  ///< Pcap file will play repeatedly
-  ERRCODE_PCAPEXIT        = 0x02,  ///< Pcap thread will exit
+  // info
+  ERRCODE_SUCCESS          = 0x00,  ///< Normal
+  ERRCODE_PCAPREPEAT       = 0x01,  ///< Pcap file will play repeatedly
+  ERRCODE_PCAPEXIT         = 0x02,  ///< Pcap thread will exit
 
-  ERRCODE_MSOPTIMEOUT     = 0x40,  ///< Msop packets receive overtime (1 sec)
-  ERRCODE_DIFOPTIMEOUT    = 0x41,  ///< Difop packets receive overtime (2 sec)
-  ERRCODE_NODIFOPRECV     = 0x42,  ///< Point cloud decoding process will not start until the difop packet receive
-  ERRCODE_WRONGPKTHEADER  = 0x43,  ///< Packet header is wrong
-  ERRCODE_WRONGPKTLENGTH  = 0x44,  ///< Packet length is wrong
-  ERRCODE_ZEROPOINTS      = 0x45,  ///< Size of the point cloud is zero
+  // warning
+  ERRCODE_MSOPTIMEOUT      = 0x40,  ///< Msop packets receive overtime (1 sec)
+  ERRCODE_DIFOPTIMEOUT     = 0x41,  ///< Difop packets receive overtime (2 sec)
+  ERRCODE_NODIFOPRECV      = 0x42,  ///< Point cloud decoding process will not start until the difop packet receive
+  ERRCODE_WRONGPKTHEADER   = 0x43,  ///< Packet header is wrong
+  ERRCODE_WRONGPKTLENGTH   = 0x44,  ///< Packet length is wrong
+  ERRCODE_ZEROPOINTS       = 0x45,  ///< Size of the point cloud is zero
+  ERRCODE_PKTBUFOVERFLOW   = 0x46,  ///< Packet buffer is overflow
+  ERRCODE_CLOUDBUFOVERFLOW = 0x47,  ///< Point cloud buffer is overflow
 
-  ERRCODE_STARTBEFOREINIT = 0x80,  ///< start() function is called before initializing successfully
-  ERRCODE_MSOPPORTBUZY    = 0x81,  ///< Input msop port is already used
-  ERRCODE_DIFOPPORTBUZY   = 0x82,  ///< Input difop port is already used
-  ERRCODE_PCAPWRONGPATH   = 0x83,  ///< Input directory of pcap file is wrong
-  ERRCODE_POINTCLOUDNULL  = 0x84,  ///< PointCloud buffer is invalid
-  ERRCODE_PKTBUFOVERFLOW  = 0x85,  ///< Packet buffer is over flow
+  // error
+  ERRCODE_STARTBEFOREINIT  = 0x80,  ///< start() function is called before initializing successfully
+  ERRCODE_MSOPPORTBUZY     = 0x81,  ///< Input msop port is already used
+  ERRCODE_DIFOPPORTBUZY    = 0x82,  ///< Input difop port is already used
+  ERRCODE_PCAPWRONGPATH    = 0x83,  ///< Input directory of pcap file is wrong
+  ERRCODE_POINTCLOUDNULL   = 0x84,  ///< PointCloud buffer is invalid
 };
 
 struct Error
@@ -97,11 +101,13 @@ struct Error
   {
     switch (error_code)
     {
+      // info
       case ERRCODE_PCAPREPEAT:
         return "Info_PcapRepeat";
       case ERRCODE_PCAPEXIT:
         return "Info_PcapExit";
 
+      // warning
       case ERRCODE_MSOPTIMEOUT:
         return "ERRCODE_MSOPTIMEOUT";
       case ERRCODE_DIFOPTIMEOUT:
@@ -115,6 +121,7 @@ struct Error
       case ERRCODE_ZEROPOINTS:
         return "ERRCODE_ZEROPOINTS";
 
+      // error
       case ERRCODE_STARTBEFOREINIT:
         return "ERRCODE_STARTBEFOREINIT";
       case ERRCODE_MSOPPORTBUZY:
@@ -127,7 +134,10 @@ struct Error
         return "ERRCODE_POINTCLOUDNULL";
       case ERRCODE_PKTBUFOVERFLOW:
         return "ERRCODE_PKTBUFOVERFLOW";
+      case ERRCODE_CLOUDBUFOVERFLOW:
+        return "ERRCODE_CLOUDBUFOVERFLOW";
 
+      //default
       default:
         return "ERRCODE_SUCCESS";
     }
