@@ -31,16 +31,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
+
 #include <rs_driver/driver/input/input.hpp>
 #include <rs_driver/driver/input/input_raw.hpp>
+
 #ifdef ENABLE_PCAP_PARSE
 #include <rs_driver/driver/input/input_pcap.hpp>
 #endif
 
 #ifdef __linux__
+
+#ifdef ENABLE_EPOLL_RECEIVE
+#include <rs_driver/driver/input/unix/input_sock_epoll.hpp>
+#else
 #include <rs_driver/driver/input/unix/input_sock.hpp>
+#endif
+
 #elif _WIN32
+
 #include <rs_driver/driver/input/win/input_sock.hpp>
+
 #endif
 
 namespace robosense

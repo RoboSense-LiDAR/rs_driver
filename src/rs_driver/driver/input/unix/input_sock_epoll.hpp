@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/select.h>
+#include <sys/epoll.h>
 
 namespace robosense
 {
@@ -65,6 +65,7 @@ private:
   inline int createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp);
 
 private:
+  int epfd_;
   int fds_[2];
   size_t sock_offset_;
   size_t sock_tail_;
@@ -93,18 +94,40 @@ inline bool InputSock::init()
   }
 
   int msop_fd = -1, difop_fd = -1;
+  int epfd = epoll_create(1);
+  if (epfd < 0)
+    goto failEpfd;
 
-  msop_fd = createSocket(input_param_.msop_port, input_param_.host_address, input_param_.group_address);
-  if (msop_fd < 0)
-    goto failMsop;
+  //
+  // msop
+  //
+  {
+    msop_fd = createSocket(input_param_.msop_port, input_param_.host_address, input_param_.group_address);
+    if (msop_fd < 0)
+      goto failMsop;
 
+    struct epoll_event ev;
+    ev.data.fd = msop_fd;
+    ev.events = EPOLLIN | EPOLLET;
+    epoll_ctl (epfd, EPOLL_CTL_ADD, msop_fd, &ev);
+  }
+
+  //
+  // difop
+  //
   if ((input_param_.difop_port != 0) && (input_param_.difop_port != input_param_.msop_port))
   {
     difop_fd = createSocket(input_param_.difop_port, input_param_.host_address, input_param_.group_address);
     if (difop_fd < 0)
       goto failDifop;
+
+    struct epoll_event ev;
+    ev.data.fd = difop_fd;
+    ev.events = EPOLLIN | EPOLLET;
+    epoll_ctl (epfd, EPOLL_CTL_ADD, difop_fd, &ev);
   }
 
+  epfd_ = epfd;
   fds_[0] = msop_fd;
   fds_[1] = difop_fd;
 
@@ -114,6 +137,8 @@ inline bool InputSock::init()
 failDifop:
   close(msop_fd);
 failMsop:
+  close(epfd);
+failEpfd:
   return false;
 }
 
@@ -145,6 +170,8 @@ inline InputSock::~InputSock()
   close(fds_[0]);
   if (fds_[1] >= 0)
     close(fds_[1]);
+
+  close(epfd_);
 }
 
 inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp)
@@ -227,20 +254,10 @@ failSocket:
 
 inline void InputSock::recvPacket()
 {
-  int max_fd = ((fds_[0] > fds_[1]) ? fds_[0] : fds_[1]);
-
   while (!to_exit_recv_)
   {
-    fd_set rfds;
-    FD_ZERO(&rfds);
-    FD_SET(fds_[0], &rfds);
-    if (fds_[1] >= 0)
-      FD_SET(fds_[1], &rfds);
-
-    struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
-    int retval = select(max_fd + 1, &rfds, NULL, NULL, &tv);
+    struct epoll_event events[8];
+    int retval = epoll_wait (epfd_, events, 8, 1000);
     if (retval == 0)
     {
       cb_excep_(Error(ERRCODE_MSOPTIMEOUT));
@@ -251,70 +268,26 @@ inline void InputSock::recvPacket()
       if (errno == EINTR)
         continue;
 
-      perror("select: ");
+       perror("epoll_wait: ");
       break;
     }
 
-    if (FD_ISSET(fds_[0], &rfds))
+    for(int i = 0; i < retval; i++)
     {
-#ifdef ENABLE_RECVMMSG
-
-#define VLEN 1
-      struct mmsghdr msgs[VLEN];
-      struct iovec iovecs[VLEN];
-      std::shared_ptr<Buffer> pkts[VLEN];
-      int i, ret;
-
-      memset(msgs, 0, sizeof(msgs));
-      for (i = 0; i < VLEN; i++)
+      if (events[i].events & EPOLLIN)
       {
-        pkts[i] = cb_get_pkt_(MAX_PKT_LEN);
-        iovecs[i].iov_base = pkts[i]->buf();
-        iovecs[i].iov_len = pkts[i]->bufSize();
-        msgs[i].msg_hdr.msg_iov = &iovecs[i];
-        msgs[i].msg_hdr.msg_iovlen = 1;
-      }
-
-      struct timespec timeout;
-      timeout.tv_sec = 0;
-      timeout.tv_nsec = 0;
-      ret = recvmmsg(fds_[0], msgs, VLEN, 0, &timeout);
-      for (i = 0; i < ret; i++)
-      {
-        pkts[i]->setData(sock_offset_, msgs[i].msg_len - sock_offset_ - sock_tail_);
-        pushPacket(pkts[i]);
-      }
-
-#else
-
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
-      ssize_t ret = recvfrom(fds_[0], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
-      if (ret < 0)
-      {
-        perror("recvfrom: ");
-        break;
-      }
-      else if (ret > 0)
-      {
-        pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
-        pushPacket(pkt);
-      }
-
-#endif
-    }
-    else if (FD_ISSET(fds_[1], &rfds))
-    {
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
-      ssize_t ret = recvfrom(fds_[1], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
-      if (ret < 0)
-      {
-        perror("recvfrom: ");
-        break;
-      }
-      else if (ret > 0)
-      {
-        pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
-        pushPacket(pkt);
+        std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
+        ssize_t ret = recvfrom(events[i].data.fd, pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
+        if (ret < 0)
+        {
+          perror("recvfrom: ");
+          break;
+        }
+        else if (ret > 0)
+        {
+          pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
+          pushPacket(pkt);
+        }
       }
     }
   }
