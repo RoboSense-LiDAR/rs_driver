@@ -34,24 +34,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rs_driver/driver/input/input.hpp>
 #include <rs_driver/driver/input/input_raw.hpp>
+#include <rs_driver/driver/input/input_raw_jumbo.hpp>
+#include <rs_driver/driver/input/input_sock.hpp>
+#include <rs_driver/driver/input/input_sock_jumbo.hpp>
 
 #ifdef ENABLE_PCAP_PARSE
 #include <rs_driver/driver/input/input_pcap.hpp>
 #include <rs_driver/driver/input/input_pcap_jumbo.hpp>
-#endif
-
-#ifdef __linux__
-
-#ifdef ENABLE_EPOLL_RECEIVE
-#include <rs_driver/driver/input/unix/input_sock_epoll.hpp>
-#else
-#include <rs_driver/driver/input/unix/input_sock.hpp>
-#endif
-
-#elif _WIN32
-
-#include <rs_driver/driver/input/win/input_sock.hpp>
-
 #endif
 
 namespace robosense
@@ -75,7 +64,10 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RS
   {
     case InputType::ONLINE_LIDAR:
       {
-        input = std::make_shared<InputSock>(param, isJumbo);
+        if (isJumbo)
+          input = std::make_shared<InputSockJumbo>(param);
+        else
+          input = std::make_shared<InputSock>(param);
       }
       break;
 
@@ -92,9 +84,16 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RS
 
     case InputType::RAW_PACKET:
       {
-        std::shared_ptr<InputRaw> inputRaw = std::make_shared<InputRaw>(param, isJumbo);
+        std::shared_ptr<InputRaw> inputRaw;
+
+        if (isJumbo)
+          inputRaw = std::make_shared<InputRawJumbo>(param);
+        else
+          inputRaw = std::make_shared<InputRaw>(param);
+
         cb_feed_pkt = std::bind(&InputRaw::feedPacket, inputRaw, 
             std::placeholders::_1, std::placeholders::_2);
+
         input = inputRaw;
       }
       break;

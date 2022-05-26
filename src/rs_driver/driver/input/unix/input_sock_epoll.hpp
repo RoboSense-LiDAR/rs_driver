@@ -48,8 +48,8 @@ namespace lidar
 class InputSock : public Input
 {
 public:
-  InputSock(const RSInputParam& input_param, bool isJumbo)
-    : Input(input_param), pkt_buf_len_(isJumbo ? IP_LEN : ETH_LEN), 
+  InputSock(const RSInputParam& input_param)
+    : Input(input_param), pkt_buf_len_(ETH_LEN), 
       sock_offset_(0), sock_tail_(0)
   {
     sock_offset_ += input_param.user_layer_bytes;
@@ -65,8 +65,8 @@ private:
   inline void higherThreadPrioty(std::thread::native_handle_type handle);
   inline int createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp);
 
-private:
-  const size_t pkt_buf_len_;
+protected:
+  size_t pkt_buf_len_;
   int epfd_;
   int fds_[2];
   size_t sock_offset_;
