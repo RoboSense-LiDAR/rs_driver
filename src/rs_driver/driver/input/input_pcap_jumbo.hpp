@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/driver/input/input.hpp>
+#include <rs_driver/driver/input/jumbo.hpp>
 
 #include <sstream>
 
@@ -46,10 +47,10 @@ namespace robosense
 {
 namespace lidar
 {
-class InputPcap : public Input
+class InputPcapJumbo : public Input
 {
 public:
-  InputPcap(const RSInputParam& input_param, double sec_to_delay)
+  InputPcapJumbo(const RSInputParam& input_param, double sec_to_delay)
     : Input(input_param), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), pcap_tail_(0), difop_filter_valid_(false), 
     msec_to_delay_((uint64_t)(sec_to_delay*1000000))
   {
@@ -68,7 +69,7 @@ public:
       difop_stream << "vlan && ";
     }
 
-    msop_stream << "udp dst port " << input_param_.msop_port;
+    msop_stream << "udp";
     difop_stream << "udp dst port " << input_param_.difop_port;
 
     msop_filter_str_ = msop_stream.str();
@@ -77,7 +78,7 @@ public:
 
   virtual bool init();
   virtual bool start();
-  virtual ~InputPcap();
+  virtual ~InputPcapJumbo();
 
 private:
   void recvPacket();
@@ -92,9 +93,11 @@ private:
   bpf_program difop_filter_;
   bool difop_filter_valid_;
   uint64_t msec_to_delay_;
+
+  Jumbo jumbo_;
 };
 
-inline bool InputPcap::init()
+inline bool InputPcapJumbo::init()
 {
   if (init_flag_)
     return true;
@@ -119,7 +122,7 @@ inline bool InputPcap::init()
   return true;
 }
 
-inline bool InputPcap::start()
+inline bool InputPcapJumbo::start()
 {
   if (start_flag_)
     return true;
@@ -131,13 +134,13 @@ inline bool InputPcap::start()
   }
 
   to_exit_recv_ = false;
-  recv_thread_ = std::thread(std::bind(&InputPcap::recvPacket, this));
+  recv_thread_ = std::thread(std::bind(&InputPcapJumbo::recvPacket, this));
 
   start_flag_ = true;
   return true;
 }
 
-inline InputPcap::~InputPcap()
+inline InputPcapJumbo::~InputPcapJumbo()
 {
   stop();
 
@@ -147,7 +150,7 @@ inline InputPcap::~InputPcap()
   }
 }
 
-inline void InputPcap::recvPacket()
+inline void InputPcapJumbo::recvPacket()
 {
   while (!to_exit_recv_)
   {
@@ -175,14 +178,21 @@ inline void InputPcap::recvPacket()
 
     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
     {
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
-      memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_ - pcap_tail_);
-      pkt->setData(0, header->len - pcap_offset_ - pcap_tail_);
-      pushPacket(pkt);
+      bool new_pkt = jumbo_.new_fragment(pkt_data, header->len);
+      if (new_pkt)
+      {
+        if (jumbo_.dst_port() == input_param_.msop_port)
+        {
+          std::shared_ptr<Buffer> pkt = cb_get_pkt_(IP_LEN);
+          memcpy(pkt->data(), jumbo_.buf() + UDP_HDR_LEN, jumbo_.buf_len() - UDP_HDR_LEN);
+          pkt->setData(0, jumbo_.buf_len() - UDP_HDR_LEN);
+          pushPacket(pkt);
+        }
+      }
     }
     else if (difop_filter_valid_ && (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
     {
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(IP_LEN);
       memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_ - pcap_tail_);
       pkt->setData(0, header->len - pcap_offset_ - pcap_tail_);
       pushPacket(pkt);

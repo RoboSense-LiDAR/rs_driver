@@ -51,13 +51,15 @@ public:
 
   InputRaw(const RSInputParam& input_param);
 
-private:
+protected:
+  size_t pkt_buf_len_;
   size_t raw_offset_;
   size_t raw_tail_;
 };
 
 InputRaw::InputRaw(const RSInputParam& input_param)
-  : Input(input_param), raw_offset_(0), raw_tail_(0)
+  : Input(input_param), pkt_buf_len_(ETH_LEN), 
+    raw_offset_(0), raw_tail_(0)
 {
   raw_offset_ += input_param.user_layer_bytes;
   raw_tail_   += input_param.tail_layer_bytes;
@@ -65,7 +67,7 @@ InputRaw::InputRaw(const RSInputParam& input_param)
 
 inline void InputRaw::feedPacket(const uint8_t* data, size_t size)
 {
-  std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
+  std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
   memcpy(pkt->data(), data + raw_offset_, size - raw_offset_ - raw_tail_);
   pkt->setData(0, size - raw_offset_ - raw_tail_);
   pushPacket(pkt);

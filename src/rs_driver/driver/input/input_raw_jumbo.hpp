@@ -32,84 +32,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <rs_driver/driver/driver_param.hpp>
-#include <rs_driver/utility/buffer.hpp>
-
-#include <functional>
-#include <thread>
-#include <cstring>
-
-#define VLAN_HDR_LEN  4
-#define ETH_HDR_LEN   42
-#define ETH_LEN       (ETH_HDR_LEN + VLAN_HDR_LEN + 1500)
-#define IP_LEN        65536 
-#define UDP_HDR_LEN   8
+#include <rs_driver/driver/input/input_raw.hpp>
 
 namespace robosense
 {
 namespace lidar
 {
-class Input
+class InputRawJumbo : public InputRaw
 {
 public:
-  Input(const RSInputParam& input_param);
 
-  inline void regCallback(
-      const std::function<void(const Error&)>& cb_excep,
-      const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
-      const std::function<void(std::shared_ptr<Buffer>)>& cb_put_pkt);
-
-  virtual bool init() = 0;
-  virtual bool start() = 0;
-  virtual void stop();
-  virtual ~Input()
+  InputRawJumbo(const RSInputParam& input_param)
+    : InputRaw(input_param)
   {
+    pkt_buf_len_ = IP_LEN;
   }
-
-protected:
-  inline void pushPacket(std::shared_ptr<Buffer> pkt);
-
-  RSInputParam input_param_;
-  std::function<std::shared_ptr<Buffer>(size_t size)> cb_get_pkt_;
-  std::function<void(std::shared_ptr<Buffer>)> cb_put_pkt_;
-  std::function<void(const Error&)> cb_excep_;
-  std::thread recv_thread_;
-  bool to_exit_recv_;
-  bool init_flag_;
-  bool start_flag_;
 };
-
-inline Input::Input(const RSInputParam& input_param)
-  : input_param_(input_param), to_exit_recv_(false), 
-  init_flag_(false), start_flag_(false)
-{
-}
-
-inline void Input::regCallback(
-    const std::function<void(const Error&)>& cb_excep,
-    const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt, 
-    const std::function<void(std::shared_ptr<Buffer>)>& cb_put_pkt)
-{
-  cb_excep_   = cb_excep;
-  cb_get_pkt_ = cb_get_pkt;
-  cb_put_pkt_ = cb_put_pkt;
-}
-
-inline void Input::stop()
-{
-  if (start_flag_)
-  {
-    to_exit_recv_ = true;
-    recv_thread_.join();
-
-    start_flag_ = false;
-  }
-}
-
-inline void Input::pushPacket(std::shared_ptr<Buffer> pkt)
-{
-  cb_put_pkt_(pkt);
-}
 
 }  // namespace lidar
 }  // namespace robosense
