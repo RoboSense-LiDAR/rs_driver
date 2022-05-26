@@ -57,7 +57,7 @@ protected:
   size_t raw_tail_;
 };
 
-InputRaw::InputRaw(const RSInputParam& input_param)
+inline InputRaw::InputRaw(const RSInputParam& input_param)
   : Input(input_param), pkt_buf_len_(ETH_LEN), 
     raw_offset_(0), raw_tail_(0)
 {
