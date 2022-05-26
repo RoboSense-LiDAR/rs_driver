@@ -32,10 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/driver/input/input.hpp>
-#include <rs_driver/utility/dbg.hpp>
+#include <rs_driver/driver/input/jumbo.hpp>
 
-#include <linux/ip.h>
-#include <linux/udp.h>
 #include <sstream>
 
 #ifdef __linux__
@@ -49,92 +47,6 @@ namespace robosense
 {
 namespace lidar
 {
-
-class jumbo_ip_packet
-{
-public:
-
-  jumbo_ip_packet()
-    : ip_id_(0), buf_off_(0)
-  {
-  }
-
-  bool new_fragment(const u_char* pkt_data, size_t pkt_data_size)
-  {
-    // Is it an ip packet ?
-    const u_short* eth_type = (const u_short*)(pkt_data + 12);
-    if (ntohs(*eth_type) != 0x0800)
-      return false;
-
-    // is it a udp packet?
-    const struct iphdr* ip_hdr = (const struct iphdr*)(pkt_data + 14);
-    if (ip_hdr->protocol != 0x11)
-      return false;
-
-    // ip data
-    u_short ip_hdr_size = ip_hdr->ihl * 4;
-    u_short ip_len = ntohs(ip_hdr->tot_len);
-
-    const u_char* ip_data = pkt_data + 14 + ip_hdr_size;
-    u_short ip_data_len = ip_len - ip_hdr_size;
-
-    // ip fragment
-    u_short ip_id = ntohs (ip_hdr->id);
-    u_short f_off = ntohs(ip_hdr->frag_off);
-    u_short frag_flags  = (f_off >> 13);
-    u_short frag_off    = (f_off & 0x1fff) * 8; // 8 octet boudary
-
-    if (ip_id == ip_id_)
-    {
-      if (frag_off == buf_off_)
-      {
-        memcpy (buf_ + buf_off_, ip_data, ip_data_len);
-        buf_off_ += ip_data_len;
-
-        if ((frag_flags & 0x1) == 0)
-        {
-          //printf ("--- end new packet. ip_id:0x%x, len:%d\n", ip_id_, buf_off_);
-
-          ip_id_ = 0;
-          return true;
-        }
-      }
-    }
-    else
-    {
-      if ((frag_off == 0) && ((frag_flags & 0x1) != 0))
-      //if (frag_off == 0)
-      {
-        ip_id_ = ip_id;
-        buf_off_ = 0;
-
-        memcpy (buf_ + buf_off_, ip_data, ip_data_len);
-        buf_off_ += ip_data_len;
-
-        //printf ("+++ start packet 0x%x\n", ip_id_);
-      }
-    }
-
-    return false;
-  }
-
-  u_char* buf()
-  {
-    return buf_;
-  }
-
-  u_short buf_len()
-  {
-    return buf_off_;
-  }
-
-private:
-
-  u_short ip_id_;
-  u_char buf_[IP_LEN];
-  u_short buf_off_;
-}; 
-
 class InputPcapJumbo : public Input
 {
 public:
@@ -182,7 +94,7 @@ private:
   bool difop_filter_valid_;
   uint64_t msec_to_delay_;
 
-  jumbo_ip_packet jumbo_packet_;
+  Jumbo jumbo_;
 };
 
 inline bool InputPcapJumbo::init()
@@ -266,26 +178,14 @@ inline void InputPcapJumbo::recvPacket()
 
     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
     {
-      bool new_pkt = jumbo_packet_.new_fragment(pkt_data, header->len);
+      bool new_pkt = jumbo_.new_fragment(pkt_data, header->len);
       if (new_pkt)
       {
-        const struct udphdr * udp_hdr = (const struct udphdr*)jumbo_packet_.buf();
-        u_short dst_port = ntohs(udp_hdr->dest);
-
-        if (dst_port == input_param_.msop_port)
+        if (jumbo_.dst_port() == input_param_.msop_port)
         {
-#if 0
-          int i = 0;
-          for (uint16_t off = UDP_HDR_LEN; off < jumbo_packet_.buf_len(); i++, off += 984)
-          {
-            char buf[32];
-            sprintf (buf, "jumbo_buf %d", i);
-            hexdump (jumbo_packet_.buf() + off, 32, buf);
-          }
-#endif
           std::shared_ptr<Buffer> pkt = cb_get_pkt_(IP_LEN);
-          memcpy(pkt->data(), jumbo_packet_.buf() + UDP_HDR_LEN, jumbo_packet_.buf_len() - UDP_HDR_LEN);
-          pkt->setData(0, jumbo_packet_.buf_len() - UDP_HDR_LEN);
+          memcpy(pkt->data(), jumbo_.buf() + UDP_HDR_LEN, jumbo_.buf_len() - UDP_HDR_LEN);
+          pkt->setData(0, jumbo_.buf_len() - UDP_HDR_LEN);
           pushPacket(pkt);
         }
       }
