@@ -9,7 +9,9 @@ message(=============================================================)
 
 include_directories(${DRIVER_INCLUDE_DIRS})
 
-set(CMAKE_BUILD_TYPE Release)
+if (CMAKE_BUILD_TYPE STREQUAL "")
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
 if(WIN32)
   cmake_policy(SET CMP0074 NEW)
