@@ -6,7 +6,7 @@ if(WIN32)
   cmake_policy(SET CMP0074 NEW) # CMake 3.12 required
 endif(WIN32)
 
-project(rs_driver VERSION 1.5.2)
+project(rs_driver VERSION 1.5.3)
 
 #========================
 #  Project setup
@@ -20,6 +20,7 @@ endif()
 #=============================
 option(ENABLE_PCAP_PARSE "Enable PCAP file parse" ON) 
 option(ENABLE_TRANSFORM "Enable transform functions" OFF)
+option(ENABLE_EPOLL_RECEIVE "Receive packets with epoll() instead of select()" OFF)
 option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
 option(ENABLE_RECVMMSG "Enable recvmmsg() to receive MSOP message" OFF)
 option(ENABLE_PCL_POINTCLOUD "Enable PCL Point Cloud" OFF)
@@ -64,7 +65,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(FATAL_ERROR "Unsupported compiler.")
   endif()
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-unused-parameter")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 endif()
@@ -92,6 +93,17 @@ endif(WIN32)
 #========================
 #  Build Features
 #========================
+
+if(${ENABLE_EPOLL_RECEIVE})
+
+  message(=============================================================)
+  message("-- Enable Epoll Receive")
+  message(=============================================================)
+
+  add_definitions("-DENABLE_EPOLL_RECEIVE")
+endif(${ENABLE_EPOLL_RECEIVE})
+
+
 if(${ENABLE_HIGH_PRIORITY_THREAD})
 
   message(=============================================================)

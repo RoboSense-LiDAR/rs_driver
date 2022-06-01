@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v1.5.3 2022-06-01
+
+### Added
+- Add option to receive packet with epoll()
+- Support Jumbo Mode
+
+### Fixed
+- Check overflow of point cloud
+- Fix compiling error of multiple definition
+
 ## v1.5.2 2022-05-20
 
 ### Added

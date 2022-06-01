@@ -186,11 +186,12 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
       std::bind(&LidarDriverImpl<T_PointCloud>::splitFrame, this, std::placeholders::_1, std::placeholders::_2));
 
   double packet_duration = decoder_ptr_->getPacketDuration();
+  bool isJumbo = (param.lidar_type >= LidarType::RS_JUMBO);
 
   //
   // input
   //
-  input_ptr_ = InputFactory::createInput(param.input_type, param.input_param, packet_duration, cb_feed_pkt_);
+  input_ptr_ = InputFactory::createInput(param.input_type, param.input_param, isJumbo, packet_duration, cb_feed_pkt_);
 
   input_ptr_->regCallback(
       std::bind(&LidarDriverImpl<T_PointCloud>::runExceptionCallback, this, std::placeholders::_1), 
@@ -325,7 +326,7 @@ inline void LidarDriverImpl<T_PointCloud>::processPacket()
 {
   while (!to_exit_handle_)
   {
-    std::shared_ptr<Buffer> pkt = pkt_queue_.popWait(1000);
+    std::shared_ptr<Buffer> pkt = pkt_queue_.popWait(500000);
     if (pkt.get() == NULL)
     {
       continue;

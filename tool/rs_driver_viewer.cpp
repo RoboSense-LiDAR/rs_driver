@@ -40,10 +40,9 @@ using namespace robosense::lidar;
 using namespace pcl::visualization;
 
 typedef PointCloudT<PointXYZI> PointCloudMsg;
-std::shared_ptr<PointCloudMsg> g_pointcloud;
 
 std::shared_ptr<PCLVisualizer> pcl_viewer;
-std::mutex mex_viewer;
+std::mutex mtx_viewer;
 
 bool checkKeywordExist(int argc, const char* const* argv, const char* str)
 {
@@ -80,11 +79,11 @@ bool parseArgument(int argc, const char* const* argv, const char* str, std::stri
 
 void parseParam(int argc, char* argv[], RSDriverParam& param)
 {
-  param.decoder_param.wait_for_difop = false;
-
   std::string result_str;
 
+  //
   // input param
+  //
   parseArgument(argc, argv, "-pcap", param.input_param.pcap_path);
   if (param.input_param.pcap_path.empty())
   {
@@ -95,43 +94,54 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
     param.input_type = InputType::PCAP_FILE;
   }
 
-  parseArgument(argc, argv, "-host", param.input_param.host_address);
-  parseArgument(argc, argv, "-group", param.input_param.group_address);
-
   if (parseArgument(argc, argv, "-msop", result_str))
   {
     param.input_param.msop_port = std::stoi(result_str);
   }
+
   if (parseArgument(argc, argv, "-difop", result_str))
   {
     param.input_param.difop_port = std::stoi(result_str);
   }
 
+  parseArgument(argc, argv, "-group", param.input_param.group_address);
+  parseArgument(argc, argv, "-host", param.input_param.host_address);
+ 
+  //
   // decoder param
+  //
   if (parseArgument(argc, argv, "-type", result_str))
   {
     param.lidar_type = strToLidarType(result_str);
   }
+  
+  param.decoder_param.wait_for_difop = false;
+
   if (parseArgument(argc, argv, "-x", result_str))
   {
     param.decoder_param.transform_param.x = std::stof(result_str);
   }
+
   if (parseArgument(argc, argv, "-y", result_str))
   {
     param.decoder_param.transform_param.y = std::stof(result_str);
   }
+
   if (parseArgument(argc, argv, "-z", result_str))
   {
     param.decoder_param.transform_param.z = std::stof(result_str);
   }
+
   if (parseArgument(argc, argv, "-roll", result_str))
   {
     param.decoder_param.transform_param.roll = std::stof(result_str);
   }
+
   if (parseArgument(argc, argv, "-pitch", result_str))
   {
     param.decoder_param.transform_param.pitch = std::stof(result_str);
   }
+
   if (parseArgument(argc, argv, "-yaw", result_str))
   {
     param.decoder_param.transform_param.yaw = std::stof(result_str);
@@ -140,81 +150,35 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
 
 void printHelpMenu()
 {
-  RS_MSG << "Argument list: " << RS_REND;
-  RS_MSG << "        -msop             = LiDAR msop port number,the default value is 6699" << RS_REND;
-  RS_MSG << "        -difop            = LiDAR difop port number,the default value is 7788" << RS_REND;
-  RS_MSG << "        -host             = LiDAR destination address." << RS_REND;
-  RS_MSG << "        -group            = LiDAR destination group address." << RS_REND;
-  RS_MSG << "        -pcap             = The path of the pcap file, if this argument is set, the driver "
-            "will work in off-line mode and read the pcap file. Otherwise the driver work in online mode." << RS_REND;
-
-  RS_MSG << "        -type             = LiDAR type(RS16, RS32, RSBP, RSHELIOS, RS128, RS80, RSM1), the default value is RS16" 
-    << RS_REND;
-  RS_MSG << "        -x                = Transformation parameter, unit: m " << RS_REND;
-  RS_MSG << "        -y                = Transformation parameter, unit: m " << RS_REND;
-  RS_MSG << "        -z                = Transformation parameter, unit: m " << RS_REND;
-  RS_MSG << "        -roll             = Transformation parameter, unit: radian " << RS_REND;
-  RS_MSG << "        -pitch            = Transformation parameter, unit: radian " << RS_REND;
-  RS_MSG << "        -yaw              = Transformation parameter, unit: radian " << RS_REND;
+  RS_MSG << "Arguments: " << RS_REND;
+  RS_MSG << "  -type   = LiDAR type(RS16, RS32, RSBP, RSHELIOS, RS128, RS80, RSM1)" << RS_REND;
+  RS_MSG << "  -pcap   = The path of the pcap file, off-line mode if it is true, else online mode." << RS_REND;
+  RS_MSG << "  -msop   = LiDAR msop port number,the default value is 6699" << RS_REND;
+  RS_MSG << "  -difop  = LiDAR difop port number,the default value is 7788" << RS_REND;
+  RS_MSG << "  -group  = LiDAR destination group address if multi-cast mode." << RS_REND;
+  RS_MSG << "  -host   = Host address." << RS_REND;
+  RS_MSG << "  -x      = Transformation parameter, unit: m " << RS_REND;
+  RS_MSG << "  -y      = Transformation parameter, unit: m " << RS_REND;
+  RS_MSG << "  -z      = Transformation parameter, unit: m " << RS_REND;
+  RS_MSG << "  -roll   = Transformation parameter, unit: radian " << RS_REND;
+  RS_MSG << "  -pitch  = Transformation parameter, unit: radian " << RS_REND;
+  RS_MSG << "  -yaw    = Transformation parameter, unit: radian " << RS_REND;
 }
 
-void printParam(const RSDriverParam& param)
+void exceptionCallback(const Error& code)
 {
-  if (param.input_type == InputType::PCAP_FILE)
-  {
-    RS_INFOL << "Working mode: ";
-    RS_INFO << "Offline Pcap " << RS_REND;
-    RS_INFOL << "Pcap Path: ";
-    RS_INFO << param.input_param.pcap_path << RS_REND;
-  }
-  else
-  {
-    RS_INFOL << "Working mode: ";
-    RS_INFO << "Online LiDAR " << RS_REND;
-  }
-
-  RS_INFOL << "MSOP Port: ";
-  RS_INFO << param.input_param.msop_port << RS_REND;
-  RS_INFOL << "DIFOP Port: ";
-  RS_INFO << param.input_param.difop_port << RS_REND;
-  RS_INFOL << "Host Adress: ";
-  RS_INFO << param.input_param.host_address << RS_REND;
-  RS_INFOL << "Group Adress: ";
-  RS_INFO << param.input_param.group_address << RS_REND;
-
-  RS_INFOL << "LiDAR Type: ";
-  RS_INFO << lidarTypeToStr(param.lidar_type) << RS_REND;
-  RS_INFOL << "Transformation Parameters (x, y, z, roll, pitch, yaw): " << RS_REND;
-  RS_INFOL << "x: ";
-  RS_INFO << std::fixed << param.decoder_param.transform_param.x << RS_REND;
-  RS_INFOL << "y: ";
-  RS_INFO << std::fixed << param.decoder_param.transform_param.y << RS_REND;
-  RS_INFOL << "z: ";
-  RS_INFO << std::fixed << param.decoder_param.transform_param.z << RS_REND;
-  RS_INFOL << "roll: ";
-  RS_INFO << std::fixed << param.decoder_param.transform_param.roll << RS_REND;
-  RS_INFOL << "pitch: ";
-  RS_INFO << std::fixed << param.decoder_param.transform_param.pitch << RS_REND;
-  RS_INFOL << "yaw: ";
-  RS_INFO << std::fixed << param.decoder_param.transform_param.yaw << RS_REND;
+  RS_WARNING << code.toString() << RS_REND;
 }
 
 std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
 {
-  return g_pointcloud;
+  return std::make_shared<PointCloudMsg>();
 }
 
-/**
- * @brief The point cloud callback function. This function will be registered to lidar driver.
- *              When the point cloud message is ready, driver can send out messages through this function.
- * @param msg  The lidar point cloud message.
- */
 void pointCloudPutCallback(std::shared_ptr<PointCloudMsg> msg)
 {
-  /* Note: Please do not put time-consuming operations in the callback function! */
-  /* Make a copy of the message and process it in another thread is recommended*/
   pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl_pointcloud->points.assign(msg->points.begin(), msg->points.end());
+  pcl_pointcloud->points.swap(msg->points);
   pcl_pointcloud->height = msg->height;
   pcl_pointcloud->width = msg->width;
   pcl_pointcloud->is_dense = msg->is_dense;
@@ -222,20 +186,9 @@ void pointCloudPutCallback(std::shared_ptr<PointCloudMsg> msg)
   PointCloudColorHandlerGenericField<pcl::PointXYZI> point_color_handle(pcl_pointcloud, "intensity");
 
   {
-    const std::lock_guard<std::mutex> lock(mex_viewer);
+    const std::lock_guard<std::mutex> lock(mtx_viewer);
     pcl_viewer->updatePointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
   }
-}
-
-/**
- * @brief The exception callback function. This function will be registered to lidar driver.
- * @param code The error code struct.
- */
-void exceptionCallback(const Error& code)
-{
-  /* Note: Please do not put time-consuming operations in the callback function! */
-  /* Make a copy of the error message and process it in another thread is recommended*/
-  RS_WARNING << code.toString() << RS_REND;
 }
 
 int main(int argc, char* argv[])
@@ -246,7 +199,8 @@ int main(int argc, char* argv[])
 
   if (argc < 2)
   {
-    RS_INFOL << "Use 'rs_driver_viewer -h/--help' to check the argument menu..." << RS_REND;
+    printHelpMenu();
+    return 0;
   }
 
   if (checkKeywordExist(argc, argv, "-h") || checkKeywordExist(argc, argv, "--help"))
@@ -255,37 +209,35 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  RSDriverParam param;                 ///< Create a parameter object
+  RSDriverParam param;
   parseParam(argc, argv, param);
-  printParam(param);
-
-  g_pointcloud = std::make_shared<PointCloudMsg>();
+  param.print();
 
   pcl_viewer = std::make_shared<PCLVisualizer>("RSPointCloudViewer");
-
   pcl_viewer->setBackgroundColor(0.0, 0.0, 0.0);
   pcl_viewer->addCoordinateSystem(1.0);
+
   pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
   pcl_viewer->addPointCloud<pcl::PointXYZI>(pcl_pointcloud, "rslidar");
   pcl_viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 2, "rslidar");
 
-  LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
-  driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback
-  driver.regPointCloudCallback(pointCloudGetCallback, pointCloudPutCallback); ///< Register the point cloud callback 
-  if (!driver.init(param))                         ///< Call the init function
+  LidarDriver<PointCloudMsg> driver;
+  driver.regExceptionCallback(exceptionCallback);
+  driver.regPointCloudCallback(pointCloudGetCallback, pointCloudPutCallback);
+  if (!driver.init(param))
   {
     RS_ERROR << "Driver Initialize Error..." << RS_REND;
     return -1;
   }
 
-  driver.start();  ///< The driver thread will start
-
   RS_INFO << "RoboSense Lidar-Driver Viewer start......" << RS_REND;
+
+  driver.start();
 
   while (!pcl_viewer->wasStopped())
   {
     {
-      const std::lock_guard<std::mutex> lock(mex_viewer);
+      const std::lock_guard<std::mutex> lock(mtx_viewer);
       pcl_viewer->spinOnce();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(100));

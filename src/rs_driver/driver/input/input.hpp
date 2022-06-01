@@ -39,7 +39,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <thread>
 #include <cstring>
 
-#define MAX_PKT_LEN 1500
+#define VLAN_HDR_LEN  4
+#define ETH_HDR_LEN   42
+#define ETH_LEN       (ETH_HDR_LEN + VLAN_HDR_LEN + 1500)
+#define IP_LEN        65536 
+#define UDP_HDR_LEN   8
 
 namespace robosense
 {

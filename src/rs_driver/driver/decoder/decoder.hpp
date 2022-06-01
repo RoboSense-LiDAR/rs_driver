@@ -388,6 +388,13 @@ inline void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t si
 template <typename T_PointCloud>
 inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
 {
+  constexpr static int CLOUD_POINT_MAX = 1000000;
+
+  if (this->point_cloud_ && (this->point_cloud_->points.size() > CLOUD_POINT_MAX))
+  {
+     LIMIT_CALL(this->cb_excep_(Error(ERRCODE_CLOUDBUFOVERFLOW)), 1);
+  }
+
   if (param_.wait_for_difop && !angles_ready_)
   {
      DELAY_LIMIT_CALL(cb_excep_(Error(ERRCODE_NODIFOPRECV)), 1);

@@ -49,7 +49,8 @@ class InputSock : public Input
 {
 public:
   InputSock(const RSInputParam& input_param)
-    : Input(input_param), sock_offset_(0), sock_tail_(0)
+    : Input(input_param), pkt_buf_len_(ETH_LEN),
+      sock_offset_(0), sock_tail_(0)
   {
     sock_offset_ += input_param.user_layer_bytes;
     sock_tail_   += input_param.tail_layer_bytes;
@@ -64,7 +65,8 @@ private:
   inline void higherThreadPrioty(std::thread::native_handle_type handle);
   inline int createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp);
 
-private:
+protected:
+  size_t pkt_buf_len_;
   int fds_[2];
   size_t sock_offset_;
   size_t sock_tail_;
@@ -227,15 +229,15 @@ failSocket:
 
 inline void InputSock::recvPacket()
 {
-  fd_set rfds;
+  int max_fd = ((fds_[0] > fds_[1]) ? fds_[0] : fds_[1]);
 
   while (!to_exit_recv_)
   {
+    fd_set rfds;
     FD_ZERO(&rfds);
     FD_SET(fds_[0], &rfds);
     if (fds_[1] >= 0)
       FD_SET(fds_[1], &rfds);
-    int max_fd = ((fds_[0] > fds_[1]) ? fds_[0] : fds_[1]);
 
     struct timeval tv;
     tv.tv_sec = 1;
@@ -246,7 +248,7 @@ inline void InputSock::recvPacket()
       cb_excep_(Error(ERRCODE_MSOPTIMEOUT));
       continue;
     }
-    else if (retval == -1)
+    else if (retval < 0)
     {
       if (errno == EINTR)
         continue;
@@ -268,7 +270,7 @@ inline void InputSock::recvPacket()
       memset(msgs, 0, sizeof(msgs));
       for (i = 0; i < VLEN; i++)
       {
-        pkts[i] = cb_get_pkt_(MAX_PKT_LEN);
+        pkts[i] = cb_get_pkt_(pkt_buf_len_);
         iovecs[i].iov_base = pkts[i]->buf();
         iovecs[i].iov_len = pkts[i]->bufSize();
         msgs[i].msg_hdr.msg_iov = &iovecs[i];
@@ -287,7 +289,7 @@ inline void InputSock::recvPacket()
 
 #else
 
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
       ssize_t ret = recvfrom(fds_[0], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
       if (ret < 0)
       {
@@ -304,7 +306,7 @@ inline void InputSock::recvPacket()
     }
     else if (FD_ISSET(fds_[1], &rfds))
     {
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(MAX_PKT_LEN);
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
       ssize_t ret = recvfrom(fds_[1], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
       if (ret < 0)
       {
