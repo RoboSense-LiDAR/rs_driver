@@ -390,7 +390,7 @@ inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t siz
 {
   constexpr static int CLOUD_POINT_MAX = 1000000;
 
-  if (this->point_cloud_->points.size() > CLOUD_POINT_MAX)
+  if (this->point_cloud_ && (this->point_cloud_->points.size() > CLOUD_POINT_MAX))
   {
      LIMIT_CALL(this->cb_excep_(Error(ERRCODE_CLOUDBUFOVERFLOW)), 1);
   }
