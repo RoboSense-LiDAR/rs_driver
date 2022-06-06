@@ -203,9 +203,9 @@ inline bool DecoderRSM2<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
 
       if (this->distance_section_.in(distance))
       {
-        float x = RS_SWAP_INT16(channel.y) * distance / VECTOR_BASE;
+        float x =   RS_SWAP_INT16(channel.y) * distance / VECTOR_BASE;
         float y = - RS_SWAP_INT16(channel.x) * distance / VECTOR_BASE;
-        float z = RS_SWAP_INT16(channel.z) * distance / VECTOR_BASE;
+        float z =   RS_SWAP_INT16(channel.z) * distance / VECTOR_BASE;
 
         this->transformPoint(x, y, z);
 
