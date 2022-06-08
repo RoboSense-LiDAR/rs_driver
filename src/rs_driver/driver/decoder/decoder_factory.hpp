@@ -34,11 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RS32.hpp>
 #include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
-#include <rs_driver/driver/decoder/decoder_RSRUBY_PLUS.hpp>
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
-#include <rs_driver/driver/decoder/decoder_RSHELIOS_16P.hpp>
 #include <rs_driver/driver/decoder/decoder_RSROCK.hpp>
 #include <rs_driver/driver/input.hpp>
 #include <rs_driver/msg/packet_msg.h>
@@ -86,9 +84,6 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDeco
     case LidarType::RS128:
       ret_ptr = std::make_shared<DecoderRS128<T_Point>>(param.decoder_param, getRS128ConstantParam());
       break;
-    case LidarType::RSRUBY_PLUS:
-      ret_ptr = std::make_shared<DecoderRSRUBY_PLUS<T_Point>>(param.decoder_param, getRSRUBY_PLUSConstantParam());
-      break;
     case LidarType::RS80:
       ret_ptr = std::make_shared<DecoderRS80<T_Point>>(param.decoder_param, getRS80ConstantParam());
       break;
@@ -97,9 +92,6 @@ inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDeco
       break;
     case LidarType::RSHELIOS:
       ret_ptr = std::make_shared<DecoderRSHELIOS<T_Point>>(param.decoder_param, getRSHELIOSConstantParam());
-      break;
-    case LidarType::RSHELIOS_16P:
-      ret_ptr = std::make_shared<DecoderRSHELIOS_16P<T_Point>>(param.decoder_param, getRSHELIOS_16PConstantParam());
       break;
     case LidarType::RSROCK:
       ret_ptr = std::make_shared<DecoderRSROCK<T_Point>>(param.decoder_param, getRSROCKConstantParam());
