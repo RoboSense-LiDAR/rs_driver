@@ -177,7 +177,7 @@ inline bool DecoderRSM1_Jumbo<T_PointCloud>::internDecodeMsopPkt(const uint8_t* 
   if (memcmp(packet, this->const_param_.MSOP_ID, this->const_param_.MSOP_ID_LEN) != 0)
     return false;
 
-  this->temperature_ = static_cast<float>(pkt.header.temperature - this->const_param_.TEMPERATURE_RES);
+  this->temperature_ = static_cast<float>((int)pkt.header.temperature - this->const_param_.TEMPERATURE_RES);
 
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
