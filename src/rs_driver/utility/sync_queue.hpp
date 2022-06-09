@@ -77,7 +77,7 @@ public:
   {
     //
     // Low latency, or low CPU usage, that is the question. 
-    //                                            -- Hamlet
+    //                                            - Hamlet
 
 #if 1
     T value;
