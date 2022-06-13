@@ -80,7 +80,8 @@ typedef struct
   RSTimestampUTC timestamp;
   uint8_t reserved_2[10];
   uint8_t lidar_type;
-  uint8_t reserved_3[49];
+  uint8_t lidar_model;
+  uint8_t reserved_3[48];
 } RSMsopHeaderV2;
 
 typedef struct

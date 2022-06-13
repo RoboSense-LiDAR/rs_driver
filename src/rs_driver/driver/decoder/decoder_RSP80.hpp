@@ -101,7 +101,7 @@ protected:
   template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 
-  uint8_t lidar_type_;
+  uint8_t lidar_model_;
 };
 
 template <typename T_PointCloud>
@@ -173,8 +173,8 @@ inline void DecoderRSP80<T_PointCloud>::calcParam()
     29.579f, 29.579f, 29.579f, 29.579f, 31.963f, 31.963f, 31.963f, 31.963f, 
   };
 
-  float* firing_tss = firing_tss_80; // 80  - lidar_type = 0x07
-  if (lidar_type_ == 0x08)           // 80v - lidar_type = 0x08
+  float* firing_tss = firing_tss_80; // 80  - lidar_model = 0x02
+  if (lidar_model_ == 0x03)          // 80v - lidar_model = 0x03
   {
     firing_tss = firing_tss_80v;
   }
@@ -218,7 +218,7 @@ inline void DecoderRSP80<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, si
 template <typename T_PointCloud>
 inline DecoderRSP80<T_PointCloud>::DecoderRSP80(const RSDecoderParam& param)
   : DecoderMech<T_PointCloud>(getConstParam(), param), 
-    lidar_type_(0)
+    lidar_model_(0)
 {
 }
 
@@ -242,10 +242,10 @@ inline bool DecoderRSP80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
   const RSP80MsopPkt& pkt = *(const RSP80MsopPkt*)(packet);
   bool ret = false;
 
-  uint8_t lidar_type = pkt.header.lidar_type;
-  if (lidar_type_ != lidar_type)
+  uint8_t lidar_model = pkt.header.lidar_model;
+  if (lidar_model_ != lidar_model)
   {
-    lidar_type_ = lidar_type;
+    lidar_model_ = lidar_model;
     calcParam();
   }
 
