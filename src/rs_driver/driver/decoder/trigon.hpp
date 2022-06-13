@@ -61,14 +61,13 @@ public:
 
     for (int32_t i = MIN, j = 0; i < MAX; i++, j++)
     {
-      double rads = static_cast<double>(i) * 0.01;
-      rads = rads * M_PI / 180;
+      double rad = DEGREE_TO_RADIAN(static_cast<double>(i) * 0.01);
 
 #ifdef DBG
       o_angles_[j] = i;
 #endif
-      o_sins_[j] = (float)std::sin(rads);
-      o_coss_[j] = (float)std::cos(rads);
+      o_sins_[j] = (float)std::sin(rad);
+      o_coss_[j] = (float)std::cos(rad);
     }
 
 #ifdef DBG

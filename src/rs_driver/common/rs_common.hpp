@@ -63,3 +63,6 @@ inline int16_t RS_SWAP_INT16(int16_t value)
 
 #include <math.h>
 
+#define DEGREE_TO_RADIAN(deg)  ((deg) * M_PI / 180)
+#define RADIAN_TO_DEGREE(deg)  ((deg) * 180 / M_PI)
+
