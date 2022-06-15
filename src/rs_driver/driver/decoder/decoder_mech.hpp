@@ -96,8 +96,10 @@ protected:
   uint16_t block_az_diff_; // azimuth difference between adjacent blocks.
   double fov_blind_ts_diff_; // timestamp difference across blind section(defined by fov)
 
+#if 0
   int lidar_alph0_;  // lens center related
   float lidar_Rxy_;  // lens center related
+#endif
 };
 
 template <typename T_PointCloud>
@@ -133,10 +135,12 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& con
       break;
   }
 
+#if 0
   // lens center: (alph0, Rxy)
   lidar_alph0_ = (int)(std::atan2(mech_const_param_.RY, mech_const_param_.RX) * 180 / M_PI * 100);
   lidar_Rxy_ = std::sqrt(mech_const_param_.RX * mech_const_param_.RX + 
       mech_const_param_.RY * mech_const_param_.RY);
+#endif
 
   if (this->param_.config_from_file)
   {
