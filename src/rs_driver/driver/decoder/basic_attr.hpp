@@ -284,5 +284,19 @@ inline int16_t parseTempInBe(const RSTemperature* tmp) // format of big endian
   return t;
 }
 
+inline int16_t parseTempInBe2(const RSTemperature* tmp) // format of big endian
+{
+  // | neg | msb | lsb | padding |
+  // |  1  |  7  |  5  |    3    | (in bits)
+  uint8_t neg = tmp->tt[0] & 0x80;
+  uint8_t msb = tmp->tt[0] & 0x7F;
+  uint8_t lsb = tmp->tt[1] >> 3;
+
+  int16_t t = ((uint16_t)msb << 5) + lsb;
+  if (neg) t = -t;
+
+  return t;
+}
+
 }  // namespace lidar
 }  // namespace robosense

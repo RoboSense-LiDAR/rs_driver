@@ -101,6 +101,8 @@ protected:
 
   template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
+
+  int temp_version_;
 };
 
 template <typename T_PointCloud>
@@ -166,7 +168,8 @@ inline RSEchoMode DecoderRSBP<T_PointCloud>::getEchoMode(uint8_t mode)
 
 template <typename T_PointCloud>
 inline DecoderRSBP<T_PointCloud>::DecoderRSBP(const RSDecoderParam& param)
-  : DecoderMech<T_PointCloud>(getConstParam(), param)
+  : DecoderMech<T_PointCloud>(getConstParam(), param),
+    temp_version_(0)
 {
 }
 
@@ -179,6 +182,15 @@ inline void DecoderRSBP<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
   this->echo_mode_ = getEchoMode (pkt.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
+
+  bool modern = (pkt.version.bottom_ver[1] == 0x03) && (pkt.version.bottom_ver[2] == 0x01);
+  if (modern) 
+  {
+    if (pkt.version.bottom_ver[3] >= 0x19) 
+      this->temp_version_ = 2;
+    if (pkt.version.bottom_ver[3] >= 0x14) 
+      this->temp_version_ = 1;
+  }
 }
 
 template <typename T_PointCloud>
@@ -201,7 +213,16 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   const RSBPMsopPkt& pkt = *(const RSBPMsopPkt*)(packet);
   bool ret = false;
 
-  this->temperature_ = parseTempInLe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
+  int16_t temp = 0;
+
+  if (this->temp_version_ == 2) 
+    temp = parseTempInBe (&(pkt.header.temp));
+  else if (temp_version_ == 1)
+    temp = parseTempInBe2 (&(pkt.header.temp));
+  else
+    temp = parseTempInLe (&(pkt.header.temp));
+
+  this->temperature_ = temp * this->const_param_.TEMPERATURE_RES;
 
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
