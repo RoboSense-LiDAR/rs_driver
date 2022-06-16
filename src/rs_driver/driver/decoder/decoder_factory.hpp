@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS_16P.hpp>
+#include <rs_driver/driver/decoder/decoder_RS48.hpp>
 #include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
 #include <rs_driver/driver/decoder/decoder_RSP128.hpp>
@@ -88,6 +89,9 @@ inline std::shared_ptr<Decoder<T_PointCloud>> DecoderFactory<T_PointCloud>::crea
       break;
     case LidarType::RS80:
       ret_ptr = std::make_shared<DecoderRS80<T_PointCloud>>(param);
+      break;
+    case LidarType::RS48:
+      ret_ptr = std::make_shared<DecoderRS48<T_PointCloud>>(param);
       break;
     case LidarType::RSP128:
       ret_ptr = std::make_shared<DecoderRSP128<T_PointCloud>>(param);
