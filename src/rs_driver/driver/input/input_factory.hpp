@@ -99,7 +99,14 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RS
       break;
 
     default:
-      RS_ERROR << "Wrong Input Type." << RS_REND;
+
+      RS_ERROR << "Wrong Input Type " << type << "." << RS_REND;
+
+      if (type == InputType::PCAP_FILE) 
+      {
+        RS_ERROR << "InputType::PCAP_FILE is specified. Please enable the cmake option -DENABLE_PCAP_PARSE." << RS_REND;
+      }
+
       exit(-1);
   }
 
