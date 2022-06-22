@@ -104,7 +104,9 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RS
 
       if (type == InputType::PCAP_FILE) 
       {
-        RS_ERROR << "InputType::PCAP_FILE is specified. Please enable the cmake option -DENABLE_PCAP_PARSE." << RS_REND;
+        RS_ERROR << "InputType::PCAP_FILE is specified. " 
+                 << "Please add add_definitions(""-DENABLE_PCAP_PARSE"") to enable it. "
+                 << "For how to add it, refer to CMakeLists.txt in the top directory of rs_driver." << RS_REND;
       }
 
       exit(-1);
