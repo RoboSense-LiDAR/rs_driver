@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/input/input_sock.hpp>
 #include <rs_driver/driver/input/input_sock_jumbo.hpp>
 
-#ifdef ENABLE_PCAP_PARSE
+#ifndef DISABLE_PCAP_PARSE
 #include <rs_driver/driver/input/input_pcap.hpp>
 #include <rs_driver/driver/input/input_pcap_jumbo.hpp>
 #endif
@@ -71,7 +71,7 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RS
       }
       break;
 
-#ifdef ENABLE_PCAP_PARSE
+#ifndef DISABLE_PCAP_PARSE
     case InputType::PCAP_FILE:
       {
         if (isJumbo)
@@ -104,9 +104,7 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RS
 
       if (type == InputType::PCAP_FILE) 
       {
-        RS_ERROR << "InputType::PCAP_FILE is specified. " 
-                 << "Please add add_definitions(""-DENABLE_PCAP_PARSE"") to enable it. "
-                 << "For how to add it, refer to CMakeLists.txt in the top directory of rs_driver." << RS_REND;
+        RS_ERROR << "To use InputType::PCAP_FILE, please do not specify the make option DISABLE_PCAP_PARSE." << RS_REND;
       }
 
       exit(-1);

@@ -18,7 +18,7 @@ endif()
 #=============================
 #  Compile Features
 #=============================
-option(ENABLE_PCAP_PARSE "Enable PCAP file parse" ON) 
+option(DISABLE_PCAP_PARSE "Disable PCAP file parse" OFF) 
 option(ENABLE_TRANSFORM "Enable transform functions" OFF)
 option(ENABLE_EPOLL_RECEIVE "Receive packets with epoll() instead of select()" OFF)
 option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
@@ -113,13 +113,15 @@ if(${ENABLE_HIGH_PRIORITY_THREAD})
   add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
 endif(${ENABLE_HIGH_PRIORITY_THREAD})
 
-if(${ENABLE_PCAP_PARSE})
+if(${DISABLE_PCAP_PARSE})
 
   message(=============================================================)
-  message("-- Enable PCAP parse")
+  message("-- Disable PCAP parse")
   message(=============================================================)
 
-  add_definitions("-DENABLE_PCAP_PARSE")
+  add_definitions("-DDISABLE_PCAP_PARSE")
+
+else()
 
   if(WIN32)
     set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
@@ -130,7 +132,7 @@ if(${ENABLE_PCAP_PARSE})
     list(APPEND EXTERNAL_LIBS pcap)
   endif(WIN32)
 
-endif(${ENABLE_PCAP_PARSE})
+endif(${DISABLE_PCAP_PARSE})
 
 if(${ENABLE_TRANSFORM})
 
