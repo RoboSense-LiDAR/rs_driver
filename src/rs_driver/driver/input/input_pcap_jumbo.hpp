@@ -62,18 +62,15 @@ public:
     pcap_offset_ += input_param.user_layer_bytes;
     pcap_tail_   += input_param.tail_layer_bytes;
 
-    std::stringstream msop_stream, difop_stream;
+    std::stringstream msop_stream;
     if (input_param_.use_vlan)
     {
       msop_stream << "vlan && ";
-      difop_stream << "vlan && ";
     }
 
     msop_stream << "udp";
-    difop_stream << "udp dst port " << input_param_.difop_port;
 
     msop_filter_str_ = msop_stream.str();
-    difop_filter_str_ = difop_stream.str();
   }
 
   virtual bool init();
@@ -88,7 +85,6 @@ private:
   size_t pcap_offset_;
   size_t pcap_tail_;
   std::string msop_filter_str_;
-  std::string difop_filter_str_;
   bpf_program msop_filter_;
   bpf_program difop_filter_;
   bool difop_filter_valid_;
@@ -111,12 +107,6 @@ inline bool InputPcapJumbo::init()
   }
 
   pcap_compile(pcap_, &msop_filter_, msop_filter_str_.c_str(), 1, 0xFFFFFFFF);
-
-  if ((input_param_.difop_port != 0) && (input_param_.difop_port != input_param_.msop_port))
-  {
-    pcap_compile(pcap_, &difop_filter_, difop_filter_str_.c_str(), 1, 0xFFFFFFFF);
-    difop_filter_valid_ = true;
-  }
 
   init_flag_ = true;
   return true;
@@ -155,7 +145,7 @@ inline void InputPcapJumbo::recvPacket()
   while (!to_exit_recv_)
   {
     struct pcap_pkthdr* header;
-    const u_char* pkt_data;
+    const uint8_t* pkt_data;
     int ret = pcap_next_ex(pcap_, &header, &pkt_data);
     if (ret < 0)  // reach file end.
     {
@@ -178,24 +168,20 @@ inline void InputPcapJumbo::recvPacket()
 
     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
     {
-      bool new_pkt = jumbo_.new_fragment(pkt_data, header->len);
+      uint16_t udp_port = 0;
+      const uint8_t* udp_data = NULL;
+      size_t udp_data_len = 0;
+      bool new_pkt = jumbo_.new_fragment(pkt_data, header->len, &udp_port, &udp_data, &udp_data_len);
       if (new_pkt)
       {
-        if (jumbo_.dst_port() == input_param_.msop_port)
+        if ((udp_port == input_param_.msop_port) || (udp_port == input_param_.difop_port))
         {
           std::shared_ptr<Buffer> pkt = cb_get_pkt_(IP_LEN);
-          memcpy(pkt->data(), jumbo_.buf() + UDP_HDR_LEN, jumbo_.buf_len() - UDP_HDR_LEN);
-          pkt->setData(0, jumbo_.buf_len() - UDP_HDR_LEN);
+          memcpy(pkt->data(), udp_data, udp_data_len);
+          pkt->setData(0, udp_data_len);
           pushPacket(pkt);
         }
       }
-    }
-    else if (difop_filter_valid_ && (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
-    {
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(IP_LEN);
-      memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_ - pcap_tail_);
-      pkt->setData(0, header->len - pcap_offset_ - pcap_tail_);
-      pushPacket(pkt);
     }
     else
     {

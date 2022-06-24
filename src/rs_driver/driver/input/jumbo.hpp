@@ -43,27 +43,27 @@ namespace lidar
 
 struct iphdr
 {
-  u_char version;
-  u_char tos;
-  u_short tot_len;
+  uint8_t version;
+  uint8_t tos;
+  uint16_t tot_len;
 
-  u_short id;
-  u_short frag_off;
+  uint16_t id;
+  uint16_t frag_off;
 
-  u_char ttl;
-  u_char protocol;
-  u_short check;
+  uint8_t ttl;
+  uint8_t protocol;
+  uint16_t check;
 
-  u_int saddr;
-  u_int daddr;
+  uint32_t saddr;
+  uint32_t daddr;
 };
 
 struct udphdr
 {
-  u_short source;
-  u_short dest;
-  u_short len;
-  u_short check;
+  uint16_t source;
+  uint16_t dest;
+  uint16_t len;
+  uint16_t check;
 };
 
 #pragma pack(pop)
@@ -77,31 +77,23 @@ public:
   {
   }
 
-  u_char* buf()
-  {
-    return buf_;
-  }
-
-  u_short buf_len()
-  {
-    return buf_off_;
-  }
-
-  bool new_fragment(const u_char* pkt_data, size_t pkt_data_size);
-
-  u_short dst_port();
+  bool new_fragment(const uint8_t* pkt_data, size_t pkt_data_size, 
+   uint16_t* udp_port, const uint8_t**ip_data, size_t* ip_data_len);
 
 private:
 
-  u_short ip_id_;
-  u_char buf_[IP_LEN];
-  u_short buf_off_;
+  uint16_t dst_port(const uint8_t* buf);
+
+  uint16_t ip_id_;
+  uint8_t  buf_[IP_LEN];
+  uint16_t buf_off_;
 }; 
 
-inline bool Jumbo::new_fragment(const u_char* pkt_data, size_t pkt_data_size)
+inline bool Jumbo::new_fragment(const uint8_t* pkt_data, size_t pkt_data_size, 
+    uint16_t* udp_port, const uint8_t** udp_data, size_t* udp_data_len)
 {
   // Is it an ip packet ?
-  const u_short* eth_type = (const u_short*)(pkt_data + 12);
+  const uint16_t* eth_type = (const uint16_t*)(pkt_data + 12);
   if (ntohs(*eth_type) != 0x0800)
     return false;
 
@@ -111,18 +103,19 @@ inline bool Jumbo::new_fragment(const u_char* pkt_data, size_t pkt_data_size)
     return false;
 
   // ip data
-  //u_short ip_hdr_size = ip_hdr->ihl * 4;
-  u_short ip_hdr_size = (ip_hdr->version & 0xf) * 4;
-  u_short ip_len = ntohs(ip_hdr->tot_len);
+  uint16_t ip_hdr_size = (ip_hdr->version & 0xf) * 4;
+  uint16_t ip_len = ntohs(ip_hdr->tot_len);
 
-  const u_char* ip_data = pkt_data + 14 + ip_hdr_size;
-  u_short ip_data_len = ip_len - ip_hdr_size;
+  const uint8_t* ip_data = pkt_data + 14 + ip_hdr_size;
+  uint16_t ip_data_len = ip_len - ip_hdr_size;
 
   // ip fragment
-  u_short ip_id = ntohs (ip_hdr->id);
-  u_short f_off = ntohs(ip_hdr->frag_off);
-  u_short frag_flags  = (f_off >> 13);
-  u_short frag_off    = (f_off & 0x1fff) * 8; // 8 octet boudary
+  uint16_t ip_id = ntohs (ip_hdr->id);
+  uint16_t f_off = ntohs(ip_hdr->frag_off);
+  uint16_t frag_flags  = (f_off >> 13);
+  uint16_t frag_off    = (f_off & 0x1fff) * 8; // 8 octet boudary
+
+#define MORE_FRAGS(flags) ((flags & 0x01) != 0)
 
   if (ip_id == ip_id_)
   {
@@ -131,7 +124,7 @@ inline bool Jumbo::new_fragment(const u_char* pkt_data, size_t pkt_data_size)
       memcpy (buf_ + buf_off_, ip_data, ip_data_len);
       buf_off_ += ip_data_len;
 
-      if ((frag_flags & 0x1) == 0)
+      if (!MORE_FRAGS(frag_flags))
       {
 #if 0
         printf ("--- end new packet. ip_id:0x%x, len:%d\n", ip_id_, buf_off_);
@@ -146,33 +139,50 @@ inline bool Jumbo::new_fragment(const u_char* pkt_data, size_t pkt_data_size)
 #endif
 
         ip_id_ = 0;
+
+        *udp_port = dst_port (buf_);
+        *udp_data = buf_ + UDP_HDR_LEN;
+        *udp_data_len = buf_off_ - UDP_HDR_LEN;
         return true;
       }
     }
   }
   else
   {
-    if ((frag_off == 0) && ((frag_flags & 0x1) != 0))
-      //if (frag_off == 0)
+    if (frag_off == 0)
     {
-      ip_id_ = ip_id;
-      buf_off_ = 0;
+      if (MORE_FRAGS(frag_flags))
+      {
+        ip_id_ = ip_id;
+        buf_off_ = 0;
 
-      memcpy (buf_ + buf_off_, ip_data, ip_data_len);
-      buf_off_ += ip_data_len;
+        memcpy (buf_ + buf_off_, ip_data, ip_data_len);
+        buf_off_ += ip_data_len;
 
 #if 0
-      printf ("+++ start packet 0x%x\n", ip_id_);
+        printf ("+++ start packet 0x%x\n", ip_id_);
 #endif
+      }
+      else
+      {
+#if 0
+        printf ("+++ non-fragment packet 0x%x\n", ip_id);
+#endif
+
+        *udp_port = dst_port (ip_data);
+        *udp_data = ip_data + UDP_HDR_LEN;
+        *udp_data_len = ip_data_len - UDP_HDR_LEN;
+        return true;
+      }
     }
   }
 
   return false;
 }
 
-inline u_short Jumbo::dst_port()
+inline uint16_t Jumbo::dst_port(const uint8_t* buf)
 {
-  const struct udphdr * udp_hdr = (const struct udphdr*)buf_;
+  const struct udphdr* udp_hdr = (const struct udphdr*)buf;
   return ntohs(udp_hdr->dest);
 }
 
