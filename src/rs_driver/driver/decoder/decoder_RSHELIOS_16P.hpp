@@ -216,7 +216,8 @@ inline bool DecoderRSHELIOS_16P<T_PointCloud>::internDecodeMsopPkt(const uint8_t
     int32_t block_az = ntohs(block.azimuth);
     if (this->split_strategy_->newBlock(block_az))
     {
-      this->cb_split_frame_(this->const_param_.LASER_NUM, this->prev_point_ts_);
+      this->cb_split_frame_(this->const_param_.LASER_NUM, this->cloudTs());
+      this->first_point_ts_ = pkt_ts;
       ret = true;
     }
 

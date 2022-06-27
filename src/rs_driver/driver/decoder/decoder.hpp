@@ -275,6 +275,8 @@ public:
 protected:
 #endif
 
+  double cloudTs();
+
   RSDecoderConstParam const_param_; // const param
   RSDecoderParam param_; // user param
   std::function<void(uint16_t, double)> cb_split_frame_;
@@ -296,8 +298,9 @@ protected:
   float temperature_; // lidar temperature
 
   bool angles_ready_; // is vert_angles/horiz_angles ready from csv file/difop packet?
-  double prev_pkt_ts_; // last packet's timestamp
-  double prev_point_ts_; // last point's timestamp
+  double prev_pkt_ts_; // timestamp of prevous packet
+  double prev_point_ts_; // timestamp of previous point
+  double first_point_ts_; // timestamp of first point
 };
 
 template <typename T_PointCloud>
@@ -321,6 +324,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param, co
   , angles_ready_(false)
   , prev_pkt_ts_(0.0)
   , prev_point_ts_(0.0)
+  , first_point_ts_(0.0)
 {
 #ifdef ENABLE_TRANSFORM
   Eigen::AngleAxisd current_rotation_x(param_.transform_param.roll, Eigen::Vector3d::UnitX());
@@ -354,6 +358,12 @@ template <typename T_PointCloud>
 inline double Decoder<T_PointCloud>::prevPktTs()
 {
   return prev_pkt_ts_;
+}
+
+template <typename T_PointCloud>
+inline double Decoder<T_PointCloud>::cloudTs()
+{
+  return (param_.ts_first_point ? first_point_ts_ : prev_point_ts_);
 }
 
 template <typename T_PointCloud>

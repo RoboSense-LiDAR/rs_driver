@@ -182,7 +182,8 @@ inline bool DecoderRSEOS<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, siz
   uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
   if (split_strategy_.newPacket(pkt_seq))
   {
-    this->cb_split_frame_(this->const_param_.LASER_NUM, this->prev_point_ts_);
+    this->cb_split_frame_(this->const_param_.LASER_NUM, this->cloudTs());
+    this->first_point_ts_ = pkt_ts;
     ret = true;
   }
 

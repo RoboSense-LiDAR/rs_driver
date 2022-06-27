@@ -200,7 +200,8 @@ inline bool DecoderRSM1_Jumbo<T_PointCloud>::internDecodeMsopPkt(const uint8_t* 
   uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
   if (split_strategy_.newPacket(pkt_seq))
   {
-    this->cb_split_frame_(this->const_param_.LASER_NUM, this->prev_point_ts_);
+    this->cb_split_frame_(this->const_param_.LASER_NUM, this->cloudTs());
+    this->first_point_ts_ = pkt_ts;
     ret = true;
   }
 

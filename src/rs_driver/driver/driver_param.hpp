@@ -270,6 +270,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
   uint16_t num_blks_split = 1;   ///< Number of packets in one frame, only be used when split_frame_mode=3
   bool use_lidar_clock = false;  ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
   bool dense_points = false;     ///< true: discard NAN points; false: reserve NAN points
+  bool ts_first_point = false;   ///< true: time-stamp point cloud with the first point; false: with the last point;
   RSTransformParam transform_param; ///< Used to transform points
 
   void print() const
