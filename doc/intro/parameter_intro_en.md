@@ -60,6 +60,7 @@ typedef struct RSDecoderParam
 {
   bool use_lidar_clock = false;
   bool dense_points = false;
+  bool ts_first_point = false;
   bool wait_for_difop = true;
   RSTransformParam transform_param;
   bool config_from_file = false;
@@ -82,6 +83,8 @@ The following parameters are for all Lidars。
   + If `use_lidar_clock`=`true`，use the Lidar timestamp, else use the host one.
 + dense_points - Whether the point cloud is dense.
   + If `dense_points`=`false`, then point cloud contains NAN points, else discard them.
++ ts_first_point - Whether to stamp the point cloud with the first point, or the last point.
+  + If `ts_first_point`=`false`, then stamp it with the last point, else with the first point。
 + wait_for_difop - Whether wait for DIFOP Packet, before parse MSOP packets.
   + DIFOP Packet contains angle calibration parameters. If it is unavailable, the point cloud is flat.
   + If you get no point cloud, try `wait_for_difop`=`false`. It might help to locate the problem.

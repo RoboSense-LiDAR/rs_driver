@@ -59,6 +59,7 @@ typedef struct RSDecoderParam
 {
   bool use_lidar_clock = false;
   bool dense_points = false;
+  bool ts_first_point = false;
   bool wait_for_difop = true;
   RSTransformParam transform_param;
   bool config_from_file = false;
@@ -80,6 +81,8 @@ typedef struct RSDecoderParam
   + 如果`use_lidar_clock`=`true`，则使用雷达写入Packet中的时间戳；如果`use_lidar_clock`=`false`,则使用rs_driver在主机端产生的时间戳。
 + dense_points - 指定点云是否是dense的。
   + 如果`dense_points`=`false`, 则点云中包含NAN点；如果`dense_points`=`true`,则去除点云中的NAN点。
++ ts_first_point - 指定点云的时间戳来自点云的第一个点，还是最后第一个点。
+  + 如果`ts_first_point`=`false`, 则第一个点的时间作为点云的时间戳；如果`ts_first_point`=`true`,则最后一个点的时间作为点云的时间戳。
 + wait_for_difop - 解析MSOP Packet之前，是否等待DIFOP Packet。
   + DIFOP Packet中包含角度校准等参数数据。如果没有这个数据，rs_driver输出的点云将是扁平的。
   + 在rs_driver不输出点云时，设置`wait_for_difop`=`false`，有助于定位问题的位置。
