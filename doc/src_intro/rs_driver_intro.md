@@ -1220,7 +1220,7 @@ decodeMsopPkt()使用不同的模板参数调用internDecodeMsopPkt()。
   + 得到Block的角度值。
   + 计算得到Block的时间戳，保存到本地变量`block_ts`。
   + 调用SplitStrategy::newBlock()，检查是否分帧。如果是，调用回调函数`cb_split_frame_`，通知使用者。
-    `cb_split_frame_`应该转移点云`pont_cloud_`，并重置它。
+    `cb_split_frame_`应该转移点云`point_cloud_`，并重置它。
 
 + 遍历Block内所有的Channel。
   + 计算Channel的时间戳
@@ -1271,8 +1271,8 @@ RSM1是MEMS雷达。这里说明RSM1的Decoder。
 | DIFOP_ID_LEN |    8     | DIFOP_LEN[]中的字节长度 |
 | BLOCK_ID[]   |    {0xFF, 0xEE}   | block标志字节，长度为2 |
 | LASER_NUM    |    5  | 5通道 |
-| BLOCKS_PER_PKT |    25  | 每Packet中12个Block |
-| CHANNEL_PER_BLOCK | 5  | RSBP为32线雷达 |
+| BLOCKS_PER_PKT |    25  | 每Packet中25个Block |
+| CHANNEL_PER_BLOCK | 5  | RSM1有5个通道 |
 | DISTANCE_MIN |    0.2   | 测距最小值，单位米 |
 | DISTANCE_MAX |  200.0   | 测距最大值，单位米 |
 | DISTANCE_RES |  0.005   | Packet中distance的解析度，单位米 |
