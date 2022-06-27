@@ -768,11 +768,11 @@ Block水平角差 = 第三个Block的水平角 - 第一个Block的水平角
 
 为了充分利用MSOP Packet的空间，RS16的Packet格式与其他机械式雷达不同。
 
-在单回波模式下，RS16将相邻两个通道的数据放在同一Block中，如下图所示。
+在单回波模式下，一组`16通道数据`包含一个回波，将相邻两组的回波数据放在同一Block中。如下图所示。
 
 ![](./img/rs16_msop_single_return.png)
 
-在双回波模式下，RS16将一个通道两个回波数据放在同一Block中，如下图所示。
+在双回波模式下，一组`16通道数据`就有两个回波，将两个回波的数据放在同一Block中。如下图所示。
 
 ![](./img/rs16_msop_dual_return.png)
 
@@ -995,7 +995,7 @@ DecoderFactory根据指定的雷达类型，生成Decoder实例。
 如下图是Decoder的详细定义。
 + 成员`const_param_`是雷达的参数配置。
 + 成员`param_`是用户的参数配置。
-+ 成员`trigon_`是Trigon类的实例，提供快速的sin/con计算。定义如下的宏，可以清晰、方便调用它。
++ 成员`trigon_`是Trigon类的实例，提供快速的sin()/cos()计算。定义如下的宏，可以清晰、方便调用它。
 
 ```
 #define SIN(angle) this->trigon_.sin(angle)
