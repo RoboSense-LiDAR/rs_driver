@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+- Support Ruby_3.0_48
+- Add option to stamp point cloud with first point
+
+### Updated
+- Different 80/80v with lidar model
+- Use ROS coordinate for EOS 
+- Enable PCAP file parsing in default mode
+- Parse DIFOP packet in case of jumbo pcap file
+
 ## v1.5.3 2022-06-01
 
 ### Added
