@@ -9,12 +9,18 @@
 ## 2 支持的雷达型号
 
 支持的雷达型号如下。
+
 - RS-LiDAR-16
 - RS-LiDAR-32
 - RS-Bpearl
 - RS-Helios
-- RS-Ruby
-- RS-Ruby Lite
+- RS-Helios-16P
+- RS-Ruby-128
+- RS-Ruby-80
+- RS-Ruby-48
+- RS-Ruby-Plus-128
+- RS-Ruby-Plus-80
+- RS-Ruby-Plus-48
 - RS-LiDAR-M1
 
 ## 3 支持的操作系统

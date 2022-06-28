@@ -8,13 +8,20 @@
 
 ## 2 Supported LiDARs
 
+Below are the supported LiDARS.
+
 - RS-LiDAR-16
 - RS-LiDAR-32
 - RS-Bpearl
-- RS-Ruby
-- RS-Ruby Lite
-- RS-LiDAR-M1
 - RS-Helios
+- RS-Helios-16P
+- RS-Ruby-128
+- RS-Ruby-80
+- RS-Ruby-48
+- RS-Ruby-Plus-128
+- RS-Ruby-Plus-80
+- RS-Ruby-Plus-48
+- RS-LiDAR-M1
 
 ## 3 Supported Platforms
 
