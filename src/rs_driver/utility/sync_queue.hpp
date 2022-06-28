@@ -73,7 +73,7 @@ public:
     return value;
   }
 
-  inline T popWait(unsigned int usec)
+  inline T popWait(unsigned int usec = 1000000)
   {
     //
     // Low latency, or low CPU usage, that is the question. 

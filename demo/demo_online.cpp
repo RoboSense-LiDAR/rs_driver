@@ -43,32 +43,65 @@ typedef PointCloudT<PointT> PointCloudMsg;
 
 using namespace robosense::lidar;
 
+SyncQueue<std::shared_ptr<PointCloudMsg>> free_cloud_queue;
+SyncQueue<std::shared_ptr<PointCloudMsg>> cloud_queue;
+
+//
+// @brief point cloud callback function. The caller should register it to the lidar driver.
+//        Via this fucntion, the driver fetches an EMPTY point cloud message from the caller.
+// @param msg  The empty point cloud message.
+//
 std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
 {
+  // Note: This callback function runs in the packet-parsing thread of the driver, 
+  //       so please DO NOT do time-consuming task here.
+  std::shared_ptr<PointCloudMsg> msg = free_cloud_queue.pop();
+  if (msg.get() != NULL)
+  {
+    return msg;
+  }
+
   return std::make_shared<PointCloudMsg>();
 }
 
-/**
- * @brief The point cloud callback function. This function will be registered to lidar driver.
- *              When the point cloud message is ready, driver can send out messages through this function.
- * @param msg  The lidar point cloud message.
- */
+//
+// @brief point cloud callback function. The caller should register it to the lidar driver.
+//        Via this function, the driver returns a STUFFED point cloud message to the caller. 
+// @param msg  The stuffed point cloud message.
+//
 void pointCloudPutCallback(std::shared_ptr<PointCloudMsg> msg)
 {
-  /* Note: Please do not put time-consuming operations in the callback function! */
-  /* Make a copy of the message and process it in another thread is recommended*/
-  RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
+  // Note: This callback function runs in the packet-parsing thread of the driver, 
+  //       so please DO NOT do time-consuming task here. Instead, process it in another thread.
+  cloud_queue.push(msg);
 }
 
-/**
- * @brief The exception callback function. This function will be registered to lidar driver.
- * @param code The error code struct.
- */
+//
+// @brief exception callback function. The caller should register it to the lidar driver.
+// @param code The error code to represent the error/warning/information
+//
 void exceptionCallback(const Error& code)
 {
-  /* Note: Please do not put time-consuming operations in the callback function! */
-  /* Make a copy of the error message and process it in another thread is recommended*/
+  // Note: This callback function runs in the packet-receving/packet-parsing thread of the driver, 
+  //       so please DO NOT do time-consuming task here.
   RS_WARNING << code.toString() << RS_REND;
+}
+
+void processCloud(void)
+{
+  while (1)
+  {
+    std::shared_ptr<PointCloudMsg> msg = cloud_queue.popWait();
+    if (msg.get() == NULL)
+    {
+      continue;
+    }
+
+    // process the point cloud msg, even it is time-consuming
+    RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
+
+    free_cloud_queue.push(msg);
+  }
 }
 
 int main(int argc, char* argv[])
@@ -76,6 +109,8 @@ int main(int argc, char* argv[])
   RS_TITLE << "------------------------------------------------------" << RS_REND;
   RS_TITLE << "            RS_Driver Core Version: v" << getDriverVersion() << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
+
+  std::thread cloud_handle_thread = std::thread(processCloud);
 
   RSDriverParam param;                  ///< Create a parameter object
   param.input_type = InputType::ONLINE_LIDAR;
