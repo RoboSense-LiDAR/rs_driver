@@ -51,7 +51,7 @@ class InputPcap : public Input
 public:
   InputPcap(const RSInputParam& input_param, double sec_to_delay)
     : Input(input_param), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), pcap_tail_(0), difop_filter_valid_(false), 
-    msec_to_delay_((uint64_t)(sec_to_delay*1000000))
+    msec_to_delay_((uint64_t)(sec_to_delay / input_param.pcap_rate * 1000000))
   {
     if (input_param.use_vlan)
     {
