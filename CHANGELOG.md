@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Added
+
+## v1.5.3 2022-07-01
+
+### Added
 - Support Ruby_3.0_48
 - Add option to stamp point cloud with first point
 
