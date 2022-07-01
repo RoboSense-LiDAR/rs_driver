@@ -1,4 +1,4 @@
-# rs_driver v1.5.2 源代码解析
+# rs_driver v1.5.4 源代码解析
 
 ## 1 基本概念
 
@@ -10,10 +10,9 @@ rs_driver支持RoboSense的两种雷达：
 
 ### 1.2 通道 Channel
 
-对于机械式雷达，通道指的是垂直方向上扫描的点数，每个通道上的点连成一条线。
-+ 比如，RS16是16线雷达，也就是16个通道； RSBP是32线雷达，RS128是128线雷达。
+对于机械式雷达，通道指的是垂直方向上扫描的点数，每个通道上的点连成一条线。比如，RS16是16线雷达，也就是16个通道； RSBP是32线雷达，RS128是128线雷达。
 
-MEMS雷达的通道与机械式不同，它的每个通道可能对应一块区域，比如一个矩形。
+MEMS雷达的通道与机械式雷达不同，它的每个通道可能对应一块区域，比如一个矩形区域。
 
 ### 1.3 MSOP/DIFOP
 
@@ -22,16 +21,16 @@ RoboSense雷达与电脑主机的通信协议有三种。
 + DIFOP (Device Information Output Protocol)。激光雷达将自身的配置信息，以及当前的状态封装成DIFOP Packet，输出给电脑主机。
 + UCWP (User Configuration Write Protocol)。用户可以修改激光雷达的某些配置参数。
 
-rs_driver处理前两类，也就是处理MSOP Packet和DIFOP Packet。
+rs_driver处理前两类协议的包，也就是MSOP Packet和DIFOP Packet。
 
 一般来说，激光雷达与电脑主机通过以太网连接，使用UDP协议。MSOP/DIFOP的格式，不同的雷达可能有较大差异。
 
 ### 1.4 点云帧
 
 + 机械式雷达持续旋转，输出点。扫描一圈360°得到的所有点，构成一帧点云。
-  + 使用者可以指定一个角度。rs_driver，按照这个角度来分割MSOP Pacekt序列，得到点云。
+  + 使用者可以指定一个角度，rs_driver按照这个角度，分割MSOP Pacekt序列得到点云。
 
-+ 对于MEMS雷达，雷达自己确定点云帧的开始点和结束点。
++ 对于MEMS雷达，点云在MSOP Packet序列中的开始和结束位置，由雷达自己确定。
   + 一帧点云包含固定数目（比如N）的MSOP Packet。雷达对MSOP Packet从 1 到 N 编号，并一直循环。
 
 ## 2 rs_driver的组件
@@ -40,11 +39,11 @@ rs_driver主要由三部分组成： Input、Decoder、LidarDriverImpl。
 
 ![components](./img/components.png)
 
-+ Input部分负责从Socket、或PCAP文件等源，获取MSOP/DIFOP Packet。Input类一般有自己的接收线程。
-+ Decoder部分负责解析MSOP/DIFOP Packet，得到点云。Decoder没有自己的线程，它运行在LiarDriverImpl的Packet处理线程中。
-+ LidarDrvierImpl将Input和Decoder组合到一起。它从Input得到Packet，根据Packet的类型将它派发到Decoder。得到点云后，通过用户的回调函数传递给用户。
-  + LidarDriverImpl提供Packet队列。Input收到MSOP/DIFOP Packet后，调用LidarDriverImpl的回调函数。回调函数将它保存到Packet Queue。
-  + LidarDriverImpl提供Packet处理线程。在Packet处理线程中，将MSOP Packet和DIFOP Packet分别派发给Decoder相应的处理函数。
++ Input部分负责从Socket/PCAP文件等数据源，获取MSOP/DIFOP Packet。Input的类一般有自己的接收线程`recv_thread_`。
++ Decoder部分负责解析MSOP/DIFOP Packet，得到点云。Decoder部分没有自己的线程，它运行在LiarDriverImpl的Packet处理线程`handle_thread_`中。
++ LidarDrvierImpl部分将Input和Decoder组合到一起。它从Input得到Packet，根据Packet的类型将它派发到Decoder。得到点云后，通过用户的回调函数传递给用户。
+  + LidarDriverImpl提供Packet队列。Input收到MSOP/DIFOP Packet后，调用LidarDriverImpl的回调函数。回调函数将它保存到Packet队列。
+  + LidarDriverImpl提供Packet处理线程`handle_thread_`。在这个线程中，将MSOP Packet和DIFOP Packet分别派发给Decoder相应的处理函数。
   + Decoder解析完一帧点云时，通知LidarDriverImpl。后者再将点云传递给用户。
 
 ## 3 Packet接收
@@ -71,7 +70,7 @@ Input定义接收MSOP/DIFOP Packet的接口。
 
 ### 3.2 InputSock
 
-InputSock类从UDP Socket接收MSOP/DIFOP Packet。雷达将MSOP/DIFOP Packet发送到这个Socket上。
+InputSock类从UDP Socket接收MSOP/DIFOP Packet。雷达将MSOP/DIFOP Packet发送到这个Socket。
 
 ![InputSock](./img/class_input_sock.png)
 
@@ -114,11 +113,12 @@ start() 开始接收MSOP/DIFOP Packet。
 #### 3.2.4 InputSock::recvPacket()
 
 recvPacket() 接收MSOP/DIFOP Packet。
-在while循环中，
+在while()循环中，
+
 + 调用FD_ZERO()初始化本地变量`rfds`，调用FD_SET()将`fds_[2]`中的两个fd加入`rfds`。当然，如果MSOP/DIFOP Packet共用一个socket， 无效的`fds_[1]`就不必加入了。
-+ 调用select()在`rfds`上等待Packet, 超时值设置为`0.5`秒。
++ 调用select()在`rfds`上等待Packet, 超时值设置为`1`秒。
 如果select()的返回值提示`rfds`上有信号，调用FD_ISSET()检查是`fds_[]`中的哪一个fd可读。对这个fd，
-+ 调用回调函数`cb_get_pkt_`， 得到大小为`MAX_PKT_LEN`的缓存。`MAX_PKT_LEN` = `1500`，对当前Robosense雷达来说，够大了。
++ 调用回调函数`cb_get_pkt_`， 得到大小为`MAX_PKT_LEN`的缓存。`MAX_PKT_LEN` = `1500`，对当前RoboSense雷达来说，够大了。
 + 调用recvfrom()接收Packet，保存到这个缓存中
 + 调用回调函数`cb_put_pkt_`，将Packet派发给InputSock的使用者。
   + 注意在派发之前，调用Buffer::setData()设置了MSOP Packet在Buffer的中偏移量及长度，以便剥除`USER_LAYER`和`TAIL_LAYER`（如果有的话）。
@@ -150,7 +150,7 @@ InputPcap解析PCAP文件得到MSOP/DIFOP Packet。使用第三方工具，如Wi
 
 ![layers of packet](./img/packet_layers_full.png)
 
-+ PCAP库可能包括非UDP库的Packet。为了校验是否MSOP/DIFOP Packet，需要使用libpcap库的过滤器，也就是`bpf_program`，它由pcap_compile()生成。成员`msop_filter_`和`difop_filter_`分别是MSOP Packet和DIFOP Packet的过滤器。
++ PCAP文件中可能不止包括MSOP/DIFOP Packet，所以需要使用libpcap库的过滤功能。libpcap过滤器`bpf_program`，由库函数pcap_compile()生成。成员`msop_filter_`和`difop_filter_`分别是MSOP Packet和DIFOP Packet的过滤器。
   + MSOP/DIFOP Packet都是UDP Packet，所以给pcap_compile()指定选项`udp`。
   + 如果是基于VLAN的，则需要指定选项`vlan`
   + 如果在一个PCAP文件中包含多个雷达的Packet，则还需要指定选项 `udp dst port`，以便只提取其中一个雷达的Packet。
@@ -194,17 +194,17 @@ recvPacket()解析PCAP文件。
 
 如果是DIFOP Packet，处理与MSOP Packet一样。
 
-+ 调用this_thread::sleep_for()让解析线程睡眠一小会。这是为了模拟雷达发送MSOP Packet的间隔。这个间隔时间来自`Decoder`，每个雷达有自己的值。在`Decoder`部分，会说明如何计算这个值。
++ 调用this_thread::sleep_for()让解析线程睡眠一小会。这是为了模拟雷达发送MSOP Packet的间隔。这个间隔时间来自每个雷达的`Decoder`类，每个雷达有自己的值。在Decoder部分，会说明如何计算这个值。
 
 如果pcap_next_ex()不能读出Packet，一般意味着到了文件结尾，则：
 + 调用pcap_close()关闭pcap文件指针 `pcap_` 。
 
 用户配置RSInputParam的设置决定是否重新进行下一轮的解析。这个选项是`RSInputParam::pcap_repeat`。
-+ 如果这个选项为真，调用pcap_open_offline()重新打开PCAP文件。这时成员变量`pcap_`回到文件的开始位置。下一次调用pcap_next_ex()又可以重新得到PCAP文件的第一个Packet了。
++ 如果这个选项为真，调用pcap_open_offline()重新打开PCAP文件。这时成员变量`pcap_`回到文件的开始位置。下一次调用pcap_next_ex()，又可以重新得到PCAP文件的第一个Packet了。
 
 ### 3.4 InputRaw
 
-InputRaw是为了重播MSOP/DIFOP Packet而设计的Input类型。将在Packet Record/Replay章节中说明。
+InputRaw是为了重播MSOP/DIFOP Packet而设计的Input类型。将在后面的Packet Record/Replay章节中说明。
 
 ### 3.5 InputFactory
 
@@ -227,7 +227,7 @@ enum InputType
 
 createInput() 根据指定的类型，创建Input实例。
 + 创建InputPcap时，需指定`sec_to_delay`。这是InputPcap回放MSOP Packet的间隔。
-+ 创建InputRaw时，需指定`cb_feed_pkt`。这个将在Packet Record/Replay章节中说明。
++ 创建InputRaw时，需指定`cb_feed_pkt`。这个将在后面的Packet Record/Replay章节中说明。
 
 ## 4 Packet解析
 
@@ -244,7 +244,7 @@ createInput() 根据指定的类型，创建Input实例。
 
 其中前五个与点云直接相关。
 
-MSOP格式中的点是极坐标系的坐标，包括极径和极角。距离就是这里的极径。从距离和角度可计算直角垂直坐标系的坐标，也就是点云使用的坐标。
+MSOP格式中的点是极坐标系的坐标，包括极径和极角。距离就是这里的极径。从距离和角度可计算直角坐标系的坐标，也就是点云使用的坐标。
 
 #### 4.1.1 Distance
 
@@ -385,17 +385,17 @@ enum RSEchoMode
 
 不同雷达有不同的回波模式`return_mode`。每个Decoder实现自己的解析函数getEchoMode()，得到rs_driver的回波模式。
 
-回波模式会影响MSOP Packet的结构，还会影响点云的分帧。
+回波模式会影响MSOP Packet中数据的布局，还可能影响点云的分帧。
 
 ### 4.2 ChanAngles
 
 #### 4.2.1 垂直角/水平角的修正
 
-如前面MSOP格式的章节所说,理论上从distance、垂直角、水平角就可以计算点的直角坐标系的坐标。
+如前面MSOP格式的章节所说，理论上，从distance、垂直角、水平角就可以计算点的直角坐标系的坐标。
 
-但在实践中，装配雷达总是无可避免地有细微的误差，导致雷达的角度不精确，需要进行修正。雷达装配后的参数标定过程，会找出相关的修正值，写入雷达的寄存器。标定后，使用修正值调整点，就可以使其精度达到要求。
+但在生产实践中，装配雷达总是无可避免地有细微的误差，导致雷达的角度不精确，需要进行修正。雷达装配后的参数标定过程，会找出相关的修正值，写入雷达的寄存器。标定后，使用修正值调整点，就可以使其精度达到要求。
 
-MEMS雷达的角度修正，在雷达内部完成，所以驱动不需要做什么；机械式雷达的角度修正，由驱动在电脑主机端完成。
+MEMS雷达的角度修正，在雷达内部完成，所以rs_driver不需要做什么；机械式雷达的角度修正，由rs_driver在电脑主机端完成。
 
 这里说明机械式雷达的垂直角/水平角修正。
 
@@ -414,12 +414,12 @@ MEMS雷达的角度修正，在雷达内部完成，所以驱动不需要做什�
 
 ```
   89.4375, 81.0625, 78.25,   72.625,  67,      61.375,  55.75,   50.125, 
-  86.8125, 83.875,  75.4375, 69.8125, 64.1875, 58.5, 52.9375,    47.3125, 
+  86.8125, 83.875,  75.4375, 69.8125, 64.1875, 58.5,    52.9375, 47.3125, 
   44.5625, 38.875,  33.25,   27.625,  22,      16.375,  10.75,   5.125, 
   41.6875, 36.1875, 30.4375, 24.8125, 19.0625, 13.5625, 7.9375,  2.3125
 ```
 
-同时，水平角修正值的例子如下。（这里有32个值，对应RSBP的32个通道）
+类似的，水平角修正值的例子如下。（这里也有32个值，对应RSBP的32个通道）
 
 ```
    0.0625,  0.0625, -0.25,    0.625,  0,      -0.375,   0.75,   -0.125, 
@@ -525,7 +525,7 @@ typedef struct
 有些场景下，雷达可能还没有写入有效的修正值，或者是因为还没有标定，或者是由于雷达故障。这时可以从外部文件读入角度修正值。
 
 文件格式如下。
-+ 每行是对应一个通道的修正值。行中第`1`个值是垂直角，第`2`个值是水平角修正值。
++ 每行是对应一个通道的修正值。其中第`1`个值是垂直角，第`2`个值是水平角修正值。
 + 每行对应一个通道。所以对于RSBP来说，应该有`32`行。这个例子略去了部分行。
 
 ```
@@ -558,7 +558,7 @@ vertAdjust()根据内部通道编号，得到修正后的垂直角。
 
 点云中的`ring`值是从用户角度看的通道编号，它来自于ChanAngles的成员变量`user_chans_`。
 
-回到RSBP的例子，如下是它的垂直角，它们按照雷达内部通道编号排列，而不是降序或升序排列。换句话说，雷达内部通道不是按照垂直角的升序或降序编号的。
+回到RSBP的例子。如下是它的垂直角，它们按照雷达内部通道编号排列，而不是降序或升序排列。换句话说，雷达内部通道不是按照垂直角的升序/降序编号的。
 
 ```
  89.5,    81.0625, 78.25,   72.625,  67,      61.375,  55.75,   50.125, 
@@ -566,7 +566,7 @@ vertAdjust()根据内部通道编号，得到修正后的垂直角。
  44.5,    38.875,  33.25,   27.625,  22,      16.375,  10.75,   5.125, 
  41.6875, 36.0625, 30.4375, 24.8125, 19.1875, 13.5625, 7.9375,  2.3125
 ```
-但用户希望看到通道编号按照垂直角按升序或降序排列。
+但用户希望看到通道编号按照垂直角按升序/降序排列。
 
 ChanAngles的成员变量`user_chans`保存的是按升序排列的编号，也就是角度小的通道在前。
 
@@ -634,10 +634,12 @@ cos()查表返回角度的cos值。
 
 ![msop single return](./img/msop_single_return.png)
 
-雷达的每轮激光发射时序包括充能、发射等步骤。每轮发射内，相邻发射的时间戳不均匀，但每轮发射的持续时间（也是相邻两轮发射的时间差）相等。
+雷达的每轮激光发射时序包括充能、发射等步骤。虽然每轮发射的持续时间（也是相邻两轮发射的时间差）相同，但在每轮发射内，每次发射的时间不是均匀分布。
+
 以RSBP为例，
+
 + 一轮发射的时长为`55.52`纳秒，这是Block之间的时间差。
-+ 一轮发射中，`32`次发射的时间戳如下（相对于Block的相对时间，单位纳秒）。这是Block内的每个Channel相对于Block的相对时间。
++ 一轮发射内，`32`次发射的时间戳如下（相对于Block的相对时间，单位纳秒）。这是每个Channel对所属Block的相对时间。
 
 ```
   0.00,  2.56,  5.12,  7.68, 10.24, 12.80, 15.36, 17.92, 
@@ -650,7 +652,7 @@ cos()查表返回角度的cos值。
 
 MSOP格式中，Packet头部包含一个时间戳。
 
-如对于RSBP雷达，Packet的时间戳如下。
+如RSBP雷达，Packet的时间戳如下。
 
 ```
 RSTimestampYMD timestamp;
@@ -660,19 +662,19 @@ RSTimestampYMD timestamp;
 
 ```
 Block的时间戳 = Packet的时间戳 + Block的持续时间 * Block数
-Channel的时间戳 = 所在Block的时间戳  + Channel对Block的相对时间戳
+Channel的时间戳 = 所在Block的时间戳  + Channel对Block的相对时间
 ```
 
 #### 4.4.3 Channel的角度
 
 在MSOP格式中，Block的成员中包括水平角`azimuth`。
 
-雷达的旋转当然不是匀速的，但放到一个Block这么短时间内来看，认为旋转是匀速的，还是合理的。
+雷达的旋转当然不是匀速的，但放到一个Block这么短的时间内看，认为旋转是匀速的，还是合理的。
 
 所以，通过Channel占Block的时间比例，可以估计Channel对Block的相对水平角。
 
 ```
-Channel的水平角 = Block的水平角 + 当前Block与下一个Block的水平角差 * Channel对Block的相对时间戳 / Block的持续时间
+Channel的水平角 = Block的水平角 + 当前Block与下一个Block的水平角差 * Channel对Block的相对时间 / Block的持续时间
 ```
 
 #### 4.4.4 双回波模式的影响
@@ -687,7 +689,7 @@ Channel的水平角 = Block的水平角 + 当前Block与下一个Block的水平�
 
 #### 4.4.5 BlockIterator定义
 
-引入BlockIterator的目的是定义一个接口，来计算：
+引入BlockIterator的目的，是定义一个接口来计算：
 + Block的时间戳。这个时间戳是相对于Packet的时间戳。
 + Block与下一次Block的水平角差。也就是当前Block内雷达旋转的水平角。
 
@@ -719,7 +721,7 @@ SingleReturnBlockIterator实现单回波模式下的BlockIterator接口。
   ```
   Block水平角差 = 下一个Block的水平角 - 当前Block的水平角
   ```
-  + 最后一个Block的水平角差，认为等于`BLOCK_AZ_DURATION`，这时雷达理论上每个Block的水平角差。
+  + 最后一个Block的水平角差，认为等于`BLOCK_AZ_DURATION`，这是雷达理论上每个Block的水平角差。
 
 + 相邻Block可能跨`角度0`，所以它们的水平角差可能小于`0`，这时需要将它修正到[`0`, `36000`)内。
 
@@ -747,7 +749,7 @@ DualReturnBlockIterator实现双回波模式下的BlockIterator接口。
 
 双回波模式下，Ruby128是个特殊情况。
 
-Ruby128的每个block有`128`个Channel，每个block占的空间太大，以至于每个packet只能放下`3`个Block。这样一次扫描的两个Block可能在不同的Packet中。相邻的两个packet格式如下图。
+Ruby128的每个Block有`128`个Channel，每个Block占的空间太大，以至于每个packet只能放下`3`个Block。这样一次扫描的两个Block可能在不同的Packet中。相邻的两个packet格式如下图。
 
 ![msop ruby128](./img/msop_ruby128.png)
 
@@ -766,7 +768,7 @@ Block水平角差 = 第三个Block的水平角 - 第一个Block的水平角
 
 #### 4.4.9 RS16的Packet格式
 
-为了充分利用MSOP Packet的空间，RS16的Packet格式与其他机械式雷达不同。
+为了充分利用MSOP Packet的空间，16线雷达(如RS16)的Packet格式与其他机械式雷达不同。
 
 在单回波模式下，一组`16通道数据`包含一个回波，将相邻两组的回波数据放在同一Block中。如下图所示。
 
@@ -777,7 +779,7 @@ Block水平角差 = 第三个Block的水平角 - 第一个Block的水平角
 ![](./img/rs16_msop_dual_return.png)
 
 这样的结果是，
-+ Packet中的相邻BLOCK之间的角度差不再一定是`BLOCK_AZ_DURATION`，时间差也不再一定是`BLOCK_DURATION`。
++ MSOP Packet中的相邻Block之间的角度差不再一定是`BLOCK_AZ_DURATION`，时间差也不再一定是`BLOCK_DURATION`。
 + 对于RS16，RSDecoderConstParam.CHANNELS_PER_BLOCK = 32。遍历所有通道时，这个值需要做一次映射，才能得到实际的通道值。
 
 ```
@@ -793,7 +795,7 @@ RS16SingleReturnBlockIterator和RS16DualReturnBlockIterator，分别处理RS16�
 
 ##### 4.4.9.1 Rs16SingleReturnBlockIterator() 
 
-在构造函数中，遍历Packet中的block，并计算az_diffs[]和tss[]。
+在构造函数中，遍历Packet中的Block，并计算az_diffs[]和tss[]。
 
 与SingleReturnBlockIterator()中不同的地方是：单回波模式下，一个Block中包括相邻的两个通道数据。
 + 缺省的角度差是`BLOCK_AZ_DURATION` * 2
@@ -807,9 +809,10 @@ calcChannel()计算单回波模式下，32个Channel的角度占比，和时间�
 
 ##### 4.4.10.1 Rs16DualReturnBlockIterator() 
 
-双回波模式下，Block两两成对。
+在构造函数中，遍历Packet中的Block，并计算az_diffs[]和tss[]。
 
-在构造函数中，遍历Packet中的Block，并计算az_diffs[]和tss[]。与Rs16DualReturnBlockIterator不同的地方是：双回波模式下，一个Block中包括两个回波的数据。
+与Rs16DualReturnBlockIterator不同的地方是：双回波模式下，一个Block中包括两个回波的数据。
+
 + 缺省的角度差是`BLOCK_AZ_DURATION`
 + 缺省的时间差是`BLOCK_DURATION`
 
@@ -821,7 +824,7 @@ calcChannel()计算双回波模式下，32个Channel的角度占比,和时间戳
 
 机械式雷达的扫描角度是[0,360)，这也是雷达输出点的角度范围。
 
-也可以限制雷达的输出角度，如下图。
+也可以对雷达进行设置，限制它的输出角度，如下图。
 + FOV的范围是[start_angle,end_angle)。
 + 与FOV互补的角度范围FOV_blind是FOV的盲区，雷达不会输出这个范围的点。
 
@@ -855,7 +858,8 @@ void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt);
 #### 4.5.2 FOV对BlockIterator的影响
 
 在BlockIterator的各种实现中，需要考虑Packet的相邻两个Block跨过FOV盲区的情况。
-如果跨过盲区，则
+如果跨过盲区，则：
+
 + 第一个Block的水平角度差调整为`BLOCK_AZ_DURATION`。这时理论上每个Block的水平角差。
 + 两个Block的时间差调整为`FOV_BLIND_DURATION`。这个值是盲区时间差，也就是前面说的`fov_blind_ts_diff_`。
 
@@ -873,7 +877,7 @@ void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt);
 ![split angle](./img/split_angle.png)
 
 + 按理论上每圈的Block数分帧。这样每帧包含的Block数和点数都是固定的。
-  + Robosense雷达支持两种转速：`600`圈/分钟和`1200`圈/分钟。以`600`圈/分钟距离，相当于每圈`0.1`秒，而Block的持续时间是固定的，由此计算理论上每圈的block数（实际上是假设雷达转速均匀）
+  + Robosense雷达支持两种转速：`600`圈/分钟和`1200`圈/分钟。以`600`圈/分钟距离，相当于每圈`0.1`秒，而Block的持续时间是固定的，由此计算理论上每圈的Block数（实际上是假设雷达转速均匀）
   
 ```
  每圈Block数 = 每圈秒数 / Block持续时间
@@ -885,7 +889,7 @@ void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt);
 #### 4.6.2 SplitStrategy
 
 SplitStrategy定义机械式雷达的分帧模式接口。
-+ 使用者遍历Packet中的Block，用block的水平角调用SplitStrategy::newBlock()。应该分帧时，newBlock()返回`true`,否则返回`false`。
++ 使用者遍历Packet中的Block，以Block的水平角为参数，调用SplitStrategy::newBlock()。应该分帧时，newBlock()返回`true`,否则返回`false`。
 
 ![split strategy](./img/classes_split_strategy.png)
 
@@ -903,7 +907,7 @@ SplitStrategyByAngle按Block角度分帧。
 
 #### 4.6.4 SplitStrategyByNum
 
-SplitStrategyByNum实现按block数分帧。
+SplitStrategyByNum实现按Block数分帧。
 + 成员`max_blks_`是每帧的Block数。
 + 成员`blks_`是当前已累积的Block数。
 
@@ -914,7 +918,7 @@ newBlock()简单地累加Block数到成员`blks_`，当`blk_`达到`max_blks_`�
 #### 4.6.5 MEMS雷达的分帧模式
 
 MEMS雷达的分帧是在雷达内部确定的。
-+ 一帧的Packet数是固定的。假设这个数为`N`, 则雷达给Packet编号，从`1`开始，依次编号到`N`。
++ 一帧的MSOP Packet数是固定的。假设这个数为`N`, 则雷达给Packet编号，从`1`开始，依次编号到`N`。
 + 对于RSM1，单回波模式下，Packet数是`630`；在双回波模式下，输出的点数要翻倍，相应的，Packet数也要翻倍，Packet数是`1260`。
 
 #### 4.6.6 SplitStrategyByPktSeq
@@ -922,13 +926,13 @@ MEMS雷达的分帧是在雷达内部确定的。
 SplitStrategyBySeq按Packet编号分帧。
 + 注意SplitStrategyBySeq的接口与SplitStrategy不同，不是后者的派生类。
 + 成员变量`prev_seq_`是前一个Packet的编号。
-+ 成员变量`safe_seq_min_`和`safe_seq_max`，是基于`prev_seq_`的一个安全区间。稍后说明它的用处。
++ 成员变量`safe_seq_min_`和`safe_seq_max`，是基于`prev_seq_`的一个安全区间。
 
 ![split strategy by seq](./img/classes_split_strategy_by_seq.png)
 
 ##### 4.6.6.1 SplitStrategyByPktSeq::newPacket()
 
-使用者用Packet的编号值，调用newPacket()。如果分帧，返回`true`。
+使用者用MSOP Packet的编号值，调用newPacket()。如果分帧，返回`true`。
 
 MSOP使用UDP协议，理论上Packet可能丢包、乱序。
 
@@ -947,7 +951,7 @@ safe_seq_max_ = prev_seq_ + RANGE
 
 ![safe range](./img/safe_range.png)
 
-+ 如果Packet在范围(`safe_seq_min_`, `safe_seq_max_`)内，都不算异常，丢包、乱序都不触发分帧。这样大多数情况，之前的问题可以避免。
++ 如果Packet在范围(`safe_seq_min_`, `safe_seq_max_`)内，都不算异常，丢包、乱序都不触发分帧。这样在大多数情况下，之前的问题可以避免。
 
 ### 4.7 点云的有效性校验
 
@@ -982,9 +986,10 @@ Decoder解析雷达MSOP/DIFOP Packet，得到点云。
 + 它是针对所有雷达的接口类，包括机械式雷达和MEMS雷达。
 
 DecoderMech派生于Decoder，给机械式雷达完成一些通用的功能，如解析DIFOP Packet。
+
 每个机械式雷达分别派生自DecoderMech的类，如DecoderRS16、DecoderRS32、DecoderBP、DecoderRSHELIOS、DecoderRS80、DecoderRS128等。
 
-MEMS雷达的类直接派生自Decoder。
+MEMS雷达的类，如DecoderRSM1，直接派生自Decoder。
 
 DecoderFactory根据指定的雷达类型，生成Decoder实例。
 
@@ -995,7 +1000,7 @@ DecoderFactory根据指定的雷达类型，生成Decoder实例。
 如下图是Decoder的详细定义。
 + 成员`const_param_`是雷达的参数配置。
 + 成员`param_`是用户的参数配置。
-+ 成员`trigon_`是Trigon类的实例，提供快速的sin()/cos()计算。定义如下的宏，可以清晰、方便调用它。
++ 成员`trigon_`是Trigon类的实例，提供快速的sin/cos计算。定义如下的宏，可以清晰、方便调用它。
 
 ```
 #define SIN(angle) this->trigon_.sin(angle)
@@ -1064,7 +1069,7 @@ processDifopPkt()处理DIFOP Packet。
 
 processMsopPkt()处理MSOP Packet。
 + 检查当前配置信息是否已经就绪(`angles_ready_`)。
-  + 当`angles_readys` = `false`时，驱动还没有获得垂直角信息，这时得到的点云是扁平的。所以用户一般希望等待`angles_ready` = `true` 才输出点云。
+  + 对于机械式雷达，当`angles_readys` = `false`时，驱动还没有获得垂直角信息，这时得到的点云是扁平的。所以用户一般希望等待`angles_ready` = `true` 才输出点云。
   + 通过用户配置参数`RSDecoderParam::wait_for_difop`，可以设置是否等待配置信息就绪。
 + 校验DIFOP Packet的长度是否匹配。
 + 校验DIFOP Packet的标志字节是否匹配。
@@ -1091,14 +1096,14 @@ DecoderMech处理机械式雷达的共同特性，如转速，分帧角度、光
 + 成员`split_blks_per_frame_`是按Block数分帧时，每帧的Block数。包括按理论上每圈Block数分帧，和按用户指定的Block数分帧。
 + 成员`block_azi_diff_`是理论上相邻block之间的角度差。
 + 成员`fov_blind_ts_diff_`是FOV盲区的时间差
-+ 成员`lidar_alpha0_`和`lidar_Rxy_`是雷达光心相对于物理中心的位置参数。MSOP格式中的点的坐标是相对于光心的，需要借助这两个值，将它转换到相对于物理中心。
++ 成员`lidar_alpha0_`和`lidar_Rxy_`是雷达光学中心相对于物理中心的位置参数。MSOP格式中的点的坐标是相对于光学中心的，需要借助这两个值，将它转换到相对于物理中心。
 
 ![decoder mech](./img/class_decoder_mech.png)
 
 ##### 4.8.2.1 RSDecoderMechConstParam
 
 RSDecoderMechConstParam基于RSDecoderConstParam，增加机械式雷达特有的参数。
-+ `RX`、`RY`、`RZ`是雷达光心相对于物理中心的坐标。`lidar_alpha0_`和`lidar_Rxy_`由它们计算而来。
++ `RX`、`RY`、`RZ`是雷达光学中心相对于物理中心的坐标。`lidar_alpha0_`和`lidar_Rxy_`由它们计算而来。
 + `BLOCK_DURATION`是Block的持续时间。
 + `CHAN_TSS[]`是Block中Channel对Block的相对时间。
 + `CHAN_AZIS[]`是Block中Channel占Block的时间比例，也是水平角比例。
@@ -1119,8 +1124,8 @@ struct RSDecoderMechConstParam
   float CHAN_AZIS[128];
 };
 ```
-+ Decoder初始化时，从每轮激光发射中的发射时间列表，计算`CHAN_TSS[]`、`CHAN_AZIS[]`。这可以简化每个Channel的时间戳和角度的计算。
-前面的"Channel的时间戳"章节，已经列出过这个发射时间列表。如下。
++ Decoder初始化时，从每轮激光发射中的每次发射时间表，计算`CHAN_TSS[]`、`CHAN_AZIS[]`。这可以简化每个Channel的时间戳和角度的计算。
+前面的"Channel的时间戳"章节，已经列出过RSBP的发射时间表，如下。
 
 ```
   0.00,  2.56,  5.12,  7.68, 10.24, 12.80, 15.36, 17.92, 
@@ -1144,7 +1149,7 @@ decodeDifopCommon()解析DIFOP Packet。
 每帧Block数 = (1/rps) / Block的持续时间
 ```
 
-+ 计算相邻block之间的角度差，也就是`block_azi_diff_`。
++ 计算相邻Block之间的角度差，也就是`block_azi_diff_`。
 
 ```
 Block间的角度差 = 360 / 每帧Block数
@@ -1244,7 +1249,7 @@ decodeMsopPkt()使用不同的模板参数调用internDecodeMsopPkt()。
 
 #### 4.8.4 DecoderRS16
 
-RS16的处理与别的机械式雷达不同。请参考前面的“RS16的Packet格式”等章节。
+RS16的处理与其他机械式雷达有差异，请先参考前面的“RS16的Packet格式”等章节。
 
 ##### 4.8.4.1 DecoderRS16::internDecodeMsopPkt()
 
@@ -1365,7 +1370,7 @@ typedef struct RSDriverParam
 组合Input,
 + 成员`free_pkt_queue_`、`pkt_queue_`分别保存空闲的Packet， 待处理的MSOP/DIFOP Packet。
   + 这2个队列是SyncQueue类的实例。SyncQueue提供多线程访问的互斥保护。
-+ 函数packetGet()和packetPut()用来向input_ptr_注册。`input_ptr_`调用前者得到空闲的Buffer，和调用后者派发填充好Packet的Buffer。
++ 函数packetGet()和packetPut()用来向input_ptr_注册。`input_ptr_`调用前者得到空闲的Buffer，调用后者派发填充好Packet的Buffer。
 
 组合Decoder,
 + 成员`cb_get_cloud_`和`cb_put_cloud_`是回调函数，由驱动的使用者提供。它们的作用类似于Input类的`cb_get_pkt_`和`cb_put_pkt_`。驱动调用`cb_get_cloud_`得到空闲的点云，调用`cb_put_cloud_`派发填充好的点云。
@@ -1440,7 +1445,7 @@ getTemperature()调用Decoder::getTemperature()， 得到雷达温度。
 
 ## 5 Packet的录制与回放
 
-使用者调试自己的程序时，点云的录制与回放是有用的。同时，点云占的空间较大，而MSOP/DIFOP Packet占的较小，所以Packet的录制与回放是更好的选择。
+使用者调试自己的程序时，点云的录制与回放是有用的，只是点云占的空间比较大。MSOP/DIFOP Packet占的空间较小，所以Packet的录制与回放是更好的选择。
 
 与MSOP/DIFP Packet的录制与回放相关的逻辑，散布在rs_driver的各个模块中，所以这里单独分一个章节说明。
 
@@ -1474,10 +1479,8 @@ getTemperature()调用Decoder::getTemperature()， 得到雷达温度。
 ![InputRaw](./img/class_input_raw.png)
 
 InputRaw回放MOSP/DIFOP Packet。
-+ 使用者从某种源（比如文件）中解析MSOP/DIFOP Packet，调用InputRaw的成员函数feedPacket()，将Packet喂给它。
++ 使用者从某种数据源（比如rosbag文件）中解析MSOP/DIFOP Packet，调用InputRaw的成员函数feedPacket()，将Packet喂给它。
   + 在feedPacket()中，InputRaw简单地调用成员`cb_put_pkt_`，将Packet推送给调用者。这样，它的后端处理就与InputSock/InputPcap一样了。
-
-所以除了输出点云之外，驱动还可以直接输出Packet，以后再重新导入进行播放。
 
 #### 5.2.2 LidarDriverImpl
 
@@ -1489,14 +1492,14 @@ InputRaw回放MOSP/DIFOP Packet。
 点云的时间戳来自于MSOP Packet的时间戳。MSOP Packet的时间戳可以有两种产生方式。
 + 用户配置参数`RSDecoderParam::use_lidar_clock`决定使用哪种方式。
 + `use_lidar_clock` = `true`时， 使用雷达产生的时间戳，这个时间戳在Packet中保存。这种情况下，一般已经使用时间同步协议对雷达做时间同步。
-+ `use_lidar_clock` = `false`时， 忽略Packet中的时间戳，在电脑主机侧由驱动重新产生一个。
++ `use_lidar_clock` = `false`时， 忽略Packet中的时间戳，在电脑主机侧由rs_driver重新产生一个。
 
 #### 5.3.1 使用雷达时间戳
 
 录制时，设置`use_lidar_clock` = `true`
 + 解析MSOP Packet的时间戳。这个时间戳是雷达产生的。
 + 输出的点云使用这个时间戳
-+ 如果输出Packet，也是用这个时间戳
++ 如果输出Packet，也是这个时间戳
 
 回放时，设置`use_lidar_clock` = `true`
 + MSOP Packet内保存的仍然是雷达产生的时间戳。
@@ -1505,13 +1508,13 @@ InputRaw回放MOSP/DIFOP Packet。
 #### 5.3.2 使用主机时间戳
 
 录制时，设置`use_lidar_clock` = `false`
-+ rs_driver在电脑主机侧重新产生时间戳。这个时间戳记录到用户的Packet文件中；如果这时有点云输出，使用rs_driver产生的时间戳
-  + 在DecoderRSBP::internDecodeMsopPacket()中，rs_driver调用getTimeHost()产生时间戳，然后调用createTimeYMD()，用这个新时间戳替换Packet中老的。
++ rs_driver在电脑主机侧重新产生时间戳。这个时间戳覆盖Packet文件中原有的时间戳；如果这时有点云输出，使用rs_driver产生的时间戳
+  + 在DecoderRSBP::internDecodeMsopPacket()中，rs_driver调用getTimeHost()产生时间戳，然后调用createTimeYMD()，用这个新时间戳替换Packet中原有的时间戳。
 + 这时输出的Packet的时间戳是rs_driver产生的时间戳
 
 回放时，设置`use_lidar_clock` = `true`
 + 解析MSOP Packet的时间戳。这个时间戳是录制时rs_driver在电脑主机侧产生的。
-+ 输出的点云使用这个时间戳
++ 输出的点云使用这个时间戳。
 
 
 

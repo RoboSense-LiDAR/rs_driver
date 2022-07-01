@@ -7,10 +7,15 @@
 - Add option to stamp point cloud with first point
 
 ### Updated
-- Different 80/80v with lidar model
+- Distinguish 80/80v with lidar model
 - Use ROS coordinate for EOS 
 - Enable PCAP file parsing in default mode
 - Parse DIFOP packet in case of jumbo pcap file
+- Update demo_online example to use ponit cloud queue
+- Update help documents
+
+### Fixed
+- Fix lidar temperature 
 
 ## v1.5.3 2022-06-01
 
