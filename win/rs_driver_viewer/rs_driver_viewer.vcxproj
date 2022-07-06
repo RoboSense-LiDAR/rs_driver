@@ -81,8 +81,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Program Files\WpdPack_4_1_2\WpdPack\Include;C:\Program Files\PCL 1.11.1\include\pcl-1.11;C:\Program Files\PCL 1.11.1\3rdParty\Boost\include\boost-1_74;C:\Program Files\PCL 1.11.1\3rdParty\Eigen\eigen3;C:\Program Files\PCL 1.11.1\3rdParty\FLANN\include;C:\Program Files\PCL 1.11.1\3rdParty\Qhull\include;C:\Program Files\PCL 1.11.1\3rdParty\VTK\include\vtk-8.2;C:\Program Files\PCL 1.11.1\3rdParty\OpenNI2\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\WpdPack_4_1_2\WpdPack\Lib\x64;C:\Program Files\PCL 1.11.1\lib;C:\Program Files\PCL 1.11.1\3rdParty\Boost\lib;C:\Program Files\PCL 1.11.1\3rdParty\FLANN\lib;C:\Program Files\PCL 1.11.1\3rdParty\Qhull\lib;C:\Program Files\PCL 1.11.1\3rdParty\VTK\lib;C:\Program Files\PCL 1.11.1\3rdParty\OpenNI2\Lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files\WpdPack_4_1_2\WpdPack\Include;C:\Program Files\PCL 1.11.1\include\pcl-1.11;C:\Program Files\PCL 1.11.1\3rdParty\Boost\include\boost-1_74;C:\Program Files\PCL 1.11.1\3rdParty\Eigen\eigen3;C:\Program Files\PCL 1.11.1\3rdParty\FLANN\include;C:\Program Files\PCL 1.11.1\3rdParty\Qhull\include;C:\Program Files\PCL 1.11.1\3rdParty\VTK\include\vtk-8.2;C:\Program Files\OpenNI2\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files\WpdPack_4_1_2\WpdPack\Lib\x64;C:\Program Files\PCL 1.11.1\lib;C:\Program Files\PCL 1.11.1\3rdParty\Boost\lib;C:\Program Files\PCL 1.11.1\3rdParty\FLANN\lib;C:\Program Files\PCL 1.11.1\3rdParty\Qhull\lib;C:\Program Files\PCL 1.11.1\3rdParty\VTK\lib;C:\Program Files\OpenNI2\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
