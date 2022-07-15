@@ -43,7 +43,8 @@ namespace lidar
 enum LidarType  ///< LiDAR type
 {
   // mechanical
-  RS16 = 0x01,
+  RS_MECH = 0x01,
+  RS16 = RS_MECH,
   RS32,
   RSBP,
   RS128,
@@ -57,7 +58,8 @@ enum LidarType  ///< LiDAR type
   RSROCK,
 
   // mems
-  RSM1 = 0x20,
+  RS_MEMS = 0x20,
+  RSM1 = RS_MEMS,
   RSM2,
   RSEOS,
 
@@ -65,6 +67,21 @@ enum LidarType  ///< LiDAR type
   RS_JUMBO = 0x100,
   RSM1_JUMBO = RS_JUMBO + RSM1,
 };
+
+inline bool isMech(LidarType type)
+{
+  return ((LidarType::RS_MECH <= type) && (type < LidarType::RS_MEMS));
+}
+
+inline bool isMems (LidarType type)
+{
+  return ((LidarType::RS_MEMS <= type) && (type < LidarType::RS_JUMBO));
+}
+
+inline bool isJumbo (LidarType type)
+{
+  return (LidarType::RS_JUMBO <= type);
+}
 
 inline std::string lidarTypeToStr(const LidarType& type)
 {
