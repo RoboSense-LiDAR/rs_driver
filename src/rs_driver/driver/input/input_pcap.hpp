@@ -144,6 +144,7 @@ inline InputPcap::~InputPcap()
   if (pcap_ != NULL)
   {
     pcap_close(pcap_);
+    pcap_ = NULL;
   }
 }
 
@@ -157,6 +158,7 @@ inline void InputPcap::recvPacket()
     if (ret < 0)  // reach file end.
     {
       pcap_close(pcap_);
+      pcap_ = NULL;
 
       if (input_param_.pcap_repeat)
       {
