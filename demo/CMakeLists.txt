@@ -21,7 +21,6 @@ add_executable(demo_online
               demo_online.cpp)
 
 target_link_libraries(demo_online
-                    pthread
                     ${EXTERNAL_LIBS})
 
 if(NOT ${DISABLE_PCAP_PARSE})
@@ -30,7 +29,6 @@ add_executable(demo_pcap
                demo_pcap.cpp)
 
 target_link_libraries(demo_pcap
-                      pthread
                      ${EXTERNAL_LIBS})
 
 endif(NOT ${DISABLE_PCAP_PARSE})

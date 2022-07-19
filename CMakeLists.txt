@@ -83,12 +83,14 @@ set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 set(DRIVER_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
 set(DRIVER_CMAKE_ROOT ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
-# fix pthread missing on ubuntu18.04 or ubuntu20.04
 if(WIN32)
 else()
-  list(APPEND EXTERNAL_LIBS pthread)
+  if (CMAKE_SYSTEM_NAME STREQUAL "QNX")
+    list(APPEND EXTERNAL_LIBS socket)
+  else()
+    list(APPEND EXTERNAL_LIBS pthread)
+  endif()
 endif(WIN32)
-
 
 #========================
 #  Build Features
