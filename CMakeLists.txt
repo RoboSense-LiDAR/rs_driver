@@ -21,7 +21,6 @@ endif()
 option(DISABLE_PCAP_PARSE "Disable PCAP file parse" OFF) 
 option(ENABLE_TRANSFORM "Enable transform functions" OFF)
 option(ENABLE_EPOLL_RECEIVE "Receive packets with epoll() instead of select()" OFF)
-option(ENABLE_HIGH_PRIORITY_THREAD "Use High priority thread to receive packets" OFF)
 option(ENABLE_RECVMMSG "Enable recvmmsg() to receive MSOP message" OFF)
 option(ENABLE_PCL_POINTCLOUD "Enable PCL Point Cloud" OFF)
 
@@ -104,16 +103,6 @@ if(${ENABLE_EPOLL_RECEIVE})
 
   add_definitions("-DENABLE_EPOLL_RECEIVE")
 endif(${ENABLE_EPOLL_RECEIVE})
-
-
-if(${ENABLE_HIGH_PRIORITY_THREAD})
-
-  message(=============================================================)
-  message("-- Enable High Priority Thread")
-  message(=============================================================)
-
-  add_definitions("-DENABLE_HIGH_PRIORITY_THREAD")
-endif(${ENABLE_HIGH_PRIORITY_THREAD})
 
 if(${DISABLE_PCAP_PARSE})
 

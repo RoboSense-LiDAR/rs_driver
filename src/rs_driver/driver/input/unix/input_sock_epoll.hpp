@@ -62,7 +62,6 @@ public:
 
 private:
   inline void recvPacket();
-  inline void higherThreadPrioty(std::thread::native_handle_type handle);
   inline int createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp);
 
 protected:
@@ -72,21 +71,6 @@ protected:
   size_t sock_offset_;
   size_t sock_tail_;
 };
-
-inline void InputSock::higherThreadPrioty(std::thread::native_handle_type handle)
-{
-#ifdef ENABLE_HIGH_PRIORITY_THREAD
-  int policy;
-  sched_param sch;
-  pthread_getschedparam(handle, &policy, &sch);
-
-  sch.sched_priority = 63;
-  if (pthread_setschedparam(handle, SCHED_RR, &sch))
-  {
-    std::cout << "setschedparam failed: " << std::strerror(errno) << std::endl;
-  }
-#endif
-}
 
 inline bool InputSock::init()
 {
@@ -158,8 +142,6 @@ inline bool InputSock::start()
   }
 
   recv_thread_ = std::thread(std::bind(&InputSock::recvPacket, this));
-
-  higherThreadPrioty(recv_thread_.native_handle());
 
   start_flag_ = true;
   return true;
