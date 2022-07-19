@@ -18,10 +18,11 @@ endif()
 #=============================
 #  Compile Features
 #=============================
-option(DISABLE_PCAP_PARSE "Disable PCAP file parse" OFF) 
-option(ENABLE_TRANSFORM "Enable transform functions" OFF)
-option(ENABLE_EPOLL_RECEIVE "Receive packets with epoll() instead of select()" OFF)
-option(ENABLE_RECVMMSG "Enable recvmmsg() to receive MSOP message" OFF)
+option(DISABLE_PCAP_PARSE    "Disable PCAP file parse" OFF) 
+option(ENABLE_TRANSFORM      "Enable transform functions" OFF)
+option(ENABLE_EPOLL_RECEIVE  "Receive packets with epoll() instead of select()" OFF)
+option(ENABLE_RECVMMSG       "Enable recvmmsg() to receive MSOP message" OFF)
+option(ENABLE_DOUBLE_RCVBUF  "Enable double size of RCVBUF" OFF)
 option(ENABLE_PCL_POINTCLOUD "Enable PCL Point Cloud" OFF)
 
 #=============================
@@ -146,6 +147,10 @@ endif(${ENABLE_TRANSFORM})
 if(${ENABLE_RECVMMSG})
   add_definitions("-DENABLE_RECVMMSG")
 endif(${ENABLE_RECVMMSG})
+
+if(${ENABLE_DOUBLE_RCVBUF})
+  add_definitions("-DENABLE_DOUBLE_RCVBUF")
+endif(${ENABLE_DOUBLE_RCVBUF})
 
 if(${COMPILE_DEMOS})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/demo)

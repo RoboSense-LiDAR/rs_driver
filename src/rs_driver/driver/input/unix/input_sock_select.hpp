@@ -188,6 +188,16 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
     }
   }
 
+#ifdef ENABLE_DOUBLE_RCVBUF
+  {
+    uint32_t opt_val;
+    socklen_t opt_len = sizeof(uint32_t);
+    getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&opt_val, &opt_len);
+    opt_val *= 4;
+    setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&opt_val, opt_len);
+  }
+#endif
+
   {
     int flags = fcntl(fd, F_GETFL, 0);
     ret = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
