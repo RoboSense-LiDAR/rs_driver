@@ -42,7 +42,7 @@ class AzimuthSection
 public:
   AzimuthSection(int32_t start, int32_t end)
   {
-    full_round_ = ((start == 0) && (end == 36000));
+    full_round_ = (start == 0) && (end == 36000);
 
     start_ = start % 36000;
     end_ = end % 36000;
