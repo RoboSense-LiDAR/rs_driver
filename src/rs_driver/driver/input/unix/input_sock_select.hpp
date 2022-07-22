@@ -116,6 +116,7 @@ inline bool InputSock::start()
     return false;
   }
 
+  to_exit_recv_ = false;
   recv_thread_ = std::thread(std::bind(&InputSock::recvPacket, this));
 
   start_flag_ = true;
