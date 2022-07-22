@@ -25,7 +25,7 @@ Below are the supported LiDARS.
 
 ## 3 Supported Platforms
 
-**rs_driver** is compatible with the following platforms and compilers: 
+**rs_driver** is compatible with the following platforms and compilers. Note the compiler should support C++ 14.
 
 - Ubuntu (16.04, 18.04)
   - gcc (4.8+)

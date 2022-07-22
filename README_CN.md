@@ -25,7 +25,7 @@
 
 ## 3 支持的操作系统
 
-支持的操作系统及编译器如下。
+支持的操作系统及编译器如下。注意编译器需支持C++14标准。
 - Ubuntu (16.04, 18.04, 20.04)
   - gcc (4.8+)
 
@@ -89,17 +89,17 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 #### libpcap
 
-  安装[libpcap运行库](https://www.winpcap.org/install/bin/WinPcap_4_1_3.exe)。
+安装[libpcap运行库](https://www.winpcap.org/install/bin/WinPcap_4_1_3.exe)。
 
-  解压[libpcap开发者包](https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip)到任意位置，并将```WpdPack_4_1_2/WpdPack``` 的路径添加到环境变量```PATH```。
+解压[libpcap开发者包](https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip)到任意位置，并将```WpdPack_4_1_2/WpdPack``` 的路径添加到环境变量```PATH```。
 
 #### PCL
 
-  如果使用MSVC编译器，可使用PCL官方提供的[PCL安装包](https://github.com/PointCloudLibrary/pcl/releases)安装。
+如果使用MSVC编译器，可使用PCL官方提供的[PCL安装包](https://github.com/PointCloudLibrary/pcl/releases)安装。
 
-  安装过程中选择 “Add PCL to the system PATH for xxx”:
+安装过程中选择 “Add PCL to the system PATH for xxx”:
 
-  ![](./doc/img/01_install_pcl.PNG)
+![](./doc/img/01_install_pcl.PNG)
 
 ### 6.2 安装
 
