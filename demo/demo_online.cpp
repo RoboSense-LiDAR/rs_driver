@@ -38,6 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/msg/point_cloud_msg.hpp>
 #endif
 
+//#define ORDERLY_EXIT
+
 typedef PointXYZI PointT;
 typedef PointCloudT<PointT> PointCloudMsg;
 
@@ -87,9 +89,10 @@ void exceptionCallback(const Error& code)
   RS_WARNING << code.toString() << RS_REND;
 }
 
+bool to_exit_process = false;
 void processCloud(void)
 {
-  while (1)
+  while (!to_exit_process)
   {
     std::shared_ptr<PointCloudMsg> msg = cloud_queue.popWait();
     if (msg.get() == NULL)
@@ -127,13 +130,23 @@ int main(int argc, char* argv[])
     RS_ERROR << "Driver Initialize Error..." << RS_REND;
     return -1;
   }
+
   driver.start();  ///< The driver thread will start
   RS_DEBUG << "RoboSense Lidar-Driver Linux online demo start......" << RS_REND;
 
+#ifdef ORDERLY_EXIT
+  std::this_thread::sleep_for(std::chrono::seconds(10));
+
+  driver.stop();
+
+  to_exit_process = true;
+  cloud_handle_thread.join();
+#else
   while (true)
   {
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+#endif
 
   return 0;
 }
