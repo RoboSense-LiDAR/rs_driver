@@ -1,8 +1,24 @@
-# Changelog
+# ChangeLog
 
 ## Unreleased
 
+## v1.5.5 2022-08-01
+
 ### Added
+- Compiled rs_driver_viewer on Windows, and add help doc
+- Add option to double RECVBUF of UDP sockets
+
+### Changed 
+- Update demo_online to exit orderly.
+
+### Fixed
+- Fix runtime error of Eigen in case of ENABLE_TRANSFORM 
+- Fix Compiling error on QNX
+- Fix pcap_rate
+- Fix the problem with repeated stop and start of driver
+
+### Removed
+- Remove option of high priority thread
 
 ## v1.5.4 2022-07-01
 
