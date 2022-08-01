@@ -36,9 +36,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS_16P.hpp>
-#include <rs_driver/driver/decoder/decoder_RS48.hpp>
-#include <rs_driver/driver/decoder/decoder_RS80.hpp>
 #include <rs_driver/driver/decoder/decoder_RS128.hpp>
+#include <rs_driver/driver/decoder/decoder_RS80.hpp>
+#include <rs_driver/driver/decoder/decoder_RS48.hpp>
 #include <rs_driver/driver/decoder/decoder_RSP128.hpp>
 #include <rs_driver/driver/decoder/decoder_RSP80.hpp>
 #include <rs_driver/driver/decoder/decoder_RSP48.hpp>

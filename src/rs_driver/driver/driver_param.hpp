@@ -47,15 +47,14 @@ enum LidarType  ///< LiDAR type
   RS16 = RS_MECH,
   RS32,
   RSBP,
+  RSHELIOS,
+  RSHELIOS_16P,
   RS128,
   RS80,
   RS48,
   RSP128,
   RSP80,
   RSP48,
-  RSHELIOS,
-  RSHELIOS_16P,
-  RSROCK,
 
   // mems
   RS_MEMS = 0x20,
