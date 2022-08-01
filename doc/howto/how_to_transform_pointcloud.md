@@ -1,4 +1,4 @@
-# How to use transform point cloud
+# How to transform point cloud
 
 ## 1 Introduction
 

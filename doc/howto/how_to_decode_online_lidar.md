@@ -103,12 +103,14 @@ Here user may add new member variables, remove member variables, or change the o
 
 ### 3.3 Point in Point Cloud
 
-Here is an example of 5_lasers Lidar. 
+For mechanical Lidar, it may be useful to explain how the layout of point cloud is like. 
+
+Here is an example of mechanical 5_lasers Lidar. 
 
 The Lidar scans block by block. It starts from b0c0(block 0 channel/laser 0), b0c1, b0c2, b0c3, b0c4, and then go to b1c0, b1c1, b1c2, b1c3, b1c4, and so on.
 ![](../img/11_rs_driver_point_cloud.png)
 
-At the same time, it saves the points in a point vector, point by point, as below.
+At the same time, it saves the points in a vector, point by point, as below.
 ![](../img/11_rs_driver_point_cloud_vector.png)
 
 ### 3.4 Define the driver object

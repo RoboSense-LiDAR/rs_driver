@@ -1,4 +1,4 @@
-# How to visualize the point cloud with rs_driver_viewer
+# How to visualize point cloud with rs_driver_viewer
 
 ## 1 Introduction
 

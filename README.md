@@ -31,7 +31,7 @@ Below are the supported LiDARS.
   - gcc (4.8+)
 
 - Windows
-  - MSVC ( tested with VS2019)
+  - MSVC ( tested with Win10 / VS2019)
 
 ## 4 Dependency Libraries
 

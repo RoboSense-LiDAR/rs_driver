@@ -30,7 +30,7 @@
   - gcc (4.8+)
 
 - Windows
-  - MSVC  (VS2019 已测试)
+  - MSVC  (Win10 / VS2019 已测试)
 
 ## 4 依赖的第三方库
 

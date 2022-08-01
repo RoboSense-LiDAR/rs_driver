@@ -1,4 +1,4 @@
-# rs_driver v1.5.4 源代码解析
+# rs_driver v1.5.5 源代码解析
 
 ## 1 基本概念
 
@@ -108,7 +108,6 @@ init() 调用createSocket()，创建两个Socket,分别接收MSOP Packet和DIFOP
 
 start() 开始接收MSOP/DIFOP Packet。
 + 启动接收线程，线程函数为InputSock::recvPacket()
-+ 调用higherThreadPriority()，提升接收线程的优先级。
 
 #### 3.2.4 InputSock::recvPacket()
 
@@ -122,17 +121,6 @@ recvPacket() 接收MSOP/DIFOP Packet。
 + 调用recvfrom()接收Packet，保存到这个缓存中
 + 调用回调函数`cb_put_pkt_`，将Packet派发给InputSock的使用者。
   + 注意在派发之前，调用Buffer::setData()设置了MSOP Packet在Buffer的中偏移量及长度，以便剥除`USER_LAYER`和`TAIL_LAYER`（如果有的话）。
-
-#### 3.2.5 InputSock::higherThreadPrioty()
-
-higherThreadPrioty()用于设置接收线程的优先级。
-+ 调用pthread_getschedparam()，pthread_setschedparam()，给线程重新设置更高的优先级。
-
-缺省情况，higherThreadPriorty()的功能是不启用的。要启用这个特性，要在编译时使用`-DENABLE_HIGH_PRIORITY_THREAD`选项。
-
-```
-cmake -DENABLE_HIGH_PRIORITY_THREAD=TRUE .
-```
 
 ### 3.3 InputPcap
 
