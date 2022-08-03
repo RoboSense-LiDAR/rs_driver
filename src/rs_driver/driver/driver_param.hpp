@@ -143,43 +143,43 @@ inline LidarType strToLidarType(const std::string& type)
 {
   if (type == "RS16")
   {
-    return lidar::LidarType::RS16;
+    return LidarType::RS16;
   }
   else if (type == "RS32")
   {
-    return lidar::LidarType::RS32;
+    return LidarType::RS32;
   }
   else if (type == "RSBP")
   {
-    return lidar::LidarType::RSBP;
+    return LidarType::RSBP;
   }
   else if (type == "RSHELIOS")
   {
-    return lidar::LidarType::RSHELIOS;
+    return LidarType::RSHELIOS;
   }
   else if (type == "RSHELIOS_16P")
   {
-    return lidar::LidarType::RSHELIOS_16P;
+    return LidarType::RSHELIOS_16P;
   }
   else if (type == "RS128")
   {
-    return lidar::LidarType::RS128;
+    return LidarType::RS128;
   }
   else if (type == "RS80")
   {
-    return lidar::LidarType::RS80;
+    return LidarType::RS80;
   }
   else if (type == "RS48")
   {
-    return lidar::LidarType::RS48;
+    return LidarType::RS48;
   }
   else if (type == "RSP128")
   {
-    return lidar::LidarType::RSP128;
+    return LidarType::RSP128;
   }
   else if (type == "RSP80")
   {
-    return lidar::LidarType::RSP80;
+    return LidarType::RSP80;
   }
   else if (type == "RSP48")
   {
@@ -195,11 +195,11 @@ inline LidarType strToLidarType(const std::string& type)
   }
   else if (type == "RSEOS")
   {
-    return lidar::LidarType::RSEOS;
+    return LidarType::RSEOS;
   }
   else if (type == "RSM1_JUMBO")
   {
-    return lidar::LidarType::RSM1_JUMBO;
+    return LidarType::RSM1_JUMBO;
   }
   else
   {
@@ -246,7 +246,7 @@ enum SplitFrameMode
   SPLIT_BY_CUSTOM_BLKS
 };
 
-typedef struct RSTransformParam  ///< The Point transform parameter
+struct RSTransformParam  ///< The Point transform parameter
 {
   float x = 0.0f;      ///< unit, m
   float y = 0.0f;      ///< unit, m
@@ -267,9 +267,9 @@ typedef struct RSTransformParam  ///< The Point transform parameter
     RS_INFOL << "yaw: " << yaw << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
-} RSTransformParam;
+};
 
-typedef struct RSDecoderParam  ///< LiDAR decoder parameter
+struct RSDecoderParam  ///< LiDAR decoder parameter
 {
   bool config_from_file = false; ///< Internal use only for debugging
   std::string angle_path = "";   ///< Internal use only for debugging
@@ -309,9 +309,9 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
     transform_param.print();
   }
 
-} RSDecoderParam;
+};
 
-typedef struct RSInputParam  ///< The LiDAR input parameter
+struct RSInputParam  ///< The LiDAR input parameter
 {
   uint16_t msop_port = 6699;                   ///< Msop packet port number
   uint16_t difop_port = 7788;                  ///< Difop packet port number
@@ -341,9 +341,9 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 
-} RSInputParam;
+};
 
-typedef struct RSDriverParam  ///< The LiDAR driver parameter
+struct RSDriverParam  ///< The LiDAR driver parameter
 {
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   InputType input_type = InputType::ONLINE_LIDAR; ///< Input type
@@ -362,7 +362,7 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
     decoder_param.print();
   }
 
-} RSDriverParam;
+};
 
 }  // namespace lidar
 }  // namespace robosense
