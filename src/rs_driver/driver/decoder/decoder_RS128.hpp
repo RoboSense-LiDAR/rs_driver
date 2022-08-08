@@ -167,8 +167,8 @@ inline RSEchoMode DecoderRS128<T_PointCloud>::getEchoMode(uint8_t mode)
   {
     case 0x03: // dual return
       return RSEchoMode::ECHO_DUAL;
-    case 0x01: // strongest return
-    case 0x02: // last return
+    case 0x01: // last return
+    case 0x02: // strongest return
     default:
       return RSEchoMode::ECHO_SINGLE;
   }
