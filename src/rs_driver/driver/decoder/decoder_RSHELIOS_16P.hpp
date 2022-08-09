@@ -209,7 +209,7 @@ inline bool DecoderRSHELIOS_16P<T_PointCloud>::internDecodeMsopPkt(const uint8_t
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 2) != 0)
     {
-      this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER));
+      this->cb_excep_(Error(ERRCODE_WRONGMSOPBLKID));
       break;
     }
 

@@ -231,7 +231,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 2) != 0)
     {
-      this->cb_excep_(Error(ERRCODE_WRONGPKTHEADER));
+      this->cb_excep_(Error(ERRCODE_WRONGMSOPBLKID));
       break;
     }
 
