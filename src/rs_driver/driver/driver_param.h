@@ -43,7 +43,6 @@ enum LidarType  ///< LiDAR type
   RS32,
   RSBP,
   RS128,
-  RS128_40,
   RS80,
   RSHELIOS,
   RSROCK,
@@ -122,6 +121,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFOL << "split_frame_mode: " << split_frame_mode << RS_REND;
     RS_INFOL << "num_pkts_split: " << num_pkts_split << RS_REND;
     RS_INFOL << "cut_angle: " << cut_angle << RS_REND;
+    RS_INFOL << "use_lidar_clock: " << use_lidar_clock << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 } RSDecoderParam;
@@ -146,6 +146,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFO << "             RoboSense Input Parameters " << RS_REND;
     RS_INFOL << "multi_cast_address: " << multi_cast_address << RS_REND;
+    RS_INFOL << "host_address: " << host_address << RS_REND;
     RS_INFOL << "msop_port: " << msop_port << RS_REND;
     RS_INFOL << "difop_port: " << difop_port << RS_REND;
     RS_INFOL << "read_pcap: " << read_pcap << RS_REND;
@@ -174,6 +175,7 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
     RS_INFOL << "             RoboSense Driver Parameters " << RS_REND;
     RS_INFOL << "angle_path: " << angle_path << RS_REND;
     RS_INFOL << "frame_id: " << frame_id << RS_REND;
+    RS_INFOL << "wait_for_difop: " << wait_for_difop << RS_REND;
     RS_INFOL << "lidar_type: ";
     RS_INFO << lidarTypeToStr(lidar_type) << RS_REND;
     RS_INFOL << "------------------------------------------------------" << RS_REND;
@@ -194,9 +196,6 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
         break;
       case LidarType::RS128:
         str = "RS128";
-        break;
-      case LidarType::RS128_40:
-        str = "RS128_40";
         break;
       case LidarType::RS80:
         str = "RS80";
@@ -233,10 +232,6 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
     else if (type == "RS128")
     {
       return lidar::LidarType::RS128;
-    }
-    else if (type == "RS128_40")
-    {
-      return lidar::LidarType::RS128_40;
     }
     else if (type == "RS80")
     {

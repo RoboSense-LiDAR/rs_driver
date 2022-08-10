@@ -308,11 +308,13 @@ inline bool LidarDriverImpl<T_Point>::decodeMsopScan(const ScanMsg& scan_msg, Po
   point_cloud_msg.point_cloud_ptr = point_cloud_transform_func_(output_point_cloud_ptr, height);
   point_cloud_msg.height = height;
   point_cloud_msg.width = point_cloud_msg.point_cloud_ptr->size() / point_cloud_msg.height;
+#if 0
   size_t iter_move = point_cloud_msg.point_cloud_ptr->size() - point_cloud_msg.height * point_cloud_msg.width;
   for (size_t i = 0; i < iter_move; i++)
   {
     point_cloud_msg.point_cloud_ptr->erase(point_cloud_msg.point_cloud_ptr->end());
   }
+#endif
   setPointCloudMsgHeader(point_cloud_msg);
   point_cloud_msg.timestamp = scan_msg.timestamp;
   if (point_cloud_msg.point_cloud_ptr->size() == 0)
@@ -415,6 +417,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     msop_pkt_queue_.is_task_finished_.store(true);
     return;
   }
+
   while (msop_pkt_queue_.size() > 0)
   {
     PacketMsg pkt = msop_pkt_queue_.popFront();
@@ -428,11 +431,13 @@ inline void LidarDriverImpl<T_Point>::processMsop()
         PointCloudMsg<T_Point> msg(point_cloud_transform_func_(point_cloud_ptr_, height));
         msg.height = height;
         msg.width = point_cloud_ptr_->size() / msg.height;
+#if 0
         size_t iter_move = point_cloud_ptr_->size() - msg.height * msg.width;
         for (size_t i = 0; i < iter_move; i++)
         {
           point_cloud_ptr_->erase(point_cloud_ptr_->end());
         }
+#endif
         setPointCloudMsgHeader(msg);
         if (driver_param_.decoder_param.use_lidar_clock == true)
         {
@@ -467,7 +472,17 @@ inline void LidarDriverImpl<T_Point>::processMsop()
       // msop_pkt_queue_.clear();
       // std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    constexpr static int CLOUD_POINT_MAX = 1000000;
+    if (point_cloud_ptr_->size() > CLOUD_POINT_MAX)
+    {
+      scan_ptr_->packets.clear();
+      point_cloud_ptr_.reset(new typename PointCloudMsg<T_Point>::PointCloud);
+
+      reportError(Error(ERRCODE_CLOUDOVERFLOW));
+    }
   }
+
   msop_pkt_queue_.is_task_finished_.store(true);
 }
 
