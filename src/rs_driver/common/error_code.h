@@ -66,7 +66,8 @@ enum ErrCode
   ERRCODE_DIFOPPORTBUZY = 0x50,    ///< Input difop port is already used
   ERRCODE_WRONGPKTHEADER = 0x51,   ///< Packet header is wrong
   ERRCODE_PKTNULL = 0x52,          ///< Input packet is null
-  ERRCODE_PKTBUFOVERFLOW = 0x53    ///< Packet buffer is over flow
+  ERRCODE_PKTBUFOVERFLOW = 0x53,   ///< Packet buffer is overflow
+  ERRCODE_CLOUDOVERFLOW = 0x54     ///< Point Cloud is overflow
 };
 
 struct Error
@@ -122,6 +123,8 @@ struct Error
         return "ERRCODE_PKTNULL";
       case ERRCODE_PKTBUFOVERFLOW:
         return "ERRCODE_PKTBUFOVERFLOW";
+      case ERRCODE_CLOUDOVERFLOW:
+        return "ERRCODE_CLOUDOVERFLOW";
       default:
         return "ERRCODE_SUCCESS";
     }

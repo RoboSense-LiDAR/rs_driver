@@ -417,6 +417,7 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     msop_pkt_queue_.is_task_finished_.store(true);
     return;
   }
+
   while (msop_pkt_queue_.size() > 0)
   {
     PacketMsg pkt = msop_pkt_queue_.popFront();
@@ -471,7 +472,17 @@ inline void LidarDriverImpl<T_Point>::processMsop()
       // msop_pkt_queue_.clear();
       // std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+
+    constexpr static int CLOUD_POINT_MAX = 1000000;
+    if (point_cloud_ptr_->size() > CLOUD_POINT_MAX)
+    {
+      scan_ptr_->packets.clear();
+      point_cloud_ptr_.reset(new typename PointCloudMsg<T_Point>::PointCloud);
+
+      reportError(Error(ERRCODE_CLOUDOVERFLOW));
+    }
   }
+
   msop_pkt_queue_.is_task_finished_.store(true);
 }
 
