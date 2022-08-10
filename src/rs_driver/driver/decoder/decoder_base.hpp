@@ -274,6 +274,11 @@ template <typename T_Point>
 class DecoderBase
 {
 public:
+
+#ifdef ENABLE_TRANSFORM
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+#endif
+
   explicit DecoderBase(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
   DecoderBase(const DecoderBase&) = delete;
   DecoderBase& operator=(const DecoderBase&) = delete;
