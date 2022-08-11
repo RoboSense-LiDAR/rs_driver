@@ -852,6 +852,19 @@ inline RSEchoMode DecoderBase<T_Point>::getEchoMode(const LidarType& type, const
 {
   switch (type)
   {
+    case LidarType::RS128_40:
+      switch (return_mode)
+      {
+        case 0x00:
+        case 0x01:
+        case 0x02:
+          return RSEchoMode::ECHO_SINGLE;
+        case 0x03:
+        case 0x04:
+        case 0x05:
+        default:
+          return RSEchoMode::ECHO_DUAL;
+      }
     case LidarType::RS128:
     case LidarType::RS80:
     case LidarType::RSHELIOS:

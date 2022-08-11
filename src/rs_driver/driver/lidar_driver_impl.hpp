@@ -417,7 +417,6 @@ inline void LidarDriverImpl<T_Point>::processMsop()
     msop_pkt_queue_.is_task_finished_.store(true);
     return;
   }
-
   while (msop_pkt_queue_.size() > 0)
   {
     PacketMsg pkt = msop_pkt_queue_.popFront();
@@ -482,7 +481,6 @@ inline void LidarDriverImpl<T_Point>::processMsop()
       reportError(Error(ERRCODE_CLOUDOVERFLOW));
     }
   }
-
   msop_pkt_queue_.is_task_finished_.store(true);
 }
 
