@@ -32,10 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <queue>
 #include <mutex>
 #include <condition_variable>
 #include <thread>
+#include <queue>
 
 namespace robosense
 {
@@ -47,16 +47,20 @@ class SyncQueue
 public:
   inline size_t push(const T& value)
   {
-    std::lock_guard<std::mutex> lg(mtx_);
+     bool empty = false;
+     size_t size = 0;
 
-    bool empty = queue_.empty();
-
-    queue_.push(value);
+    {
+      std::lock_guard<std::mutex> lg(mtx_);
+      empty = queue_.empty();
+      queue_.push(value);
+      size = queue_.size();
+    }
 
     if (empty)
       cv_.notify_one();
 
-    return queue_.size();
+    return size;
   }
 
   inline T pop()

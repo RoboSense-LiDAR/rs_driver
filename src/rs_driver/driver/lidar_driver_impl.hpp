@@ -31,12 +31,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
+
 #include <rs_driver/driver/driver_param.hpp>
 #include <rs_driver/msg/packet.hpp>
 #include <rs_driver/common/error_code.hpp>
 #include <rs_driver/macro/version.hpp>
 #include <rs_driver/utility/sync_queue.hpp>
-
 #include <rs_driver/utility/buffer.hpp>
 #include <rs_driver/driver/input/input_factory.hpp>
 #include <rs_driver/driver/decoder/decoder_factory.hpp>

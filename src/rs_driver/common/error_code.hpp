@@ -91,7 +91,8 @@ struct Error
   {
   }
 
-  explicit Error(const ErrCode& code) : error_code(code)
+  explicit Error(const ErrCode& code) 
+   : error_code(code)
   {
     if (error_code < 0x40)
     {

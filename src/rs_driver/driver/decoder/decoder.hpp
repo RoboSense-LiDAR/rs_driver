@@ -252,8 +252,6 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 #endif
 
-  constexpr static uint16_t PROTOCOL_VER_0 = 0x00;
-
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual ~Decoder() = default;

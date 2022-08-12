@@ -51,6 +51,8 @@ public:
     buf_size_ = buf_size;
   }
 
+  ~Buffer() = default;
+
   uint8_t* buf()
   {
     return buf_.data();

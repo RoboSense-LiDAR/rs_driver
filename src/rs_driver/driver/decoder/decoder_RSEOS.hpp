@@ -84,7 +84,7 @@ class DecoderRSEOS : public Decoder<T_PointCloud>
 public:
 
   constexpr static double FRAME_DURATION = 0.1;
-  constexpr static uint32_t SINGLE_PKT_NUM = 112; //126
+  constexpr static uint32_t SINGLE_PKT_NUM = 112;
   constexpr static int VECTOR_BASE = 32768;
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
@@ -201,9 +201,13 @@ inline bool DecoderRSEOS<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, siz
 
       if (this->distance_section_.in(distance))
       {
-        float x = RS_SWAP_INT16(channel.x) * distance / VECTOR_BASE;
-        float y = RS_SWAP_INT16(channel.y) * distance / VECTOR_BASE;
-        float z = RS_SWAP_INT16(channel.z) * distance / VECTOR_BASE;
+        int16_t vector_x = RS_SWAP_INT16(channel.x);
+        int16_t vector_y = RS_SWAP_INT16(channel.y);
+        int16_t vector_z = RS_SWAP_INT16(channel.z);
+
+        float x = vector_x * distance / VECTOR_BASE;
+        float y = vector_y * distance / VECTOR_BASE;
+        float z = vector_z * distance / VECTOR_BASE;
 
         this->transformPoint(x, y, z);
 

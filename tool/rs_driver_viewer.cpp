@@ -220,8 +220,6 @@ void processCloud(void)
   }
 }
 
-
-
 int main(int argc, char* argv[])
 {
   RS_TITLE << "------------------------------------------------------" << RS_REND;

@@ -47,19 +47,19 @@ class Trigon
 {
 public:
 
-  constexpr static int32_t MIN = -9000;
-  constexpr static int32_t MAX = 45000;
+  constexpr static int32_t ANGLE_MIN = -9000;
+  constexpr static int32_t ANGLE_MAX = 45000;
 
   Trigon()
   {
-    int32_t range = MAX - MIN;
+    int32_t range = ANGLE_MAX - ANGLE_MIN;
 #ifdef DBG
     o_angles_ = (int32_t*)malloc(range * sizeof(int32_t));
 #endif
     o_sins_ = (float*)malloc(range * sizeof(float));
     o_coss_ = (float*)malloc(range * sizeof(float));
 
-    for (int32_t i = MIN, j = 0; i < MAX; i++, j++)
+    for (int32_t i = ANGLE_MIN, j = 0; i < ANGLE_MAX; i++, j++)
     {
       double rad = DEGREE_TO_RADIAN(static_cast<double>(i) * 0.01);
 
@@ -71,10 +71,10 @@ public:
     }
 
 #ifdef DBG
-    angles_ = o_angles_ - MIN;
+    angles_ = o_angles_ - ANGLE_MIN;
 #endif
-    sins_ = o_sins_ - MIN;
-    coss_ = o_coss_ - MIN;
+    sins_ = o_sins_ - ANGLE_MIN;
+    coss_ = o_coss_ - ANGLE_MIN;
   }
 
   ~Trigon()
@@ -88,7 +88,7 @@ public:
 
   float sin(int32_t angle)
   {
-    if (angle < MIN || angle >= MAX)
+    if (angle < ANGLE_MIN || angle >= ANGLE_MAX)
     {
       angle = 0;
     }
@@ -98,7 +98,7 @@ public:
 
   float cos(int32_t angle)
   {
-    if (angle < MIN || angle >= MAX)
+    if (angle < ANGLE_MIN || angle >= ANGLE_MAX)
     {
       angle = 0;
     }
