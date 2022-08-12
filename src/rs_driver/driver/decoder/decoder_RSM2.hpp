@@ -75,6 +75,8 @@ typedef struct
   RSM2MsopHeader header;
   RSM2Block blocks[25];
   uint8_t reserved[4];
+  uint8_t crc32[4];
+  uint8_t rolling_counter[4];
 } RSM2MsopPkt;
 
 #pragma pack(pop)
@@ -107,7 +109,7 @@ inline RSDecoderConstParam& DecoderRSM2<T_PointCloud>::getConstParam()
 {
   static RSDecoderConstParam param = 
   {
-    1336 // msop len
+    1342 // msop len
       , 256 // difop len
       , 4 // msop id len
       , 8 // difop id len
@@ -204,9 +206,9 @@ inline bool DecoderRSM2<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
 
       if (this->distance_section_.in(distance))
       {
-        float x =   RS_SWAP_INT16(channel.y) * distance / VECTOR_BASE;
-        float y = - RS_SWAP_INT16(channel.x) * distance / VECTOR_BASE;
-        float z =   RS_SWAP_INT16(channel.z) * distance / VECTOR_BASE;
+        float x = RS_SWAP_INT16(channel.x) * distance / VECTOR_BASE;
+        float y = RS_SWAP_INT16(channel.y) * distance / VECTOR_BASE;
+        float z = RS_SWAP_INT16(channel.z) * distance / VECTOR_BASE;
 
         this->transformPoint(x, y, z);
 
