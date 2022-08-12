@@ -38,10 +38,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/msg/point_cloud_msg.hpp>
 #endif
 
+//#define ORDERLY_EXIT
+
 typedef PointXYZI PointT;
 typedef PointCloudT<PointT> PointCloudMsg;
 
 using namespace robosense::lidar;
+
+SyncQueue<std::shared_ptr<PointCloudMsg>> free_cloud_queue;
+SyncQueue<std::shared_ptr<PointCloudMsg>> cloud_queue;
 
 //
 // @brief point cloud callback function. The caller should register it to the lidar driver.
@@ -52,6 +57,12 @@ std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
 {
   // Note: This callback function runs in the packet-parsing thread of the driver, 
   //       so please DO NOT do time-consuming task here.
+  std::shared_ptr<PointCloudMsg> msg = free_cloud_queue.pop();
+  if (msg.get() != NULL)
+  {
+    return msg;
+  }
+
   return std::make_shared<PointCloudMsg>();
 }
 
@@ -64,7 +75,7 @@ void pointCloudPutCallback(std::shared_ptr<PointCloudMsg> msg)
 {
   // Note: This callback function runs in the packet-parsing thread of the driver, 
   //       so please DO NOT do time-consuming task here. Instead, process it in another thread.
-  RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
+  cloud_queue.push(msg);
 }
 
 //
@@ -78,11 +89,31 @@ void exceptionCallback(const Error& code)
   RS_WARNING << code.toString() << RS_REND;
 }
 
+bool to_exit_process = false;
+void processCloud(void)
+{
+  while (!to_exit_process)
+  {
+    std::shared_ptr<PointCloudMsg> msg = cloud_queue.popWait();
+    if (msg.get() == NULL)
+    {
+      continue;
+    }
+
+    // process the point cloud msg, even it is time-consuming
+    RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
+
+    free_cloud_queue.push(msg);
+  }
+}
+
 int main(int argc, char* argv[])
 {
   RS_TITLE << "------------------------------------------------------" << RS_REND;
   RS_TITLE << "            RS_Driver Core Version: v" << getDriverVersion() << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
+
+  std::thread cloud_handle_thread = std::thread(processCloud);
 
   RSDriverParam param;                                         ///< Create a parameter object
   param.input_type = InputType::PCAP_FILE;
@@ -90,7 +121,6 @@ int main(int argc, char* argv[])
   param.input_param.msop_port = 6699;                          ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;                         ///< Set the lidar difop port number, the default is 7788
   param.lidar_type = LidarType::RSM1;                          ///< Set the lidar type. Make sure this type is correct
-
   param.print();
 
   LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
@@ -101,13 +131,23 @@ int main(int argc, char* argv[])
     RS_ERROR << "Driver Initialize Error..." << RS_REND;
     return -1;
   }
+
   driver.start();  ///< The driver thread will start
   RS_DEBUG << "RoboSense Lidar-Driver Linux pcap demo start......" << RS_REND;
 
+#ifdef ORDERLY_EXIT
+  std::this_thread::sleep_for(std::chrono::seconds(10));
+
+  driver.stop();
+
+  to_exit_process = true;
+  cloud_handle_thread.join();
+#else
   while (true)
   {
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+#endif
 
   return 0;
 }

@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
   param.lidar_type = LidarType::RSM1;   ///< Set the lidar type. Make sure this type is correct
   param.print();
 
-  LidarDriver<PointCloudMsg> driver;
+  LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
   driver.regPointCloudCallback(pointCloudGetCallback, pointCloudPutCallback); ///< Register the point cloud callback function 
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function
   if (!driver.init(param))                         ///< Call the init function

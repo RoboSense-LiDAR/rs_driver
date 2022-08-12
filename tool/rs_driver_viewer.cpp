@@ -44,6 +44,9 @@ typedef PointCloudT<PointXYZI> PointCloudMsg;
 std::shared_ptr<PCLVisualizer> pcl_viewer;
 std::mutex mtx_viewer;
 
+SyncQueue<std::shared_ptr<PointCloudMsg>> free_cloud_queue;
+SyncQueue<std::shared_ptr<PointCloudMsg>> cloud_queue;
+
 bool checkKeywordExist(int argc, const char* const* argv, const char* str)
 {
   for (int i = 1; i < argc; i++)
@@ -172,24 +175,52 @@ void exceptionCallback(const Error& code)
 
 std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
 {
+  std::shared_ptr<PointCloudMsg> msg = free_cloud_queue.pop();
+  if (msg.get() != NULL)
+  {
+    return msg;
+  }
+
   return std::make_shared<PointCloudMsg>();
 }
 
 void pointCloudPutCallback(std::shared_ptr<PointCloudMsg> msg)
 {
-  pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
-  pcl_pointcloud->points.swap(msg->points);
-  pcl_pointcloud->height = msg->height;
-  pcl_pointcloud->width = msg->width;
-  pcl_pointcloud->is_dense = msg->is_dense;
+  cloud_queue.push(msg);
+}
 
-  PointCloudColorHandlerGenericField<pcl::PointXYZI> point_color_handle(pcl_pointcloud, "intensity");
-
+bool to_exit_process = false;
+void processCloud(void)
+{
+  while (!to_exit_process)
   {
-    const std::lock_guard<std::mutex> lock(mtx_viewer);
-    pcl_viewer->updatePointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
+    std::shared_ptr<PointCloudMsg> msg = cloud_queue.popWait();
+    if (msg.get() == NULL)
+    {
+      continue;
+    }
+
+    //
+    // show the point cloud
+    //
+    pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
+    pcl_pointcloud->points.swap(msg->points);
+    pcl_pointcloud->height = msg->height;
+    pcl_pointcloud->width = msg->width;
+    pcl_pointcloud->is_dense = msg->is_dense;
+
+    PointCloudColorHandlerGenericField<pcl::PointXYZI> point_color_handle(pcl_pointcloud, "intensity");
+
+    {
+      const std::lock_guard<std::mutex> lock(mtx_viewer);
+      pcl_viewer->updatePointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
+    }
+
+    free_cloud_queue.push(msg);
   }
 }
+
+
 
 int main(int argc, char* argv[])
 {
@@ -208,6 +239,8 @@ int main(int argc, char* argv[])
     printHelpMenu();
     return 0;
   }
+
+  std::thread cloud_handle_thread = std::thread(processCloud);
 
   RSDriverParam param;
   parseParam(argc, argv, param);
@@ -240,8 +273,14 @@ int main(int argc, char* argv[])
       const std::lock_guard<std::mutex> lock(mtx_viewer);
       pcl_viewer->spinOnce();
     }
+
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+
+  driver.stop();
+
+  to_exit_process = true;
+  cloud_handle_thread.join();
 
   return 0;
 }
