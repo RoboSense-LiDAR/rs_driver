@@ -172,9 +172,14 @@ private:
       if (!std::getline(fd, line))
         return -1;
 
-      size_t pos_comma = 0;
-      float vert = std::stof(line, &pos_comma);
-      float horiz = std::stof(line.substr(pos_comma+1));
+      float vert = std::stof(line);
+
+      float horiz = 0;
+      size_t pos_comma = line.find_first_of(',');
+      if (pos_comma != std::string::npos)
+      {
+        horiz = std::stof(line.substr(pos_comma+1));
+      }
 
       vert_angles.emplace_back(static_cast<int32_t>(vert * 100));
       horiz_angles.emplace_back(static_cast<int32_t>(horiz * 100));
