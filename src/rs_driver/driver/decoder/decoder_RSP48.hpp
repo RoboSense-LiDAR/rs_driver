@@ -228,7 +228,6 @@ inline bool DecoderRSP48<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
   T_BlockIterator iter(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION,
       this->block_az_diff_, this->fov_blind_ts_diff_);
 
-  double block_ts = pkt_ts;
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
     const RSP48MsopBlock& block = pkt.blocks[blk];
@@ -239,23 +238,24 @@ inline bool DecoderRSP48<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
       break;
     }
 
+    int32_t block_az_diff;
+    double block_ts_off;
+    iter.get(blk, block_az_diff, block_ts_off);
+
+    double block_ts = pkt_ts + block_ts_off;
     int32_t block_az = ntohs(block.azimuth);
     if (this->split_strategy_->newBlock(block_az))
     {
       this->cb_split_frame_(this->const_param_.LASER_NUM, this->cloudTs());
-      this->first_point_ts_ = pkt_ts;
+      this->first_point_ts_ = block_ts;
       ret = true;
     }
-
-    int32_t block_az_diff;
-    double block_ts_off;
-    iter.get(blk, block_az_diff, block_ts_off);
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
       const RSChannel& channel = block.channels[chan]; 
 
-      double chan_ts = block_ts + block_ts_off + this->mech_const_param_.CHAN_TSS[chan];
+      double chan_ts = block_ts + this->mech_const_param_.CHAN_TSS[chan];
       int32_t angle_horiz = block_az + 
         (int32_t)((float)block_az_diff * this->mech_const_param_.CHAN_AZIS[chan]);
 
