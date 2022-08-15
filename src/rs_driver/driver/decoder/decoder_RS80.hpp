@@ -211,7 +211,7 @@ inline bool DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithNs(&pkt.header.timestamp) * 1e-6;
+    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
   }
   else
   {
@@ -222,7 +222,7 @@ inline bool DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
     if (this->write_pkt_ts_)
     {
-      createTimeUTCWithNs (ts, (RSTimestampUTC*)&pkt.header.timestamp);
+      createTimeUTCWithUs (ts, (RSTimestampUTC*)&pkt.header.timestamp);
     }
   }
 

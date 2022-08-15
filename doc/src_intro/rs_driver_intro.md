@@ -316,7 +316,8 @@ typedef struct
 } RSTimestampUTC;
 ```
 + 如果`ss[4]`保存微秒值，使用parseTimeUTCWithUs()解析。遵循这种格式的有RSHELIOS/RSM1。
-+ 如果`ss[4]`保存纳秒值，使用parseTimeUTCWithNs()解析。遵循这种格式的有RS128/RS80。
++ 如果`ss[4]`保存纳秒值，使用parseTimeUTCWithNs()解析。
++ 目前出货的RS128/RS80都遵循微秒格式，只有早期出货的一些RS128/RS80是纳秒格式。当前版本的rs_driver只支持微秒格式的解析。
 
 #### 4.1.6 temperature
 
