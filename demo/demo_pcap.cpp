@@ -46,16 +46,16 @@ typedef PointCloudT<PointT> PointCloudMsg;
 using namespace robosense::lidar;
 
 SyncQueue<std::shared_ptr<PointCloudMsg>> free_cloud_queue;
-SyncQueue<std::shared_ptr<PointCloudMsg>> cloud_queue;
+SyncQueue<std::shared_ptr<PointCloudMsg>> stuffed_cloud_queue;
 
 //
 // @brief point cloud callback function. The caller should register it to the lidar driver.
-//        Via this fucntion, the driver fetches an EMPTY point cloud message from the caller.
-// @param msg  The empty point cloud message.
+//        Via this fucntion, the driver gets an free/unused point cloud message from the caller.
+// @param msg  The free/unused point cloud message.
 //
-std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
+std::shared_ptr<PointCloudMsg> driverGetPointCloudFromCallerCallback(void)
 {
-  // Note: This callback function runs in the packet-parsing thread of the driver, 
+  // Note: This callback function runs in the packet-parsing/point-cloud-constructing thread of the driver, 
   //       so please DO NOT do time-consuming task here.
   std::shared_ptr<PointCloudMsg> msg = free_cloud_queue.pop();
   if (msg.get() != NULL)
@@ -68,23 +68,24 @@ std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
 
 //
 // @brief point cloud callback function. The caller should register it to the lidar driver.
-//        Via this function, the driver returns a STUFFED point cloud message to the caller. 
+//        Via this function, the driver gets/returns a stuffed point cloud message to the caller. 
 // @param msg  The stuffed point cloud message.
 //
-void pointCloudPutCallback(std::shared_ptr<PointCloudMsg> msg)
+void driverReturnPointCloudToCallerCallback(std::shared_ptr<PointCloudMsg> msg)
 {
-  // Note: This callback function runs in the packet-parsing thread of the driver, 
-  //       so please DO NOT do time-consuming task here. Instead, process it in another thread.
-  cloud_queue.push(msg);
+  // Note: This callback function runs in the packet-parsing/point-cloud-constructing thread of the driver, 
+  //       so please DO NOT do time-consuming task here. Instead, process it in caller's own thread. (see processCloud() below)
+  stuffed_cloud_queue.push(msg);
 }
 
 //
 // @brief exception callback function. The caller should register it to the lidar driver.
+//        Via this function, the driver inform the caller that something happens.
 // @param code The error code to represent the error/warning/information
 //
 void exceptionCallback(const Error& code)
 {
-  // Note: This callback function runs in the packet-receving/packet-parsing thread of the driver, 
+  // Note: This callback function runs in the packet-receving and packet-parsing/point-cloud_constructing thread of the driver, 
   //       so please DO NOT do time-consuming task here.
   RS_WARNING << code.toString() << RS_REND;
 }
@@ -94,13 +95,13 @@ void processCloud(void)
 {
   while (!to_exit_process)
   {
-    std::shared_ptr<PointCloudMsg> msg = cloud_queue.popWait();
+    std::shared_ptr<PointCloudMsg> msg = stuffed_cloud_queue.popWait();
     if (msg.get() == NULL)
     {
       continue;
     }
 
-    // process the point cloud msg, even it is time-consuming
+    // Well, it is time to process the point cloud msg, even it is time-consuming.
     RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
 
     free_cloud_queue.push(msg);
@@ -123,8 +124,8 @@ int main(int argc, char* argv[])
   param.lidar_type = LidarType::RSM1;                          ///< Set the lidar type. Make sure this type is correct
   param.print();
 
-  LidarDriver<PointCloudMsg> driver;  ///< Declare the driver object
-  driver.regPointCloudCallback(pointCloudGetCallback, pointCloudPutCallback); ///< Register the point cloud callback function 
+  LidarDriver<PointCloudMsg> driver;               ///< Declare the driver object
+  driver.regPointCloudCallback(driverGetPointCloudFromCallerCallback, driverReturnPointCloudToCallerCallback); ///< Register the point cloud callback functions
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function
   if (!driver.init(param))                         ///< Call the init function
   {

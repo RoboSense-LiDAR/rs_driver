@@ -45,7 +45,7 @@ std::shared_ptr<PCLVisualizer> pcl_viewer;
 std::mutex mtx_viewer;
 
 SyncQueue<std::shared_ptr<PointCloudMsg>> free_cloud_queue;
-SyncQueue<std::shared_ptr<PointCloudMsg>> cloud_queue;
+SyncQueue<std::shared_ptr<PointCloudMsg>> stuffed_cloud_queue;
 
 bool checkKeywordExist(int argc, const char* const* argv, const char* str)
 {
@@ -186,7 +186,7 @@ std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
 
 void pointCloudPutCallback(std::shared_ptr<PointCloudMsg> msg)
 {
-  cloud_queue.push(msg);
+  stuffed_cloud_queue.push(msg);
 }
 
 bool to_exit_process = false;
@@ -194,7 +194,7 @@ void processCloud(void)
 {
   while (!to_exit_process)
   {
-    std::shared_ptr<PointCloudMsg> msg = cloud_queue.popWait();
+    std::shared_ptr<PointCloudMsg> msg = stuffed_cloud_queue.popWait();
     if (msg.get() == NULL)
     {
       continue;
