@@ -85,7 +85,7 @@ private:
   void runExceptionCallback(const Error& error);
 
   std::shared_ptr<Buffer> packetGet(size_t size);
-  void packetPut(std::shared_ptr<Buffer> pkt);
+  void packetPut(std::shared_ptr<Buffer> pkt, bool stuffed);
 
   void processPacket();
 
@@ -196,7 +196,7 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   input_ptr_->regCallback(
       std::bind(&LidarDriverImpl<T_PointCloud>::runExceptionCallback, this, std::placeholders::_1), 
       std::bind(&LidarDriverImpl<T_PointCloud>::packetGet, this, std::placeholders::_1), 
-      std::bind(&LidarDriverImpl<T_PointCloud>::packetPut, this, std::placeholders::_1));
+      std::bind(&LidarDriverImpl<T_PointCloud>::packetPut, this, std::placeholders::_1, std::placeholders::_2));
 
   if (!input_ptr_->init())
   {
@@ -309,9 +309,15 @@ inline std::shared_ptr<Buffer> LidarDriverImpl<T_PointCloud>::packetGet(size_t s
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt)
+inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt, bool stuffed)
 {
   constexpr static int PACKET_POOL_MAX = 1024;
+
+  if (!stuffed)
+  {
+    free_pkt_queue_.push(pkt);
+    return;
+  }
 
   size_t sz = pkt_queue_.push(pkt);
   if (sz > PACKET_POOL_MAX)

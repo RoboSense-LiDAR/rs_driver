@@ -57,7 +57,7 @@ public:
   inline void regCallback(
       const std::function<void(const Error&)>& cb_excep,
       const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
-      const std::function<void(std::shared_ptr<Buffer>)>& cb_put_pkt);
+      const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt);
 
   virtual bool init() = 0;
   virtual bool start() = 0;
@@ -67,11 +67,11 @@ public:
   }
 
 protected:
-  inline void pushPacket(std::shared_ptr<Buffer> pkt);
+  inline void pushPacket(std::shared_ptr<Buffer> pkt, bool stuffed = true);
 
   RSInputParam input_param_;
   std::function<std::shared_ptr<Buffer>(size_t size)> cb_get_pkt_;
-  std::function<void(std::shared_ptr<Buffer>)> cb_put_pkt_;
+  std::function<void(std::shared_ptr<Buffer>, bool)> cb_put_pkt_;
   std::function<void(const Error&)> cb_excep_;
   std::thread recv_thread_;
   bool to_exit_recv_;
@@ -88,7 +88,7 @@ inline Input::Input(const RSInputParam& input_param)
 inline void Input::regCallback(
     const std::function<void(const Error&)>& cb_excep,
     const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt, 
-    const std::function<void(std::shared_ptr<Buffer>)>& cb_put_pkt)
+    const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt)
 {
   cb_excep_   = cb_excep;
   cb_get_pkt_ = cb_get_pkt;
@@ -106,9 +106,9 @@ inline void Input::stop()
   }
 }
 
-inline void Input::pushPacket(std::shared_ptr<Buffer> pkt)
+inline void Input::pushPacket(std::shared_ptr<Buffer> pkt, bool stuffed)
 {
-  cb_put_pkt_(pkt);
+  cb_put_pkt_(pkt, stuffed);
 }
 
 }  // namespace lidar

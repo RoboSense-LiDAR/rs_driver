@@ -248,6 +248,7 @@ inline ssize_t InputSock::readSocket(int fd)
     {
       if (errno == EAGAIN)
       {
+        pushPacket(pkt, false);
         return 0;
       }
       else

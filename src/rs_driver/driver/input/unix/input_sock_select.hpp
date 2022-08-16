@@ -254,7 +254,7 @@ inline void InputSock::recvPacket()
     {
 #ifdef ENABLE_RECVMMSG
 
-#define VLEN 1
+#define VLEN 2
       struct mmsghdr msgs[VLEN];
       struct iovec iovecs[VLEN];
       std::shared_ptr<Buffer> pkts[VLEN];
@@ -279,7 +279,10 @@ inline void InputSock::recvPacket()
         pkts[i]->setData(sock_offset_, msgs[i].msg_len - sock_offset_ - sock_tail_);
         pushPacket(pkts[i]);
       }
-
+      for (i = ret; i < VLEN; i++)
+      {
+        pushPacket(pkts[i], false);
+      }
 #else
 
       std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
