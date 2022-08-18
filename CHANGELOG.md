@@ -11,6 +11,7 @@
 
 ### Fixed
 - Fix timestamp of Ruby series' cloud to follow new format instead of old one.
+- Fix ERRCODE_MSOPTIMEOUT problem of input_sock_epoll 
 
 ## v1.5.5 2022-08-01
 
