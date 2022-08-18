@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Changed 
+- Make error code different for MSOP/DIFOP Packets
+- Rename error code CLOUDOVERFOW
+- Recover M2 decoder's coordinate
+- Update demo_pcap and rs_driver_viewer with cloud queue
+- Add option ENABLE_DOUBLE_RCVBUF
+
+### Fixed
+- Fix timestamp of Ruby series' cloud to follow new format instead of old one.
+
 ## v1.5.5 2022-08-01
 
 ### Added
