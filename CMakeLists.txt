@@ -164,6 +164,10 @@ if(${ENABLE_STAMP_WITH_LOCAL})
   add_definitions("-DENABLE_STAMP_WITH_LOCAL")
 endif(${ENABLE_STAMP_WITH_LOCAL})
 
+if(${ENABLE_PCL_POINTCLOUD})
+  add_definitions("-DENABLE_PCL_POINTCLOUD")
+endif(${ENABLE_PCL_POINTCLOUD})
+
 if(${COMPILE_DEMOS})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/demo)
 endif(${COMPILE_DEMOS})
