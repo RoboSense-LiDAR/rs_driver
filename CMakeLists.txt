@@ -26,6 +26,7 @@ option(ENABLE_WAIT_IF_QUEUE_EMPTY "Enable waiting for a while in handle thread i
 option(ENABLE_EPOLL_RECEIVE       "Receive packets with epoll() instead of select()" OFF)
 option(ENABLE_RECVMMSG            "Enable recvmmsg() to receive MSOP message" OFF)
 
+option(ENABLE_STAMP_WITH_LOCAL    "Enable stamp point cloud with local time" OFF)
 option(ENABLE_PCL_POINTCLOUD      "Enable PCL Point Cloud" OFF)
 
 #=============================
@@ -158,6 +159,10 @@ endif(${ENABLE_DOUBLE_RCVBUF})
 if(${ENABLE_WAIT_IF_QUEUE_EMPTY})
   add_definitions("-DENABLE_WAIT_IF_QUEUE_EMPTY")
 endif(${ENABLE_WAIT_IF_QUEUE_EMPTY})
+
+if(${ENABLE_STAMP_WITH_LOCAL})
+  add_definitions("-DENABLE_STAMP_WITH_LOCAL")
+endif(${ENABLE_STAMP_WITH_LOCAL})
 
 if(${COMPILE_DEMOS})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/demo)

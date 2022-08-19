@@ -73,6 +73,29 @@ typedef struct
 
 #pragma pack(pop)
 
+#ifdef ENABLE_STAMP_WITH_LOCAL
+inline long getTimezone(void)
+{
+  static long tzone = 0;
+  static bool tzoneReady = false;
+
+  if (!tzoneReady)
+  {
+#ifdef _MSC_VER
+    _get_timezone(&tzone);
+#else
+    tzset();
+    tzone = timezone;
+#endif
+
+    tzoneReady = true;
+  }
+
+  return tzone;
+}
+#endif
+
+#if 0
 inline uint64_t parseTimeUTCWithNs(const RSTimestampUTC* tsUtc)
 {
   // sec
@@ -91,6 +114,10 @@ inline uint64_t parseTimeUTCWithNs(const RSTimestampUTC* tsUtc)
     ns += tsUtc->ss[i]; 
   }
 
+#ifdef ENABLE_STAMP_WITH_LOCAL
+  sec -= getTimezone();
+#endif
+
   return (sec * 1000000 + ns/1000);
 }
 
@@ -98,6 +125,10 @@ inline void createTimeUTCWithNs(uint64_t us, RSTimestampUTC* tsUtc)
 {
   uint64_t sec  = us / 1000000;
   uint64_t nsec = (us % 1000000) * 1000;
+
+#ifdef ENABLE_STAMP_WITH_LOCAL
+  sec += getTimezone();
+#endif
 
   for (int i = 5; i >= 0; i--)
   {
@@ -111,6 +142,7 @@ inline void createTimeUTCWithNs(uint64_t us, RSTimestampUTC* tsUtc)
     nsec >>= 8;
   }
 }
+#endif
 
 inline uint64_t parseTimeUTCWithUs(const RSTimestampUTC* tsUtc)
 {
@@ -130,6 +162,10 @@ inline uint64_t parseTimeUTCWithUs(const RSTimestampUTC* tsUtc)
     us += tsUtc->ss[i]; 
   }
 
+#ifdef ENABLE_STAMP_WITH_LOCAL
+  sec -= getTimezone();
+#endif
+
   return (sec * 1000000 + us);
 }
 
@@ -137,6 +173,10 @@ inline void createTimeUTCWithUs(uint64_t us, RSTimestampUTC* tsUtc)
 {
   uint64_t sec  = us / 1000000;
   uint64_t usec = us % 1000000;
+
+#ifdef ENABLE_STAMP_WITH_LOCAL
+  sec += getTimezone();
+#endif
 
   for (int i = 5; i >= 0; i--)
   {
@@ -151,6 +191,7 @@ inline void createTimeUTCWithUs(uint64_t us, RSTimestampUTC* tsUtc)
   }
 }
 
+#if 0
 inline uint64_t parseTimeUTCWithMs(const RSTimestampUTC* tsUtc)
 {
   // sec
@@ -171,8 +212,13 @@ inline uint64_t parseTimeUTCWithMs(const RSTimestampUTC* tsUtc)
   us <<= 8;
   us += tsUtc->ss[3];
 
+#ifdef ENABLE_STAMP_WITH_LOCAL
+  sec -= getTimezone();
+#endif
+
   return (sec * 1000000 + ms * 1000 + us);
 }
+#endif
 
 inline uint64_t parseTimeYMD(const RSTimestampYMD* tsYmd)
 {
@@ -205,6 +251,10 @@ inline uint64_t parseTimeYMD(const RSTimestampYMD* tsYmd)
     << std::endl;
 #endif
 
+#ifdef ENABLE_STAMP_WITH_LOCAL
+  sec -= getTimezone();
+#endif
+
   return (sec * 1000000 + ms * 1000 + us);
 }
 
@@ -215,6 +265,10 @@ inline void createTimeYMD(uint64_t usec, RSTimestampYMD* tsYmd)
 
   uint64_t ms = tot_ms % 1000;
   uint64_t sec = tot_ms / 1000;
+
+#ifdef ENABLE_STAMP_WITH_LOCAL
+  sec += getTimezone();
+#endif
 
   time_t t_sec = sec;
 
