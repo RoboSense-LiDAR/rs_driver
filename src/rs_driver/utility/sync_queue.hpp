@@ -83,20 +83,7 @@ public:
     // Low latency, or low CPU usage, that is the question. 
     //                                            - Hamlet
 
-#if 1
-    T value;
-
-    std::unique_lock<std::mutex> ul(mtx_);
-    cv_.wait_for(ul, std::chrono::microseconds(usec), [this] { return (!queue_.empty()); });
-
-    if (!queue_.empty())
-    {
-      value = queue_.front();
-      queue_.pop();
-    }
-
-    return value;
-#else
+#ifdef ENABLE_WAIT_IF_QUEUE_EMPTY
     T value;
 
     {
@@ -110,6 +97,20 @@ public:
     }
 
     std::this_thread::sleep_for(std::chrono::microseconds(1000));
+    return value;
+#else
+
+    T value;
+
+    std::unique_lock<std::mutex> ul(mtx_);
+    cv_.wait_for(ul, std::chrono::microseconds(usec), [this] { return (!queue_.empty()); });
+
+    if (!queue_.empty())
+    {
+      value = queue_.front();
+      queue_.pop();
+    }
+
     return value;
 #endif
   }

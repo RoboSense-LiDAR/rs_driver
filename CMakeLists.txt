@@ -18,12 +18,15 @@ endif()
 #=============================
 #  Compile Features
 #=============================
-option(DISABLE_PCAP_PARSE    "Disable PCAP file parse" OFF) 
-option(ENABLE_TRANSFORM      "Enable transform functions" OFF)
-option(ENABLE_EPOLL_RECEIVE  "Receive packets with epoll() instead of select()" OFF)
-option(ENABLE_RECVMMSG       "Enable recvmmsg() to receive MSOP message" OFF)
-option(ENABLE_DOUBLE_RCVBUF  "Enable double size of RCVBUF" OFF)
-option(ENABLE_PCL_POINTCLOUD "Enable PCL Point Cloud" OFF)
+option(DISABLE_PCAP_PARSE         "Disable PCAP file parse" OFF) 
+option(ENABLE_TRANSFORM           "Enable transform functions" OFF)
+
+option(ENABLE_DOUBLE_RCVBUF       "Enable double size of RCVBUF" OFF)
+option(ENABLE_WAIT_IF_QUEUE_EMPTY "Enable waiting for a while in handle thread if the queue is empty" OFF)
+option(ENABLE_EPOLL_RECEIVE       "Receive packets with epoll() instead of select()" OFF)
+option(ENABLE_RECVMMSG            "Enable recvmmsg() to receive MSOP message" OFF)
+
+option(ENABLE_PCL_POINTCLOUD      "Enable PCL Point Cloud" OFF)
 
 #=============================
 #  Compile Demos, Tools, Tests
@@ -151,6 +154,10 @@ endif(${ENABLE_RECVMMSG})
 if(${ENABLE_DOUBLE_RCVBUF})
   add_definitions("-DENABLE_DOUBLE_RCVBUF")
 endif(${ENABLE_DOUBLE_RCVBUF})
+
+if(${ENABLE_WAIT_IF_QUEUE_EMPTY})
+  add_definitions("-DENABLE_WAIT_IF_QUEUE_EMPTY")
+endif(${ENABLE_WAIT_IF_QUEUE_EMPTY})
 
 if(${COMPILE_DEMOS})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/demo)
