@@ -106,12 +106,12 @@ TEST(TestDecoder, processDifopPkt_fail)
   MyDifopPkt pkt = {0};
   errCode = ERRCODE_SUCCESS;
   decoder.processDifopPkt((const uint8_t*)&pkt, 10);
-  ASSERT_EQ(errCode, ERRCODE_WRONGPKTLENGTH);
+  ASSERT_EQ(errCode, ERRCODE_WRONGDIFOPLEN);
 
   // wrong difop id
   errCode = ERRCODE_SUCCESS;
   decoder.processDifopPkt((const uint8_t*)&pkt, sizeof(pkt));
-  ASSERT_EQ(errCode, ERRCODE_WRONGPKTHEADER);
+  ASSERT_EQ(errCode, ERRCODE_WRONGDIFOPID);
 }
 
 TEST(TestDecoder, processDifopPkt)
@@ -268,14 +268,14 @@ TEST(TestDecoder, processMsopPkt)
   // wrong msop len
   errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, 2);
-  ASSERT_EQ(errCode, ERRCODE_WRONGPKTLENGTH);
+  ASSERT_EQ(errCode, ERRCODE_WRONGMSOPLEN);
 
   decoder.param_.wait_for_difop = false;
 
   // wrong msop header
   errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, sizeof(pkt));
-  ASSERT_EQ(errCode, ERRCODE_WRONGPKTHEADER);
+  ASSERT_EQ(errCode, ERRCODE_WRONGMSOPID);
 
   // valid msop
   uint8_t id[] = {0x55, 0xAA, 0x05, 0x0A, 0x5A, 0xA5, 0x50, 0xA0};
