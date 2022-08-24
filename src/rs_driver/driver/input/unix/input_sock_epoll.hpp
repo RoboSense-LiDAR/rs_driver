@@ -94,7 +94,7 @@ inline bool InputSock::init()
 
     struct epoll_event ev;
     ev.data.fd = msop_fd;
-    ev.events = EPOLLIN | EPOLLET;
+    ev.events = EPOLLIN; // level-triggered
     epoll_ctl (epfd, EPOLL_CTL_ADD, msop_fd, &ev);
   }
 
@@ -278,6 +278,7 @@ inline void InputSock::recvPacket()
   }
 
 failExit:
+  return;
 }
 
 }  // namespace lidar
