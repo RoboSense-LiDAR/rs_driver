@@ -294,8 +294,8 @@ struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFO << "------------------------------------------------------" << RS_REND;
     RS_INFO << "             RoboSense Decoder Parameters " << RS_REND;
     RS_INFOL << "wait_for_difop: " << wait_for_difop << RS_REND;
-    RS_INFOL << "max_distance: " << max_distance << RS_REND;
     RS_INFOL << "min_distance: " << min_distance << RS_REND;
+    RS_INFOL << "max_distance: " << max_distance << RS_REND;
     RS_INFOL << "start_angle: " << start_angle << RS_REND;
     RS_INFOL << "end_angle: " << end_angle << RS_REND;
     RS_INFOL << "use_lidar_clock: " << use_lidar_clock << RS_REND;
