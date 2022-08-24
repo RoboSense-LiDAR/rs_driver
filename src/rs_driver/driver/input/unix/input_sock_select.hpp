@@ -252,7 +252,7 @@ inline void InputSock::recvPacket()
 
     if (FD_ISSET(fds_[0], &rfds))
     {
-#ifdef ENABLE_RECVMMSG
+#if 0
 
 #define VLEN 2
       struct mmsghdr msgs[VLEN];

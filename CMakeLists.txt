@@ -24,7 +24,6 @@ option(ENABLE_TRANSFORM           "Enable transform functions" OFF)
 option(ENABLE_DOUBLE_RCVBUF       "Enable double size of RCVBUF" OFF)
 option(ENABLE_WAIT_IF_QUEUE_EMPTY "Enable waiting for a while in handle thread if the queue is empty" OFF)
 option(ENABLE_EPOLL_RECEIVE       "Receive packets with epoll() instead of select()" OFF)
-option(ENABLE_RECVMMSG            "Enable recvmmsg() to receive MSOP message" OFF)
 
 option(ENABLE_STAMP_WITH_LOCAL    "Enable stamp point cloud with local time" OFF)
 option(ENABLE_PCL_POINTCLOUD      "Enable PCL Point Cloud" OFF)
@@ -147,10 +146,6 @@ endif(${ENABLE_TRANSFORM})
 #============================
 #  Build Demos, Tools, Tests
 #============================
-
-if(${ENABLE_RECVMMSG})
-  add_definitions("-DENABLE_RECVMMSG")
-endif(${ENABLE_RECVMMSG})
 
 if(${ENABLE_DOUBLE_RCVBUF})
   add_definitions("-DENABLE_DOUBLE_RCVBUF")
