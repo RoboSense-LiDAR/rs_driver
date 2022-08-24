@@ -627,8 +627,8 @@ cos()查表返回角度的cos值。
 
 以RSBP为例，
 
-+ 一轮发射的时长为`55.52`纳秒，这是Block之间的时间差。
-+ 一轮发射内，`32`次发射的时间戳如下（相对于Block的相对时间，单位纳秒）。这是每个Channel对所属Block的相对时间。
++ 一轮发射的时长为`55.52`微秒，这是Block之间的时间差。
++ 一轮发射内，`32`次发射的时间戳如下（相对于Block的相对时间，单位微秒）。这是每个Channel对所属Block的相对时间。
 
 ```
   0.00,  2.56,  5.12,  7.68, 10.24, 12.80, 15.36, 17.92, 
@@ -701,17 +701,19 @@ SingleReturnBlockIterator实现单回波模式下的BlockIterator接口。
 
 ##### 4.4.6.1 SingleReturnBlockIterator() 
 
-单回波模式下，
+单回波模式下。
 在构造函数中，遍历Packet中的block，并计算az_diffs[]和tss[]。
+
 + Block之间的时间差是固定值，也就是`BLOCK_DURATION`。
 + 1个Packet有`BLOCKS_PER_PKT`个Block。
+  
   + 对于前面的Block，
-
+  
   ```
   Block水平角差 = 下一个Block的水平角 - 当前Block的水平角
   ```
   + 最后一个Block的水平角差，认为等于`BLOCK_AZ_DURATION`，这是雷达理论上每个Block的水平角差。
-
+  
 + 相邻Block可能跨`角度0`，所以它们的水平角差可能小于`0`，这时需要将它修正到[`0`, `36000`)内。
 
 #### 4.4.7 DualReturnBlockIterator
@@ -878,7 +880,7 @@ void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt);
 #### 4.6.2 SplitStrategy
 
 SplitStrategy定义机械式雷达的分帧模式接口。
-+ 使用者遍历Packet中的Block，以Block的水平角为参数，调用SplitStrategy::newBlock()。应该分帧时，newBlock()返回`true`,否则返回`false`。
++ 使用者遍历Packet中的Block，以Block的水平角为参数，调用SplitStrategy::newBlock()。应该分帧时，newBlock()返回`true`，否则返回`false`。
 
 ![split strategy](./img/classes_split_strategy.png)
 
@@ -930,7 +932,7 @@ MSOP使用UDP协议，理论上Packet可能丢包、乱序。
 + 那假如只有丢包呢？举个例子，如果编号为`1`的Packet丢了，则可以加入检查条件，就是当前Packet编号小于`prev_seq_`，就分帧。
 + 在乱序的情况下，这个检查条件会导致另一个困境。举个例子，如果编号为`300`和`301`的两个Packet乱序，那么这个位置分帧，会导致原本的一帧拆分成两帧。
 
-为了一定程度上，包容可能的Packet丢包、乱序情况，引入安全区间的概念。
+为了在一定程度上包容可能的Packet丢包、乱序情况，引入安全区间的概念。
 + 以`prev_seq_`为参考点，划定一个范围值`RANGE`, 
 
 ```
@@ -1085,14 +1087,13 @@ DecoderMech处理机械式雷达的共同特性，如转速，分帧角度、光
 + 成员`split_blks_per_frame_`是按Block数分帧时，每帧的Block数。包括按理论上每圈Block数分帧，和按用户指定的Block数分帧。
 + 成员`block_azi_diff_`是理论上相邻block之间的角度差。
 + 成员`fov_blind_ts_diff_`是FOV盲区的时间差
-+ 成员`lidar_alpha0_`和`lidar_Rxy_`是雷达光学中心相对于物理中心的位置参数。MSOP格式中的点的坐标是相对于光学中心的，需要借助这两个值，将它转换到相对于物理中心。
 
 ![decoder mech](./img/class_decoder_mech.png)
 
 ##### 4.8.2.1 RSDecoderMechConstParam
 
 RSDecoderMechConstParam基于RSDecoderConstParam，增加机械式雷达特有的参数。
-+ `RX`、`RY`、`RZ`是雷达光学中心相对于物理中心的坐标。`lidar_alpha0_`和`lidar_Rxy_`由它们计算而来。
++ `RX`、`RY`、`RZ`是雷达光学中心相对于物理中心的坐标。
 + `BLOCK_DURATION`是Block的持续时间。
 + `CHAN_TSS[]`是Block中Channel对Block的相对时间。
 + `CHAN_AZIS[]`是Block中Channel占Block的时间比例，也是水平角比例。
@@ -1147,7 +1148,7 @@ Block间的角度差 = 360 / 每帧Block数
 + 解析得到FOV的起始角度`fov_start_angle`和终止角度`fov_end_angle`，计算FOV的大小`fov_range`。
 + 计算与FOV互补的盲区大小。按照盲区范围比例，计算盲区的时间戳差，也就是`fov_blind_ts_diff_`。
 
-+ 如果用户设置从DIFOP Packet读入角度修正值(`RSDecoderParam..config_from_file` = `false`)，则调用ChanAngles::loadFromDifop()得到他们。
++ 如果用户设置从DIFOP Packet读入角度修正值(`RSDecoderParam.config_from_file` = `false`)，则调用ChanAngles::loadFromDifop()得到他们。
   + 一般角度修正值不改变，所以一旦解析成功（`angles_ready_ = true`），就没必要解析第二次。
 
 #### 4.8.3 DecoderRSBP
