@@ -61,7 +61,6 @@ public:
   virtual ~InputSock();
 
 private:
-  ssize_t readSocket(int fd);
   inline void recvPacket();
   inline int createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp);
 
@@ -110,7 +109,7 @@ inline bool InputSock::init()
 
     struct epoll_event ev;
     ev.data.fd = difop_fd;
-    ev.events = EPOLLIN | EPOLLET;
+    ev.events = EPOLLIN; // level-triggered
     epoll_ctl (epfd, EPOLL_CTL_ADD, difop_fd, &ev);
   }
 
@@ -238,40 +237,6 @@ failSocket:
   return -1;
 }
 
-inline ssize_t InputSock::readSocket(int fd)
-{
-  while (1)
-  {
-    std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
-    ssize_t ret = recvfrom(fd, pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
-    if (ret < 0)
-    {
-      if (errno == EAGAIN)
-      {
-        pushPacket(pkt, false);
-        return 0;
-      }
-      else
-      {
-        perror("recvfrom: ");
-        return -1;
-      }
-    }
-    else if (ret > 0)
-    {
-      pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
-      pushPacket(pkt);
-    }
-    else
-    {
-      // never reach here.
-    }
-  }
-
-  // never reach here.
-  return 0;
-}
-
 inline void InputSock::recvPacket()
 {
   while (!to_exit_recv_)
@@ -296,13 +261,23 @@ inline void InputSock::recvPacket()
     {
       if (events[i].events & EPOLLIN)
       {
-        int ret = readSocket(events[i].data.fd);
+        std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
+        ssize_t ret = recvfrom(events[i].data.fd, pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
         if (ret < 0)
-          return;
+        {
+          perror("recvfrom: ");
+          goto failExit;
+        }
+        else if (ret > 0)
+        {
+          pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
+          pushPacket(pkt);
+        }
       }
     }
   }
 
+failExit:
 }
 
 }  // namespace lidar
