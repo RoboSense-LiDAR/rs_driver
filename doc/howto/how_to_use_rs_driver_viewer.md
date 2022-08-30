@@ -4,7 +4,7 @@
 
 The rs_driver_viewer is a visualization tool for the point cloud. This document illustrates how to use it.
 
-![](../img/14_rs_driver_viewer_point_cloud.png)
+![](./img/14_rs_driver_viewer_point_cloud.png)
 
 ## 2 Compile and Run
 

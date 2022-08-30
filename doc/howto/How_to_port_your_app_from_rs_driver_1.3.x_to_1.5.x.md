@@ -1,8 +1,8 @@
-# How to port your app from rs_driver 1.3.x to 1.5.x
+# How to port your app from rs_driver v1.3.x to v1.5.x
 
 ## 1 Introduction
 
-This document illustrates how to port your app from rs_driver 1.3.x to 1.5.x.
+This document illustrates how to port your app from rs_driver v1.3.x to v1.5.x.
 
 The interface of rs_driver contains two parts: RSDriverParam and LidarDriver.
 

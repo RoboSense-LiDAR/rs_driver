@@ -13,7 +13,7 @@ The driver is designed to achieve these objectives.
 
 Below is the supposed interaction between rs_driver and user's code. 
 
-![](../img/11_rs_driver_queue_thread.png)
+![](./img/11_rs_driver_queue_thread.png)
 
 rs_driver runs in its thread `construct_thread`. It
 + Gets free point cloud from user. User fetches it from a free cloud queue `free_point_cloud_queue`.
@@ -108,10 +108,10 @@ For mechanical Lidar, it may be useful to explain how the layout of point cloud 
 Here is an example of mechanical 5_lasers Lidar. 
 
 The Lidar scans block by block. It starts from b0c0(block 0 channel/laser 0), b0c1, b0c2, b0c3, b0c4, and then go to b1c0, b1c1, b1c2, b1c3, b1c4, and so on.
-![](../img/11_rs_driver_point_cloud.png)
+![](./img/11_rs_driver_point_cloud.png)
 
 At the same time, it saves the points in a vector, point by point, as below.
-![](../img/11_rs_driver_point_cloud_vector.png)
+![](./img/11_rs_driver_point_cloud_vector.png)
 
 ### 3.4 Define the driver object
 

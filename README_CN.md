@@ -99,7 +99,7 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 安装过程中选择 “Add PCL to the system PATH for xxx”:
 
-![](./doc/img/01_install_pcl.PNG)
+![](./img/01_install_pcl.png)
 
 ### 6.2 安装
 

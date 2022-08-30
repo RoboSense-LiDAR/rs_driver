@@ -103,7 +103,7 @@ To compile with VS2019, please use the official installation package [PCL All-in
 
 Select the "Add PCL to the system PATH for xxx" option during the installation.
 
-![](./doc/img/01_install_pcl.PNG)
+![](./img/01_install_pcl.png)
 
 ### 6.2 Installation
 
