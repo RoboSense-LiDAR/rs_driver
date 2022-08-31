@@ -6,9 +6,9 @@ RoboSense雷达可以工作在单播/组播/广播模式下，也可以工作在
 
 本文说明了在每种场景下如何配置rs_driver的参数。
 
-阅读本文之前，请先阅读 [在线雷达-高级主题](./online_lidar_advanced_topics.md).
+阅读本文之前，请先阅读 [在线雷达-高级主题](./online_lidar_advanced_topics_CN.md).
 
-## 2 一般情况
+## 2 一般场景
 
 在下列场景下，使用如下配置代码解码PCAP文件。
 + 广播/组播/单播模式
@@ -27,7 +27,7 @@ param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 
 ## 3 VLAN
 
-有些场景下，雷达可以工作在VLAN环境下。这时MSOP/DIFOP包带VLAN层，如下图。
+有些场景下，雷达工作在VLAN环境下。这时MSOP/DIFOP包带VLAN层，如下图。
 
 ![](./img/12_vlan_layer.png)
 
@@ -46,7 +46,6 @@ param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 ```
 
 ## 4 User Layer, Tail Layer 
-
 
 某些场景下，用户可能在MSOP/DIFOP数据前后加入自己的层。
 + USER_LAYER 在MSOP/DIFOP数据之前，TAIL_LAYER在MSOP/DIFOP数据之后。

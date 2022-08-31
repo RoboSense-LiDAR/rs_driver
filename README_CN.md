@@ -122,9 +122,9 @@ Windows下，**rs_driver** 暂不支持安装。
 cmake -DCOMPILE_DEMOS=ON ..
 ```
 
-关于`demo_online`的更多说明，可以参考[在线连接雷达](doc/howto/how_to_decode_online_lidar.md)
+关于`demo_online`的更多说明，可以参考[连接在线雷达](doc/howto/how_to_decode_online_lidar.md)
 
-关于`demo_pcap`的更多说明，可以参考[解析pcap包](doc/howto/how_to_decode_pcap_file.md)
+关于`demo_pcap`的更多说明，可以参考[解析PCAP包](doc/howto/how_to_decode_pcap_file.md)
 
 ## 8 可视化工具
 
@@ -143,7 +143,8 @@ cmake -DCOMPILE_TOOLS=ON ..
 关于**rs_driver**的其他主题，请参考如下链接。
 
 坐标变换: [坐标变换](doc/howto/how_to_transform_pointcloud.md) 
-网络配置的高级主题: [高级主题](doc/howto/online_lidar_advanced_topics.md) 
+在线雷达 - 高级主题: [在线雷达 - 高级主题](doc/howto/online_lidar_advanced_topics_CN.md) 
+PCAP文件 - 高级主题: [PCAP文件 - 高级主题](doc/howto/online_lidar_advanced_topics.md) 
 
 **rs_driver**的主要接口文件如下。
 

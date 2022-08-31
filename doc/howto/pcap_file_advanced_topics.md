@@ -47,7 +47,7 @@ param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 
 ## 4 User Layer, Tail Layer 
 
-In some user cases, User may add extra layers before or after the MSOP/DIFOP packet.
+In some user cases, User may add extra layers before or/and after the MSOP/DIFOP packet.
 + USER_LAYER is before the packet and TAIL_LAYER is after it.
 
 ![](./img/12_user_layer.png)

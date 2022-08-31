@@ -10,7 +10,7 @@ Why to port your app from v1.3.x to v1.5.x? Below are several reasons.
 + Add compile options to solve packet-loss problems on some platforms.
 + Remove the dependency on the Boost library, help to port rs_driver to other platforms other than x86.
 + Refactory the Network Input part and the Decoder part, to support different use cases.
-+ Improve the help documents, including [understand source code of rs_driver](../src_intro/rs_driver_intro.md), to help user understand it.
++ Improve the help documents, including [understand source code of rs_driver](../src_intro/rs_driver_intro_CN.md), to help user understand it.
 
 ## 2 How to port ?
 

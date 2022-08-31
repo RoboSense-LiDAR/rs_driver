@@ -128,7 +128,7 @@ cmake -DCOMPILE_DEMOS=ON ..
 
 For more info about how to decode an online Lidar, Please refer to [Decode online LiDAR](doc/howto/how_to_decode_online_lidar.md)
 
-For more info about how to decode a PCAP file, Please refer to [Decode pcap bag](doc/howto/how_to_decode_pcap_file.md)
+For more info about how to decode a PCAP file, Please refer to [Decode pcap file](doc/howto/how_to_decode_pcap_file.md)
 
 ## 8 Visualization of Point Cloud
 
@@ -147,7 +147,8 @@ For more info about how to use the `rs_driver_viewer`, please refer to [Visualiz
 For more topics, Please refer to:
 
 Trasformation function: [Transformation guide](doc/howto/how_to_transform_pointcloud.md) 
-Network configuration advanced topics: [Advanced Topics](doc/howto/online_lidar_advanced_topics.md) 
+Online Lidar -  Advanced topics: [Online LiDAR - Advanced Topics](doc/howto/online_lidar_advanced_topics.md) 
+PCAP file - Advanced topics: [PCAP file - Advanced Topics](doc/howto/online_lidar_advanced_topics.md) 
 
 For more info about the `rs_driver` API, Please refer to:
 - **Point Cloud message definition**: ```rs_driver/src/rs_driver/msg/point_cloud_msg.hpp```, ```rs_driver/src/rs_driver/msg/pcl_point_cloud_msg.hpp```

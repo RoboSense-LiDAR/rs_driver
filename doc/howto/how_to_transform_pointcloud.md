@@ -2,7 +2,7 @@
 
 ## 1 Introduction
 
-Before reading this document, please be sure that you have read the [Decode online LiDAR](how_to_decode_with_online_lidar.md) or [Decode PCAP file](how_to_decode_with_pcap_file.md).
+Before reading this document, please be sure that you have read the [Decode online LiDAR](./how_to_decode_online_lidar.md) or [Decode PCAP file](./how_to_decode_pcap_file.md).
 
 This document illustrate how to transform the point cloud to a different position with the built-in trasform function.
 
