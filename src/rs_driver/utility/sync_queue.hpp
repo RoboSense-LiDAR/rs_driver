@@ -47,18 +47,24 @@ class SyncQueue
 public:
   inline size_t push(const T& value)
   {
+#ifndef ENABLE_WAIT_IF_QUEUE_EMPTY
      bool empty = false;
+#endif
      size_t size = 0;
 
     {
       std::lock_guard<std::mutex> lg(mtx_);
+#ifndef ENABLE_WAIT_IF_QUEUE_EMPTY
       empty = queue_.empty();
+#endif
       queue_.push(value);
       size = queue_.size();
     }
 
+#ifndef ENABLE_WAIT_IF_QUEUE_EMPTY
     if (empty)
       cv_.notify_one();
+#endif
 
     return size;
   }
@@ -125,7 +131,9 @@ public:
 private:
   std::queue<T> queue_;
   std::mutex mtx_;
+#ifndef ENABLE_WAIT_IF_QUEUE_EMPTY
   std::condition_variable cv_;
+#endif
 };
 }  // namespace lidar
 }  // namespace robosense
