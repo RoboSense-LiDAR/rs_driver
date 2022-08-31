@@ -1,17 +1,31 @@
-# ChangeLog
+# CHANGLOG
 
 ## Unreleased
 
 ### Changed 
-- Make error code different for MSOP/DIFOP Packets
-- Rename error code CLOUDOVERFOW
-- Recover M2 decoder's coordinate
-- Update demo_pcap and rs_driver_viewer with cloud queue
-- Add option ENABLE_DOUBLE_RCVBUF
+
+## v1.5.6 2022-09-01
+
+### Added
+- Add option ENABLE_DOUBLE_RCVBUF to solve the packet-loss problem
+- Add option ENABLE_WAIT_IF_QUEUE_EMPTY to reduce CPU usage.
+- Add option ENABLE_STAMP_WITH_LOCAL to convert point cloud's timestamp to local time
+
+### Changed 
+- Make ERRCODEs different for MSOP/DIFOP Packet
+- Rename error code CLOUDOVERFLOW
+- For RSM2, recover its coordinate to ROS-compatible
+- For RSM2, adapt to increased MSOP packet len 
+- Update `demo_pcap` and `rs_driver_viewer` with cloud queue
+- Accept angle.csv with vert angle only
+- Update help documents
 
 ### Fixed
-- Fix timestamp of Ruby series' cloud to follow new format instead of old one.
+- For Ruby and Ruby Plus, fix the problem of parsing point cloud' timestamp.
 - Fix ERRCODE_MSOPTIMEOUT problem of input_sock_epoll 
+
+### Removed
+- Remove option ENABLE_RCVMMSG
 
 ## v1.5.5 2022-08-01
 
