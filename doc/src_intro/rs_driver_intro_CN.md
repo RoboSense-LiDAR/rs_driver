@@ -1,12 +1,12 @@
-# rs_driver v1.5.5 源代码解析
+# rs_driver v1.5.6 源代码解析
 
 ## 1 基本概念
 
-### 1.1 机械式激光雷达、MEMS激光雷达
+### 1.1 机械式雷达、MEMS雷达
 
 rs_driver支持RoboSense的两种雷达：
-+ 机械式激光雷达。如RS16/RS32/RSBP/RSHELIOS/RS80/RS128。机械式激光雷达有控制激光发射角度的旋转部件，有360°扫描视场。
-+ MEMS激光雷达。如RSM1。MEMS激光雷达是单轴、谐振式的MEMS扫描镜，其水平扫描角度可达120°。
++ 机械式雷达。如RS16/RS32/RSBP/RSHELIOS/RS80/RS128。机械式雷达有控制激光发射角度的旋转部件，有360°扫描视场。
++ MEMS雷达。如RSM1。MEMS雷达是单轴、谐振式的MEMS扫描镜，其水平扫描角度可达120°。
 
 ### 1.2 通道 Channel
 
@@ -586,8 +586,8 @@ Trigon用于计算指定范围内的sin/cos值，并用于查询。
 
 ![Trigon](./img/class_trigon.png)
 
-+ 成员变量`MIN`和`MAX`保存角度范围。这里`MIN` = `-9000`, `MAX` = `45000`。
-+ 成员变量`o_sins_`保存所有角度的sin值，`o_coss_`保存所有角度的cos值。`o_sins_[]`和`o_coss_[]`是两个大小为 `MAX - MIN` 的数组。
++ 成员变量`ANGLE_MIN`和`ANGLE_MAX`保存角度范围。这里`ANGLE_MIN` = `-9000`, `ANGLE_MAX` = `45000`。
++ 成员变量`o_sins_`保存所有角度的sin值，`o_coss_`保存所有角度的cos值。`o_sins_[]`和`o_coss_[]`是两个大小为 `AMGLE_MAX - ANGLE_MIN` 的数组。
 + 引用`os_sins_[]`和`o_coss_[]`计算三角函数值时，需要减去一个偏移。为了免去这个麻烦，重新定义了两个指针`sins_`和`coss_`，让它们分别指向`os_sins_[9000]`和`os_cons_[9000]`。这样就可以用角度值直接引用`sins_`和`coss_`了。
 
 ![Trigon](./img/trigon_sinss.png)
