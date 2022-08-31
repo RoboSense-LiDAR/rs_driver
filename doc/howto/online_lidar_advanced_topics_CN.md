@@ -1,25 +1,25 @@
-# Online Lidar - Advanced Topics
+# 在线雷达 - 高级主题
 
-## 1 Introduction
+## 1 简介
 
- The RoboSense LiDAR may work in unicast/multicast/broadcast mode, with VLAN layer and with user layers.
+RoboSense雷达可以工作在单播/组播/广播模式下，也可以工作在VLAN环境下，也可以加入用户自己的层。
 
-This document illustrates how to configure the driver in each case.
+本文说明了在每种场景下如何配置rs_driver的参数。
 
-Before reading this document, please be sure that you have read [Decode online LiDAR](./how_to_decode_online_lidar.md).
+阅读本文之前，请先阅读 [连接在线雷达](./how_to_decode_online_lidar_CN.md).
 
-## 2 Unicast, Multicast and Broadcast
+## 2 单播、组播、广播
 
-### 2.1 Broadcast mode
+### 2.1 广播模式
 
-The simplest way is broadcast mode. 
+广播模式的配置最简单。
 
-The Lidar sends MSOP/DIFOP packets to the host machine (The driver runs on it). For simplicity, the DIFOP port is ommited here.
-+ The Lidar sends to `255.255.255.255` : `6699`, and the host binds to port `6699`.
+下面的图中，雷达发送MSOP/DIFOP包到主机，rs_driver运行在主机上。为了简化，图中没有画DIFOP端口。
++ 雷达发送到 `255.255.255.255` : `6699`, rs_driver绑定到端口`6699`.
 
 ![](./img/12_broadcast.png)
 
-Below is how to configure RSDriverParam variable.
+如下代码配置RSDriverParam。
 
 ```c++
 RSDriverParam param;                              ///< Create a parameter object
@@ -29,14 +29,17 @@ param.input_param.difop_port = 7788;              ///< Set the lidar difop port 
 param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 ```
 
-### 2.2 Unicast mode
+### 2.2 单播模式
 
-To reduce the network load, the Lidar is suggested to work in unicast mode.
-+ The Lidar sends to `192.168.1.102` : `6699`, and the host binds to port `6699`.
+为减少网络流量，推荐使用单播模式。
+
+如下的例子中，
+
++ 雷达发送到`192.168.1.102` : `6699`, rs_driver绑定到端口`6699`。
 
 ![](./img/12_unicast.png)
 
-Below is how to configure the RSDriverParam variable. In fact, it is same with the broadcast case.
+如下代码配置RSDriverParam。它与广播模式的配置完全相同。
 
 ```c++
 RSDriverParam param;                              ///< Create a parameter object
@@ -47,15 +50,18 @@ param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 ```
 
 
-### 2.3 Multicast mode
+### 2.3 组播模式
 
-The Lidar may also works in multicast mode.
-+ The lidar sends to `224.1.1.1`:`6699` 
-+ The host binds to port `6699`. And it makes local NIC (Network Interface Card) join the multicast group `224.1.1.1`. The local NIC's IP is `192.168.1.102`.
+雷达也可以工作在组播模式。
+
+如下的例子中，
+
++ 雷达发送到`224.1.1.1`:`6699` 
++ rs_driver绑定到端口`6699`。 rs_driver让本地网卡加入组播组`224.1.1.1`. 这个网卡的地址是`192.168.1.102`。
 
 ![](./img/12_multicast.png)
 
-Below is how to configure the RSDriverParam variable.
+如下代码配置RSDriverParam。
 
 ```c++
 RSDriverParam param;                              ///< Create a parameter object
@@ -67,17 +73,20 @@ param.input_param.difop_port = 7788;              ///< Set the lidar difop port 
 param.lidar_type = LidarType::RS32;               ///< Set the lidar type. Make sure this type is correct 
 ```
 
-## 3 Multiple Lidars
+## 3 多雷达的情况
 
-### 3.1 Different remote ports
+### 3.1 雷达目的端口不同
 
-If you have two Lidars, it is suggested to set different remote ports.
-+ First Lidar sends to `192.168.1.102`:`6699`, and the first driver instance binds to `6699`.
-+ Second Lidar sends to `192.168.1.102`:`5599`, and the second driver instance binds to `5599`.
+如果要接入两个雷达，推荐给它们配置不同的目的端口。
+
+如下的例子中，
+
++ 第一个雷达发送到`192.168.1.102`:`6699`，rs_driver的第一个实例绑定到端口`6699`。
++ 第二个雷达发送到`192.168.1.102`:`5599`，rs_driver的第二个实例绑定到端口`5599`。
 
 ![](./img/12_multi_lidars_port.png)
 
-Below is how to configure the RSDriverParam variables.
+
 
 ```c++
 RSDriverParam param1;                              ///< Create a parameter object for Lidar 192.168.1.200
@@ -93,16 +102,16 @@ param2.input_param.difop_port = 6688;              ///< Set the lidar difop port
 param2.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 ```
 
-### 3.2 Different remote IPs
+### 3.2 雷达的目的IP不同
 
-An alternate way is to set different remote IPs. 
-+ The host has two NICs: `192.168.1.102` and `192.168.1.103`.
-+ First Lidar sends to `192.168.1.102`:`6699`, and the first driver instance binds to `192.168.1.102:6699`.
-+ Second Lidar sends to `192.168.1.103`:`6699`, and the second driver instance binds to `192.168.1.103:6699`.
+虽然不推荐，也可以给接入的两个雷达配置不同的目的IP。
++ 主机有两个网卡，地址分别是`192.168.1.102` 和`192.168.1.103`。
++ 第一个雷达发送到`192.168.1.102`:`6699`，第一个rs_driver实例绑定到`192.168.1.102:6699`。
++ 第二个雷达发送到`192.168.1.103`:`6699`，第二个rs_driver实例绑定到`192.168.1.103:6699`。
 
 ![](./img/12_multi_lidars_ip.png)
 
-Below is how to configure the RSDriverParam variables.
+如下代码分别配置两个rs_driver实例的RSDriverParam。
 
 ```c++
 RSDriverParam param1;                              ///< Create a parameter object for Lidar 192.168.1.200
@@ -122,19 +131,19 @@ param2.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 
 ## 4 VLAN
 
-In some user cases, The Lidar may work on VLAN.  Its packets have a VLAN layer.
+有些场景下，雷达可以工作在VLAN环境下。这时MSOP/DIFOP包带VLAN层，如下图。
 
 ![](./img/12_vlan_layer.png)
 
-The driver cannot parse this packet. Instead, it depends on a virtual NIC to strip the VLAN layer.
+rs_driver工作在应用层，接触不到VLAN层。这时需要用户创建一个虚拟网卡来剥除VLAN层。
 
-Below is an example.
-+ The Lidar works on VLAN `80`. It sends packets to `192.168.1.102` : `6699`. The packet has a VLAN layer.
-+ Suppose there is a physical NIC `eno1` on the host.  It receives packets with VLAN layer.
+如下是一个例子。
++ 给雷达分配的VLAN ID是`80`。雷达发送到`192.168.1.102` : `6699`。 发送的包带VLAN层。
++ 主机上装的物理网卡eno1也在VLAN ID `80`上，它接收雷达发出的带VLAN层的包。
 
 ![](./img/12_vlan.png)
 
-To strip the VLAN layer, create a virtual NIC `eno1.80` on `eno1`, and assign IP `192.168.1.102` to it.
+要剥除VLAN层，需要用户手工创建一个虚拟网卡。如下的命令，在物理网卡eno1上创建虚拟网卡`eno1.80`，并给它指定IP地址`192.168.1.102` 。
 
 ```
 sudo apt-get install vlan -y
@@ -144,7 +153,9 @@ sudo vconfig add eno1 80
 sudo ifconfig eno1.80 192.168.1.102 up
 ```
 
-Now the driver may take `eno1.80` as a general NIC, and receives packets without VLAN layer.
+现在rs_driver就可以从eno1.80网卡上接收MSOP/DIFOP包了，这些包不带VLAN层。
+
+如下代码配置RSDriverParam。
 
 ```c++
 RSDriverParam param;                              ///< Create a parameter object
@@ -156,16 +167,14 @@ param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 
 ## 5 User Layer, Tail Layer 
 
-In some user cases, User may add extra layers before or after the MSOP/DIFOP packet.
-+ USER_LAYER is before the packet and TAIL_LAYER is after it.
+某些场景下，用户可能在MSOP/DIFOP数据前后加入自己的层。
++ USER_LAYER 在MSOP/DIFOP数据之前，TAIL_LAYER在MSOP/DIFOP数据之后。
 
 ![](./img/12_user_layer.png)
 
-These extra layers are parts of UDP data. The driver can strip them. 
+这些层是UDP数据的一部分，所以rs_driver可以自己剥除他们。只需要告诉rs_driver每个层的字节数就可以。
 
-To strip them, just give their lengths in bytes. 
-
-In the following example, USER_LAYER is 8 bytes, and TAIL_LAYER is 4 bytes.
+如下的例子中，指定USER_LAYER为8字节，TAIL_LAYER为4字节。
 
 ```c++
 RSDriverParam param;                              ///< Create a parameter object

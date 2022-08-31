@@ -2,13 +2,15 @@
 
 ## 1 Introduction
 
-Note:
-+ Before reading this document, please be sure that you have read the [Online connect LiDAR](how_to_decode_with_online_lidar.md) or [Offline decode pcap bag](how_to_decode_with_pcap_file.md).
-+ This function is only for test purpose, and it costs much CPU resources, so **never, never enable this function in your released products**.
+Before reading this document, please be sure that you have read the [Decode online LiDAR](how_to_decode_with_online_lidar.md) or [Decode PCAP file](how_to_decode_with_pcap_file.md).
 
 This document illustrate how to transform the point cloud to a different position with the built-in trasform function.
 
 The rotation order of the transformation is **yaw - pitch - row**. The unit of x, y, z, is ```m```, and the unit of roll, pitch, yaw, is ```radian```.
+
+Warning: 
+
+This function is only for test purpose. It costs much CPU resources, so **never, never enable this function in your released products**.
 
 ## 2 Steps
 

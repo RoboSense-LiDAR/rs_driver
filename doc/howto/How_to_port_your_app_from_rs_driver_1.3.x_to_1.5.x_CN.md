@@ -1,28 +1,27 @@
-# How to port your app from rs_driver v1.3.x to v1.5.x
+# 如何将基于rs_driver v1.3.x的应用程序移植到v1.5.x
 
-## 1 Why to port ?
+## 1 为什么要移植？
 
-This document illustrates how to port your app from rs_driver v1.3.x to v1.5.x.
+本文说明了如何将基于rs_driver v1.3.x的应用程序移植到v1.5.x上。
 
-Why to port your app from v1.3.x to v1.5.x? Below are several reasons.
+rs_driver v1.5.x是对v1.3.x较大重构后的版本。它主要做了如下改进。
++ 明显减少CPU资源的占用率
++ 增加可选的编译选项，解决在某些平台上丢包的问题
++ 去除对Boost库的依赖，更容易移植到除x86以外的其他平台上。
++ 重构网络部分和解码部分的代码，完整支持不同场景下的配置
++ 完善帮助文档，尤其是提供了[源代码解析](../src_intro/rs_driver_intro.md)文档，帮助用户深入理解驱动的实现，以方便功能裁剪。
 
-+ Obviously reduce CPU usage.
-+ Add compile options to solve packet-loss problems on some platforms.
-+ Remove the dependency on the Boost library, help to port rs_driver to other platforms other than x86.
-+ Refactory the Network Input part and the Decoder part, to support different use cases.
-+ Improve the help documents, including [understand source code of rs_driver](../src_intro/rs_driver_intro.md), to help user understand it.
+## 2 如何移植？
 
-## 2 How to port ?
-
-The interface of rs_driver contains two parts: RSDriverParam and LidarDriver.
+rs_driver的接口包括了两个部分：RSDriverParam和LidarDriver。
 
 ### 2.1 RSDriverParam
 
 #### 2.1.1 RSDriverParam
 
-RSDriverParam contains the options to change the rs_driver's behavior.
+RSDriverParam包括了一些可以改变rs_driver行为的参数。
 
-RSDriverParam is as below in rs_driver 1.3.x.
+在v1.3.2中，RSDriverParam定义如下。
 
 ```c++
 typedef struct RSDriverParam  ///< The LiDAR driver parameter
@@ -32,12 +31,12 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
   std::string angle_path = "null";   ///< Path of angle calibration files(angle.csv).Only used for internal debugging.
   std::string frame_id = "rslidar";  ///< The frame id of LiDAR message
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
-  bool wait_for_difop = true;        ///< true: start sending point cloud until receive difop packet
+  bool wait_for_difop = true;              ///< true: start sending point cloud until receive difop packet
   bool saved_by_rows = false;        ///< true: the output point cloud will be saved by rows (default is saved by columns)
 };
 ```
 
-And it is as below in rs_driver 1.5.x.
+在v1.5.x中，RSDriverParam定义如下。
 
 ```c++
 typedef struct RSDriverParam  ///< The LiDAR driver parameter
@@ -49,18 +48,18 @@ typedef struct RSDriverParam  ///< The LiDAR driver parameter
 };
 ```
 
-Below are the changes.
-+ A new member `input_type` is added. It means the type of data sources: `ONLINE_LIDAR`, `PCAP_FILE`, or `RAW_PACKET`.
-+ The member `wait_for_difop` specifies whether to handle MSOP packets before handling DIFOP packet. For mechenical LiDARs, the point cloud will be flat without the angle data in DIFOP packet。This option is about decoding, so it is shifted to RSDecoderParam.
-+ The member `saved_by_rows` specifies to give point cloud row by row. There are two reasons to remove it: 
-  + Even point cloud is given column by column, it is easier to access row by row (by skipping column). 
-  + The option consumes two much CPU resources, so not suggested.
-+ The member `angle_path` specifies a file which contains the angle data. It is about data source, so it is shifted to RSInputParam.
-+ The member `frame_id` is a concept from ROS. It is removed, and the driver `rslidar_sdk`  (for ROS) will handle it.
+变动如下：
++ 加入新成员`input_type`。这个成员指定数据源的类型：`ONLINE_LIDAR`, `PCAP_FILE`, or `RAW_PACKET`.
++ 成员`wait_for_difop` 指定在处理MSOP包之前是否先等待DIFOP包。对于机械式雷达，如果没有DIFOP包中的垂直角数据，得到的点云就是扁平的。这个选项是与解码相关的，所以把它移到RSDecoderParam中。
++ 删除成员`save_by_rows`。默认情况下，点在点云中按照扫描的通道次序保存在vector中，一轮扫描的点在竖直的线上，也就是按照列保存。成员`saved_by_rows` 可以指定按照水平的线保存点，也就是按照行保存。删除这个成员有两个原因：
+  + 在按照列保存点的vector中，按照行的顺序检索点，也是容易的，跳过通道数就可以了。
+  + 这个选项的实现方式是将点云重排一遍，但是复制点云的代码太大了。
++ 成员`angle_path`指定垂直角从指定的文件读取，而不是解析DIFOP包得到。这个选项是关于数据源的，所以移到RSInputParam。
++ 成员`frame_id` 来自ROS的概念，rs_driver本身和rs_driver的其他使用者并不需要它，所以删除它。适配ROS的驱动 `rslidar_sdk`会创建和处理它。
 
 #### 2.1.2 RSInputParam
 
-RSInputParam is as below in rs_driver 1.3.x.
+在v1.3.x中，RSInputParam定义如下。
 
 ```c++
 typedef struct RSInputParam  ///< The LiDAR input parameter
@@ -81,7 +80,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
 }；
 ```
 
-And it is as below in rs_driver 1.5.x.
+在v1.5.x中，RSInputParam定义如下。
 
 ```c++
 typedef struct RSInputParam  ///< The LiDAR input parameter
@@ -99,15 +98,15 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
 };
 ```
 
-Below are the changes.
-+ The member `device_ip` is not needed for receiving packets, so it is removed.
-+ The member `multi_cast_address` is renamed to `group_address`。This is to say, in the multicast mode, the host will join the group to receive packets.
-+ The member `read_pcap` is not needed now. `RSDriverParam.input_type` replaces it. 
-+ The members `use_someip` and `use_custom_proto` is not needed now. `user_layer_bytes` replaces them.
+变动如下：
++ 删除成员`device_ip`。rs_driver接收MSOP/DIFOP包时，其实不需要这个值。
++ 成员`multi_cast_address`改名为`group_address`。这里想表达的含义是，在组播模式下，rs_driver会将主机加入`group_address`指定的组播组。
++ 删除成员`read_pcap`。 既然`RSDriverParam.input_type` 已经指定了数据源类型，`read_pcap`就不需要了。
++ 删除成员`use_someip` and `use_custom_proto`。它们的功能已经被新的选项 `RSInputParam.user_layer_bytes`所取代。
 
 #### 2.1.3 RSDecoderParam
 
-RSDecoderParam is as below in rs_driver 1.3.x.
+在v1.3.x中，RSDecoderParam定义如下。
 
 ```c++
 typedef struct RSDecoderParam  ///< LiDAR decoder parameter
@@ -127,7 +126,7 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
 };
 ```
 
-And it is as below in rs_driver 1.5.x.
+在v1.5.x中，RSDecoderParam定义如下。
 
 ```c++
 typedef struct RSDecoderParam  ///< LiDAR decoder parameter
@@ -151,16 +150,16 @@ typedef struct RSDecoderParam  ///< LiDAR decoder parameter
 };
 ```
 
-Below are the changes.
-+ The member `cut_angle` is renamed to `split_angle`, to align to `split_frame_mode`.
-+ The member `config_from_file` is added. Only if it is true, the member `angle_path` is valid.
-+ The member `num_pkts_split` is renamed to `number_blks_split`. That means to split frames `by blocks (in MSOP packets)` instead of `by MSOP packets`.
+变动如下：
++ 成员`cut_angle`改名为`split_angle`, 以便与成员 `split_frame_mode`的名字保持一致。
++ 增加成员`config_from_file`。只有这个成员为true，成员`angle_path`才有效。
++ 成员`num_pkts_split`改名为 `number_blks_split`. 因为在v1.3.x中，分帧的最小单位是packet，而在v1.5.x中，分帧单位改成了更小的block。
 
 ### 2.2 LidarDriver
 
-LidarDriver contains the functions to run rs_driver.
+创建LidarDriver实例，并调用它的成员函数，可以运行rs_driver。
 
-LidarDriver is as below in rs_driver 1.3.x.
+在v1.3.x中，LidarDriver定义如下。
 
 ```c++
 template <typename PointT>
@@ -176,7 +175,8 @@ public:
 };
 ```
 
-And it is as below in rs_driver 1.5.x.
+
+在v1.5.x中，LidarDriver定义如下。
 
 ```c++
 template <typename T_PointCloud>
@@ -193,11 +193,10 @@ public:
 };
 ```
 
-Below are the changes.
-+ The template parameter is changed from typename `PointT` to typename `T_PointCloud`.
-+ The function to get point cloud is now requested to have two callbacks instead of one.
-
-For details of these two changes, please refer to [Decode online Lidar](./how_to_decode_online_lidar.md). 
+变动如下：
++ LidarDriver类的模板参数从点 `PointT`改成了点云 `T_PointCloud`。
++ LidarDriver在v1.3.x时需要一个点云回调函数，用于rs_driver把构建好的点云返回给调用者，在v1.5.x中则需要两个回调函数，除了返回构建好的点云，还需要给rs_driver提供空闲的点云实例。
+关于这两点，可以参考[Decode online Lidar](./how_to_decode_online_lidar_CN.md)，得到更详细的说明。
 
 
 
