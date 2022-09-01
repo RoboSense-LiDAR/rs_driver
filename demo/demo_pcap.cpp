@@ -114,8 +114,6 @@ int main(int argc, char* argv[])
   RS_TITLE << "            RS_Driver Core Version: v" << getDriverVersion() << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
-  std::thread cloud_handle_thread = std::thread(processCloud);
-
   RSDriverParam param;                                         ///< Create a parameter object
   param.input_type = InputType::PCAP_FILE;
   param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap file directory
@@ -133,7 +131,10 @@ int main(int argc, char* argv[])
     return -1;
   }
 
+  std::thread cloud_handle_thread = std::thread(processCloud);
+
   driver.start();  ///< The driver thread will start
+
   RS_DEBUG << "RoboSense Lidar-Driver Linux pcap demo start......" << RS_REND;
 
 #ifdef ORDERLY_EXIT

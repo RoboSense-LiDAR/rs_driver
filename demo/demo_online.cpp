@@ -114,8 +114,6 @@ int main(int argc, char* argv[])
   RS_TITLE << "            RS_Driver Core Version: v" << getDriverVersion() << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
-  std::thread cloud_handle_thread = std::thread(processCloud);
-
   RSDriverParam param;                  ///< Create a parameter object
   param.input_type = InputType::ONLINE_LIDAR;
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
@@ -131,6 +129,8 @@ int main(int argc, char* argv[])
     RS_ERROR << "Driver Initialize Error..." << RS_REND;
     return -1;
   }
+
+  std::thread cloud_handle_thread = std::thread(processCloud);
 
   driver.start();  ///< The driver thread will start
   RS_DEBUG << "RoboSense Lidar-Driver Linux online demo start......" << RS_REND;
