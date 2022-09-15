@@ -104,6 +104,15 @@ void processCloud(void)
     // Well, it is time to process the point cloud msg, even it is time-consuming.
     RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
 
+#if 0
+    for (auto it = msg->points.begin(); it != msg->points.end(); it++)
+    {
+      std::cout << std::fixed << std::setprecision(3) 
+                << "(" << it->x << ", " << it->y << ", " << it->z << ", " << (int)it->intensity << ")" 
+                << std::endl;
+    }
+#endif
+
     free_cloud_queue.push(msg);
   }
 }
