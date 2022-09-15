@@ -76,8 +76,8 @@ inline RSDecoderMechConstParam& DecoderRSHELIOS_16P<T_PointCloud>::getConstParam
     , 16 // laser number
     , 12 // blocks per packet
       , 32 // channels per block
-      , 0.4f // distance min
-      , 200.0f // distance max
+      , 0.1f // distance min
+      , 150.0f // distance max
       , 0.0025f // distance resolution
       , 0.0625f // temperature resolution
 
