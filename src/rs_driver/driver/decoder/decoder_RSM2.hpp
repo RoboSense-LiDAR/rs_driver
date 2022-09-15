@@ -76,7 +76,7 @@ typedef struct
   RSM2Block blocks[25];
   uint8_t reserved[4];
   uint8_t crc32[4];
-  uint8_t rolling_counter[4];
+  uint8_t rolling_counter[2];
 } RSM2MsopPkt;
 
 #pragma pack(pop)
