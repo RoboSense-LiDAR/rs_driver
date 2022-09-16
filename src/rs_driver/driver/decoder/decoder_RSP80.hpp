@@ -119,7 +119,7 @@ inline RSDecoderMechConstParam& DecoderRSP80<T_PointCloud>::getConstParam()
     , 80 // laser number
     , 4 // blocks per packet
       , 80 // channels per block
-      , 1.0f // distance min
+      , 0.4f // distance min
       , 250.0f // distance max
       , 0.005f // distance resolution
       , 0.0625f // temperature resolution

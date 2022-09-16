@@ -119,7 +119,7 @@ inline RSDecoderMechConstParam& DecoderRSBP<T_PointCloud>::getConstParam()
     , 12 // blocks per packet
       , 32 // channels per block
       , 0.1f // distance min
-      , 100.0f // distance max
+      , 150.0f // distance max
       , 0.005f // distance resolution
       , 0.0625f // temperature resolution
 
