@@ -240,7 +240,7 @@ inline bool DecoderRS128<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 1) != 0)
     {
-      this->cb_excep_(Error(ERRCODE_WRONGMSOPBLKID));
+      //this->cb_excep_(Error(ERRCODE_WRONGMSOPBLKID));
       break;
     }
 
