@@ -249,6 +249,7 @@ int main(int argc, char* argv[])
   std::thread cloud_handle_thread = std::thread(processCloud);
 
   RSDriverParam param;
+  param.input_param.pcap_repeat = false;
   param.decoder_param.dense_points = true;
 
   parseParam(argc, argv, param);
@@ -263,7 +264,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  RS_INFO << "RoboSense Lidar-Driver Viewer start......" << RS_REND;
+  RS_INFO << "RoboSense Lidar-Driver PCD Saver start......" << RS_REND;
 
   driver.start();
 
