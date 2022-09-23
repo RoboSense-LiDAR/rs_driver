@@ -13,6 +13,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "")
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
+if(${COMPILE_TOOL_VIEWER})
+
 if(WIN32)
   cmake_policy(SET CMP0074 NEW)
   set(OPENNI_ROOT "C:\\Program Files\\OpenNI2")
@@ -44,3 +46,17 @@ endif()
 
 install(TARGETS rs_driver_viewer
         RUNTIME DESTINATION /usr/bin)     
+
+endif (${COMPILE_TOOL_VIEWER})
+
+
+if(${COMPILE_TOOL_PCDSAVER})
+
+add_executable(rs_driver_pcdsaver
+               rs_driver_pcdsaver.cpp)
+
+target_link_libraries(rs_driver_pcdsaver
+                    ${EXTERNAL_LIBS})
+
+endif(${COMPILE_TOOL_PCDSAVER})
+

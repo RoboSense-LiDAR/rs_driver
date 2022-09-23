@@ -32,7 +32,9 @@ option(ENABLE_PCL_POINTCLOUD      "Enable PCL Point Cloud" OFF)
 #  Compile Demos, Tools, Tests
 #=============================
 option(COMPILE_DEMOS "Build rs_driver demos" OFF)
-option(COMPILE_TOOLS "Build point cloud visualization tool" OFF)
+option(COMPILE_TOOLS "Build rs_driver tools" OFF)
+option(COMPILE_TOOL_VIEWER "Build point cloud visualization tool" OFF)
+option(COMPILE_TOOL_PCDSAVER "Build point cloud pcd saver tool" OFF)
 option(COMPILE_TESTS "Build rs_driver unit tests" OFF)
 
 #========================
@@ -167,9 +169,14 @@ if(${COMPILE_DEMOS})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/demo)
 endif(${COMPILE_DEMOS})
 
-if(${COMPILE_TOOLS})
+if (${COMPILE_TOOLS})
+  set(COMPILE_TOOL_VIEWER ON)
+  set(COMPILE_TOOL_PCDSAVER ON)
+endif (${COMPILE_TOOLS})
+
+if(${COMPILE_TOOL_VIEWER} OR ${COMPILE_TOOL_PCDSAVER})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tool)
-endif(${COMPILE_TOOLS})
+endif(${COMPILE_TOOL_VIEWER} OR ${COMPILE_TOOL_PCDSAVER})
 
 if(${COMPILE_TESTS})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/test)
