@@ -47,6 +47,7 @@ enum LidarType  ///< LiDAR type
   RS16 = RS_MECH,
   RS32,
   RSBP,
+  RSBPV4,
   RSHELIOS,
   RSHELIOS_16P,
   RS128,
@@ -95,6 +96,9 @@ inline std::string lidarTypeToStr(const LidarType& type)
       break;
     case LidarType::RSBP:
       str = "RSBP";
+      break;
+    case LidarType::RSBPV4:
+      str = "RSBPV4";
       break;
     case LidarType::RSHELIOS:
       str = "RSHELIOS";
@@ -152,6 +156,10 @@ inline LidarType strToLidarType(const std::string& type)
   else if (type == "RSBP")
   {
     return LidarType::RSBP;
+  }
+  else if (type == "RSBPV4")
+  {
+    return LidarType::RSBPV4;
   }
   else if (type == "RSHELIOS")
   {
