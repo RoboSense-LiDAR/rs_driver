@@ -255,34 +255,22 @@ inline void InputSock::recvPacket()
       break;
     }
 
-    if (FD_ISSET(fds_[0], &rfds))
+    for (int i = 0; i < 2; i++)
     {
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
-      int ret = recvfrom(fds_[0], (char*)pkt->buf(), (int)pkt->bufSize(), 0, NULL, NULL);
-      if (ret < 0)
+      if ((fds_[i] >= 0) && FD_ISSET(fds_[i], &rfds))
       {
-        perror("recvfrom: ");
-        break;
-      }
-      else if (ret > 0)
-      {
-        pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
-        pushPacket(pkt);
-      }
-    }
-    else if (FD_ISSET(fds_[1], &rfds))
-    {
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
-      int ret = recvfrom(fds_[1], (char*)pkt->buf(), (int)pkt->bufSize(), 0, NULL, NULL);
-      if (ret < 0)
-      {
-        perror("recvfrom: ");
-        break;
-      }
-      else if (ret > 0)
-      {
-        pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
-        pushPacket(pkt);
+        std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
+        int ret = recvfrom(fds_[i], (char*)pkt->buf(), (int)pkt->bufSize(), 0, NULL, NULL);
+        if (ret < 0)
+        {
+          perror("recvfrom: ");
+          break;
+        }
+        else if (ret > 0)
+        {
+          pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
+          pushPacket(pkt);
+        }
       }
     }
   }
