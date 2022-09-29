@@ -46,8 +46,8 @@ namespace lidar
 class InputSock : public Input
 {
 public:
-  InputSock(const RSInputParam& input_param) 
-    : Input(input_param), pkt_buf_len_(ETH_LEN), 
+  InputSock(const RSInputParam& input_param)
+    : Input(input_param), pkt_buf_len_(ETH_LEN),
       sock_offset_(0), sock_tail_(0)
   {
     sock_offset_ += input_param.user_layer_bytes;
@@ -71,12 +71,12 @@ protected:
 
 inline bool InputSock::init()
 {
-  int msop_fd = -1, difop_fd = -1;
-
   if (init_flag_)
   {
     return true;
   }
+
+  int msop_fd = -1, difop_fd = -1;
 
   WORD version = MAKEWORD(2, 2);
   WSADATA wsaData;
@@ -104,8 +104,6 @@ inline bool InputSock::init()
 failDifop:
   closesocket(msop_fd);
 failMsop:
-  if (difop_fd >= 0)
-    closesocket(difop_fd);
 failWsa:
   return false;
 }
@@ -229,15 +227,15 @@ failSocket:
 
 inline void InputSock::recvPacket()
 {
-  fd_set rfds;
+  int max_fd = ((fds_[0] > fds_[1]) ? fds_[0] : fds_[1]);
 
   while (!to_exit_recv_)
   {
+    fd_set rfds;
     FD_ZERO(&rfds);
     FD_SET(fds_[0], &rfds);
     if (fds_[1] >= 0)
       FD_SET(fds_[1], &rfds);
-    int max_fd = ((fds_[0] > fds_[1]) ? fds_[0] : fds_[1]);
 
     struct timeval tv;
     tv.tv_sec = 1;
@@ -248,7 +246,7 @@ inline void InputSock::recvPacket()
       cb_excep_(Error(ERRCODE_MSOPTIMEOUT));
       continue;
     }
-    else if (retval == -1)
+    else if (retval < 0)
     {
       if (errno == EINTR)
         continue;
