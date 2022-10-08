@@ -23,6 +23,12 @@ add_executable(demo_online
 target_link_libraries(demo_online
                     ${EXTERNAL_LIBS})
 
+add_executable(demo_online_multi_lidars
+              demo_online_multi_lidars.cpp)
+
+target_link_libraries(demo_online_multi_lidars
+                    ${EXTERNAL_LIBS})
+
 if(NOT ${DISABLE_PCAP_PARSE})
 
 add_executable(demo_pcap
