@@ -4,6 +4,20 @@
 
 ### Changed 
 
+## v1.5.7 2022-10-09
+
+### Added
+- Add tool to save as PCD file
+- Seperate RSBPV4 from RSBP
+- Add demo app demo_online_multi_lidars 
+
+### Changed
+- Disable error report in case of wrong block id for RS128/RS80 temporarily
+
+### Fixed
+- Fix distance range of helios series. Also update distance ranges of other lidars
+- Report error ERRCODE_MSOP_TIMEOUT if only DIFOP packet is received
+
 ## v1.5.6 2022-09-01
 
 ### Added
