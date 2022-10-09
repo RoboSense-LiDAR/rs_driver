@@ -13,6 +13,7 @@
 - RS-LiDAR-16
 - RS-LiDAR-32
 - RS-Bpearl
+- RS-Bpearl-V4
 - RS-Helios
 - RS-Helios-16P
 - RS-Ruby-128
