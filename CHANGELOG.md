@@ -1,33 +1,166 @@
-# Changelog 
+# CHANGLOG
 
-## v1.3.2 - 2022-03-01
+## Unreleased
 
-### Fixed
-- Fix version to v1.3.2
+### Changed 
 
-## v1.3.1 - 2022-01-27
+## v1.5.7 2022-10-09
 
 ### Added
-- Support the Ruby 4.0 Lidar
-- Add vlan support with the PCAP file
-- Add SOME/IP support
+- Add tool to save as PCD file
+- Seperate RSBPV4 from RSBP
+- Add demo app demo_online_multi_lidars 
+
+### Changed
+- Disable error report in case of wrong block id for RS128/RS80 temporarily
+
+### Fixed
+- Fix distance range of helios series. Also update distance ranges of other lidars
+- Report error ERRCODE_MSOP_TIMEOUT if only DIFOP packet is received
+
+## v1.5.6 2022-09-01
+
+### Added
+- Add option ENABLE_DOUBLE_RCVBUF to solve the packet-loss problem
+- Add option ENABLE_WAIT_IF_QUEUE_EMPTY to reduce CPU usage.
+- Add option ENABLE_STAMP_WITH_LOCAL to convert point cloud's timestamp to local time
+
+### Changed 
+- Make ERRCODEs different for MSOP/DIFOP Packet
+- Rename error code CLOUDOVERFLOW
+- For RSM2, recover its coordinate to ROS-compatible
+- For RSM2, adapt to increased MSOP packet len 
+- Update `demo_pcap` and `rs_driver_viewer` with cloud queue
+- Accept angle.csv with vert angle only
+- Update help documents
+
+### Fixed
+- For Ruby and Ruby Plus, fix the problem of parsing point cloud' timestamp.
+- Fix ERRCODE_MSOPTIMEOUT problem of input_sock_epoll 
+
+### Removed
+- Remove option ENABLE_RCVMMSG
+
+## v1.5.5 2022-08-01
+
+### Added
+- Compiled rs_driver_viewer on Windows, and add help doc
+- Add option to double RECVBUF of UDP sockets
+
+### Changed 
+- Update demo_online to exit orderly.
+
+### Fixed
+- Fix runtime error of Eigen in case of ENABLE_TRANSFORM 
+- Fix Compiling error on QNX
+- Fix pcap_rate
+- Fix the problem with repeated stop and start of driver
+
+### Removed
+- Remove option of high priority thread
+
+## v1.5.4 2022-07-01
+
+### Added
+- Support Ruby_3.0_48
+- Add option to stamp point cloud with first point
+
+### Updated
+- Distinguish 80/80v with lidar model
+- Use ROS coordinate for EOS 
+- Enable PCAP file parsing in default mode
+- Parse DIFOP packet in case of jumbo pcap file
+- Update demo_online example to use ponit cloud queue
+- Update help documents
+
+### Fixed
+- Fix lidar temperature 
+
+## v1.5.3 2022-06-01
+
+### Added
+- Add option to receive packet with epoll()
+- Support Jumbo Mode
+
+### Fixed
+- Check overflow of point cloud
+- Fix compiling error of multiple definition
+
+## v1.5.2 2022-05-20
+
+### Added
+- Support RSP128/RSP80/RSP48 lidars
+- Support EOS lidar
+- Add option to usleep() when no packets to be handled
+
+### Changed
+- Limit error information when error happens
+- Use raw buffer for packet callback
+- Split frame by seq 1 (for MEMS lidars)
+- Remove difop handle thread
+
+## v1.5.1 - 2022-04-28
+
+### Changed
+- When replay MSOP/DIFOP file, use the timestamp when it is recording.
+For Mechanical LiDARs,
+- Split frame by block instead of by packet
+- Let every point has its own timestamp, instead of using the block's one.
+- 
+
+## v1.5.0 - 2022-04-21
+-- Refactory the coder part
+
+## v1.4.6 - 2022-04-21
+
+### Added
+- Check msop timeout
+- Support M2
+- add cmake option ENABLE_RECVMMSG
+
+### Changed
+- Optimize point cloud transform
+
+## v1.4.5 - 2022-03-09
+
+### Added
+- Support dense attribute
+- Support to bind to a specifed ip
+- Limit max size of packet queue
+- Apply SO_REUSEADDR option to the receiving socket
+- Support user layer and tail layer
+- add macro option to disable the PCAP function.
+
+### Changed
+- Join multicast group with code instead of shell script
+
+### Fixed
+- Fix memory leaks problem
+- Fix temperature calculation (for M1 only)
+
+## v1.4.0 - 2021-11-01
+
+### Changed
+Optimazation to decrease CPU uage, includes: 
+- Replace point with point cloud as template parameter
+- Instead of alloc/free packet, use packet pool
+- Instead of alloc/free point cloud, always keep point cloud memory
+- By default, use conditional macro to disable scan_msg/camera_trigger related code
+
+## V1.3.1
+### Added
+- Add vlan support
+- Add somip support
 - Add split frame when pkt_cnt < last_pkt_cnt in mems
 - Add temperature in mems
 - Add ROCK support
-- Support to bind the receiving socket to the specified ip
-- Join multicast group with code instead of shell script
-- Allow msop socket and difop socket to receive via same port.
 
 ### Fixed
 - Fix don't get time when PointType doesn't have timestamp member
 - Fix ROCK light center compensation algorithm
-- Fix incorrect delay while playing pcap file with multicast lidars
 
 ### Removed
 - Remove redundance condition code in vec.emplace_back(std::move(point)) in mech lidars
-
-
-
 
 ## v1.3.0 - 2020-11-10
 

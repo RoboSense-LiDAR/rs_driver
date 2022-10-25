@@ -1,48 +1,54 @@
-# How to use visualization tool
+# How to visualize point cloud with rs_driver_viewer
 
 ## 1 Introduction
 
-This document will show you how to use the visualization tool to watch point cloud from LiDAR.
+The rs_driver_viewer is a visualization tool for the point cloud. This document illustrates how to use it.
 
-## 2 Run
+![](./img/14_rs_driver_viewer_point_cloud.png)
 
-If user install the **rs_driver** in the previous step, the tool can be start by the following command:
+## 2 Compile and Run
 
-```bash
-rs_driver_viewer
-```
-
-Otherwise, the tool need to be start with the absolute path:
+Compile the driver with the option COMPILE_TOOLS=ON. 
 
 ```bash
-./rs_driver/build/tool/rs_driver_viewer 
+cmake -DCOMPILE_TOOS=ON ..
 ```
 
-### 2.1 Arguments
+Run the tool.
 
-- -h/--help
+```bash
+./tool/rs_driver_viewer 
+```
+
+### 2.1 Help Menu
+
+- -h
 
    print the argument menu 
 
+- -type
+
+   LiDAR type, the default value is *RS16*
+
+- -pcap
+
+   Full path of the PCAP file. If this argument is set, the driver read packets from the pcap file, else from online Lidar. 
+
 - -msop
 
-   Msop port number of LiDAR, the default value is *6699*
+   MSOP port number of LiDAR, the default value is *6699*
 
 - -difop
 
-   Difop port number of LiDAR, the default value is *7788*
+   DIFOP port number of LiDAR, the default value is *7788*
+   
+- -group
+
+   the multicast group address
 
 - -host
 
-   Host address. 
-
-- -multi_cast
-
-   Destination multi-cast address.
-
-- -type
-
-   Typer of LiDAR, the default value is *RS16*
+   the host address
 
 - -x
 
@@ -68,33 +74,25 @@ Otherwise, the tool need to be start with the absolute path:
 
    Transformation parameter, default is 0, unit: radian
 
-- -pcap
+Note:
 
-   The absolute path of pcap file. If this argument is set, the driver will work in off-line mode and the pcap file. Otherwise the driver work in online mode.
-
-**The point cloud transformation function can only be used when the cmake option ENABLE_TRANSFORM is set to ON.**
+**The point cloud transformation function is available only if the CMake option ENABLE_TRANSFORM is ON.**
 
 ## 3 Examples
 
-- Online decode a RS128 LiDAR, which msop port is ```9966``` and difop port is ```8877```
+- Decode from an online RS128 LiDAR. Its MSOP port is ```9966```, and difop port is ```8877```
 
   ```bash
-  rs_driver_viewer -msop 9966 -difop 8877 -type RS128 
+  rs_driver_viewer -type RS128 -msop 9966 -difop 8877 
   ```
 
-- Online decode a RSM1 LiDAR, which send to a muti-cast group ```224.1.1.1``` and the host address is ```192.168.1.102```.
+- Decode from a PCAP file with RSHELIOS LiDAR data.
 
   ```bash
-  rs_driver_viewer -type RSM1 -host 192.168.1.102 -multi_cast 224.1.1.1
+  rs_driver_viewer -type RSHELIOS -pcap /home/robosense/helios.pcap
   ```
 
-- Offline decode a RSHELIOS LiDAR with a pcap file.
-
-  ```bash
-  rs_driver_viewer -pcap /home/robosense/helios.pcap -type RSHELIOS
-  ```
-
-- Online decode a RS16 LiDAR with the coordinate transformation parameter x=1.5, y=2, z=0, roll=1.57, pitch=0, yaw=0
+- Decode with the coordinate transformation parameters: x=1.5, y=2, z=0, roll=1.57, pitch=0, yaw=0
 
   ```bash
   rs_driver_viewer -type RS16 -x 1.5 -y 2 -roll 1.57 

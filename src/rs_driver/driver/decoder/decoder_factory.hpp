@@ -30,255 +30,102 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
+#pragma once
+
+#include <rs_driver/driver/decoder/decoder.hpp>
 #include <rs_driver/driver/decoder/decoder_RS16.hpp>
 #include <rs_driver/driver/decoder/decoder_RS32.hpp>
-#include <rs_driver/driver/decoder/decoder_RS80.hpp>
-#include <rs_driver/driver/decoder/decoder_RS128.hpp>
-#include <rs_driver/driver/decoder/decoder_RS128_40.hpp>
 #include <rs_driver/driver/decoder/decoder_RSBP.hpp>
-#include <rs_driver/driver/decoder/decoder_RSM1.hpp>
+#include <rs_driver/driver/decoder/decoder_RSBPV4.hpp>
 #include <rs_driver/driver/decoder/decoder_RSHELIOS.hpp>
-#include <rs_driver/driver/decoder/decoder_RSROCK.hpp>
-#include <rs_driver/driver/input.hpp>
-#include <rs_driver/msg/packet_msg.h>
+#include <rs_driver/driver/decoder/decoder_RSHELIOS_16P.hpp>
+#include <rs_driver/driver/decoder/decoder_RS128.hpp>
+#include <rs_driver/driver/decoder/decoder_RS80.hpp>
+#include <rs_driver/driver/decoder/decoder_RS48.hpp>
+#include <rs_driver/driver/decoder/decoder_RSP128.hpp>
+#include <rs_driver/driver/decoder/decoder_RSP80.hpp>
+#include <rs_driver/driver/decoder/decoder_RSP48.hpp>
+#include <rs_driver/driver/decoder/decoder_RSM1.hpp>
+#include <rs_driver/driver/decoder/decoder_RSM2.hpp>
+#include <rs_driver/driver/decoder/decoder_RSEOS.hpp>
+#include <rs_driver/driver/decoder/decoder_RSM1_Jumbo.hpp>
 
 namespace robosense
 {
 namespace lidar
 {
-template <typename T_Point>
+
+template <typename T_PointCloud>
 class DecoderFactory
 {
 public:
-  DecoderFactory() = default;
-  ~DecoderFactory() = default;
-  static std::shared_ptr<DecoderBase<T_Point>> createDecoder(const RSDriverParam& param);
 
-private:
-  static const LidarConstantParameter getRS16ConstantParam();
-  static const LidarConstantParameter getRS32ConstantParam();
-  static const LidarConstantParameter getRSBPConstantParam();
-  static const LidarConstantParameter getRS80ConstantParam();
-  static const LidarConstantParameter getRS128ConstantParam();
-  static const LidarConstantParameter getRS128_40ConstantParam();
-  static const LidarConstantParameter getRSM1ConstantParam();
-  static const LidarConstantParameter getRSHELIOSConstantParam();
-  static const LidarConstantParameter getRSROCKConstantParam();
+  static std::shared_ptr<Decoder<T_PointCloud>> createDecoder(
+      LidarType type, const RSDecoderParam& param);
 };
 
-template <typename T_Point>
-inline std::shared_ptr<DecoderBase<T_Point>> DecoderFactory<T_Point>::createDecoder(const RSDriverParam& param)
+template <typename T_PointCloud>
+inline std::shared_ptr<Decoder<T_PointCloud>> DecoderFactory<T_PointCloud>::createDecoder(
+    LidarType type, const RSDecoderParam& param)
 {
-  std::shared_ptr<DecoderBase<T_Point>> ret_ptr;
-  switch (param.lidar_type)
+  std::shared_ptr<Decoder<T_PointCloud>> ret_ptr;
+
+  switch (type)
   {
     case LidarType::RS16:
-      ret_ptr = std::make_shared<DecoderRS16<T_Point>>(param.decoder_param, getRS16ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS16<T_PointCloud>>(param);
       break;
     case LidarType::RS32:
-      ret_ptr = std::make_shared<DecoderRS32<T_Point>>(param.decoder_param, getRS32ConstantParam());
+      ret_ptr = std::make_shared<DecoderRS32<T_PointCloud>>(param);
       break;
     case LidarType::RSBP:
-      ret_ptr = std::make_shared<DecoderRSBP<T_Point>>(param.decoder_param, getRSBPConstantParam());
+      ret_ptr = std::make_shared<DecoderRSBP<T_PointCloud>>(param);
       break;
-    case LidarType::RS128:
-      ret_ptr = std::make_shared<DecoderRS128<T_Point>>(param.decoder_param, getRS128ConstantParam());
-      break;
-    case LidarType::RS128_40:
-      ret_ptr = std::make_shared<DecoderRS128_40<T_Point>>(param.decoder_param, getRS128_40ConstantParam());
-      break;
-    case LidarType::RS80:
-      ret_ptr = std::make_shared<DecoderRS80<T_Point>>(param.decoder_param, getRS80ConstantParam());
-      break;
-    case LidarType::RSM1:
-      ret_ptr = std::make_shared<DecoderRSM1<T_Point>>(param.decoder_param, getRSM1ConstantParam());
+    case LidarType::RSBPV4:
+      ret_ptr = std::make_shared<DecoderRSBPV4<T_PointCloud>>(param);
       break;
     case LidarType::RSHELIOS:
-      ret_ptr = std::make_shared<DecoderRSHELIOS<T_Point>>(param.decoder_param, getRSHELIOSConstantParam());
+      ret_ptr = std::make_shared<DecoderRSHELIOS<T_PointCloud>>(param);
       break;
-    case LidarType::RSROCK:
-      ret_ptr = std::make_shared<DecoderRSROCK<T_Point>>(param.decoder_param, getRSROCKConstantParam());
+    case LidarType::RSHELIOS_16P:
+      ret_ptr = std::make_shared<DecoderRSHELIOS_16P<T_PointCloud>>(param);
+      break;
+    case LidarType::RS128:
+      ret_ptr = std::make_shared<DecoderRS128<T_PointCloud>>(param);
+      break;
+    case LidarType::RS80:
+      ret_ptr = std::make_shared<DecoderRS80<T_PointCloud>>(param);
+      break;
+    case LidarType::RS48:
+      ret_ptr = std::make_shared<DecoderRS48<T_PointCloud>>(param);
+      break;
+    case LidarType::RSP128:
+      ret_ptr = std::make_shared<DecoderRSP128<T_PointCloud>>(param);
+      break;
+    case LidarType::RSP80:
+      ret_ptr = std::make_shared<DecoderRSP80<T_PointCloud>>(param);
+      break;
+    case LidarType::RSP48:
+      ret_ptr = std::make_shared<DecoderRSP48<T_PointCloud>>(param);
+      break;
+    case LidarType::RSM1:
+      ret_ptr = std::make_shared<DecoderRSM1<T_PointCloud>>(param);
+      break;
+    case LidarType::RSM2:
+      ret_ptr = std::make_shared<DecoderRSM2<T_PointCloud>>(param);
+      break;
+    case LidarType::RSEOS:
+      ret_ptr = std::make_shared<DecoderRSEOS<T_PointCloud>>(param);
+      break;
+    case LidarType::RSM1_JUMBO:
+      ret_ptr = std::make_shared<DecoderRSM1_Jumbo<T_PointCloud>>(param);
       break;
     default:
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
       exit(-1);
   }
-  ret_ptr->loadAngleFile(param.angle_path);
+
   return ret_ptr;
-}
-
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRS16ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0xA050A55A0A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xEEFF;
-  ret_param.PKT_RATE = 750;
-  ret_param.BLOCKS_PER_PKT = 12;
-  ret_param.CHANNELS_PER_BLOCK = 32;
-  ret_param.LASER_NUM = 16;
-  ret_param.DSR_TOFFSET = 2.8;
-  ret_param.FIRING_FREQUENCY = 0.009;
-  ret_param.DIS_RESOLUTION = 0.005;
-  ret_param.RX = 0.03825;
-  ret_param.RY = -0.01088;
-  ret_param.RZ = 0;
-  return ret_param;
-}
-
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRS32ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0xA050A55A0A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xEEFF;
-  ret_param.PKT_RATE = 1500;
-  ret_param.BLOCKS_PER_PKT = 12;
-  ret_param.CHANNELS_PER_BLOCK = 32;
-  ret_param.LASER_NUM = 32;
-  ret_param.DSR_TOFFSET = 1.44;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.005;
-  ret_param.RX = 0.03997;
-  ret_param.RY = -0.01087;
-  ret_param.RZ = 0;
-  return ret_param;
-}
-
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRSBPConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0xA050A55A0A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xEEFF;
-  ret_param.PKT_RATE = 1500;
-  ret_param.BLOCKS_PER_PKT = 12;
-  ret_param.CHANNELS_PER_BLOCK = 32;
-  ret_param.LASER_NUM = 32;
-  ret_param.DSR_TOFFSET = 1.28;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.005;
-  ret_param.RX = 0.01473;
-  ret_param.RY = 0.0085;
-  ret_param.RZ = 0.09427;
-  return ret_param;
-}
-
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRS80ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0x5A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xFE;
-  ret_param.PKT_RATE = 4500;
-  ret_param.BLOCKS_PER_PKT = 4;
-  ret_param.CHANNELS_PER_BLOCK = 80;
-  ret_param.LASER_NUM = 80;
-  ret_param.DSR_TOFFSET = 3.236;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.005;
-  ret_param.RX = 0.03615;
-  ret_param.RY = -0.017;
-  ret_param.RZ = 0;
-  return ret_param;
-}
-
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRS128ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0x5A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xFE;
-  ret_param.PKT_RATE = 6000;
-  ret_param.BLOCKS_PER_PKT = 3;
-  ret_param.CHANNELS_PER_BLOCK = 128;
-  ret_param.LASER_NUM = 128;
-  ret_param.DSR_TOFFSET = 3.236;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.005;
-  ret_param.RX = 0.03615;
-  ret_param.RY = -0.017;
-  ret_param.RZ = 0;
-  return ret_param;
-}
-
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRS128_40ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0x5A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xFE;
-  ret_param.PKT_RATE = 6000;
-  ret_param.BLOCKS_PER_PKT = 3;
-  ret_param.CHANNELS_PER_BLOCK = 128;
-  ret_param.LASER_NUM = 128;
-  ret_param.DSR_TOFFSET = 3.236;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.005;
-  ret_param.RX = 0.02892; //0.03615; 
-  ret_param.RY = -0.013; //-0.017;
-  ret_param.RZ = 0;//0.0735; //0;
-  return ret_param;
-}
-
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRSM1ConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0xA55AAA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCKS_PER_PKT = 25;
-  ret_param.CHANNELS_PER_BLOCK = 5;
-  ret_param.LASER_NUM = 5;
-  ret_param.DIS_RESOLUTION = 0.005;
-  return ret_param;
-}
-
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRSHELIOSConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0x5A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xEEFF;
-  ret_param.PKT_RATE = 1500;
-  ret_param.BLOCKS_PER_PKT = 12;
-  ret_param.CHANNELS_PER_BLOCK = 32;
-  ret_param.LASER_NUM = 32;
-  ret_param.DSR_TOFFSET = 1.0;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.0025;
-  ret_param.RX = 0.03498;
-  ret_param.RY = -0.015;
-  ret_param.RZ = 0.0;
-  return ret_param;
-}
-
-// TODO
-template <typename T_Point>
-inline const LidarConstantParameter DecoderFactory<T_Point>::getRSROCKConstantParam()
-{
-  LidarConstantParameter ret_param;
-  ret_param.MSOP_ID = 0x000001005A05AA55;
-  ret_param.DIFOP_ID = 0x555511115A00FFA5;
-  ret_param.BLOCK_ID = 0xEEFF;
-  ret_param.PKT_RATE = 1071;  // TODO
-  ret_param.BLOCKS_PER_PKT = 6;
-  ret_param.CHANNELS_PER_BLOCK = 14 * 4;  // TODO
-  ret_param.LASER_NUM = 4;
-  ret_param.DSR_TOFFSET = 1.0;
-  ret_param.FIRING_FREQUENCY = 0.018;
-  ret_param.DIS_RESOLUTION = 0.0025;
-  ret_param.RX = 0.07526;
-  ret_param.RY = 0.00968;
-  ret_param.RZ = 0.0;
-  return ret_param;
 }
 
 }  // namespace lidar

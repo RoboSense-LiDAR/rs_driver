@@ -31,16 +31,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
-#include <rs_driver/driver/decoder/decoder_base.hpp>
+#include <rs_driver/driver/decoder/decoder.hpp>
 
 namespace robosense
 {
 namespace lidar
 {
-const uint32_t SINGLE_PKT_NUM = 630;
-const uint32_t DUAL_PKT_NUM = 1260;
-const int ANGLE_OFFSET = 32768;
 #pragma pack(push, 1)
+
+typedef struct
+{
+  uint8_t id[4];
+  uint16_t pkt_seq;
+  uint16_t protocol_version;
+  uint8_t return_mode;
+  uint8_t time_mode;
+  RSTimestampUTC timestamp;
+  uint8_t reserved[10];
+  uint8_t lidar_type;
+  uint8_t temperature;
+} RSM1MsopHeader;
 
 typedef struct
 {
@@ -58,19 +68,6 @@ typedef struct
   uint8_t return_seq;
   RSM1Channel channel[5];
 } RSM1Block;
-
-typedef struct
-{
-  uint32_t id;
-  uint16_t pkt_cnt;
-  uint16_t protocol_version;
-  uint8_t return_mode;
-  uint8_t time_mode;
-  RSTimestampUTC timestamp;
-  uint8_t reserved[10];
-  uint8_t lidar_type;
-  int8_t temperature;
-} RSM1MsopHeader;
 
 typedef struct
 {
@@ -119,177 +116,185 @@ typedef struct
 
 typedef struct
 {
-  uint64_t id;
-  uint8_t reserved_1;
+  uint8_t id[8];
+  uint8_t reserved1[1];
   uint8_t frame_rate;
   RSM1DifopEther ether;
-  RSM1DifopFov fov_setting;
+  RSM1DifopFov fov;
   RSM1DifopVerInfo ver_info;
-  RSSn sn;
+  RSSN sn;
   uint8_t return_mode;
   RSTimeInfo time_info;
   RSM1DifopRunSts status;
-  uint8_t diag_reserved[40];
+  uint8_t reserved2[40];
   RSM1DifopCalibration cali_param[20];
-  uint8_t reserved_2[71];
+  uint8_t reserved3[71];
 } RSM1DifopPkt;
+
 #pragma pack(pop)
 
-template <typename T_Point>
-class DecoderRSM1 : public DecoderBase<T_Point>
+template <typename T_PointCloud>
+class DecoderRSM1 : public Decoder<T_PointCloud>
 {
 public:
-  DecoderRSM1(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param);
-  RSDecoderResult decodeDifopPkt(const uint8_t* pkt);
-  RSDecoderResult decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height, int& azimuth);
-  double getLidarTime(const uint8_t* pkt);
-  RSDecoderResult processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& pointcloud_vec, int& height);
+
+  constexpr static double FRAME_DURATION = 0.1;
+  constexpr static uint32_t SINGLE_PKT_NUM = 630;
+  constexpr static int ANGLE_OFFSET = 32768;
+
+  virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
+  virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
+  virtual ~DecoderRSM1() = default;
+
+  explicit DecoderRSM1(const RSDecoderParam& param);
 
 private:
-  uint32_t last_pkt_cnt_;
-  uint32_t max_pkt_num_;
-  double last_pkt_time_;
+
+  static RSDecoderConstParam& getConstParam();
+  RSEchoMode getEchoMode(uint8_t mode);
+
+  SplitStrategyBySeq split_strategy_;
 };
 
-template <typename T_Point>
-inline DecoderRSM1<T_Point>::DecoderRSM1(const RSDecoderParam& param, const LidarConstantParameter& lidar_const_param)
-  : DecoderBase<T_Point>(param, lidar_const_param), last_pkt_cnt_(1), max_pkt_num_(SINGLE_PKT_NUM), last_pkt_time_(0)
+template <typename T_PointCloud>
+inline RSDecoderConstParam& DecoderRSM1<T_PointCloud>::getConstParam()
 {
-  if (this->param_.max_distance > 200.0f)
+  static RSDecoderConstParam param = 
   {
-    this->param_.max_distance = 200.0f;
-  }
-  if (this->param_.min_distance < 0.2f || this->param_.min_distance > this->param_.max_distance)
-  {
-    this->param_.min_distance = 0.2f;
-  }
-  this->time_duration_between_blocks_ = 5 * 1e-6;
+    1210 // msop len
+      , 256 // difop len
+      , 4 // msop id len
+      , 8 // difop id len
+      , {0x55, 0xAA, 0x5A, 0xA5} // msop id
+    , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+    , {0x00, 0x00}
+    , 5  // laser number
+    , 25 // blocks per packet
+      , 5 // channels per block
+      , 0.2f // distance min
+      , 200.0f // distance max
+      , 0.005f // distance resolution
+      , 80.0f // initial value of temperature 
+  };
+
+  return param;
 }
 
-template <typename T_Point>
-inline double DecoderRSM1<T_Point>::getLidarTime(const uint8_t* pkt)
+template <typename T_PointCloud>
+inline DecoderRSM1<T_PointCloud>::DecoderRSM1(const RSDecoderParam& param)
+  : Decoder<T_PointCloud>(getConstParam(), param)
 {
-  return this->template calculateTimeUTC<RSM1MsopPkt>(pkt, LidarType::RSM1);
+  this->packet_duration_ = FRAME_DURATION / SINGLE_PKT_NUM;
+  this->angles_ready_ = true;
 }
 
-template <typename T_Point>
-inline RSDecoderResult DecoderRSM1<T_Point>::processMsopPkt(const uint8_t* pkt, std::vector<T_Point>& pointcloud_vec,
-                                                            int& height)
+template <typename T_PointCloud>
+inline RSEchoMode DecoderRSM1<T_PointCloud>::getEchoMode(uint8_t mode)
 {
-  int azimuth = 0;
-  RSDecoderResult ret = decodeMsopPkt(pkt, pointcloud_vec, height, azimuth);
-  this->pkt_count_++;
-  switch (this->param_.split_frame_mode)
+  switch (mode)
   {
-    case SplitFrameMode::SPLIT_BY_ANGLE:
-    case SplitFrameMode::SPLIT_BY_FIXED_PKTS:
-      return ret;
-    case SplitFrameMode::SPLIT_BY_CUSTOM_PKTS:
-      if (this->pkt_count_ >= this->param_.num_pkts_split)
-      {
-        this->pkt_count_ = 0;
-        this->trigger_index_ = 0;
-        this->prev_angle_diff_ = RS_ONE_ROUND;
-        return FRAME_SPLIT;
-      }
-      break;
+    case 0x00: // dual return
+      return RSEchoMode::ECHO_DUAL;
+    case 0x04: // strongest return
+    case 0x05: // last return
+    case 0x06: // first return
     default:
-      break;
+      return RSEchoMode::ECHO_SINGLE;
   }
-  return DECODE_OK;
 }
 
-template <typename T_Point>
-inline RSDecoderResult DecoderRSM1<T_Point>::decodeMsopPkt(const uint8_t* pkt, std::vector<T_Point>& vec, int& height,
-                                                           int& azimuth)
+template <typename T_PointCloud>
+inline void DecoderRSM1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
-  height = this->lidar_const_param_.LASER_NUM;
-  RSM1MsopPkt* mpkt_ptr = (RSM1MsopPkt*)pkt;
-  if (mpkt_ptr->header.id != this->lidar_const_param_.MSOP_ID)
+  const RSM1DifopPkt& pkt = *(RSM1DifopPkt*)packet;
+  this->echo_mode_ = this->getEchoMode(pkt.return_mode);
+}
+
+template <typename T_PointCloud>
+inline bool DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
+{
+  const RSM1MsopPkt& pkt = *(RSM1MsopPkt*)packet;
+  bool ret = false;
+
+  this->temperature_ = static_cast<float>((int)pkt.header.temperature - this->const_param_.TEMPERATURE_RES);
+
+  double pkt_ts = 0;
+  if (this->param_.use_lidar_clock)
   {
-    return RSDecoderResult::WRONG_PKT_HEADER;
+    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
   }
-  this->current_temperature_ = static_cast<float>(mpkt_ptr->header.temperature - 80);
-  this->protocol_ver_ = RS_SWAP_SHORT(mpkt_ptr->header.protocol_version);
-  double pkt_timestamp = 0;
-  switch (mpkt_ptr->blocks[0].return_seq)
+  else
   {
-    case 0:
-      pkt_timestamp = this->get_point_time_func_(pkt);
-      break;
-    case 1:
-      pkt_timestamp = this->get_point_time_func_(pkt);
-      last_pkt_time_ = pkt_timestamp;
-      break;
-    case 2:
-      pkt_timestamp = last_pkt_time_;
-      break;
+    uint64_t ts = getTimeHost();
+
+    // roll back to first block to approach lidar ts as near as possible.
+    pkt_ts = getTimeHost() * 1e-6 - this->getPacketDuration();
+
+    if (this->write_pkt_ts_)
+    {
+      createTimeUTCWithUs (ts, (RSTimestampUTC*)&pkt.header.timestamp);
+    }
   }
 
-  for (size_t blk_idx = 0; blk_idx < this->lidar_const_param_.BLOCKS_PER_PKT; blk_idx++)
+  uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
+  if (split_strategy_.newPacket(pkt_seq))
   {
-    const RSM1Block& blk = mpkt_ptr->blocks[blk_idx];
-    double point_time = pkt_timestamp + blk.time_offset * 1e-6;
-    for (size_t channel_idx = 0; channel_idx < this->lidar_const_param_.CHANNELS_PER_BLOCK; channel_idx++)
+    this->cb_split_frame_(this->const_param_.LASER_NUM, this->cloudTs());
+    this->first_point_ts_ = pkt_ts;
+    ret = true;
+  }
+
+  for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
+  {
+    const RSM1Block& block = pkt.blocks[blk];
+
+    double point_time = pkt_ts + block.time_offset * 1e-6;
+
+    for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
-      T_Point point;
-      float distance = RS_SWAP_SHORT(blk.channel[channel_idx].distance) * this->lidar_const_param_.DIS_RESOLUTION;
-      if (distance <= this->param_.max_distance && distance >= this->param_.min_distance)
+      const RSM1Channel& channel = block.channel[chan];
+
+      float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
+
+      if (this->distance_section_.in(distance))
       {
-        int pitch = RS_SWAP_SHORT(blk.channel[channel_idx].pitch) - ANGLE_OFFSET;
-        int yaw = RS_SWAP_SHORT(blk.channel[channel_idx].yaw) - ANGLE_OFFSET;
-        uint8_t intensity = blk.channel[channel_idx].intensity;
-        float x = distance * this->checkCosTable(pitch) * this->checkCosTable(yaw);
-        float y = distance * this->checkCosTable(pitch) * this->checkSinTable(yaw);
-        float z = distance * this->checkSinTable(pitch);
+        int pitch = ntohs(channel.pitch) - ANGLE_OFFSET;
+        int yaw = ntohs(channel.yaw) - ANGLE_OFFSET;
+
+        float x = distance * COS (pitch) * COS (yaw);
+        float y = distance * COS (pitch) * SIN (yaw);
+        float z = distance * SIN (pitch);
         this->transformPoint(x, y, z);
+
+        typename T_PointCloud::PointT point;
         setX(point, x);
         setY(point, y);
         setZ(point, z);
-        setIntensity(point, intensity);
+        setIntensity(point, channel.intensity);
+        setTimestamp(point, point_time);
+        setRing(point, chan);
+
+        this->point_cloud_->points.emplace_back(point);
       }
-      else
+      else if (!this->param_.dense_points)
       {
+        typename T_PointCloud::PointT point;
         setX(point, NAN);
         setY(point, NAN);
         setZ(point, NAN);
         setIntensity(point, 0);
+        setTimestamp(point, point_time);
+        setRing(point, chan);
+
+        this->point_cloud_->points.emplace_back(point);
       }
-      setTimestamp(point, point_time);
-      setRing(point, channel_idx + 1);
-      vec.emplace_back(std::move(point));
     }
-  }
-  unsigned int pkt_cnt = RS_SWAP_SHORT(mpkt_ptr->header.pkt_cnt);
 
-  // TODO whatif packet loss or seq unorder
-  if (pkt_cnt == max_pkt_num_ || pkt_cnt < last_pkt_cnt_)
-  {
-    last_pkt_cnt_ = 1;
-    return RSDecoderResult::FRAME_SPLIT;
+    this->prev_point_ts_ = point_time;
   }
-  last_pkt_cnt_ = pkt_cnt;
-  return RSDecoderResult::DECODE_OK;
-}
 
-template <typename T_Point>
-inline RSDecoderResult DecoderRSM1<T_Point>::decodeDifopPkt(const uint8_t* pkt)
-{
-  RSM1DifopPkt* dpkt_ptr = (RSM1DifopPkt*)pkt;
-  if (dpkt_ptr->id != this->lidar_const_param_.DIFOP_ID)
-  {
-    return RSDecoderResult::WRONG_PKT_HEADER;
-  }
-  if (!this->difop_flag_)
-  {
-    this->echo_mode_ = this->getEchoMode(LidarType::RSM1, dpkt_ptr->return_mode);
-    if (this->echo_mode_ == RSEchoMode::ECHO_DUAL)
-    {
-      max_pkt_num_ = DUAL_PKT_NUM;
-    }
-    this->difop_flag_ = true;
-  }
-  return RSDecoderResult::DECODE_OK;
+  this->prev_pkt_ts_ = pkt_ts;
+  return ret;
 }
 
 }  // namespace lidar
