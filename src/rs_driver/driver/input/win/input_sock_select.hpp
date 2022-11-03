@@ -171,6 +171,7 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
   if (ret < 0)
   {
     perror("bind: ");
+    cb_excep_(Error(ERRCODE_WRONGHOSTADDR));
     goto failBind;
   }
 
@@ -190,6 +191,7 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
     if (ret < 0)
     {
       perror("setsockopt: ");
+      cb_excep_(Error(ERRCODE_WRONGHOSTADDR));
       goto failGroup;
     }
   }
