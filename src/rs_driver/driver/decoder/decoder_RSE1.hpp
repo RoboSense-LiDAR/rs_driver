@@ -79,7 +79,7 @@ typedef struct
 #pragma pack(pop)
 
 template <typename T_PointCloud>
-class DecoderRSEOS : public Decoder<T_PointCloud>
+class DecoderRSE1 : public Decoder<T_PointCloud>
 {
 public:
 
@@ -89,9 +89,9 @@ public:
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
-  virtual ~DecoderRSEOS() = default;
+  virtual ~DecoderRSE1() = default;
 
-  explicit DecoderRSEOS(const RSDecoderParam& param);
+  explicit DecoderRSE1(const RSDecoderParam& param);
 
 private:
 
@@ -102,7 +102,7 @@ private:
 };
 
 template <typename T_PointCloud>
-inline RSDecoderConstParam& DecoderRSEOS<T_PointCloud>::getConstParam()
+inline RSDecoderConstParam& DecoderRSE1<T_PointCloud>::getConstParam()
 {
   static RSDecoderConstParam param = 
   {
@@ -126,7 +126,7 @@ inline RSDecoderConstParam& DecoderRSEOS<T_PointCloud>::getConstParam()
 }
 
 template <typename T_PointCloud>
-inline DecoderRSEOS<T_PointCloud>::DecoderRSEOS(const RSDecoderParam& param)
+inline DecoderRSE1<T_PointCloud>::DecoderRSE1(const RSDecoderParam& param)
   : Decoder<T_PointCloud>(getConstParam(), param)
 {
   this->packet_duration_ = FRAME_DURATION / SINGLE_PKT_NUM;
@@ -134,7 +134,7 @@ inline DecoderRSEOS<T_PointCloud>::DecoderRSEOS(const RSDecoderParam& param)
 }
 
 template <typename T_PointCloud>
-inline RSEchoMode DecoderRSEOS<T_PointCloud>::getEchoMode(uint8_t mode)
+inline RSEchoMode DecoderRSE1<T_PointCloud>::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
@@ -149,12 +149,12 @@ inline RSEchoMode DecoderRSEOS<T_PointCloud>::getEchoMode(uint8_t mode)
 }
 
 template <typename T_PointCloud>
-inline void DecoderRSEOS<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
+inline void DecoderRSE1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
 }
 
 template <typename T_PointCloud>
-inline bool DecoderRSEOS<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
+inline bool DecoderRSE1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size_t size)
 {
   const RSEOSMsopPkt& pkt = *(RSEOSMsopPkt*)packet;
   bool ret = false;
