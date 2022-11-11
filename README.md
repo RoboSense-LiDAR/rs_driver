@@ -24,7 +24,7 @@ Below are the supported LiDARS.
 - RS-Ruby-Plus-48
 - RS-LiDAR-M1
 - RS-LiDAR-M2
-- RS-LiDAR-EOS
+- RS-LiDAR-E1
 
 ## 3 Supported Platforms
 
