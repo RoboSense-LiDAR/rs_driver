@@ -75,11 +75,10 @@ enum ErrCode
 
   // error
   ERRCODE_STARTBEFOREINIT = 0x80,  ///< start() function is called before initializing successfully
-  ERRCODE_WRONGHOSTADDR   = 0x81,  ///< Input msop port is already used
-  ERRCODE_MSOPPORTBUZY    = 0x82,  ///< Input msop port is already used
-  ERRCODE_DIFOPPORTBUZY   = 0x83,  ///< Input difop port is already used
-  ERRCODE_PCAPWRONGPATH   = 0x84,  ///< Input directory of pcap file is wrong
-  ERRCODE_POINTCLOUDNULL  = 0x85,  ///< PointCloud buffer is invalid
+  ERRCODE_MSOPPORTBUZY    = 0x81,  ///< Input msop port is already used
+  ERRCODE_DIFOPPORTBUZY   = 0x82,  ///< Input difop port is already used
+  ERRCODE_PCAPWRONGPATH   = 0x83,  ///< Input directory of pcap file is wrong
+  ERRCODE_POINTCLOUDNULL  = 0x84,  ///< PointCloud buffer is invalid
 };
 
 struct Error
@@ -141,8 +140,6 @@ struct Error
       // error
       case ERRCODE_STARTBEFOREINIT:
         return "ERRCODE_STARTBEFOREINIT";
-      case ERRCODE_WRONGHOSTADDR:
-        return "ERRCODE_WRONGHOSTADDR";
       case ERRCODE_MSOPPORTBUZY:
         return "ERRCODE_MSOPPORTBUZY";
       case ERRCODE_DIFOPPORTBUZY:
