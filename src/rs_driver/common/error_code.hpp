@@ -62,23 +62,20 @@ enum ErrCode
 
   // warning
   ERRCODE_MSOPTIMEOUT     = 0x40,  ///< Msop packets receive overtime (1 sec)
-  ERRCODE_DIFOPTIMEOUT    = 0x41,  ///< Difop packets receive overtime (2 sec)
-  ERRCODE_NODIFOPRECV     = 0x42,  ///< Point cloud decoding process will not start until the difop packet receive
-  ERRCODE_WRONGMSOPID     = 0x43,  ///< Packet header is wrong
-  ERRCODE_WRONGMSOPLEN    = 0x44,  ///< Packet length is wrong
-  ERRCODE_WRONGMSOPBLKID  = 0x45,  ///< Packet header is wrong
-  ERRCODE_WRONGDIFOPID    = 0x46,  ///< Packet header is wrong
-  ERRCODE_WRONGDIFOPLEN   = 0x47,  ///< Packet length is wrong
-  ERRCODE_ZEROPOINTS      = 0x48,  ///< Size of the point cloud is zero
-  ERRCODE_PKTBUFOVERFLOW  = 0x49,  ///< Packet buffer is overflow
-  ERRCODE_CLOUDOVERFLOW   = 0x4a,  ///< Point cloud buffer is overflow
+  ERRCODE_NODIFOPRECV     = 0x41,  ///< Point cloud decoding process will not start until the difop packet receive
+  ERRCODE_WRONGMSOPID     = 0x42,  ///< Packet header is wrong
+  ERRCODE_WRONGMSOPLEN    = 0x43,  ///< Packet length is wrong
+  ERRCODE_WRONGMSOPBLKID  = 0x44,  ///< Packet header is wrong
+  ERRCODE_WRONGDIFOPID    = 0x45,  ///< Packet header is wrong
+  ERRCODE_WRONGDIFOPLEN   = 0x46,  ///< Packet length is wrong
+  ERRCODE_ZEROPOINTS      = 0x47,  ///< Size of the point cloud is zero
+  ERRCODE_PKTBUFOVERFLOW  = 0x48,  ///< Packet buffer is overflow
+  ERRCODE_CLOUDOVERFLOW   = 0x49,  ///< Point cloud buffer is overflow
 
   // error
   ERRCODE_STARTBEFOREINIT = 0x80,  ///< start() function is called before initializing successfully
-  ERRCODE_MSOPPORTBUZY    = 0x81,  ///< Input msop port is already used
-  ERRCODE_DIFOPPORTBUZY   = 0x82,  ///< Input difop port is already used
-  ERRCODE_PCAPWRONGPATH   = 0x83,  ///< Input directory of pcap file is wrong
-  ERRCODE_POINTCLOUDNULL  = 0x84,  ///< PointCloud buffer is invalid
+  ERRCODE_PCAPWRONGPATH   = 0x81,  ///< Input directory of pcap file is wrong
+  ERRCODE_POINTCLOUDNULL  = 0x82,  ///< PointCloud buffer is invalid
 };
 
 struct Error
@@ -120,8 +117,6 @@ struct Error
       // warning
       case ERRCODE_MSOPTIMEOUT:
         return "ERRCODE_MSOPTIMEOUT";
-      case ERRCODE_DIFOPTIMEOUT:
-        return "ERRCODE_DIFOPTIMEOUT";
       case ERRCODE_NODIFOPRECV:
         return "ERRCODE_NODIFOPRECV";
       case ERRCODE_WRONGMSOPID:
@@ -136,22 +131,18 @@ struct Error
         return "ERRCODE_WRONGDIFOPLEN";
       case ERRCODE_ZEROPOINTS:
         return "ERRCODE_ZEROPOINTS";
-
-      // error
-      case ERRCODE_STARTBEFOREINIT:
-        return "ERRCODE_STARTBEFOREINIT";
-      case ERRCODE_MSOPPORTBUZY:
-        return "ERRCODE_MSOPPORTBUZY";
-      case ERRCODE_DIFOPPORTBUZY:
-        return "ERRCODE_DIFOPPORTBUZY";
-      case ERRCODE_PCAPWRONGPATH:
-        return "ERRCODE_PCAPWRONGPATH";
-      case ERRCODE_POINTCLOUDNULL:
-        return "ERRCODE_POINTCLOUDNULL";
       case ERRCODE_PKTBUFOVERFLOW:
         return "ERRCODE_PKTBUFOVERFLOW";
       case ERRCODE_CLOUDOVERFLOW:
         return "ERRCODE_CLOUDOVERFLOW";
+
+      // error
+      case ERRCODE_STARTBEFOREINIT:
+        return "ERRCODE_STARTBEFOREINIT";
+      case ERRCODE_PCAPWRONGPATH:
+        return "ERRCODE_PCAPWRONGPATH";
+      case ERRCODE_POINTCLOUDNULL:
+        return "ERRCODE_POINTCLOUDNULL";
 
       //default
       default:
