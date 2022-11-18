@@ -228,7 +228,6 @@ failSocket:
 inline void InputSock::recvPacket()
 {
   int max_fd = ((fds_[0] > fds_[1]) ? fds_[0] : fds_[1]);
-  bool msop_recv = true;
 
   while (!to_exit_recv_)
   {
@@ -273,20 +272,6 @@ inline void InputSock::recvPacket()
           pushPacket(pkt);
         }
       }
-    }
-
-    if (FD_ISSET(fds_[0], &rfds)) // receive msop
-    {
-      msop_recv = true;
-    }
-    else  // receive difop
-    {
-      if (!msop_recv)
-      {
-        cb_excep_(Error(ERRCODE_MSOPTIMEOUT));
-      }
-
-      msop_recv = false;
     }
   }
 }
