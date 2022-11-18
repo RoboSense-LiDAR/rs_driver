@@ -175,7 +175,7 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
   ret = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
   if (ret < 0)
   {
-    perror("setsockopt: ");
+    perror("setsockopt(SO_REUSEADDR): ");
     goto failOption;
   }
 
@@ -211,7 +211,7 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
     ret = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ipm, sizeof(ipm));
     if (ret < 0)
     {
-      perror("setsockopt: ");
+      perror("setsockopt(IP_ADD_MEMBERSHIP): ");
       goto failGroup;
     }
   }
