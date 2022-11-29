@@ -120,7 +120,7 @@ inline RSDecoderConstParam& DecoderRSM2<T_PointCloud>::getConstParam()
     , 25 // blocks per packet
       , 5 // channels per block
       , 0.2f // distance min
-      , 200.0f // distance max
+      , 250.0f // distance max
       , 0.005f // distance resolution
       , 80.0f // initial value of temperature 
   };
