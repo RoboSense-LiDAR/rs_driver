@@ -282,8 +282,8 @@ struct RSDecoderParam  ///< LiDAR decoder parameter
   bool config_from_file = false; ///< Internal use only for debugging
   std::string angle_path = "";   ///< Internal use only for debugging
   bool wait_for_difop = true;    ///< true: start sending point cloud until receive difop packet
-  float min_distance = 0.2f;     ///< Minimum distance of point cloud range
-  float max_distance = 200.0f;   ///< Max distance of point cloud range
+  float min_distance = 0.0f;     ///< min/max distances of point cloud range. valid if min distance or max distance > 0
+  float max_distance = 0.0f; 
   float start_angle = 0.0f;      ///< Start angle of point cloud
   float end_angle = 360.0f;      ///< End angle of point cloud
   SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;  

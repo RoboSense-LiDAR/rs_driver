@@ -59,9 +59,16 @@ TEST(TestDistanceSection, ctor)
   ASSERT_FALSE(sec.in(150.5));
 }
 
-TEST(TestDistanceSection, ctorNoUseBlock)
+TEST(TestDistanceSection, ctorZeroUserDistance)
 {
-  DistanceSection sec(0.5, 200, 0.0, 200.5);
+  DistanceSection sec(0.5, 200, 0.0, 0.0);
+  ASSERT_EQ(sec.min_, 0.5);
+  ASSERT_EQ(sec.max_, 200);
+}
+
+TEST(TestDistanceSection, ctorNegtiveUserDistance)
+{
+  DistanceSection sec(0.5, 200, -0.1, -0.2);
   ASSERT_EQ(sec.min_, 0.5);
   ASSERT_EQ(sec.max_, 200);
 }

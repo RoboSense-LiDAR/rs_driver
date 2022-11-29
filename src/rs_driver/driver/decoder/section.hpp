@@ -77,8 +77,16 @@ class DistanceSection
 {
 public:
   DistanceSection (float min, float max, float usr_min, float usr_max)
-    : min_((usr_min > min) ? usr_min : min), max_((usr_max < max) ? usr_max : max)
+    : min_(min), max_(max)
   {
+    if (usr_min < 0) usr_min = 0;
+    if (usr_max < 0) usr_max = 0;
+
+    if ((usr_min != 0) || (usr_max != 0))
+    {
+      min_ = usr_min;
+      max_ = usr_max;
+    }
   }
 
   bool in(float distance)
