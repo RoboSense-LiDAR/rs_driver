@@ -39,43 +39,37 @@ namespace robosense
 {
 namespace lidar
 {
-/**
- * @brief Error Code for RoboSense LiDAR Driver.
- * 0x00 For success info
- * 0x01 ~ 0x40 for Infos, some infomation during the program running
- * 0x41 ~ 0x80 for Warning, the program may not work normally
- * 0x81 ~ 0xC0 for Critical Error, the program will exit
- */
+
 enum class ErrCodeType
 {
-  INFO_CODE,     ///< Common information
-  WARNING_CODE,  ///< Program may not work normally
-  ERROR_CODE     ///< Program will exit immediately
+  INFO_CODE,     // 0x00 ~ 0x3F
+  WARNING_CODE,  // 0x40 ~ 0x7F
+  ERROR_CODE     // 0x80 ~ 0xBF
 };
 
 enum ErrCode
 {
   // info
-  ERRCODE_SUCCESS         = 0x00,  ///< Normal
-  ERRCODE_PCAPREPEAT      = 0x01,  ///< Pcap file will play repeatedly
-  ERRCODE_PCAPEXIT        = 0x02,  ///< Pcap thread will exit
+  ERRCODE_SUCCESS         = 0x00,  ///< Normal Status
+  ERRCODE_PCAPREPEAT      = 0x01,  ///< Reach file end, and play PCAP file again.
+  ERRCODE_PCAPEXIT        = 0x02,  ///< Reach file end, and exit parsing PCAP file
 
   // warning
-  ERRCODE_MSOPTIMEOUT     = 0x40,  ///< Msop packets receive overtime (1 sec)
-  ERRCODE_NODIFOPRECV     = 0x41,  ///< Point cloud decoding process will not start until the difop packet receive
-  ERRCODE_WRONGMSOPID     = 0x42,  ///< Packet header is wrong
-  ERRCODE_WRONGMSOPLEN    = 0x43,  ///< Packet length is wrong
-  ERRCODE_WRONGMSOPBLKID  = 0x44,  ///< Packet header is wrong
-  ERRCODE_WRONGDIFOPID    = 0x45,  ///< Packet header is wrong
-  ERRCODE_WRONGDIFOPLEN   = 0x46,  ///< Packet length is wrong
-  ERRCODE_ZEROPOINTS      = 0x47,  ///< Size of the point cloud is zero
-  ERRCODE_PKTBUFOVERFLOW  = 0x48,  ///< Packet buffer is overflow
+  ERRCODE_MSOPTIMEOUT     = 0x40,  ///< Timeout (1s) of receiving MSOP Packets
+  ERRCODE_NODIFOPRECV     = 0x41,  ///< Calibration data (in DIFOP packet in general) is not ready while handling MOSP Packet
+  ERRCODE_WRONGMSOPLEN    = 0x42,  ///< MSOP Packet length is wrong
+  ERRCODE_WRONGMSOPID     = 0x43,  ///< MSOP Packet ID is wrong
+  ERRCODE_WRONGMSOPBLKID  = 0x44,  ///< Block ID in MSOP Packet is wrong
+  ERRCODE_WRONGDIFOPLEN   = 0x45,  ///< DIFOP Packet length is wrong
+  ERRCODE_WRONGDIFOPID    = 0x46,  ///< DIFOP Packet ID is wrong
+  ERRCODE_ZEROPOINTS      = 0x47,  ///< No points in PointCloud
+  ERRCODE_PKTBUFOVERFLOW  = 0x48,  ///< Packet queue is overflow
   ERRCODE_CLOUDOVERFLOW   = 0x49,  ///< Point cloud buffer is overflow
 
   // error
-  ERRCODE_STARTBEFOREINIT = 0x80,  ///< start() function is called before initializing successfully
-  ERRCODE_PCAPWRONGPATH   = 0x81,  ///< Input directory of pcap file is wrong
-  ERRCODE_POINTCLOUDNULL  = 0x82,  ///< PointCloud buffer is invalid
+  ERRCODE_STARTBEFOREINIT = 0x80,  ///< User calls start() before init()
+  ERRCODE_PCAPWRONGPATH   = 0x81,  ///< Path of pcap file is wrong
+  ERRCODE_POINTCLOUDNULL  = 0x82   ///< User provided PointCloud buffer is invalid
 };
 
 struct Error
