@@ -1,12 +1,16 @@
-# **rs_driver**  
+# **0 rs_driver**  
 
 [中文介绍](README_CN.md) 
 
-## 1 Introduction
+
+
+## 0.1 Introduction
 
 **rs_driver** is the driver kernel for the RoboSense LiDARs.
 
-## 2 Supported LiDARs
+
+
+## 0.2 Supported LiDARs
 
 Below are the supported LiDARS.
 
@@ -26,7 +30,9 @@ Below are the supported LiDARS.
 - RS-LiDAR-M2
 - RS-LiDAR-E1
 
-## 3 Supported Platforms
+
+
+## 0.3 Supported Platforms
 
 **rs_driver** is compatible with the following platforms and compilers. Note the compiler should support C++ 14.
 
@@ -36,7 +42,9 @@ Below are the supported LiDARS.
 - Windows
   - MSVC ( tested with Win10 / VS2019)
 
-## 4 Dependency Libraries
+
+
+## 0.4 Dependency Libraries
 
 **rs_driver** depends on the following third-party libraries. Please install them before compiling **rs_driver**.
 
@@ -45,15 +53,17 @@ Below are the supported LiDARS.
 - PCL (optional, needed to build the visualization tool)
 - Boost (optional, needed to build the visualization tool)
 
-## 5 Compile On Ubuntu
 
-### 5.1 Dependency Libraries
+
+## 0.5 Compile On Ubuntu
+
+### 0.5.1 Dependency Libraries
 
 ```sh
 sudo apt-get install libpcap-dev libeigen3-dev libboost-dev libpcl-dev
 ```
 
-### 5.2 Compilation
+### 0.5.2 Compilation
 
 ```bash
 cd rs_driver
@@ -61,13 +71,13 @@ mkdir build && cd build
 cmake .. && make -j4
 ```
 
-### 5.3 Installation
+### 0.5.3 Installation
 
 ```bash
 sudo make install
 ```
 
-### 5.4 Use rs_driver as a third party library
+### 0.5.4 Use rs_driver as a third party library
 
 In your ```CMakeLists.txt```, find the **rs_driver** package and link to it .
 
@@ -77,7 +87,7 @@ include_directories(${rs_driver_INCLUDE_DIRS})
 target_link_libraries(your_project ${rs_driver_LIBRARIES})
 ```
 
-### 5.5 Use rs_driver as a submodule
+### 0.5.5 Use rs_driver as a submodule
 
 Add **rs_driver** into your project as a submodule. 
 
@@ -90,9 +100,11 @@ include_directories(${rs_driver_INCLUDE_DIRS})
 target_link_libraries(your_project ${rs_driver_LIBRARIES})
 ```
 
-## 6 Compile On Windows
 
-### 6.1 Dependency Libraries
+
+## 0.6 Compile On Windows
+
+### 0.6.1 Dependency Libraries
 
 #### libpcap
 
@@ -105,14 +117,15 @@ Unzip [libpcap's developer's pack](https://www.winpcap.org/install/bin/WpdPack_4
 To compile with VS2019, please use the official installation package [PCL All-in-one installer](https://github.com/PointCloudLibrary/pcl/releases).
 
 Select the "Add PCL to the system PATH for xxx" option during the installation.
+![](./img/install_pcl.png)
 
-![](./img/01_install_pcl.png)
-
-### 6.2 Installation
+### 0.6.2 Installation
 
 Installation is not supported on Windows.
 
-## 7 Quick Start
+
+
+## 0.7 Quick Start
 
 **rs_driver** offers two demo programs in ```rs_driver/demo```.
 
@@ -129,11 +142,13 @@ To build `demo_online` and `demo_pcap`, enable the option COMPILE_DEMOS when con
 cmake -DCOMPILE_DEMOS=ON ..
 ```
 
-For more info about how to decode an online Lidar, Please refer to [Decode online LiDAR](doc/howto/how_to_decode_online_lidar.md)
+For more info about how to decode an online Lidar, Please refer to [Decode online LiDAR](doc/howto/07_how_to_decode_online_lidar.md)
 
-For more info about how to decode a PCAP file, Please refer to [Decode pcap file](doc/howto/how_to_decode_pcap_file.md)
+For more info about how to decode a PCAP file, Please refer to [Decode pcap file](doc/howto/09_how_to_decode_pcap_file.md)
 
-## 8 Visualization of Point Cloud
+
+
+## 0.8 Visualization of Point Cloud
 
 **rs_driver** offers a visualization tool `rs_driver_viwer` in ```rs_driver/tool``` , which is based on PCL.
 
@@ -143,15 +158,17 @@ To build it, enable the option CMOPILE_TOOLS when configuring the project.
 cmake -DCOMPILE_TOOLS=ON ..
 ```
 
-For more info about how to use the `rs_driver_viewer`, please refer to [Visualization tool guide](doc/howto/how_to_use_rs_driver_viewer.md) 
+For more info about how to use the `rs_driver_viewer`, please refer to [Visualization tool guide](doc/howto/13_how_to_use_rs_driver_viewer.md) 
 
-## 9 More Topics
+
+
+## 0.9 More Topics
 
 For more topics, Please refer to:
 
-Trasformation function: [Transformation guide](doc/howto/how_to_transform_pointcloud.md) 
-Online Lidar -  Advanced topics: [Online LiDAR - Advanced Topics](doc/howto/online_lidar_advanced_topics.md) 
-PCAP file - Advanced topics: [PCAP file - Advanced Topics](doc/howto/online_lidar_advanced_topics.md) 
+Trasformation function: [Transformation guide](doc/howto/14_how_to_transform_pointcloud.md) 
+Online Lidar -  Advanced topics: [Online LiDAR - Advanced Topics](doc/howto/08_online_lidar_advanced_topics.md) 
+PCAP file - Advanced topics: [PCAP file - Advanced Topics](doc/howto/09_how_to_decode_pcap_file.md) 
 
 For more info about the `rs_driver` API, Please refer to:
 - **Point Cloud message definition**: ```rs_driver/src/rs_driver/msg/point_cloud_msg.hpp```, ```rs_driver/src/rs_driver/msg/pcl_point_cloud_msg.hpp```
