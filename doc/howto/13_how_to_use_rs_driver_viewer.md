@@ -4,7 +4,7 @@
 
 ## 1 Introduction
 
-The rs_driver_viewer is a visualization tool for the point cloud. This document illustrates how to use it.
+The `rs_driver_viewer` is a visualization tool for the point cloud. This document illustrates how to use it.
 ![](./img/13_01_rs_driver_viewer_point_cloud.png)
 
 
@@ -83,7 +83,7 @@ Note:
 
 ## 3 Examples
 
-- Decode from an online RS128 LiDAR. Its MSOP port is ```9966```, and difop port is ```8877```
+- Decode from an online RS128 LiDAR. Its MSOP port is ```9966```, and DIFOP port is ```8877```
 
   ```bash
   rs_driver_viewer -type RS128 -msop 9966 -difop 8877 

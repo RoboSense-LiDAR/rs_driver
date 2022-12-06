@@ -4,7 +4,7 @@
 
 ## 13.1 概述
 
-rs_driver_viewer是rs_driver自带的小工具，可以用于显示点云。
+`rs_driver_viewer`是`rs_driver`自带的小工具，可以用于显示点云。
 
 本文说明如何使用这个工具。
 ![](./img/13_01_rs_driver_viewer_point_cloud.png)
@@ -13,13 +13,13 @@ rs_driver_viewer是rs_driver自带的小工具，可以用于显示点云。
 
 ## 13.2 编译和运行
 
-要编译rs_driver_viewer，需要使能编译选项COMPILE_TOOLS=ON。
+要编译`rs_driver_viewer`，需要使能编译选项COMPILE_TOOLS=ON。
 
 ```bash
 cmake -DCOMPILE_TOOS=ON ..
 ```
 
-运行rs_driver_viewer。
+运行`rs_driver_viewer`。
 
 ```bash
 ./tool/rs_driver_viewer 

@@ -266,7 +266,6 @@ msg: 6 point cloud size: 28800
 msg: 7 point cloud size: 28832
 msg: 8 point cloud size: 28800
 msg: 9 point cloud size: 28800
-
 ```
 
 如果您没有看到，可能是因为网络选项的配置不正确，请参考[在线雷达-高级主题](./08_online_lidar_advanced_topics_CN.md)，获得正确的配置。

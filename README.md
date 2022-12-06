@@ -8,6 +8,12 @@
 
 **rs_driver** is the driver kernel for the RoboSense LiDARs.
 
+Please download the official release from [github](https://github.com/RoboSense-LiDAR/rs_driver/releases), or get the latest version with the git client tool.
+
+````shell
+git clone https://github.com/RoboSense-LiDAR/rs_driver.git
+````
+
 
 
 ## 0.2 Supported LiDARs
@@ -34,7 +40,7 @@ Below are the supported LiDARS.
 
 ## 0.3 Supported Platforms
 
-**rs_driver** is compatible with the following platforms and compilers. Note the compiler should support C++ 14.
+**rs_driver** is supported on the following platforms and compilers. Note the compiler should support `C++14`.
 
 - Ubuntu (16.04, 18.04)
   - gcc (4.8+)
@@ -46,7 +52,7 @@ Below are the supported LiDARS.
 
 ## 0.4 Dependency Libraries
 
-**rs_driver** depends on the following third-party libraries. Please install them before compiling **rs_driver**.
+**rs_driver** depends on the following third-party libraries. 
 
 - libpcap (optional, needed to parse PCAP file)
 - Eigen3 (optional, needed to use the internal transformation function)
@@ -130,21 +136,22 @@ Installation is not supported on Windows.
 **rs_driver** offers two demo programs in ```rs_driver/demo```.
 
 - demo_online.cpp
+
+`demo_online` connects to online lidar, and output point cloud.
+
 - demo_pcap.cpp
 
-Please refer to them for usage of the rs_driver API. 
+`demo_pcap` parses pcap file, and output point cloud. It is based on libpcap.
 
-`demo_pcap` is based on libpcap.
-
-To build `demo_online` and `demo_pcap`, enable the option COMPILE_DEMOS when configure the project.
+To build `demo_online` and `demo_pcap`, enable the CMake option `COMPILE_DEMOS`.
 
 ```bash
 cmake -DCOMPILE_DEMOS=ON ..
 ```
 
-For more info about how to decode an online Lidar, Please refer to [Decode online LiDAR](doc/howto/07_how_to_decode_online_lidar.md)
+For more info about `demo_online`, Please refer to [Decode online LiDAR](doc/howto/07_how_to_decode_online_lidar.md)
 
-For more info about how to decode a PCAP file, Please refer to [Decode pcap file](doc/howto/09_how_to_decode_pcap_file.md)
+For more info about `demo_pcap`, Please refer to [Decode pcap file](doc/howto/09_how_to_decode_pcap_file.md)
 
 
 
@@ -152,27 +159,28 @@ For more info about how to decode a PCAP file, Please refer to [Decode pcap file
 
 **rs_driver** offers a visualization tool `rs_driver_viwer` in ```rs_driver/tool``` , which is based on PCL.
 
-To build it, enable the option CMOPILE_TOOLS when configuring the project.
+To build it, enable the CMake option CMOPILE_TOOLS.
 
 ```bash
 cmake -DCOMPILE_TOOLS=ON ..
 ```
 
-For more info about how to use the `rs_driver_viewer`, please refer to [Visualization tool guide](doc/howto/13_how_to_use_rs_driver_viewer.md) 
+For more info about `rs_driver_viewer`, please refer to [Visualization tool guide](doc/howto/13_how_to_use_rs_driver_viewer.md) 
 
-
-
-## 0.9 More Topics
-
-For more topics, Please refer to:
-
-Trasformation function: [Transformation guide](doc/howto/14_how_to_transform_pointcloud.md) 
-Online Lidar -  Advanced topics: [Online LiDAR - Advanced Topics](doc/howto/08_online_lidar_advanced_topics.md) 
-PCAP file - Advanced topics: [PCAP file - Advanced Topics](doc/howto/09_how_to_decode_pcap_file.md) 
+## 0.9 API files
 
 For more info about the `rs_driver` API, Please refer to:
 - **Point Cloud message definition**: ```rs_driver/src/rs_driver/msg/point_cloud_msg.hpp```, ```rs_driver/src/rs_driver/msg/pcl_point_cloud_msg.hpp```
 - **API definition**: ```rs_driver/src/rs_driver/api/lidar_driver.hpp```
 - **Parameters definition**: ```rs_driver/src/rs_driver/driver/driver_param.hpp```, 
 - **Error code definition**: ```rs_driver/src/rs_driver/common/error_code.hpp```
+
+## 0.10 More Topics
+
+For more topics, Please refer to:
+
+Online Lidar -  Advanced topics: [Online LiDAR - Advanced Topics](doc/howto/08_online_lidar_advanced_topics.md) 
+PCAP file - Advanced topics: [PCAP file - Advanced Topics](doc/howto/09_how_to_decode_pcap_file.md) 
+Trasformation function: [Transformation guide](doc/howto/14_how_to_transform_pointcloud.md) 
+
 

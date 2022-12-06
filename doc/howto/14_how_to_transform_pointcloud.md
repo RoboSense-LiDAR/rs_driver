@@ -4,15 +4,12 @@
 
 ## 14.1 Introduction
 
-Before reading this document, please be sure that you have read the [Decode online LiDAR](./07_how_to_decode_online_lidar.md) or [Decode PCAP file](./09_how_to_decode_pcap_file.md).
-
-This document illustrate how to transform the point cloud to a different position with the built-in trasform function.
-
-The rotation order of the transformation is **yaw - pitch - row**. The unit of x, y, z, is ```m```, and the unit of roll, pitch, yaw, is ```radian```.
+This document illustrate how to transform the point cloud to a different position with the built-in transform function.
 
 Warning: 
 
-This function is only for test purpose. It costs much CPU resources, so **never, never enable this function in your released products**.
++ It costs much CPU resources. This function is only for test purpose.  
++ **Never enable this function in your released products**.
 
 
 
@@ -29,6 +26,11 @@ cmake -DENABLE_TRANSFORM=ON ..
 ### 14.2.2 Config parameters
 
 Configure the transformation parameters. These parameters' default value is ```0```.  
+
++ The unit of x, y, z, is ```m``` 
++ the unit of roll, pitch, yaw, is ```radian```
+
++ The rotation order of the transformation is **yaw - pitch - row**. 
 
 Below is an example with x=1, y=0, z=2.5, roll=0.1, pitch=0.2, yaw=1.57. 
 

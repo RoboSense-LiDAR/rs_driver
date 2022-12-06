@@ -6,7 +6,11 @@
 
 The parameters are defined in the file `rs_driver/src/rs_driver/driver_param.h`.
 
-Basically, there are 3 structures: RSDriverParam, RSDecoderParam, and RSInputParam.
+Basically, there are 3 structures: 
+
++ RSDriverParam 
++ RSDecoderParam 
++ RSInputParam
 
 
 
@@ -24,8 +28,7 @@ typedef struct RSDriverParam
 } RSDriverParam;
 ```
 
-+ lidar_type - Lidar Type
-  + There are two classes of Lidars: Mechanical Lidar and MEMS Lidar. Some paramters of RSDecoderParam is only for mechanical Lidars.
++ lidar_type - Lidar Type. Some LiDARs are mechanical, and some are MEMS. Some parameters of RSDecoderParam is only for mechanical LiDARs.
 
 ```c++
 enum LidarType
@@ -36,13 +39,12 @@ enum LidarType
   RS128,
   RS80,
   RSHELIOS,
-  RSROCK,
   RSM1
 };
 ```
 
-+ input_type - Where the Lidar packets is from.
-  + ONLINE_LIDAR means from online Lidar; PCAP_FILE means from PCAP file, which is captured with 3rd party tool; RAW_PACKET is used for recording/replaying packets.
++ input_type - What source the Lidar packets is from.
+  + ONLINE_LIDAR means from online LiDAR; PCAP_FILE means from PCAP file, which is captured with 3rd party tool; RAW_PACKET is user's own data captured with the `rs_driver` API.
 
 ```c++
 enum InputType
@@ -55,9 +57,46 @@ enum InputType
 
 
 
-## 3.3 RSDecoderParam
+## 3.3 RSInputParam
 
-RSDecoderParam specifies how rs_driver decode Lidar's packets.
+RSInputParam specifies the detail paramters of packet source.
+
+The following parameters are for `ONLINE_LIDAR` and `PCAP_FILE`.
++ msop_port - The UDP port on the host, to receive MSOP packets.
++ difop_port - The UDP port on the host, to receive DIFOP Packets.
+
+The following parameters are only for ONLINE_LIDAR.
++ host_address - The host's IP, to receive MSOP/DIFOP Packets
++ group_address - A multicast group to receive MSOP/DIFOP packts. `rs_driver` make `host_address` join it.
+
+The following parameters are only for PCAP_FILE.
++ pcap_path - Full path of the PCAP file.
++ pcap_repeat - Whether to replay PCAP file repeatly
++ pcap_rate - `rs_driver` replay the PCAP file by the theological frame rate. `pcap_rate` gives a rate to it, so as to speed up or slow down.
++ use_vlan - If the PCAP file contains VLAN layer, use `use_vlan`=`true` to skip it.
+
+```c++
+typedef struct RSInputParam
+{
+  uint16_t msop_port = 6699;
+  uint16_t difop_port = 7788;
+  std::string host_address = "0.0.0.0";
+  std::string group_address = "0.0.0.0";
+
+  // The following parameters are only for PCAP_FILE
+  std::string pcap_path = "";
+  bool pcap_repeat = true;
+  float pcap_rate = 1.0;
+  bool use_vlan = false;
+} RSInputParam;
+
+```
+
+
+
+## 3.4 RSDecoderParam
+
+RSDecoderParam specifies how rs_driver decode LiDAR's packets.
 
 ```c++
 typedef struct RSDecoderParam
@@ -82,14 +121,14 @@ typedef struct RSDecoderParam
 } RSDecoderParam;
 ```
 
-The following parameters are for all Lidars。
-+ use_lidar_clock - Where the point cloud's timestamp is from. From the lidar, or from rs_driver on the host? 
-  + If `use_lidar_clock`=`true`，use the Lidar timestamp, else use the host one.
+The following parameters are for all LiDARs。
++ use_lidar_clock - Where the point cloud's timestamp is from. From the LiDAR, or from `rs_driver` on the host? 
+  + If `use_lidar_clock`=`true`，use the LiDAR timestamp, else use the host one.
 + dense_points - Whether the point cloud is dense.
   + If `dense_points`=`false`, then point cloud contains NAN points, else discard them.
 + ts_first_point - Whether to stamp the point cloud with the first point, or the last point.
   + If `ts_first_point`=`false`, then stamp it with the last point, else with the first point。
-+ wait_for_difop - Whether wait for DIFOP Packet, before parse MSOP packets.
++ wait_for_difop - Whether wait for DIFOP Packet before parse MSOP packets.
   + DIFOP Packet contains angle calibration parameters. If it is unavailable, the point cloud is flat.
   + If you get no point cloud, try `wait_for_difop`=`false`. It might help to locate the problem.
 + transform_param - paramters of coordinate transformation. It is only valid when the CMake option `ENABLE_TRANSFORM`=`ON`.
@@ -106,13 +145,15 @@ typedef struct RSTransformParam
 } RSTransformParam;
 ```
 
-+ config_from_file - Where to get Lidar config parameters. From extern files, or from DIFOP packet. Internal use only.
-+ angle_path - File of angle calibration. Internal use only.
-+ min_distance、max_distance - Measurement Range. Internal use only.
++ config_from_file - Where to get LiDAR configuration parameters, from extern files, or from DIFOP packet. Internal use only.
++ angle_path - File of angle calibration parameters. Internal use only.
++ min_distance、max_distance - Set measurement range. Internal use only.
 
-The following paramters are only for mechanical Lidars.
+The following parameters are only for mechanical LiDARs.
 + split_frame_mode - How to split frame.
-  + `SPLIT_BY_ANGLE` is by user requested angle;`SPLIT_BY_FIXED_BLKS` is by blocks/round theologically; `SPLIT_BY_CUSTOM_BLKS` is by user requested blocks/frame. `SPLIT_BY_ANGLE` is default, and the other two values are not suggested.
+  + `SPLIT_BY_ANGLE` is by a user requested angle. User can specify it. This is default and suggested.
+  + `SPLIT_BY_FIXED_BLKS` is by blocks theologically; 
+  + `SPLIT_BY_CUSTOM_BLKS` is by user requested blocks. 
 
 ```c++
 enum SplitFrameMode
@@ -123,43 +164,9 @@ enum SplitFrameMode
 };
 ```
 + split_angle - If `split_frame_mode`=`SPLIT_BY_ANGLE`, then `split_angle` is the requested angle to split.
-+ num_blks_split - If `split_frame_mode`=`SPLIT_BY_CUSTOM_BLKS`，then `num_blks_split` is blocks/frame.
++ num_blks_split - If `split_frame_mode`=`SPLIT_BY_CUSTOM_BLKS`，then `num_blks_split` is blocks.
 
-+ start_angle、end_angle - Generally, mechanical Lidars's point cloud's azimuths are in the range of [`0`, `360`]. Here you may assign a smaller range of [`start_angle`, `end_angle`).
++ start_angle、end_angle - Generally, mechanical LiDARs's point cloud's azimuths are in the range of [`0`, `360`]. Here you may assign a smaller range of [`start_angle`, `end_angle`).
 
 
 
-## 3.4 RSInputParam
-
-RSInputParam specifies the detail paramters of packet source.
-
-The following parameters are for `ONLINE_LIDAR` and `PCAP_FILE`.
-+ msop_port - The UDP port on the host, to receive MSOP packets.
-+ difop_port - The UDP port on the host, to receive DIFOP Packets.
-
-The following parameters are only for ONLINE_LIDAR.
-+ host_address - The host's IP, to receive MSOP/DIFOP Packets
-+ group_address - A multicast group to receive MSOP/DIFOP packts. rs_driver make `host_address` join it.
-
-The following parameters are only for PCAP_FILE.
-+ pcap_path - Full path of the PCAP file.
-+ pcap_repeat - Whether to replay PCAP file repeatly
-+ pcap_rate - rs_driver replay the PCAP file by the theological frame rate. `pcap_rate` gives a rate to it, so as to speed up or slow down.
-+ use_vlan - If the PCAP file contains VLAN layer, use `use_vlan`=`true` to skip it.
-
-```c++
-typedef struct RSInputParam
-{
-  uint16_t msop_port = 6699;
-  uint16_t difop_port = 7788;
-  std::string host_address = "0.0.0.0";
-  std::string group_address = "0.0.0.0";
-
-  // The following parameters are only for PCAP_FILE
-  std::string pcap_path = "";
-  bool pcap_repeat = true;
-  float pcap_rate = 1.0;
-  bool use_vlan = false;
-} RSInputParam;
-
-```

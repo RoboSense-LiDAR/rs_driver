@@ -64,22 +64,22 @@ RSDriverParam包括一些配置选项，这些选项可以改变`rs_driver`的�
 在`v1.3.x`中，RSDriverParam定义如下。
 
 ```c++
-typedef struct RSDriverParam  ///< The LiDAR driver parameter
+typedef struct RSDriverParam
 {
-  RSInputParam input_param;          ///< Input parameter
-  RSDecoderParam decoder_param;      ///< Decoder parameter
-  std::string angle_path = "null";   ///< Path of angle calibration files(angle.csv).Only used for internal debugging.
-  std::string frame_id = "rslidar";  ///< The frame id of LiDAR message
+  RSInputParam input_param;                ///< Input parameter
+  RSDecoderParam decoder_param;            ///< Decoder parameter
+  std::string angle_path = "null";         ///< Path of angle calibration files(angle.csv).Only used for internal debugging.
+  std::string frame_id = "rslidar";        ///< The frame id of LiDAR message
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   bool wait_for_difop = true;              ///< true: start sending point cloud until receive difop packet
-  bool saved_by_rows = false;        ///< true: the output point cloud will be saved by rows (default is saved by columns)
+  bool saved_by_rows = false;              ///< true: the output point cloud will be saved by rows (default is saved by columns)
 };
 ```
 
 在`v1.5.x`中，RSDriverParam定义如下。
 
 ```c++
-typedef struct RSDriverParam  ///< The LiDAR driver parameter
+typedef struct RSDriverParam
 {
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   InputType input_type = InputType::ONLINE_LIDAR; ///< Input type

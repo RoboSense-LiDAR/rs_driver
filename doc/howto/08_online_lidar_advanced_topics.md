@@ -6,7 +6,11 @@
 
  The RoboSense LiDAR may work in unicast/multicast/broadcast mode, with VLAN layer and with user layers.
 
-This document illustrates how to configure the driver in each case.
++ This document illustrates how to configure the driver in each case.
+
+   Before configure `rs_driver`, first find out what case the LiDAR is. Please refer to [How to configure rs_driver by PCAP file](./11_how_to_configure_by_pcap_file.md).
+
++ Even if all configure are correct, some system settings may block `rs_driver` to receive MOSP/DIFOP packets. This document also list them.
 
 
 
@@ -16,8 +20,8 @@ This document illustrates how to configure the driver in each case.
 
 The simplest way is broadcast mode. 
 
-The Lidar sends MSOP/DIFOP packets to the host machine (The driver runs on it). For simplicity, the DIFOP port is ommited here.
-+ The Lidar sends to `255.255.255.255` : `6699`, and the host binds to port `6699`.
+The LiDAR sends MSOP/DIFOP packets to the host machine (`rs_driver` runs on it). For simplicity, the DIFOP port is ommited here.
++ The LiDAR sends to `255.255.255.255` : `6699`, and the host binds to port `6699`.
 
 ![](./img/08_01_broadcast.png)
 
@@ -33,8 +37,8 @@ param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 
 ### 8.2.2 Unicast mode
 
-To reduce the network load, the Lidar is suggested to work in unicast mode.
-+ The Lidar sends to `192.168.1.102` : `6699`, and the host binds to port `6699`.
+To reduce the network load, the LiDAR is suggested to work in unicast mode.
++ The LiDAR sends to `192.168.1.102` : `6699`, and the host binds to port `6699`.
 
 ![](./img/08_02_unicast.png)
 
@@ -69,13 +73,15 @@ param.input_param.difop_port = 7788;              ///< Set the lidar difop port 
 param.lidar_type = LidarType::RS32;               ///< Set the lidar type. Make sure this type is correct 
 ```
 
+
+
 ## 8.3 Multiple Lidars
 
 ### 8.3.1 Different remote ports
 
-If you have two Lidars, it is suggested to set different remote ports.
-+ First Lidar sends to `192.168.1.102`:`6699`, and the first driver instance binds to `6699`.
-+ Second Lidar sends to `192.168.1.102`:`5599`, and the second driver instance binds to `5599`.
+If you have two LiDARs, it is suggested to set different remote ports.
++ First LiDAR sends to `192.168.1.102`:`6699`, and the first driver instance binds to `6699`.
++ Second LiDAR sends to `192.168.1.102`:`5599`, and the second driver instance binds to `5599`.
 
 ![](./img/08_04_multi_lidars_port.png)
 
@@ -99,8 +105,8 @@ param2.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 
 An alternate way is to set different remote IPs. 
 + The host has two NICs: `192.168.1.102` and `192.168.1.103`.
-+ First Lidar sends to `192.168.1.102`:`6699`, and the first driver instance binds to `192.168.1.102:6699`.
-+ Second Lidar sends to `192.168.1.103`:`6699`, and the second driver instance binds to `192.168.1.103:6699`.
++ First LiDAR sends to `192.168.1.102`:`6699`, and the first driver instance binds to `192.168.1.102:6699`.
++ Second LiDAR sends to `192.168.1.103`:`6699`, and the second driver instance binds to `192.168.1.103:6699`.
 
 ![](./img/08_05_multi_lidars_ip.png)
 
@@ -122,16 +128,18 @@ param2.input_param.difop_port = 7788;              ///< Set the lidar difop port
 param2.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 ```
 
+
+
 ## 8.4 VLAN
 
-In some user cases, The Lidar may work on VLAN.  Its packets have a VLAN layer.
+In some user cases, The LiDAR may work on VLAN.  Its packets have a VLAN layer.
 
 ![](./img/08_06_vlan_layer.png)
 
-The driver cannot parse this packet. Instead, it depends on a virtual NIC to strip the VLAN layer.
+`rs_driver cannot parse this packet. Instead, it depends on a virtual NIC to strip the VLAN layer.
 
 Below is an example.
-+ The Lidar works on VLAN `80`. It sends packets to `192.168.1.102` : `6699`. The packet has a VLAN layer.
++ The LiDAR works on VLAN `80`. It sends packets to `192.168.1.102` : `6699`. The packet has a VLAN layer.
 + Suppose there is a physical NIC `eno1` on the host.  It receives packets with VLAN layer.
 
 ![](./img/08_07_vlan.png)
@@ -146,6 +154,8 @@ sudo vconfig add eno1 80
 sudo ifconfig eno1.80 192.168.1.102 up
 ```
 
+Keep `eno1` with IP `0.0.0.0`. At least do NOT set it as same as `eno1.80`. This may block eno1.80.
+
 Now the driver may take `eno1.80` as a general NIC, and receives packets without VLAN layer.
 
 ```c++
@@ -155,6 +165,8 @@ param.input_param.msop_port = 6699;               ///< Set the lidar msop port n
 param.input_param.difop_port = 7788;              ///< Set the lidar difop port number, the default is 7788
 param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 ```
+
+
 
 ## 8.5 User Layer, Tail Layer 
 
@@ -181,7 +193,22 @@ param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 
 
 
+## 8.6 System Settings
 
+In below cases, Wireshark can capture MSOP/DIFOP packets, and `rs_driver` is configured correctly, but it can not get MOSP/DIFOP packets. 
+
++ The LiDAR works on VLAN, but the phisical NIC occupies the destination IP address of the LiDAR.
++ The LiDAR works in broadcast mode, but the host machine have a incorrect netmask, so it takes MSOP/DIFOP packets as unicast and discard them.
++ Firewall blocks MSOP/DIFOP packets.
+  
+  On ubuntu, use iptables to list the rules
+  
+  ```
+  sudo iptables -L # list all rules
+  suod iptalbes --flush # clear all rules
+  ```
+  
++ Other processes of `rs_driver`, or other programs(such as RSView), have bound the port.
 
 
 

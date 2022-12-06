@@ -8,7 +8,7 @@
 
 This document illustrates how to configure the driver in each case.
 
-Before reading this document, please be sure that you have read [Online LiDAR - Advanced Topics](./08_online_lidar_advanced_topics.md).
+Before configure `rs_driver`, first find out what case the LiDAR is. Please refer to [How to configure rs_driver by PCAP file](./11_how_to_configure_by_pcap_file.md).
 
 
 
@@ -16,7 +16,7 @@ Before reading this document, please be sure that you have read [Online LiDAR - 
 
 Generally, below code is for decoding a PCAP file in these cases.
 + Broadcast/multicast/unicast mode
-+ There are multiple LiDars in a file.
++ There are multiple LiDARs in a file.
 
 ```c++
 RSDriverParam param;                              ///< Create a parameter object

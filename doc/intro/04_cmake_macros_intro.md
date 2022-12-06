@@ -4,20 +4,20 @@
 
 ## 4.1 CMakeList.txt
 
-A group of macros can be used to determine what and how to compile rs_driver. Please find them in `CMakeLists.txt` of the project.
+A group of macros can be used to determine what and how to compile `rs_driver`. Please find them in `CMakeLists.txt` of the project.
 
 
 
 ## 4.2 What to compile
 
 The targets of compilation includes:
-+ Demo Apps, including `demo_online`, `demo_pcap`, etc.
++ Demo apps, including `demo_online`, `demo_online_multi_lidars`, `demo_pcap`, etc.
 + Tools, including `rs_driver_viewer`, `rs_driver_pcdsaver`, etc.
 + Test cases
 
 ### 4.2.1 COMPILE_DEMOS
 
-COMPILE_DEMOS determines whether to compile Demo Apps.
+COMPILE_DEMOS determines whether to compile Demo apps.
 + COMPILE_DEMOS=OFF means No。This is the default.
 + COMPILE_DEMOS=ON means Yes。
 

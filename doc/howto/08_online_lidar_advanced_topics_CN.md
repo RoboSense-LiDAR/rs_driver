@@ -40,7 +40,7 @@ param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 
 如下的例子中，
 
-+ 雷达发送到`192.168.1.102` : `6699`, rs_driver绑定到端口`6699`。
++ 雷达发送到`192.168.1.102` : `6699`, `rs_driver`绑定到端口`6699`。
 ![](./img/08_02_unicast.png)
 
 如下代码配置RSDriverParam。它与广播模式的配置完全相同。
@@ -61,7 +61,7 @@ param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 如下的例子中，
 
 + 雷达发送到`224.1.1.1`:`6699` 
-+ rs_driver绑定到端口`6699`。 rs_driver让本地网卡加入组播组`224.1.1.1`. 这个网卡的地址是`192.168.1.102`。
++ `rs_driver`绑定到端口`6699`。 `rs_driver`让本地网卡加入组播组`224.1.1.1`. 这个网卡的地址是`192.168.1.102`。
 ![](./img/08_03_multicast.png)
 
 如下代码配置RSDriverParam。
