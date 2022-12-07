@@ -1,95 +1,95 @@
-# **15 如何在Windows上编译rs_driver**
+# **15 How to compile rs_driver on Windows**
 
-## 15.1 概述
+## 15.1 Overview
 
-这里的编译说明，针对`rs_driver`的两个部分。
-- 示例程序，包括`demo_online`和`demo_pcap`
-- 点云显示工具 `rs_driver_viewer`
+This document illustrates how to comile two parts of `rs_driver`.
+- Demo apps, includes `demo_online` and`demo_pcap`
+- Point point visualization tool `rs_driver_viewer`
 
-两者对第三方库的依赖不同，这里将分开说明。
+They depends on different 3rd-party libraries. 
 
-如下步骤在`Windows 10`系统下完成，使用的编译工具为`VS2019`。
+Below steps are done with `VS2019` on `Windows 10`. 
 
 
 
-## 15.2 编译demo_online
+## 15.2 Compile demo_online
 
-演示程序的编译，以`demo_online`为例说明。`demo_pcap`的编译步骤与`demo_online`相同。
+Here take `demo_online` as an example. `demo_pcap` is similar to  `demo_online`.
 
-### 15.2.1 安装第三方库
+### 15.2.1 Setup 3rd Libraries
 
-- 如果需要解析PCAP文件，则需要安装`libpcap`库，包括：
+- To parse PCAP files, first setup `libpcap`. 
 
 ```
-WpdPack_4_1_2.zip, 编译时需要的头文件和库文件
-WinPcap_4_1_3.exe, 包括运行时库
+WpdPack_4_1_2.zip  // header files and library files
+WinPcap_4_1_3.exe // runtime libraries
 ```
 
-- 将`WpdPack_4_1_2.zip`解压到目录`C:/Program Files`下。
+- Unzip `WpdPack_4_1_2.zip` to the directory `C:/Program Files`.
 
-- 运行`WinPcap_4_1_3.exe`，安装到目录`C:/Program Files`下。
+- Run `WinPcap_4_1_3.exe`, and setup into`C:/Program Files`.
 
-### 15.2.2 创建demo_online工程
+### 15.2.2 Setup Project demo_online 
 
-- 创建`demo_online`工程，加入源文件`demo_online.cpp`。
+- Setup the `demo_online` project, and add the source file`demo_online.cpp`.
 ![](./img/15_01_demo_project.png)
 
-### 15.2.3 配置demo_online工程
+### 15.2.3 Configure Project demo_online
 
-- 遵循`C++14`标准
+- Comply with `C++14`.
 ![](./img/15_02_demo_use_cpp14.png)
 
-- `demo_online`当然依赖`rs_driver`库。设置`rs_driver`的头文件路径。
+- `demo_online` depends on `rs_driver`。set its header file path.
 ![](./img/15_03_demo_extra_include.png)
 
-- 设置`libpcap`库的头文件路径。
+- set the header file path of `libpcap`.
 ![](./img/15_04_demo_include_path.png)
 
-- 设置`libpcap`库的库文件路径。
+- set the library file path of `libpcap`.
 ![](./img/15_05_demo_lib_path.png)
 
-- 设置依赖的`libpcap`库`wpcap.lib`。也同时设置`ws2_32.lib`，这是Windows的socket库，`rs_driver`依赖它。
+- Add the dependency library of `libpcap`. It is `wpcap.lib`。Also add`ws2_32.lib`. It is Windows socket library. `rs_driver` depends on it.
 ![](./img/15_06_demo_lib.png)
 
-- 设置编译选项 `_CRT_SECURE_NO_WARNINGS`，避免不必要的编译错误。
+- set the compile option `_CRT_SECURE_NO_WARNINGS` to avoid unnecessary compiling errors.
 ![](./img/15_07_demo_precompile_macro.png)
 
-### 15.2.4 编译及运行
+### 15.2.4 Compile and Run
 
-- 编译`demo_online`工程，并运行。
+- Compile the `demo_online` project, and run it.
   
-  这个步骤没有什么特别的。
+  
 
 
 
-## 15.3 编译rs_driver_viewer
+## 15.3 Compile rs_driver_viewer
 
-### 15.3.1 安装第三方库
+### 15.3.1 Setup 3rd Party Library
 
-- 与`demo_online`一样，安装`libpcap`库。
+- Setup the `libpcap` library.
 
-- `rs_driver_viewer`还依赖`PCL`库，后者又依赖`Boost`、`Eigen`等一系列库。幸运的是，`PCL`库提供了适配`MSVC2019`的安装包，而这个包中又自带了它所依赖的库。这里使用的安装包是：
+- `rs_driver_viewer` Also depends on `PCL`, and then `Boost`、`Eigen` etc. It is lucky that `PCL` offers a setup package which contains all these libraries. This package fits `VS2019`.
 
 ```
 PCL-1.11.1-AllInOne-msvc2019-win64.exe
 ```
 
-  运行它，安装到目录`C:/Program Files`下。
+  Setup it to  the directory C:/Program Files`.
 ![](./img/15_08_viewer_install_pcl.png)
 
-  注意，安装`PCL`库的同时，也会安装它依赖的库。
+it also setup its dependency libraries.
 ![](./img/15_09_viewer_install_pcl_dep.png)
 
-安装的组件位置如下：
+The components are in the these directories.
 ```
-C:\Program Files\PCL 1.11.1          # PCL自身的库
-C:\Program Files\OpenNI2             # PCL依赖的OpenNI2库
-C:\Program Files\PCL 1.11.1\3rdParty # PCL依赖的其他库
+C:\Program Files\PCL 1.11.1          # PCL libraries
+C:\Program Files\OpenNI2             # OpenNI2 libraries depended by PCL
+C:\Program Files\PCL 1.11.1\3rdParty # Other libraries depended by PCL
 ```
 
-### 15.3.2 配置第三方库
+### 15.3.2 configure 3rd-party Library
 
-将如下运行时库的路径加入`PATH`。
+Add paths of runtime libraries as below.
 ![](./img/15_10_viewer_add_env_var.png)
 
 ```
@@ -98,23 +98,23 @@ C:\Program Files\PCL 1.11.1\3rdParty\VTK\bin
 C:\Program Files\PCL 1.11.1\3rdParty\OpenNI2\Redist
 ```
 
-### 15.3.3 创建rs_driver_viewer工程
+### 15.3.3 Setup the rs_driver_viewer Project
 
-- 创建`rs_driver_viewer`工程，加入源文件`rs_driver_viewer.cpp`。
+- Setup the `rs_driver_viewer` project,  and add the source file`rs_driver_viewer.cpp`.
 ![](./img/15_11_viewer_project.png)
 
-### 15.3.4 配置rs_driver_viewer工程
+### 15.3.4 Configure Project rs_driver_viewer
 
-- 与`demo_online`一样，遵循`C++14`标准
+- Comply with `C++14`
 ![](./img/15_02_demo_use_cpp14.png)
 
-- 禁止SDL检查
+- Disable SDL check
 ![](./img/15_12_viewer_sdl_check.png)
 
-- 与`demo_online`一样，设置`rs_driver`的头文件路径。
+- Set the header file path of `rs_driver`.
 ![](./img/15_03_demo_extra_include.png)
 
-- 设置`PCL`库的头文件路径如下。（与`demo_online`一样，同时设置`libpcap`库）
+- Set the header file path of `PCL`. Set its dependency libraries also.
 ![](./img/15_13_viewer_include_path.png)
 
 ```
@@ -127,7 +127,7 @@ C:\Program Files\PCL 1.11.1\3rdParty\VTK\include\vtk-8.2
 C:\Program Files\OpenNI2\Include
 ```
 
-- 设置`PCL`库的库文件路径。（与`demo_online`一样，同时设置`libpcap`）
+- Set the library file path of `PCL`. Set its dependency libraries also.
 ![](./img/15_14_viewer_lib_path.png)
 
 ```
@@ -139,9 +139,9 @@ C:\Program Files\PCL 1.11.1\3rdParty\VTK\lib
 C:\Program Files\OpenNI2\Lib
 ```
 
-- 设置`PCL`及它依赖的库，包括`PCL`和`vtk`两部分。（与`demo_online`一样，同时设置`wpcap.lib`和`ws2_32.lib`）
+- Set `PCL` libraries, including `PCL` and `vtk`. Also set `wpcap.lib` and `ws2_32.lib`.
 
-`PCL`的库文件如下：
+`PCL` libraries are as below.
 
 ```
 pcl_common.lib
@@ -186,7 +186,7 @@ pcl_visualization.lib
 pcl_visualizationd.lib
 ```
 
-`vtk`库分为`debug`/`release`版本。如下是`release`版本。这里的步骤以`release`版本举例。
+`vtk` has `debug` version and `release`version. Here take `release` as an example. 
 ![](./img/15_15_viewer_lib.png)
 
 ```
@@ -315,7 +315,7 @@ vtkViewsInfovis-8.2.lib
 vtkzlib-8.2.lib
 ```
 
-- 设置如下编译选项，避免不必要的编译错误。（与`demo_online`一样，设置`_CRT_SECURE_NO_WARNINGS`选项）
+- Set below compile options to avoid unnecessary compile errors. 
 ![](./img/15_16_viewer_precompile_macro.png)
 
 ```
@@ -324,8 +324,8 @@ NOMINMAX
 _CRT_SECURE_NO_DEPRECATE
 ```
 
-### 15.3.5 编译及运行
+### 15.3.5 Compile and Run
 
-编译`demo_online`工程的`X64 release`版本，并运行。
+Compile `demo_online` to get `X64 release`version, and run it.
 ![](./img/15_17_viewer_run.png)
 
