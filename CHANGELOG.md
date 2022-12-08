@@ -4,6 +4,19 @@
 
 ### Changed 
 
+## v1.5.8 2022-12-09
+
+### Added
+- Add User's guide document
+
+### Changed
+- Rename RSEOS as RSE1
+- Let user's distance values cover LiDAR's
+
+### Fixed
+- Revert "Report error ERRCODE_MSOP_TIMEOUT if only DIFOP packet is received", to avoid incorrect error report.
+- Fix error distance of RSM2. Change it to 250m. 
+
 ## v1.5.7 2022-10-09
 
 ### Added
