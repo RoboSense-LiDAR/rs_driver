@@ -24,7 +24,7 @@ cmake -DENABLE_TRANSFORM=ON ..
 
 配置坐标转换的参数，这些参数的默认值是`0`。
 + x, y, z的单位是`米`
-+ yaw, pitch, roll的单位是`度`
++ yaw, pitch, roll的单位是`弧度`
 + 旋转的顺序是 `yaw -> pitch -> roll`
 
 例子如下。
