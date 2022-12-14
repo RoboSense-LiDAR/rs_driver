@@ -4,7 +4,7 @@
 
 ## 11.1 概述
 
-RoboSense雷达可以工作在单播/组播/广播模式下，也可以工作在VLAN环境下，也可以加入用户自己的层。
+根据雷达的配置，它可能工作在单播/组播/广播模式下，或者在VLAN环境下，也可能加入用户自己的层。
 
 本文说明了在每种场景下如何设置`rs_driver`的网络配置选项。
 
@@ -18,7 +18,7 @@ RoboSense雷达可以工作在单播/组播/广播模式下，也可以工作在
 
 这里的配置代码适用于如下的场景。
 + 广播/组播/单播模式
-+ PCAP文件中有多个雷达的数据
++ PCAP文件中有多个雷达的数据，只想从中解码其中一个雷达的点云
 
 ```c++
 RSDriverParam param;                              ///< Create a parameter object
@@ -29,7 +29,9 @@ param.input_param.difop_port = 7788;              ///< Set the lidar difop port 
 param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 ```
 
-一个例外是：PCAP文件中有多个雷达的数据，但这些雷达目的端口相同，使用不同的目的IP地址来区分。这种情况不支持。
+一个`rs_driver`不支持的例外是：
+
+PCAP文件中有多个雷达的数据，它们的目的IP不同，但目的端口相同。这种情况`rs_driver`不支持。
 
 
 

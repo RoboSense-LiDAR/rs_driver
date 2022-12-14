@@ -4,7 +4,7 @@
 
 ## 11.1 Introduction
 
- The RoboSense LiDAR may work in unicast/multicast/broadcast mode, with VLAN layer and with user layers.
+According to the configuration of RoboSense LiDAR,  it may work in unicast/multicast/broadcast mode, with VLAN layer and with user layers.
 
 This document illustrates how to configure the driver in each case.
 
@@ -16,7 +16,7 @@ Before configure `rs_driver`, first find out what case the LiDAR is. Please refe
 
 Generally, below code is for decoding a PCAP file in these cases.
 + Broadcast/multicast/unicast mode
-+ There are multiple LiDARs in a file.
++ There are multiple LiDARs in a file, and decode only one of them.
 
 ```c++
 RSDriverParam param;                              ///< Create a parameter object
@@ -27,7 +27,9 @@ param.input_param.difop_port = 7788;              ///< Set the lidar difop port 
 param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 ```
 
-The only exception is "Multiple Lidars with same ports but different IPs", which is not supported now.
+The only exception is:
+
+ "Multiple LiDARs with same ports but different IPs". This is not supported by `rs_driver`.
 
 
 
@@ -49,6 +51,8 @@ param.input_param.difop_port = 7788;              ///< Set the lidar difop port 
 param.input_param.use_vlan = true;                ///< Whether to use VLAN layer.
 param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 ```
+
+And a useful tips is: `RSInputParam.use_vlan` is not used when connecting to a online LiDAR. It is only to decode a PCAP file.
 
 
 

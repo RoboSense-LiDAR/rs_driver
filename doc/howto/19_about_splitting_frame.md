@@ -83,7 +83,7 @@ In each zone, scan in the Z order. And then get a group of MSOP packets.
 
 Number these packets from 1.  Take M1 as an example,  the numbers are `1`~`630`.
 
-What left for `rs_driver` to do, is split packets by the numbers. 
+What left for `rs_driver` to do, is to split packets by the numbers. 
 
 ### 19.3.1 Packet Loss and Out of Order
 

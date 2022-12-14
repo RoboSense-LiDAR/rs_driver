@@ -27,6 +27,8 @@ MSOP/DIFOP Packet基于UDP协议，包括如下层。
 + MSOP/DIFOP Packet（真正的数据部分）
 + 尾部层（后缀部分，可选）
 
+
+
 `VLAN`层是可选的。有没有`VLAN`层取决于两点：
 
 + 雷达是不是运行在VLAN环境下
@@ -64,31 +66,29 @@ WireShark软件可以区分`Ethernet`、`IP`、`UDP`这些层。
 如下是查看PCAP文件的一般步骤。
 + 确定MSOP/DIFOP Packet的`目的地址`。在RoboSense雷达的设计中，MSOP和DIFOP的`目的地址`总是相同的。
 
-需要明确的是，这是个什么地址？`广播地址`/`组播地址`/`单播地址`？如果是`组播地址`，则需要同时指定`group_address`和`host_address`。
+​		需要明确的是，这是个什么地址？`广播地址`/`组播地址`/`单播地址`？如果是`组播地址`，则需要同时指定`group_address`和`host_address`。
 
 + MSOP/DIFOP Packet的`目的端口`。
 
-可以通过设置过滤条件来显示某种类型的Packet。
+​		可以通过设置过滤条件来显示某种类型的Packet。
 ![](./img/12_01_select_by_port.png)
 
-也可以排除某种类型的Packet。
+​		也可以排除某种类型的Packet。
 ![](./img/12_02_select_by_non_port.png)
 
-需要分别设置`msop_port`和`difop_port`。
+​		需要分别设置`msop_port`和`difop_port`。
 
-+ 是否有`VLAN层`？
-
-如果有`VLAN层`，则：
-  + 连接在线雷达时，需手工创建虚拟网卡
-  + 解析PCAP文件时，需指定`use_vlan`选项
++ 是否有`VLAN层`？ 如果有`VLAN层`，则：
+  + 连接在线雷达时，需手工创建虚拟网卡 
+  + 解析PCAP文件时，需指定`use_vlan`选项 
 
 + 通过MSOP/DIFOP Packet的`标志字节`，确定是否有`用户自定义层`。如果有，是多长？
 
-如果有`用户自定义层`，需指定`user_layer_bytes`。
+​		如果有`用户自定义层`，需指定`user_layer_bytes`。
 
 + 通过MSOP/DIFOP Packet的长度， 确定是否有`尾部层`。如果有，是多长？
 
-如果有`尾部层`，需指定`tail_layer_bytes`。
+​		如果有`尾部层`，需指定`tail_layer_bytes`。
 
 
 

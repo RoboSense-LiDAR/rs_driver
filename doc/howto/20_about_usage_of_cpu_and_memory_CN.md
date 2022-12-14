@@ -119,15 +119,3 @@ class Decoder
 + MSOP Packet和DIFOP Packet一般各有自己接收的Socket
 + 在丢包的情况下，可能需要增加Socket接收缓存的大小
 
-
-
-
-
-
-
-
-
-
-
-
-

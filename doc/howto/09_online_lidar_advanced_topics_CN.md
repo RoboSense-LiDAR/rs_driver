@@ -2,13 +2,13 @@
 
 ## 9.1 概述
 
-RoboSense雷达可以工作在单播/组播/广播模式下，也可以工作在VLAN环境下，也可以加入用户自己的层。
+根据雷达的配置，它可能工作在单播/组播/广播模式下，或者在VLAN环境下，也可能加入用户自己的层。
 
 + 本文说明了在每种场景下如何设置`rs_driver`的网络配置选项。
 
-设置网络配置选项的前提，是先确定雷达工作在哪种场景。这一点，请参考[根据PCAP文件确定网络配置选项](./12_how_to_configure_by_pcap_file_CN.md)
+​		设置网络配置选项的前提，是先确定雷达工作在哪种场景。这一点，请参考[根据PCAP文件确定网络配置选项](./12_how_to_configure_by_pcap_file_CN.md)
 
-为了清晰，本文所有的图都只列出了MSOP端口，DIFOP端口的配置与MSOP类似。
+​		为了清晰，本文所有的图都只列出了MSOP端口，DIFOP端口的配置与MSOP类似。
 
 + 在所有配置选项都正确的前提下，一些系统设置不正确，也可能导致MSOP/DIFOP Packet无法接收。本文也对这些环境因素作了说明。
 
@@ -168,6 +168,10 @@ param.input_param.msop_port = 6699;               ///< Set the lidar msop port n
 param.input_param.difop_port = 7788;              ///< Set the lidar difop port number, the default is 7788
 param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
 ```
+
+另外可能需要说明的一点是：
+
+连接在线雷达时，不需要、不关心选项`RSInputParam.use_vlan`的值。这个选项是为解析PCAP文件准备的。
 
 
 

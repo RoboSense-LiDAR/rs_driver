@@ -9,7 +9,7 @@ This document illustrate how to transform the point cloud to a different positio
 Warning: 
 
 + It costs much CPU resources. This function is only for test purpose.  
-+ **Never enable this function in your released products**.
++ **Never enable this function in the released products**.
 
 
 

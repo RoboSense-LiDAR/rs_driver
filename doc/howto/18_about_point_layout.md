@@ -111,7 +111,7 @@ The zone is `126` lines x `125` columns. LiDAR scan from up to down in Z order. 
 
 ## 18.5 Coordinate of points
 
-`rs_driver`comply with the right-handed coordinate system, because RoboSense LiDAR first apply on ROS, and ROS follows it.
+`rs_driver`comply with the right-handed coordinate system.
 
 To change this, change mapping relationship of (x, y, z) as below. 
 
@@ -132,13 +132,13 @@ To change this, change mapping relationship of (x, y, z) as below.
 
 Mechanical LiDAR (600 rpm） and MEMS LiDAR finish a frame in 0.1 second. Its points scatter into this time range.
 
-If you are not satisfied with timestamp of point cloud, please use  the point type of `XYZIRT`. `T` is the timestamp of point.
+To get higher resolution of timestamp than point cloud's, please use  the point type of `XYZIRT`. `T` is the timestamp of point.
 
 
 
 ## 18.7 member `timestamp` of Point Cloud
 
-`timestamp` of point cloud is from its points.
+`timestamp` of point cloud may be from from its first point or last point.
 
 
 
@@ -146,8 +146,8 @@ If you are not satisfied with timestamp of point cloud, please use  the point ty
 
 `rs_driver`may get `timestamp` of point cloud from LiDAR or from host.
 
-+ From MSOP packet.  LiDAR set set the stampstamp based on its own system clock. Generally, user synchronizes LiDAR's clock with the PTP protocol. 
-+ Invoke system API. With it, `rs_driver` gets the local system tme. This is the default.
++ From MSOP packet.  LiDAR set set the timestamp based on its own system clock. Generally, user synchronizes LiDAR's clock with the PTP protocol. 
++ Invoke Operation System's API. With it, `rs_driver` gets the local system time. This is the default.
 
 Use the option `use_lidar_clock` to change this.
 

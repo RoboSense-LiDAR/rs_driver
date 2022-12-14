@@ -27,6 +27,8 @@ MSOP/DIFOP Packet is based on UDP protocol. It includes:
 + MSOP/DIFOP Packet（Real data）
 + Tail Layer（Suffix part, Optional）
 
+
+
 `VLAN` Layer is optional. It is up to:
 
 + Whether the LiDAR is on VLAN
@@ -66,17 +68,17 @@ Note:  MSOP and DIFOP packets have different `ID`s, so we can determine which pa
 Below are the steps to analysis PCAP file.
 + Find out the destination IP address of MSOP/DIFOP Packet。In design of RoboSense LiDAR, MSOP and DIFOP packets always have the same destination IPs.
 
-Also find out what address is it? broadcast/multicast/unicast address? If it is multicast, `groud_address` and `host_address` are required.
+​		Also find out what address is it? broadcast/multicast/unicast address? If it is multicast, `groud_address` and `host_address` are required.
 
 + Find out the destination port of MSOP/DIFOP packets.
 
-Here show a specified type of packet with filter criteria.
+​		Here show a specified type of packet with filter criteria.
 ![](./img/12_01_select_by_port.png)
 
-Here exclude a specified type with filter criteria.
+​		Here exclude a specified type with filter criteria.
 ![](./img/12_02_select_by_non_port.png)
 
-Just set filter criteria on `msop_port` and `difop_port`.
+​		Just set filter criteria on `msop_port` and `difop_port`.
 
 + Is there VLAN layer? If Yes,
 
@@ -87,11 +89,11 @@ Just set filter criteria on `msop_port` and `difop_port`.
 
 + Find out the ID bytes first. Is there User Layer?  How long is it?
 
-If Yes, set `user_layer_bytes`.
+​		If Yes, set `user_layer_bytes`.
 
 + Is there Tail Layer ? How long is it?
 
-If Yes, set `tail_layer_bytes`.
+​		If Yes, set `tail_layer_bytes`.
 
 
 
