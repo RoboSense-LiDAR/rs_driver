@@ -328,6 +328,4 @@ _CRT_SECURE_NO_DEPRECATE
 
 ### 16.3.5 Compile and Run
 
-Compile `demo_online` to get `X64 release`version, and run it.
-![](./img/16_17_viewer_run.png)
-
+Compile `demo_online`, and run it.

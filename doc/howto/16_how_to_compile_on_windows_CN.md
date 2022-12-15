@@ -326,6 +326,4 @@ _CRT_SECURE_NO_DEPRECATE
 
 ### 16.3.5 编译及运行
 
-编译`demo_online`工程的`X64 release`版本，并运行。
-![](./img/16_17_viewer_run.png)
-
+编译`demo_online`工程，并运行。
