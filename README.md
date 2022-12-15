@@ -112,13 +112,13 @@ target_link_libraries(your_project ${rs_driver_LIBRARIES})
 
 ### 1.6.1 Dependency Libraries
 
-#### libpcap
+#### 1.6.1.1 libpcap
 
 Install [libpcap runtime library](https://www.winpcap.org/install/bin/WinPcap_4_1_3.exe).
 
 Unzip [libpcap's developer's pack](https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip) to your favorite location, and add the path to the folder ```WpdPack_4_1_2/WpdPack``` to the environment variable ```PATH``` . 
 
-#### PCL
+####  1.6.1.2 PCL
 
 To compile with VS2019, please use the official installation package [PCL All-in-one installer](https://github.com/PointCloudLibrary/pcl/releases).
 

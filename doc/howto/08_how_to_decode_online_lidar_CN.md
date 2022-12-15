@@ -8,7 +8,7 @@
 
 这个例子连接单个雷达，完整的代码可以参考示例程序`rs_driver/demo/demo_online.cpp`。
 
-如果您需要连接多个雷达，请参考示例程序`demo_online_multi_lidars.cpp`。
+如果需要连接多个雷达，请参考示例程序`demo_online_multi_lidars.cpp`。
 
 这里的点和点云定义，引用了`rs_driver`工程的消息文件。
 

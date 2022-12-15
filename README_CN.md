@@ -111,13 +111,13 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 ### 1.6.1 安装第三方库
 
-#### libpcap
+#### 1.6.1.1 libpcap
 
 安装[libpcap运行库](https://www.winpcap.org/install/bin/WinPcap_4_1_3.exe)。
 
 解压[libpcap开发者包](https://www.winpcap.org/install/bin/WpdPack_4_1_2.zip)到任意位置，并将```WpdPack_4_1_2/WpdPack``` 的路径添加到环境变量```PATH```。
 
-#### PCL
+#### 1.6.1.2 PCL
 
 如果使用MSVC编译器，可使用PCL官方提供的[PCL安装包](https://github.com/PointCloudLibrary/pcl/releases)安装。
 
