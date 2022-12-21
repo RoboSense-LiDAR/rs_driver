@@ -330,6 +330,9 @@ inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::processPacket()
 {
+  static const uint8_t msop_id[] = {0x55, 0xAA};
+  static const uint8_t difop_id[] = {0xA5, 0xFF};
+
   while (!to_exit_handle_)
   {
     std::shared_ptr<Buffer> pkt = pkt_queue_.popWait(500000);
@@ -339,12 +342,12 @@ inline void LidarDriverImpl<T_PointCloud>::processPacket()
     }
 
     uint8_t* id = pkt->data();
-    if (*id == 0x55)
+    if (memcmp(id, msop_id, sizeof(msop_id)) == 0)
     {
       bool pkt_to_split = decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
       runPacketCallBack(pkt->data(), pkt->dataSize(), decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
     }
-    else if (*id == 0xA5)
+    else if(memcmp(id, difop_id, sizeof(difop_id)) == 0)
     {
       decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
       runPacketCallBack(pkt->data(), pkt->dataSize(), 0, true, false); // difop packet
