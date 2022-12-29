@@ -65,6 +65,7 @@ enum ErrCode
   ERRCODE_ZEROPOINTS      = 0x47,  ///< No points in PointCloud
   ERRCODE_PKTBUFOVERFLOW  = 0x48,  ///< Packet queue is overflow
   ERRCODE_CLOUDOVERFLOW   = 0x49,  ///< Point cloud buffer is overflow
+  ERRCODE_WRONGCRC32      = 0x4A,  ///< Wrong CRC32 value of MSOP Packet
 
   // error
   ERRCODE_STARTBEFOREINIT = 0x80,  ///< User calls start() before init()
@@ -129,6 +130,8 @@ struct Error
         return "ERRCODE_PKTBUFOVERFLOW";
       case ERRCODE_CLOUDOVERFLOW:
         return "ERRCODE_CLOUDOVERFLOW";
+      case ERRCODE_WRONGCRC32:
+        return "ERRCODE_WRONGCRC32";
 
       // error
       case ERRCODE_STARTBEFOREINIT:

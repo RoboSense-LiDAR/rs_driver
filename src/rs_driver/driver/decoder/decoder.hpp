@@ -426,6 +426,14 @@ inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t siz
     return false;
   }
 
+#ifdef ENABLE_CRC32_CHECK
+  if (!isCrc32Correct(pkt, size))
+  {
+    LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGCRC32)), 1);
+    return false;
+  }
+#endif
+
   return decodeMsopPkt(pkt, size);
 }
 
