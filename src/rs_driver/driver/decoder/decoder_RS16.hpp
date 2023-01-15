@@ -86,6 +86,10 @@ inline void RS16DifopPkt2Adapter (const RS16DifopPkt& src, AdapterDifopPkt& dst)
   dst.rpm = src.rpm;
   dst.fov = src.fov;
   dst.return_mode = src.return_mode;
+  dst.sn = src.sn;
+  dst.eth = src.eth;
+  dst.version = src.version;
+  dst.status = src.status;
 
   for (uint16_t i = 0; i < 16; i++)
   {

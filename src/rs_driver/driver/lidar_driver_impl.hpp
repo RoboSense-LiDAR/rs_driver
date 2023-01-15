@@ -78,6 +78,8 @@ public:
 
   void decodePacket(const Packet& pkt);
   bool getTemperature(float& temp);
+  bool getDeviceInfo(DeviceInfo& info);
+  bool getDeviceStatus(DeviceStatus& status);
 
 private:
 
@@ -267,6 +269,28 @@ inline bool LidarDriverImpl<T_PointCloud>::getTemperature(float& temp)
 
   temp = decoder_ptr_->getTemperature();
   return true;
+}
+
+template <typename T_PointCloud>
+inline bool LidarDriverImpl<T_PointCloud>::getDeviceInfo(DeviceInfo& info)
+{
+  if (decoder_ptr_ == nullptr)
+  {
+    return false;
+  }
+
+  return decoder_ptr_->getDeviceInfo(info);
+}
+
+template <typename T_PointCloud>
+inline bool LidarDriverImpl<T_PointCloud>::getDeviceStatus(DeviceStatus& status)
+{
+  if (decoder_ptr_ == nullptr)
+  {
+    return false;
+  }
+
+  return decoder_ptr_->getDeviceStatus(status);
 }
 
 template <typename T_PointCloud>

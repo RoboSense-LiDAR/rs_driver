@@ -59,8 +59,12 @@ struct RSDecoderMechConstParam
 typedef struct
 {
   uint16_t rpm;
+  RSEthNetV1 eth;
   RSFOV fov;
+  RSVersionV1 version;
+  RSSN sn;
   uint8_t return_mode;
+  RSStatusV1 status;
   RSCalibrationAngle vert_angle_cali[32];
   RSCalibrationAngle horiz_angle_cali[32];
 } AdapterDifopPkt;
@@ -197,6 +201,17 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
     int ret = this->chan_angles_.loadFromDifop(pkt.vert_angle_cali, pkt.horiz_angle_cali);
     this->angles_ready_ = (ret == 0);
   }
+
+#ifdef ENABLE_DIFOP_PARSE
+  // device info
+  memcpy (this->device_info_.sn, pkt.sn.num, 6), 
+  memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6), 
+  memcpy (this->device_info_.top_ver, pkt.version.top_ver, 5), 
+  memcpy (this->device_info_.bottom_ver, pkt.version.bottom_ver, 5), 
+
+  // device status
+  this->device_status_.voltage = ntohs(pkt.status.vol_12v);
+#endif
 }
 
 }  // namespace lidar

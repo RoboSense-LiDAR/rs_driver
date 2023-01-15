@@ -128,6 +128,26 @@ public:
   }
 
   /**
+   * @brief Get device info
+   * @param info The variable to store device info
+   * @return if get device info successfully, return true; else return false
+   */
+  inline bool getDeviceInfo(DeviceInfo& info)
+  {
+    return driver_ptr_->getDeviceInfo(info);
+  }
+
+  /**
+   * @brief Get device status
+   * @param info The variable to store device status
+   * @return if get device info successfully, return true; else return false
+   */
+  inline bool getDeviceStatus(DeviceStatus& status)
+  {
+    return driver_ptr_->getDeviceStatus(status);
+  }
+
+  /**
    * @brief Stop all threads
    */
   inline void stop()

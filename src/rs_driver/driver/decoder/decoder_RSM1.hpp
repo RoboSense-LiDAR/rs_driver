@@ -80,7 +80,7 @@ typedef struct
 {
   uint8_t ip_local[4];
   uint8_t ip_remote[4];
-  uint8_t mac[6];
+  uint8_t mac_addr[6];
   uint8_t msop_port[2];
   uint8_t difop_port[2];
 } RSM1DifopEther;
@@ -119,9 +119,9 @@ typedef struct
   uint8_t id[8];
   uint8_t reserved1[1];
   uint8_t frame_rate;
-  RSM1DifopEther ether;
+  RSM1DifopEther eth;
   RSM1DifopFov fov;
-  RSM1DifopVerInfo ver_info;
+  RSM1DifopVerInfo version;
   RSSN sn;
   uint8_t return_mode;
   RSTimeInfo time_info;
@@ -208,6 +208,17 @@ inline void DecoderRSM1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
 {
   const RSM1DifopPkt& pkt = *(RSM1DifopPkt*)packet;
   this->echo_mode_ = this->getEchoMode(pkt.return_mode);
+
+#ifdef ENABLE_DIFOP_PARSE
+  // device info
+  memcpy (this->device_info_.sn, pkt.sn.num, 6), 
+  memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6), 
+  memcpy (this->device_info_.top_ver, pkt.version.pl_ver, 5), 
+  memcpy (this->device_info_.bottom_ver, pkt.version.ps_ver, 5), 
+
+  // device status
+  this->device_status_.voltage = ntohs(pkt.status.voltage_1);
+#endif
 }
 
 template <typename T_PointCloud>

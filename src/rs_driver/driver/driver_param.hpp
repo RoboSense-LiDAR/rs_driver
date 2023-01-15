@@ -372,5 +372,18 @@ struct RSDriverParam  ///< The LiDAR driver parameter
 
 };
 
+struct DeviceInfo
+{
+  uint8_t sn[6];
+  uint8_t mac[6];
+  uint8_t top_ver[5];
+  uint8_t bottom_ver[5];
+};
+
+struct DeviceStatus
+{
+  float voltage = 0.0f;
+};
+
 }  // namespace lidar
 }  // namespace robosense

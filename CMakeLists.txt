@@ -28,6 +28,7 @@ option(ENABLE_EPOLL_RECEIVE       "Receive packets with epoll() instead of selec
 option(ENABLE_STAMP_WITH_LOCAL    "Enable stamp point cloud with local time" OFF)
 option(ENABLE_PCL_POINTCLOUD      "Enable PCL Point Cloud" OFF)
 option(ENABLE_CRC32_CHECK         "Enable CRC32 Check on MSOP Packet" OFF)
+option(ENABLE_DIFOP_PARSE         "Enable DIFOP Packet Parse" OFF)
 
 #=============================
 #  Compile Demos, Tools, Tests
@@ -169,6 +170,10 @@ endif(${ENABLE_PCL_POINTCLOUD})
 if(${ENABLE_CRC32_CHECK})
   add_definitions("-DENABLE_CRC32_CHECK")
 endif(${ENABLE_CRC32_CHECK})
+
+if(${ENABLE_DIFOP_PARSE})
+  add_definitions("-DENABLE_DIFOP_PARSE")
+endif(${ENABLE_DIFOP_PARSE})
 
 if(${COMPILE_DEMOS})
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/demo)

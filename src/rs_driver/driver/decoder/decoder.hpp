@@ -126,8 +126,8 @@ typedef struct
 
 typedef struct
 {
-  uint8_t top_firmware_ver[5];
-  uint8_t bot_firmware_ver[5];
+  uint8_t top_ver[5];    // firmware
+  uint8_t bottom_ver[5]; // firmware
   uint8_t bot_soft_ver[5];
   uint8_t motor_firmware_ver[5];
   uint8_t hw_ver[3];
@@ -262,6 +262,8 @@ public:
   explicit Decoder(const RSDecoderConstParam& const_param, const RSDecoderParam& param);
 
   float getTemperature();
+  bool getDeviceInfo(DeviceInfo& info);
+  bool getDeviceStatus(DeviceStatus& status);
   double getPacketDuration();
   void enableWritePktTs(bool value);
   double prevPktTs();
@@ -298,6 +300,8 @@ protected:
 
   RSEchoMode echo_mode_; // echo mode (defined by return mode)
   float temperature_; // lidar temperature
+  DeviceInfo device_info_;
+  DeviceStatus device_status_;
 
   bool angles_ready_; // is vert_angles/horiz_angles ready from csv file/difop packet?
   double prev_pkt_ts_; // timestamp of prevous packet
@@ -348,6 +352,20 @@ template <typename T_PointCloud>
 inline float Decoder<T_PointCloud>::getTemperature()
 {
   return temperature_;
+}
+
+template <typename T_PointCloud>
+inline bool Decoder<T_PointCloud>::getDeviceInfo(DeviceInfo& info)
+{
+  memcpy (&info, &device_info_, sizeof(DeviceInfo));
+  return true;
+}
+
+template <typename T_PointCloud>
+inline bool Decoder<T_PointCloud>::getDeviceStatus(DeviceStatus& status)
+{
+  memcpy (&status, &device_status_, sizeof(DeviceStatus));
+  return true;
 }
 
 template <typename T_PointCloud>
