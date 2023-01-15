@@ -159,10 +159,10 @@ inline void DecoderRSM2<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
 
 #ifdef ENABLE_DIFOP_PARSE
   // device info
-  memcpy (this->device_info_.sn, pkt.sn.num, 6), 
-  memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6), 
-  memcpy (this->device_info_.top_ver, pkt.version.pl_ver, 5), 
-  memcpy (this->device_info_.bottom_ver, pkt.version.ps_ver, 5), 
+  memcpy (this->device_info_.sn, pkt.sn.num, 6);
+  memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6);
+  memcpy (this->device_info_.top_ver, pkt.version.pl_ver, 5);
+  memcpy (this->device_info_.bottom_ver, pkt.version.ps_ver, 5);
 
   // device status
   this->device_status_.voltage = ntohs(pkt.status.voltage_1);

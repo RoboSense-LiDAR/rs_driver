@@ -204,10 +204,10 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
 
 #ifdef ENABLE_DIFOP_PARSE
   // device info
-  memcpy (this->device_info_.sn, pkt.sn.num, 6), 
-  memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6), 
-  memcpy (this->device_info_.top_ver, pkt.version.top_ver, 5), 
-  memcpy (this->device_info_.bottom_ver, pkt.version.bottom_ver, 5), 
+  memcpy (this->device_info_.sn, pkt.sn.num, 6);
+  memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6);
+  memcpy (this->device_info_.top_ver, pkt.version.top_ver, 5);
+  memcpy (this->device_info_.bottom_ver, pkt.version.bottom_ver, 5);
 
   // device status
   this->device_status_.voltage = ntohs(pkt.status.vol_12v);
