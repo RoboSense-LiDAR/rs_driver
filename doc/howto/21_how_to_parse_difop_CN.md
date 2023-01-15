@@ -17,11 +17,11 @@
 
 
 
-## 21.2 扩充DIFOP包的定义
+## 21.2 拓展DIFOP包的定义
 
 DIFOP包的定义在雷达解码器的头文件中。
 
-如果客户定制了自己的DIFOP包格式，则需要扩充原有的定义、甚至将这个定义替换成自己的。
+如果客户定制了自己的DIFOP包格式，则需要拓展原有的定义、甚至将这个定义替换成自己的。
 
 以RS128雷达为例，这个定义在`decoder_RS128.hpp`中。
 
@@ -226,17 +226,61 @@ public:
 ```
 
 
+
 ## 21.6 使能ENABLE_DIFOP_PARSE
 
 一般的使用者只需要解析点云，所以默认情况下希望免去这些CPU资源的消耗。
 CMake编译选项`ENABLE_DIFOP_PARSE`用于指定是否解析DIFOP包。如果希望解析，则需要启用这个选项。这个选项定义在`CMakeLists.txt`下。
 
 
-```
+```cmake
 CMakeLists.txt
 option(ENABLE_DIFOP_PARSE         "Enable DIFOP Packet Parse" OFF)
 ```
 
 
 
+## 21.7 对RS16/RS32雷达的特别处理
+
+RS16/RS32是早期的雷达，它们的DIFOP包的定义与后来的雷达差别较大。
+
+为了能适配到`DecoderMech<T_PointCloud>::decodeDifopCommon()`，`rs_driver`给他们定义了一个通用的DIFOP包定义，也就是`AdapterDifopPkt`。
+
+```c++
+typedef struct
+{
+  uint16_t rpm;
+  RSEthNetV1 eth;
+  RSFOV fov;
+  RSVersionV1 version;
+  RSSN sn; 
+  uint8_t return_mode;
+  RSStatusV1 status;
+  RSCalibrationAngle vert_angle_cali[32];
+  RSCalibrationAngle horiz_angle_cali[32];
+} AdapterDifopPkt;
+```
+
+RS16/RS32的解码器类会先将需要的字段，从自己的DIFOP包中复制到AdapterDifopPkt的实例，再将这个实例交给`DecoderMech<T_PointCloud>::decodeDifopCommon()`处理。
+
+要让RS16/RS32支持新的字段，
+
++ 首先需要拓展AdapterDifopPkt的定义。
+
++ 然后需要将这些新的字段复制到AdapterDifopPkt的实例。以RS16为例，在函数RS16DifopPkt2Adapter()中处理。
+
+```c++
+inline void RS16DifopPkt2Adapter (const RS16DifopPkt& src, AdapterDifopPkt& dst)
+{
+  dst.rpm = src.rpm;
+  dst.fov = src.fov;
+  dst.return_mode = src.return_mode;
+  dst.sn = src.sn;
+  dst.eth = src.eth;
+  dst.version = src.version;
+  dst.status = src.status;
+  
+  ......
+}
+```
 
