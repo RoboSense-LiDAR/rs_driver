@@ -355,6 +355,7 @@ struct RSDriverParam  ///< The LiDAR driver parameter
 {
   LidarType lidar_type = LidarType::RS16;  ///< Lidar type
   InputType input_type = InputType::ONLINE_LIDAR; ///< Input type
+  std::string frame_id = "rslidar";  ///< The frame id of LiDAR mesage
   RSInputParam input_param;          ///< Input parameter
   RSDecoderParam decoder_param;      ///< Decoder parameter
 
@@ -364,6 +365,7 @@ struct RSDriverParam  ///< The LiDAR driver parameter
     RS_INFO << "             RoboSense Driver Parameters " << RS_REND;
     RS_INFOL << "input type: " << inputTypeToStr(input_type) << RS_REND;
     RS_INFOL << "lidar_type: " << lidarTypeToStr(lidar_type) << RS_REND;
+    RS_INFOL << "frame_id: "   << frame_id << RS_REND;
     RS_INFOL << "------------------------------------------------------" << RS_REND;
 
     input_param.print();

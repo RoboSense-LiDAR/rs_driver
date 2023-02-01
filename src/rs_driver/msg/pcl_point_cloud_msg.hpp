@@ -63,5 +63,6 @@ public:
 
   double timestamp = 0.0;
   uint32_t seq = 0;           ///< Sequence number of message
+  std::string frame_id = "";  ///< Point cloud frame id
 };
 

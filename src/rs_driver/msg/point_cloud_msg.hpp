@@ -65,6 +65,7 @@ public:
   bool is_dense = false;  ///< If is_dense is true, the point cloud does not contain NAN points,
   double timestamp = 0.0;
   uint32_t seq = 0;           ///< Sequence number of message
+  std::string frame_id = "";  ///< Point cloud frame id
 
   VectorT points;
 };

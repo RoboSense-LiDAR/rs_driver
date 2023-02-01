@@ -304,6 +304,7 @@ inline void LidarDriverImpl<T_PointCloud>::runPacketCallBack(uint8_t* data, size
     pkt.is_difop = is_difop;
     pkt.is_frame_begin = is_frame_begin;
     pkt.seq = pkt_seq_++;
+    pkt.frame_id = driver_param_.frame_id;
 
     pkt.buf_.resize(data_size);
     memcpy (pkt.buf_.data(), data, data_size);
@@ -414,6 +415,8 @@ void LidarDriverImpl<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointC
     msg->height = height;
     msg->width = (uint32_t)msg->points.size() / msg->height;
   }
+
+  msg->frame_id = driver_param_.frame_id;
 }
 
 }  // namespace lidar

@@ -47,6 +47,7 @@ struct Packet
   uint32_t seq = 0;
   uint8_t is_difop = 0;
   uint8_t is_frame_begin = 0;
+  std::string frame_id = "";  ///< Packet message frame id
 
   Packet(const Packet& msg)
   {
