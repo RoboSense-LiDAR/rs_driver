@@ -57,6 +57,7 @@ protected:
   static RSEchoMode getEchoMode(uint8_t mode);
 
   void calcParam();
+
   template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 };

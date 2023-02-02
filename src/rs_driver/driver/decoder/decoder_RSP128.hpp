@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
-#include <rs_driver/driver/decoder/decoder.hpp>
+#include <rs_driver/driver/decoder/decoder_mech.hpp>
 
 namespace robosense
 {
