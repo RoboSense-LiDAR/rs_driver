@@ -250,6 +250,12 @@ inline void LidarDriverImpl<T_PointCloud>::stop()
   to_exit_handle_ = true;
   handle_thread_.join();
 
+  // clear all points before next session
+  if (decoder_ptr_->point_cloud_)
+  {
+    decoder_ptr_->point_cloud_->points.clear();
+  }
+
   start_flag_ = false;
 }
 
