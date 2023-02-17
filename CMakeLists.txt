@@ -28,7 +28,7 @@ option(ENABLE_EPOLL_RECEIVE       "Receive packets with epoll() instead of selec
 option(ENABLE_STAMP_WITH_LOCAL    "Enable stamp point cloud with local time" OFF)
 option(ENABLE_PCL_POINTCLOUD      "Enable PCL Point Cloud" OFF)
 option(ENABLE_CRC32_CHECK         "Enable CRC32 Check on MSOP Packet" OFF)
-option(ENABLE_DIFOP_PARSE         "Enable DIFOP Packet Parse" OFF)
+option(ENABLE_DIFOP_PARSE         "Enable parsing DIFOP Packet" OFF)
 
 #=============================
 #  Compile Demos, Tools, Tests

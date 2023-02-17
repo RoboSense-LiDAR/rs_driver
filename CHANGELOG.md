@@ -4,6 +4,25 @@
 
 ### Changed 
 
+
+
+## v1.5.9 2023-02-17
+
+### Added
+- Support CRC32 check on MSOP/DIFOP packets.
+- Support parsing DIFOP packets to get config/status data.
+
+### Changed
+- Filter MOSP/DIFOP messages with two bytes instead of one byte.
+- clear current cloud point when stop the instance of rs_driver.
+- Recover frame_id field for C user.
+
+### Fixed
+- Fix pcl point cloud message. Adapt it to the format of the output file of rslidar_sdk.
+- Fix timestamp value of XYZIRT for RS128
+
+
+
 ## v1.5.8 2022-12-09
 
 ### Added
@@ -16,6 +35,8 @@
 ### Fixed
 - Revert "Report error ERRCODE_MSOP_TIMEOUT if only DIFOP packet is received", to avoid incorrect error report.
 - Fix error distance of RSM2. Change it to 250m. 
+
+
 
 ## v1.5.7 2022-10-09
 
@@ -30,6 +51,8 @@
 ### Fixed
 - Fix distance range of helios series. Also update distance ranges of other lidars
 - Report error ERRCODE_MSOP_TIMEOUT if only DIFOP packet is received
+
+
 
 ## v1.5.6 2022-09-01
 
@@ -54,6 +77,8 @@
 ### Removed
 - Remove option ENABLE_RCVMMSG
 
+
+
 ## v1.5.5 2022-08-01
 
 ### Added
@@ -72,6 +97,8 @@
 ### Removed
 - Remove option of high priority thread
 
+
+
 ## v1.5.4 2022-07-01
 
 ### Added
@@ -89,6 +116,8 @@
 ### Fixed
 - Fix lidar temperature 
 
+
+
 ## v1.5.3 2022-06-01
 
 ### Added
@@ -98,6 +127,8 @@
 ### Fixed
 - Check overflow of point cloud
 - Fix compiling error of multiple definition
+
+
 
 ## v1.5.2 2022-05-20
 
@@ -112,6 +143,8 @@
 - Split frame by seq 1 (for MEMS lidars)
 - Remove difop handle thread
 
+
+
 ## v1.5.1 - 2022-04-28
 
 ### Changed
@@ -121,8 +154,13 @@ For Mechanical LiDARs,
 - Let every point has its own timestamp, instead of using the block's one.
 - 
 
+
+
 ## v1.5.0 - 2022-04-21
+
 -- Refactory the coder part
+
+
 
 ## v1.4.6 - 2022-04-21
 
@@ -133,6 +171,8 @@ For Mechanical LiDARs,
 
 ### Changed
 - Optimize point cloud transform
+
+
 
 ## v1.4.5 - 2022-03-09
 
@@ -151,6 +191,8 @@ For Mechanical LiDARs,
 - Fix memory leaks problem
 - Fix temperature calculation (for M1 only)
 
+
+
 ## v1.4.0 - 2021-11-01
 
 ### Changed
@@ -160,7 +202,10 @@ Optimazation to decrease CPU uage, includes:
 - Instead of alloc/free point cloud, always keep point cloud memory
 - By default, use conditional macro to disable scan_msg/camera_trigger related code
 
+
+
 ## V1.3.1
+
 ### Added
 - Add vlan support
 - Add somip support
@@ -174,6 +219,8 @@ Optimazation to decrease CPU uage, includes:
 
 ### Removed
 - Remove redundance condition code in vec.emplace_back(std::move(point)) in mech lidars
+
+
 
 ## v1.3.0 - 2020-11-10
 
@@ -201,6 +248,8 @@ Optimazation to decrease CPU uage, includes:
 
 - Fix the timestamp calculation for RS16,RS32 & RSBP. Now the output lidar timestamp will be UTC time and will not be affected by system time zone.
 
+
+
 ## v1.2.0 - 2020-09-01
 
 ### Added
@@ -214,6 +263,8 @@ Optimazation to decrease CPU uage, includes:
 
 - Update the decoding part for ruby in echo-dual mode
 - Update the compiler version from C++11 to C++14
+
+
 
 ## v1.1.0 - 2020-07-01
 
@@ -232,6 +283,8 @@ Optimazation to decrease CPU uage, includes:
 
 ### Removed
 - Remove unused variables in point cloud message
+
+
 
 ## v1.0.0 - 2020-06-01
 

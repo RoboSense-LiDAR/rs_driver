@@ -143,5 +143,24 @@ ENABLE_PCL_POINTCLOUD determines the format of point cloud in the Demo Apps.
 option(ENABLE_PCL_POINTCLOUD      "Enable PCL Point Cloud" OFF)
 ```
 
+### 5.3.8 ENABLE_CRC32_CHECK
+
+ENABLE_CRC32_CHECK determines whether to apply CRC32 check on MSOP/DIFOP Packet.
++ ENABLE_CRC32_CHECK=OFF means no CRC32 check. This is the default.
++ ENABLE_CRC32_CHECK=ON means CRC32 check. The LiDAR should support this feature to enable this.
+
+```
+option(ENABLE_CRC32_CHECK      "Enable CRC32 Check on MSOP Packet" OFF)
+```
+
+### 5.3.9 ENABLE_DIFOP_PARSE
+
+ENABLE_DIFOP_PARSE determins whether to parse DIFOP Packet, to get the configuratioin data and status data.
++ ENABLE_DIFOP_PARSE=OFF means not to parse. This is the default.
++ ENABLE_DIFOP_PARSE=ON means to parse. Note `rs_driver` parses only a few fields as an example. Please refer to [how to parse difop packet](../howto/21_how_to_parse_difop.md)
+
+```
+option(ENABLE_DIFOP_PARSE      "Enable Parsing DIFOP Packet" OFF)
+```
 
 

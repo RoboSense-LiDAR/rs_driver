@@ -1,4 +1,6 @@
-# **rs_driver v1.5.8 源代码解析**
+# **rs_driver v1.5.9 源代码解析**
+
+
 
 ## 1 基本概念
 
@@ -33,6 +35,8 @@ rs_driver处理前两类协议的包，也就是MSOP Packet和DIFOP Packet。
 + 对于MEMS雷达，点云在MSOP Packet序列中的开始和结束位置，由雷达自己确定。
   + 一帧点云包含固定数目（比如N）的MSOP Packet。雷达对MSOP Packet从 1 到 N 编号，并一直循环。
 
+
+
 ## 2 rs_driver的组件
 
 rs_driver主要由三部分组成： Input、Decoder、LidarDriverImpl。
@@ -45,6 +49,8 @@ rs_driver主要由三部分组成： Input、Decoder、LidarDriverImpl。
   + LidarDriverImpl提供Packet队列。Input收到MSOP/DIFOP Packet后，调用LidarDriverImpl的回调函数。回调函数将它保存到Packet队列。
   + LidarDriverImpl提供Packet处理线程`handle_thread_`。在这个线程中，将MSOP Packet和DIFOP Packet分别派发给Decoder相应的处理函数。
   + Decoder解析完一帧点云时，通知LidarDriverImpl。后者再将点云传递给用户。
+
+
 
 ## 3 Packet接收
 
@@ -216,6 +222,8 @@ enum InputType
 createInput() 根据指定的类型，创建Input实例。
 + 创建InputPcap时，需指定`sec_to_delay`。这是InputPcap回放MSOP Packet的间隔。
 + 创建InputRaw时，需指定`cb_feed_pkt`。这个将在后面的Packet Record/Replay章节中说明。
+
+
 
 ## 4 Packet解析
 
@@ -1432,6 +1440,8 @@ splitFrame()在Decoder通知分帧时，派发点云。
 #### 4.9.8 LidarDriverImpl::getTemperature()
 
 getTemperature()调用Decoder::getTemperature()， 得到雷达温度。
+
+
 
 ## 5 Packet的录制与回放
 

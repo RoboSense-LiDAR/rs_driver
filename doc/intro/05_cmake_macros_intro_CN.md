@@ -146,3 +146,23 @@ ENABLE_PCL_POINTCLOUD 指定示例程序中的点云格式。
 option(ENABLE_PCL_POINTCLOUD      "Enable PCL Point Cloud" OFF)
 ```
 
+### 5.3.8 ENABLE_CRC32_CHECK
+
+ENABLE_CRC32_CHECK 指定对MSOP/DIFOP Packet的数据作CRC32校验。
++ ENABLE_CRC32_CHECK=OFF，不校验。这是默认值。
++ ENABLE_CRC32_CHECK=ON，校验。使能这个选项，需要雷达本身支持这个特性。
+
+```
+option(ENABLE_CRC32_CHECK      "Enable CRC32 Check on MSOP Packet" OFF)
+```
+
+### 5.3.9 ENABLE_DIFOP_PARSE
+
+ENABLE_DIFOP_PARSE 指定是否解析DIFOP Packet，得到雷达的配置和状态数据。
++ ENABLE_DIFOP_PARSE=OFF，不解析。这是默认值。
++ ENABLE_DIFOP_PARSE=ON，解析。注意这个特性只是解析几个域作为例子。请参考文档 [how to parse difop packet](../howto/21_how_to_parse_difop_CN.md)
+
+```
+option(ENABLE_DIFOP_PARSE      "Enable Parsing DIFOP Packet" OFF)
+```
+
