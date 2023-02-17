@@ -90,6 +90,7 @@ private:
   void packetPut(std::shared_ptr<Buffer> pkt, bool stuffed);
 
   void processPacket();
+  void internalProcessPacket(std::shared_ptr<Buffer> pkt);
 
   std::shared_ptr<T_PointCloud> getPointCloud();
   void splitFrame(uint16_t height, double ts);
@@ -359,11 +360,29 @@ inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::processPacket()
+inline void LidarDriverImpl<T_PointCloud>::internalProcessPacket(std::shared_ptr<Buffer> pkt)
 {
   static const uint8_t msop_id[] = {0x55, 0xAA};
   static const uint8_t difop_id[] = {0xA5, 0xFF};
 
+  uint8_t* id = pkt->data();
+  if (memcmp(id, msop_id, sizeof(msop_id)) == 0)
+  {
+    bool pkt_to_split = decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
+    runPacketCallBack(pkt->data(), pkt->dataSize(), decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
+  }
+  else if(memcmp(id, difop_id, sizeof(difop_id)) == 0)
+  {
+    decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
+    runPacketCallBack(pkt->data(), pkt->dataSize(), 0, true, false); // difop packet
+  }
+
+  free_pkt_queue_.push(pkt);
+}
+
+template <typename T_PointCloud>
+inline void LidarDriverImpl<T_PointCloud>::processPacket()
+{
   while (!to_exit_handle_)
   {
     std::shared_ptr<Buffer> pkt = pkt_queue_.popWait(500000);
@@ -372,19 +391,7 @@ inline void LidarDriverImpl<T_PointCloud>::processPacket()
       continue;
     }
 
-    uint8_t* id = pkt->data();
-    if (memcmp(id, msop_id, sizeof(msop_id)) == 0)
-    {
-      bool pkt_to_split = decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
-      runPacketCallBack(pkt->data(), pkt->dataSize(), decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
-    }
-    else if(memcmp(id, difop_id, sizeof(difop_id)) == 0)
-    {
-      decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
-      runPacketCallBack(pkt->data(), pkt->dataSize(), 0, true, false); // difop packet
-    }
-
-    free_pkt_queue_.push(pkt);
+    internalProcessPacket(pkt);
   }
 }
 
