@@ -64,8 +64,10 @@ typedef struct
   uint8_t id[8];
   uint8_t reserved_1[12];
   RSTimestampYMD timestamp;
+  uint8_t legacy_lidar_type;
   uint8_t lidar_type;
-  uint8_t reserved_2[7];
+  uint8_t lidar_model;
+  uint8_t reserved_2[5];
   RSTemperature temp;
   uint8_t reserved_3[2];
 } RSMsopHeaderV1;
