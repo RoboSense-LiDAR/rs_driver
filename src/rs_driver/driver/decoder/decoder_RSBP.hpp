@@ -204,6 +204,11 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
   this->temperature_ = parseTempInLe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
+  if ((pkt.header.lidar_type == 0x03) && (pkt.header.lidar_model == 0x04)) 
+  {
+    this->const_param_.DISTANCE_RES = 0.0025f;
+  }
+
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
