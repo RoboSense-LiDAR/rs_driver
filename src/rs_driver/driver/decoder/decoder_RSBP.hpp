@@ -207,6 +207,9 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   if ((pkt.header.lidar_type == 0x03) && (pkt.header.lidar_model == 0x04)) 
   {
     this->const_param_.DISTANCE_RES = 0.0025f;
+    this->mech_const_param_.RX = 0.01619f;
+    this->mech_const_param_.RY = 0.0085f;
+    this->mech_const_param_.RZ = 0.09571f;
   }
 
   double pkt_ts = 0;
