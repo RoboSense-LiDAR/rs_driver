@@ -424,6 +424,7 @@ inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t siz
   if (this->point_cloud_ && (this->point_cloud_->points.size() > CLOUD_POINT_MAX))
   {
      LIMIT_CALL(this->cb_excep_(Error(ERRCODE_CLOUDOVERFLOW)), 1);
+     this->point_cloud_->points.clear();
   }
 
   if (param_.wait_for_difop && !angles_ready_)
