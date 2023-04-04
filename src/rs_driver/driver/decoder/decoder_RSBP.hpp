@@ -201,11 +201,13 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 {
   const RSBPMsopPkt& pkt = *(const RSBPMsopPkt*)(packet);
   bool ret = false;
+  bool isBpV4 = false;
 
   this->temperature_ = parseTempInLe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
   if ((pkt.header.lidar_type == 0x03) && (pkt.header.lidar_model == 0x04)) 
   {
+    isBpV4 = true;
     this->const_param_.DISTANCE_RES = 0.0025f;
     this->mech_const_param_.RX = 0.01619f;
     this->mech_const_param_.RY = 0.0085f;
@@ -215,7 +217,10 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeYMD(&pkt.header.timestamp) * 1e-6;
+    if (isBpV4) 
+      pkt_ts = parseTimeUTCWithUs ((RSTimestampUTC*)&pkt.header.timestamp) * 1e-6;
+    else
+      pkt_ts = parseTimeYMD (&pkt.header.timestamp) * 1e-6;
   }
   else
   {
@@ -226,7 +231,10 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
     if (this->write_pkt_ts_)
     {
-      createTimeYMD (ts, (RSTimestampYMD*)&pkt.header.timestamp);
+      if (isBpV4) 
+        createTimeUTCWithUs (ts, (RSTimestampUTC*)&pkt.header.timestamp);
+      else
+        createTimeYMD (ts, (RSTimestampYMD*)&pkt.header.timestamp);
     }
   }
 
