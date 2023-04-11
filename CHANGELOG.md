@@ -5,6 +5,11 @@
 ### Changed 
 
 
+## v1.5.9 2023-02-17
+
+### Added
+- Merge RSBPV4 into RSBP
+
 
 ## v1.5.9 2023-02-17
 
