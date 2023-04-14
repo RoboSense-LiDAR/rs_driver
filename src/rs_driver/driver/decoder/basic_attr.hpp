@@ -156,7 +156,13 @@ inline uint64_t parseTimeYMD(const RSTimestampYMD* tsYmd)
   stm.tm_hour = tsYmd->hour;
   stm.tm_min = tsYmd->minute;
   stm.tm_sec = tsYmd->second;
-  time_t sec = std::mktime(&stm);
+  time_t sec = 
+    #if defined(_WIN32)
+      _mkgmtime(&stm);
+    #else
+      timegm(&stm)
+    #endif
+  ;
 
   uint64_t ms = ntohs(tsYmd->ms);
   uint64_t us = ntohs(tsYmd->us);
@@ -194,7 +200,7 @@ inline void createTimeYMD(uint64_t usec, RSTimestampYMD* tsYmd)
 
   time_t t_sec = sec;
 
-  std::tm* stm = localtime(&t_sec);
+  std::tm* stm = gmtime(&t_sec);
 
 #if 0
   std::cout << "+ tm_year:" << stm->tm_year 
