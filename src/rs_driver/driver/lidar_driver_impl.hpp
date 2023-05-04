@@ -405,10 +405,6 @@ void LidarDriverImpl<T_PointCloud>::splitFrame(uint16_t height, double ts)
     cb_put_cloud_(cloud);
     decoder_ptr_->point_cloud_ = getPointCloud();
   }
-  else
-  {
-    runExceptionCallback(Error(ERRCODE_ZEROPOINTS));
-  }
 }
 
 template <typename T_PointCloud>
