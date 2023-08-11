@@ -5,9 +5,18 @@
 
 using namespace robosense::lidar;
 
+TEST(TestAzimuthSection, round)
+{
+  ASSERT_EQ(AzimuthSection::_round(0), 0);
+  ASSERT_EQ(AzimuthSection::_round(36000), 0);
+  ASSERT_EQ(AzimuthSection::_round(-36000), 0);
+}
+
 TEST(TestAzimuthSection, ctorFull)
 {
   AzimuthSection sec(0, 36000);
+  ASSERT_TRUE(sec.full_round_);
+
   ASSERT_TRUE(sec.in(0));
   ASSERT_TRUE(sec.in(10));
   ASSERT_TRUE(sec.in(36000));
@@ -16,6 +25,8 @@ TEST(TestAzimuthSection, ctorFull)
 TEST(TestAzimuthSection, ctor)
 {
   AzimuthSection sec(10, 20);
+  ASSERT_FALSE(sec.full_round_);
+
   ASSERT_EQ(sec.start_, 10);
   ASSERT_EQ(sec.end_, 20);
 
