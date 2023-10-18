@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/driver/decoder/decoder_mech.hpp>
+#include <iomanip>
 
 namespace robosense
 {
@@ -201,18 +202,39 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 {
   const RSBPMsopPkt& pkt = *(const RSBPMsopPkt*)(packet);
   bool ret = false;
-  bool isBpV4 = false;
-
+  static bool isBpV4 = false;
+  static bool isFirstPkt = true;
   this->temperature_ = parseTempInLe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
 
-  if ((pkt.header.lidar_type == 0x03) && (pkt.header.lidar_model == 0x04)) 
+  if(isFirstPkt)
   {
-    isBpV4 = true;
-    this->const_param_.DISTANCE_RES = 0.0025f;
-    this->mech_const_param_.RX = 0.01619f;
-    this->mech_const_param_.RY = 0.0085f;
-    this->mech_const_param_.RZ = 0.09571f;
+    isFirstPkt = false;
+      if ((pkt.header.lidar_type == 0x03) && (pkt.header.lidar_model == 0x04)) 
+    {
+      isBpV4 = true;
+      this->const_param_.DISTANCE_RES = 0.0025f;
+      this->mech_const_param_.RX = 0.01619f;
+      this->mech_const_param_.RY = 0.0085f;
+      this->mech_const_param_.RZ = 0.09571f;
+      float blk_ts = 55.56f;
+      float firing_tss[] = 
+      {
+        0.00f,  1.67f,  3.34f,  5.00f, 6.67f, 8.34f, 10.01f, 11.68f, 
+        13.34f, 15.01f, 16.68f, 18.35f, 20.02f, 21.68f, 23.35f, 25.02f,
+        26.69f,  28.36f,  30.02f, 31.69f, 33.36f, 35.03f, 36.70f, 38.36f,
+        40.03f, 41.70f, 43.37f, 45.04f, 46.70f, 48.37f, 50.04f, 51.71f
+      };
+     
+      this->mech_const_param_.BLOCK_DURATION = blk_ts / 1000000;
+      for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)
+      {
+        this->mech_const_param_.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
+        this->mech_const_param_.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
+      }
+    }
+
   }
+   
 
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
@@ -274,16 +296,14 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
       int32_t angle_vert = this->chan_angles_.vertAdjust(chan);
       int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
-
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
-
+     
       if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
       {
         float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
         float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->mech_const_param_.RX * SIN(angle_horiz);
         float z =  distance * SIN(angle_vert) + this->mech_const_param_.RZ;
         this->transformPoint(x, y, z);
-
         typename T_PointCloud::PointT point;
         setX(point, x);
         setY(point, y);
@@ -303,7 +323,6 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
         setIntensity(point, 0);
         setTimestamp(point, chan_ts);
         setRing(point, this->chan_angles_.toUserChan(chan));
-
         this->point_cloud_->points.emplace_back(point);
       }
 
