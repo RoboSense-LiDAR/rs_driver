@@ -102,6 +102,7 @@ protected:
 
   template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
+  bool reversal_;
 };
 
 template <typename T_PointCloud>
@@ -176,7 +177,12 @@ inline void DecoderRSBP<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
 {
   const RSBPDifopPkt& pkt = *(const RSBPDifopPkt*)(packet);
   this->template decodeDifopCommon<RSBPDifopPkt>(pkt);
-
+   if(pkt.reserved_2[0])
+  {
+    reversal_ = true;
+  }else{
+    reversal_ = false;
+  }
   this->echo_mode_ = getEchoMode (pkt.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
@@ -199,6 +205,10 @@ template <typename T_PointCloud>
 template <typename T_BlockIterator>
 inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
+  static int frame_num = 0, pkt_cnt = 0;
+  pkt_cnt++;
+
+
   const RSBPMsopPkt& pkt = *(const RSBPMsopPkt*)(packet);
   bool ret = false;
   bool isBpV4 = false;
@@ -249,8 +259,8 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     {
       this->cb_excep_(Error(ERRCODE_WRONGMSOPBLKID));
       break;
-    }
-
+    } 
+    
     int32_t block_az_diff;
     double block_ts_off;
     iter.get(blk, block_az_diff, block_ts_off);
@@ -262,7 +272,14 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       this->cb_split_frame_(this->const_param_.LASER_NUM, this->cloudTs());
       this->first_point_ts_ = block_ts;
       ret = true;
+      frame_num++;
+      pkt_cnt = 0;
     }
+      if(reversal_)
+    {
+       block_az = 36000 - ntohs(block.azimuth);
+    }
+    std::cout << "reversal_:"<<reversal_ <<"frame_num:"<< frame_num <<"pkt_cnt:" <<pkt_cnt<<"blk:"  << blk<< "block_az:" << block_az << std::endl;
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
