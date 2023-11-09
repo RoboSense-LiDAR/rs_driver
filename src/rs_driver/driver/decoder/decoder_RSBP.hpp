@@ -205,10 +205,6 @@ template <typename T_PointCloud>
 template <typename T_BlockIterator>
 inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
-  static int frame_num = 0, pkt_cnt = 0;
-  pkt_cnt++;
-
-
   const RSBPMsopPkt& pkt = *(const RSBPMsopPkt*)(packet);
   bool ret = false;
   bool isBpV4 = false;
@@ -272,15 +268,8 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       this->cb_split_frame_(this->const_param_.LASER_NUM, this->cloudTs());
       this->first_point_ts_ = block_ts;
       ret = true;
-      frame_num++;
-      pkt_cnt = 0;
     }
-      if(reversal_)
-    {
-       block_az = 36000 - ntohs(block.azimuth);
-    }
-    std::cout << "reversal_:"<<reversal_ <<"frame_num:"<< frame_num <<"pkt_cnt:" <<pkt_cnt<<"blk:"  << blk<< "block_az:" << block_az << std::endl;
-
+   
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
       const RSChannel& channel = block.channels[chan]; 
@@ -293,7 +282,11 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
 
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
-
+        if(reversal_)
+      {
+          angle_horiz_final = 36000 - angle_horiz_final;
+          angle_horiz = 36000 - angle_horiz;
+      }
       if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
       {
         float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
