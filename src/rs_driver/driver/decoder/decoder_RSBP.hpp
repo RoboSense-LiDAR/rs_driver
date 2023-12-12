@@ -103,6 +103,7 @@ protected:
 
   template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
+  bool reversal_;
 };
 
 template <typename T_PointCloud>
@@ -177,7 +178,12 @@ inline void DecoderRSBP<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
 {
   const RSBPDifopPkt& pkt = *(const RSBPDifopPkt*)(packet);
   this->template decodeDifopCommon<RSBPDifopPkt>(pkt);
-
+   if(pkt.reserved_2[0])
+  {
+    reversal_ = true;
+  }else{
+    reversal_ = false;
+  }
   this->echo_mode_ = getEchoMode (pkt.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
@@ -271,8 +277,8 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     {
       this->cb_excep_(Error(ERRCODE_WRONGMSOPBLKID));
       break;
-    }
-
+    } 
+    
     int32_t block_az_diff;
     double block_ts_off;
     iter.get(blk, block_az_diff, block_ts_off);
@@ -285,7 +291,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       this->first_point_ts_ = block_ts;
       ret = true;
     }
-
+   
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
       const RSChannel& channel = block.channels[chan]; 
@@ -297,7 +303,11 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       int32_t angle_vert = this->chan_angles_.vertAdjust(chan);
       int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
-     
+        if(reversal_)
+      {
+          angle_horiz_final = 36000 - angle_horiz_final;
+          angle_horiz = 36000 - angle_horiz;
+      }
       if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
       {
         float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
