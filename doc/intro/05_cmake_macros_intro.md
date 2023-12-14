@@ -89,16 +89,16 @@ ENABLE_TRANSFORM determines whether to support coordinate transformation.
 option(ENABLE_TRANSFORM           "Enable transform functions" OFF)
 ```
 
-### 5.3.3 ENABLE_DOUBLE_RCVBUF
+### 5.3.3 ENABLE_MODIFY_RECVBUF
 
-ENABLE_DOUBLE_RCVBUF determines whether to double the receiving buffer of the MSOP/DIFOP sockets.
+ENABLE_MODIFY_RECVBUF determines whether to change the receiving buffer of the MSOP/DIFOP sockets.
 
 On some platforms (such as embedded Linux, Windows, etc), the default size of the buffer is small. This may cause loss of MSOP/DIFOP packets, so enable this macro to enlarge the buffer.
-+ ENABLE_DOUBLE_RCVBUF=OFF means No. This is the default.
-+ ENABLE_DOUBLE_RCVBUF=ON means Yes. The current implementation will change this value to `4` times. You can change it if needed.
++ ENABLE_MODIFY_RECVBUF=OFF means No. This is the default.
++ ENABLE_MODIFY_RECVBUF=ON means Yes. Modify the receive cache based on the size passed in by the user
 
 ```
-option(ENABLE_DOUBLE_RCVBUF       "Enable double size of RCVBUF" OFF)
+option(ENABLE_MODIFY_RECVBUF       "Enable modify size of RCVBUF" OFF)
 ```
 
 ### 5.3.4 ENABLE_WAIT_IF_QUEUE_EMPTY

@@ -4,6 +4,19 @@
 
 ### Changed 
 
+## v1.5.11 2023-12-20
+
+### Added
+- Split frame at the end of frame.
+- Support parsing DIFOP packets to get serial number of 0226.
+
+### Changed
+- Enable modify socket buffer size.
+
+### Fixed
+- Fix the bug of rs_drvier_viewer.cpp abnormal crash.
+- Fix fir_tss of RSBPV4.
+- Fix roation direction of RSBPV4 when reversal.
 
 ## v1.5.10 2023-04-11
 

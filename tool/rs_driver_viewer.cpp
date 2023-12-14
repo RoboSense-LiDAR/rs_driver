@@ -213,7 +213,8 @@ void processCloud(void)
 
     {
       const std::lock_guard<std::mutex> lock(mtx_viewer);
-      pcl_viewer->updatePointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
+      pcl_viewer->removePointCloud("rslidar");
+      pcl_viewer->addPointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
     }
 
     free_cloud_queue.push(msg);
@@ -242,6 +243,8 @@ int main(int argc, char* argv[])
 
   RSDriverParam param;
   parseParam(argc, argv, param);
+    // param.input_param.use_vlan = true;  
+  param.input_param.pcap_repeat = true;   
   param.print();
 
   pcl_viewer = std::make_shared<PCLVisualizer>("RSPointCloudViewer");
