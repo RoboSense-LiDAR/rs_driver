@@ -125,10 +125,10 @@ int main(int argc, char* argv[])
 
   RSDriverParam param;                                         ///< Create a parameter object
   param.input_type = InputType::PCAP_FILE;
-  param.input_param.pcap_path = "/home/robosense/test.pcap";  ///< Set the pcap file directory
+  param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap file directory
   param.input_param.msop_port = 6699;                          ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;                         ///< Set the lidar difop port number, the default is 7788
-  param.lidar_type = LidarType::RSBP;                          ///< Set the lidar type. Make sure this type is correct
+  param.lidar_type = LidarType::RSM1;                          ///< Set the lidar type. Make sure this type is correct
   param.print();
 
   LidarDriver<PointCloudMsg> driver;               ///< Declare the driver object
@@ -154,6 +154,7 @@ int main(int argc, char* argv[])
   to_exit_process = true;
   cloud_handle_thread.join();
 #else
+  
   while (true)
   {
     std::this_thread::sleep_for(std::chrono::seconds(1));

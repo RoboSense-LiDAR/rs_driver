@@ -8,7 +8,6 @@
 
 ### Added
 - Split frame at the end of frame.
-- Support parsing DIFOP packets to get serial number of 0226.
 
 ### Changed
 - Enable modify socket buffer size.
