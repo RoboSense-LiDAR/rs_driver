@@ -303,7 +303,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
       int32_t angle_vert = this->chan_angles_.vertAdjust(chan);
       int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
-        if(reversal_)
+      if(reversal_)
       {
           angle_horiz_final = 36000 - angle_horiz_final;
           angle_horiz = 36000 - angle_horiz;

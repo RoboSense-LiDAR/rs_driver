@@ -15,7 +15,7 @@
 ### Fixed
 - Fix the bug of rs_drvier_viewer.cpp abnormal crash.
 - Fix fir_tss of RSBPV4.
-- Fix roation direction of RSBPV4 when reversal.
+- Fix rotation direction of RSBPV4 when reversal.
 
 ## v1.5.10 2023-04-11
 

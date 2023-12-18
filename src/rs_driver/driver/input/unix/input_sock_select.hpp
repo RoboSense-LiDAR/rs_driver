@@ -157,6 +157,7 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
   host_addr.sin_family = AF_INET;
   host_addr.sin_port = htons(port);
   host_addr.sin_addr.s_addr = INADDR_ANY;
+  // host_addr.sin_addr.s_addr = INADDR_ANY;
   if (hostIp != "0.0.0.0" && grpIp == "0.0.0.0")
   {
     inet_pton(AF_INET, hostIp.c_str(), &(host_addr.sin_addr));
