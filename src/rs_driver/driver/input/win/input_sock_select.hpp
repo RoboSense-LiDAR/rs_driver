@@ -203,10 +203,10 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
     }
     socklen_t opt_len = sizeof(uint32_t);
     getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&before_set_val, &opt_len);
-    RS_INFO << "before: recv buf opt_val:" <<before_set_val << std::endl;
+    // RS_INFO << "before: recv buf opt_val:" <<before_set_val << std::endl;
     setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&opt_val, opt_len);
     getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&after_set_val, &opt_len);
-    RS_INFO << "aftert: recv buf opt_val:" <<after_set_val << std::endl;
+    // RS_INFO << "aftert: recv buf opt_val:" <<after_set_val << std::endl;
   }
 #endif
 

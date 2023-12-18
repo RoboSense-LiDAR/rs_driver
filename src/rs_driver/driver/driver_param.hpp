@@ -323,7 +323,7 @@ struct RSInputParam  ///< The LiDAR input parameter
   bool use_vlan = false;                       ///< Vlan on-off
   uint16_t user_layer_bytes = 0;    ///< Bytes of user layer. thers is no user layer if it is 0
   uint16_t tail_layer_bytes = 0;    ///< Bytes of tail layer. thers is no tail layer if it is 0
-  uint32_t socket_recv_buf = 106496;   //the default value: /proc/sys/net/core/rmem_default 
+  uint32_t socket_recv_buf = 106496;   //  <Bytes of socket receive buffer. 
 
   void print() const
   {
