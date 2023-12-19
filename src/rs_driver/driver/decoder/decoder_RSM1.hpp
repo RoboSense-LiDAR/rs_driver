@@ -120,7 +120,6 @@ typedef struct
   uint8_t reserved1[1];
   uint8_t frame_rate;
   RSM1DifopEther eth;
-  RSM1DifopFov fov;
   RSM1DifopVerInfo version;
   RSSN sn;
   uint8_t return_mode;
@@ -215,7 +214,6 @@ inline void DecoderRSM1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
   memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6);
   memcpy (this->device_info_.top_ver, pkt.version.pl_ver, 5);
   memcpy (this->device_info_.bottom_ver, pkt.version.ps_ver, 5);
-
   // device status
   this->device_status_.voltage = ntohs(pkt.status.voltage_1);
 #endif
