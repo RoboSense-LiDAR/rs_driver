@@ -162,7 +162,7 @@ inline void InputPcap::recvPacket()
 
       if (input_param_.pcap_repeat)
       {
-        // cb_excep_(Error(ERRCODE_PCAPREPEAT));
+        cb_excep_(Error(ERRCODE_PCAPREPEAT));
 
         char errbuf[PCAP_ERRBUF_SIZE];
         pcap_ = pcap_open_offline(input_param_.pcap_path.c_str(), errbuf);

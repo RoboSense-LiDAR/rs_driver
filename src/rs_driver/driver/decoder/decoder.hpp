@@ -263,7 +263,7 @@ public:
 
   explicit Decoder(const RSDecoderConstParam& const_param, const RSDecoderParam& param);
 
-  float getTemperature();
+  bool getTemperature(float& temp);
   bool getDeviceInfo(DeviceInfo& info);
   bool getDeviceStatus(DeviceStatus& status);
   double getPacketDuration();
@@ -289,6 +289,7 @@ protected:
   std::function<void(const Error&)> cb_excep_;
   bool write_pkt_ts_;
 
+
 #ifdef ENABLE_TRANSFORM
   Eigen::Matrix4d trans_;
 #endif
@@ -309,6 +310,7 @@ protected:
   double prev_pkt_ts_; // timestamp of prevous packet
   double prev_point_ts_; // timestamp of previous point
   double first_point_ts_; // timestamp of first point
+  bool is_get_temperature_{false};
 };
 
 template <typename T_PointCloud>
@@ -351,22 +353,36 @@ inline void Decoder<T_PointCloud>::enableWritePktTs(bool value)
 }
 
 template <typename T_PointCloud>
-inline float Decoder<T_PointCloud>::getTemperature()
+inline bool Decoder<T_PointCloud>::getTemperature(float& temp)
 {
-  return temperature_;
+  if(!is_get_temperature_)
+  {
+    return false;
+  }
+
+  temp = temperature_;
+  return true;
 }
 
 template <typename T_PointCloud>
 inline bool Decoder<T_PointCloud>::getDeviceInfo(DeviceInfo& info)
 {
-  memcpy (&info, &device_info_, sizeof(DeviceInfo));
+  if(!device_info_.state)
+  {
+    return false;
+  }
+  info = device_info_;
   return true;
 }
 
 template <typename T_PointCloud>
 inline bool Decoder<T_PointCloud>::getDeviceStatus(DeviceStatus& status)
 {
-  memcpy (&status, &device_status_, sizeof(DeviceStatus));
+  if(!device_status_.state)
+  {
+    return false;
+  }
+  status = device_status_;
   return true;
 }
 

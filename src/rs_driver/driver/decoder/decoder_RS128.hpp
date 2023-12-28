@@ -212,7 +212,7 @@ inline bool DecoderRS128<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
   bool ret = false;
 
   this->temperature_ = parseTempInBe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
-
+  this->is_get_temperature_ = true;
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {

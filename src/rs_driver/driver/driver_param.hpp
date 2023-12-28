@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/common/rs_log.hpp>
 #include <string>
 #include <map>
-
+#include <cstring>
 namespace robosense
 {
 namespace lidar
@@ -370,15 +370,63 @@ struct RSDriverParam  ///< The LiDAR driver parameter
 
 struct DeviceInfo
 {
+  DeviceInfo()
+  {
+      init();
+  }
   uint8_t sn[6];
   uint8_t mac[6];
   uint8_t top_ver[5];
   uint8_t bottom_ver[5];
+  bool state;
+  
+  void init()
+  {
+    memset(sn, 0, sizeof(sn));
+    memset(mac, 0, sizeof(mac));
+    memset(top_ver, 0, sizeof(top_ver));
+    memset(bottom_ver, 0, sizeof(bottom_ver));
+    state = false;
+  }
+
+  DeviceInfo& operator=(const DeviceInfo& other)
+  {
+    if (this != &other) 
+    {
+      memcpy(sn, other.sn, sizeof(sn));
+      memcpy(mac, other.mac, sizeof(mac));
+      memcpy(top_ver, other.top_ver, sizeof(top_ver));
+      memcpy(bottom_ver, other.bottom_ver, sizeof(bottom_ver));
+      state = other.state;
+    }
+    return *this;
+  }
 };
 
 struct DeviceStatus
 {
+  DeviceStatus()
+  {
+      init();
+  }
   float voltage = 0.0f;
+    bool state;
+  
+  void init()
+  {
+    voltage = 0.0f;
+    state = false;
+  }
+
+  DeviceStatus& operator=(const DeviceStatus& other)
+  {
+    if (this != &other) 
+    {
+      voltage = other.voltage;
+      state = other.state;
+    }
+    return *this;
+  }
 };
 
 }  // namespace lidar
