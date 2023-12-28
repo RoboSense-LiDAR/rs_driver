@@ -269,13 +269,11 @@ inline void LidarDriverImpl<T_PointCloud>::decodePacket(const Packet& pkt)
 template <typename T_PointCloud>
 inline bool LidarDriverImpl<T_PointCloud>::getTemperature(float& temp)
 {
-  if (decoder_ptr_ == nullptr)
+  if (decoder_ptr_ == nullptr )
   {
     return false;
   }
-
-  temp = decoder_ptr_->getTemperature();
-  return true;
+  return decoder_ptr_->getTemperature(temp);
 }
 
 template <typename T_PointCloud>
