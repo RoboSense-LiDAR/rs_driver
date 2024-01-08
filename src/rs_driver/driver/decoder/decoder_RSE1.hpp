@@ -164,18 +164,18 @@ inline bool DecoderRSE1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
+    pkt_ts = parseTimeUTCWithNs(&pkt.header.timestamp) * 1e-9;
   }
   else
   {
-    uint64_t ts = getTimeHost();
+    uint64_t ts = getTimeHostWithNs();
 
     // roll back to first block to approach lidar ts as near as possible.
     pkt_ts = getTimeHost() * 1e-6 - this->getPacketDuration();
 
     if (this->write_pkt_ts_)
     {
-      createTimeUTCWithUs (ts, (RSTimestampUTC*)&pkt.header.timestamp);
+      createTimeUTCWithNs(ts, (RSTimestampUTC*)&pkt.header.timestamp);
     }
   }
 
