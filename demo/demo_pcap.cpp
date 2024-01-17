@@ -143,7 +143,6 @@ int main(int argc, char* argv[])
   std::thread cloud_handle_thread = std::thread(processCloud);
 
   driver.start();  ///< The driver thread will start
-
   RS_DEBUG << "RoboSense Lidar-Driver Linux pcap demo start......" << RS_REND;
 
 #ifdef ORDERLY_EXIT
