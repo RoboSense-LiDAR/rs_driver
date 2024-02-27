@@ -84,7 +84,7 @@ class DecoderRSE1 : public Decoder<T_PointCloud>
 public:
 
   constexpr static double FRAME_DURATION = 0.1;
-  constexpr static uint32_t SINGLE_PKT_NUM = 112;
+  constexpr static uint32_t SINGLE_PKT_NUM = 288;
   constexpr static int VECTOR_BASE = 32768;
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
@@ -164,18 +164,18 @@ inline bool DecoderRSE1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithNs(&pkt.header.timestamp) * 1e-9;
+    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
   }
   else
   {
-    uint64_t ts = getTimeHostWithNs();
+    uint64_t ts = getTimeHost();
 
     // roll back to first block to approach lidar ts as near as possible.
     pkt_ts = getTimeHost() * 1e-6 - this->getPacketDuration();
 
     if (this->write_pkt_ts_)
     {
-      createTimeUTCWithNs(ts, (RSTimestampUTC*)&pkt.header.timestamp);
+      createTimeUTCWithUs(ts, (RSTimestampUTC*)&pkt.header.timestamp);
     }
   }
 
