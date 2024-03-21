@@ -61,6 +61,7 @@ enum LidarType  ///< LiDAR type
   RSM1 = RS_MEMS,
   RSM2,
   RSE1,
+  RSMX,
 
   // jumbo
   RS_JUMBO = 0x100,
@@ -128,6 +129,9 @@ inline std::string lidarTypeToStr(const LidarType& type)
       break;
     case LidarType::RSE1:
       str = "RSE1";
+      break;
+    case LidarType::RSMX:
+      str = "RSMX";
       break;
     case LidarType::RSM1_JUMBO:
       str = "RSM1_JUMBO";
@@ -197,6 +201,10 @@ inline LidarType strToLidarType(const std::string& type)
   {
     return LidarType::RSE1;
   }
+  else if (type == "RSMX")
+  {
+    return LidarType::RSMX;
+  }
   else if (type == "RSM1_JUMBO")
   {
     return LidarType::RSM1_JUMBO;
@@ -205,7 +213,7 @@ inline LidarType strToLidarType(const std::string& type)
   {
     RS_ERROR << "Wrong lidar type: " << type << RS_REND;
     RS_ERROR << "Please give correct type: RS16, RS32, RSBP, RSHELIOS, RSHELIOS_16P, RS48, RS80, RS128, RSP128, RSP80, RSP48, "
-             << "RSM1, RSM1_JUMBO, RSM2, RSE1." 
+             << "RSM1, RSM1_JUMBO, RSM2, RSE1, RSMX." 
              << RS_REND;
     exit(-1);
   }
