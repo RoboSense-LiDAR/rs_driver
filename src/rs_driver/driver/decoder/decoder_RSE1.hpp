@@ -191,7 +191,7 @@ inline bool DecoderRSE1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   {
     const RSEOSBlock& block = pkt.blocks[blk];
 
-    double point_time = pkt_ts + ntohs(block.time_offset) * 1e-6;
+    double point_time = pkt_ts + ntohs(block.time_offset) * 1e-9;
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
