@@ -150,7 +150,7 @@ inline RSDecoderMechConstParam& DecoderRSP128<T_PointCloud>::getConstParam()
     41.94f,  43.3f,   43.3f,   43.3f,   43.3f,   44.8f,    44.8f,   44.8f,
     44.8f,   46.17f,  46.17f,  46.17f,  46.17f,  47.66f,   47.66f,  47.66f,
     47.66f,  49.03f,  49.03f,  49.03f,  49.03f,  50.53f,   50.53f,  53.771f
-  }
+  };
 
   param.BLOCK_DURATION = blk_ts / 1000000;
   for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)
