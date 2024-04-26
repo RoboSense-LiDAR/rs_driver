@@ -127,7 +127,7 @@ typedef struct
   RSM1DifopRunSts status;
   uint8_t reserved2[40];
   RSM1DifopCalibration cali_param[20];
-  uint8_t reserved3[71];
+  uint8_t reserved3[79];
 } RSM1DifopPkt;
 
 #pragma pack(pop)
