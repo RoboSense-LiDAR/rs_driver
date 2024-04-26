@@ -6,7 +6,7 @@ if(WIN32)
   cmake_policy(SET CMP0074 NEW) # CMake 3.12 required
 endif(WIN32)
 
-project(rs_driver VERSION 1.5.10)
+project(rs_driver VERSION 1.5.11)
 
 #========================
 #  Project setup
