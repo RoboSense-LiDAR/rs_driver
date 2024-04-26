@@ -213,7 +213,8 @@ void processCloud(void)
 
     {
       const std::lock_guard<std::mutex> lock(mtx_viewer);
-      pcl_viewer->updatePointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
+      pcl_viewer->removePointCloud("rslidar");
+      pcl_viewer->addPointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
     }
 
     free_cloud_queue.push(msg);

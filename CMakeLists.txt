@@ -6,7 +6,7 @@ if(WIN32)
   cmake_policy(SET CMP0074 NEW) # CMake 3.12 required
 endif(WIN32)
 
-project(rs_driver VERSION 1.5.10)
+project(rs_driver VERSION 1.5.11)
 
 #========================
 #  Project setup
@@ -21,7 +21,7 @@ endif()
 option(DISABLE_PCAP_PARSE         "Disable PCAP file parse" OFF) 
 option(ENABLE_TRANSFORM           "Enable transform functions" OFF)
 
-option(ENABLE_DOUBLE_RCVBUF       "Enable double size of RCVBUF" OFF)
+option(ENABLE_MODIFY_RECVBUF       "Enable modify size of RCVBUF" OFF)
 option(ENABLE_WAIT_IF_QUEUE_EMPTY "Enable waiting for a while in handle thread if the queue is empty" OFF)
 option(ENABLE_EPOLL_RECEIVE       "Receive packets with epoll() instead of select()" OFF)
 
@@ -151,9 +151,9 @@ endif(${ENABLE_TRANSFORM})
 #  Build Demos, Tools, Tests
 #============================
 
-if(${ENABLE_DOUBLE_RCVBUF})
-  add_definitions("-DENABLE_DOUBLE_RCVBUF")
-endif(${ENABLE_DOUBLE_RCVBUF})
+if(${ENABLE_MODIFY_RECVBUF})
+  add_definitions("-DENABLE_MODIFY_RECVBUF")
+endif(${ENABLE_MODIFY_RECVBUF})
 
 if(${ENABLE_WAIT_IF_QUEUE_EMPTY})
   add_definitions("-DENABLE_WAIT_IF_QUEUE_EMPTY")

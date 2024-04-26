@@ -304,6 +304,11 @@ inline bool DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
     this->prev_point_ts_ = point_time;
   }
 
+  if (split_strategy_.maxSeq() == pkt_seq)
+  {
+    this->cb_split_frame_(this->const_param_.LASER_NUM, this->cloudTs());
+  }
+
   this->prev_pkt_ts_ = pkt_ts;
   return ret;
 }

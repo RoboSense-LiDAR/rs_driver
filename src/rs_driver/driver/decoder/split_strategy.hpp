@@ -114,7 +114,7 @@ class SplitStrategyBySeq
 public:
 
   SplitStrategyBySeq()
-    : prev_seq_(0)
+    : prev_seq_(0), max_seq_(0), looped_(false)
   {
     setSafeRange();
   }
@@ -123,10 +123,16 @@ public:
   {
     bool split = false;
 
+    if (seq > max_seq_)
+    {
+        max_seq_ = seq;
+    }
+
     if (seq < safe_seq_min_) // rewind
     {
       prev_seq_ = seq;
       split = true;
+      looped_ = true;
     }
     else if (seq < prev_seq_)
     {
@@ -148,6 +154,12 @@ public:
     return split;
   }
 
+  uint16_t maxSeq()
+  {
+      return (looped_ ? max_seq_ : 0);
+  }
+  
+
 #ifndef UNIT_TEST
 private:
 #endif
@@ -163,6 +175,9 @@ private:
   uint16_t prev_seq_;
   uint16_t safe_seq_min_;
   uint16_t safe_seq_max_;
+
+  uint16_t max_seq_;
+  bool looped_;
 };
 
 }  // namespace lidar

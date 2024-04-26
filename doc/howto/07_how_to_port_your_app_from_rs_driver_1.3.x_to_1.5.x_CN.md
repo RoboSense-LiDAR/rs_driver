@@ -148,6 +148,7 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
   bool use_vlan = false;                       ///< Vlan on-off
   uint16_t user_layer_bytes = 0;    ///< Bytes of user layer. thers is no user layer if it is 0
   uint16_t tail_layer_bytes = 0;    ///< Bytes of tail layer. thers is no tail layer if it is 0
+  uint32_t socket_recv_buf = 106496;   //<Bytes of socket receive buffer. 
 };
 ```
 
@@ -156,7 +157,6 @@ typedef struct RSInputParam  ///< The LiDAR input parameter
 + 成员`multi_cast_address`改名为`group_address`。新名字想表达的含义是：在组播模式下，`rs_driver`会将IP地址为`host_address`的网卡加入`group_address`指定的组播组。
 + 删除成员`read_pcap`。 既然`RSDriverParam.input_type` 已经明确了数据源类型，`read_pcap`就不需要了。
 + 删除成员`use_someip` and `use_custom_proto`。它们的功能已经被新的选项 `RSInputParam.user_layer_bytes`所取代。
-
 #### 7.3.1.3 RSDecoderParam
 
 在`v1.3.x`中，RSDecoderParam定义如下。

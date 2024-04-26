@@ -31,22 +31,28 @@ Packet loss may happens in below cases.
 
 The solution is to increase the receiving buffer of MSOP Packet Socket.
 
-in `CMakeLists.txt`，CMake macro `ENABLE_DOUBLE_RCVBUF` enable this feature.
+in `CMakeLists.txt`，CMake macro `ENABLE_MODIFY_RECVBUF` enable this feature.
 
 ```cmake
-option(ENABLE_DOUBLE_RCVBUF       "Enable double size of RCVBUF" OFF)
+option(ENABLE_MODIFY_RECVBUF       "Enable modify size of RCVBUF" OFF)
 ```
 
 The code is as below.  Please test it in your cases, and change buffer size to a good value.
 
 ```c++
-#ifdef ENABLE_DOUBLE_RCVBUF
+#ifdef ENABLE_MODIFY_RECVBUF
   {
-    uint32_t opt_val;
+    uint32_t opt_val = input_param_.socket_recv_buf, before_set_val,after_set_val = 0;
+    if(opt_val < 1024)
+    {
+      opt_val = 106496;
+    }
     socklen_t opt_len = sizeof(uint32_t);
-    getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&opt_val, &opt_len);
-    opt_val *= 2;
+    getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&before_set_val, &opt_len);
+    RS_INFO << "before: recv buf opt_val:" <<before_set_val << std::endl;
     setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&opt_val, opt_len);
+    getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&after_set_val, &opt_len);
+    RS_INFO << "aftert: recv buf opt_val:" <<after_set_val << std::endl;
   }
 #endif
 ```

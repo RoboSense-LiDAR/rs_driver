@@ -42,10 +42,10 @@ class AzimuthSection
 public:
   AzimuthSection(int32_t start, int32_t end)
   {
-    full_round_ = (start == 0) && (end == 36000);
+    full_round_ = _round (end - start) == 0;
 
-    start_ = start % 36000;
-    end_ = end % 36000;
+    start_ = _round (start);
+    end_ = _round (end);
     cross_zero_ = (start_ > end_);
   }
 
@@ -67,6 +67,13 @@ public:
 #ifndef UNIT_TEST
 private:
 #endif
+
+  static
+  int32_t _round(int32_t value)
+  {
+      return (value % 36000 + 36000) % 36000;
+  }
+
   bool full_round_;
   int32_t start_;
   int32_t end_;
