@@ -31,22 +31,28 @@
 
 解决丢包的办法是将接收MSOP Packet的Socket的接收缓存增大。
 
-在`rs_driver`工程的`CMakeLists.txt`中，宏`ENABLE_DOUBLE_RCVBUF`可以使能这个特性。
+在`rs_driver`工程的`CMakeLists.txt`中，宏`ENABLE_MODIFY_RECVBUF`可以使能这个特性。
 
 ```cmake
-option(ENABLE_DOUBLE_RCVBUF       "Enable double size of RCVBUF" OFF)
+option(ENABLE_MODIFY_RECVBUF       "Enable modify size of RCVBUF" OFF)
 ```
 
 代码如下。建议在实际场景下测试，再根据测试结果，将缓存大小调整为合适的值。
 
 ```c++
-#ifdef ENABLE_DOUBLE_RCVBUF
+#ifdef ENABLE_MODIFY_RECVBUF
   {
-    uint32_t opt_val;
+    uint32_t opt_val = input_param_.socket_recv_buf, before_set_val,after_set_val = 0;
+    if(opt_val < 1024)
+    {
+      opt_val = 106496;
+    }
     socklen_t opt_len = sizeof(uint32_t);
-    getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&opt_val, &opt_len);
-    opt_val *= 2;
+    getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&before_set_val, &opt_len);
+    RS_INFO << "before: recv buf opt_val:" <<before_set_val << std::endl;
     setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&opt_val, opt_len);
+    getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&after_set_val, &opt_len);
+    RS_INFO << "aftert: recv buf opt_val:" <<after_set_val << std::endl;
   }
 #endif
 ```

@@ -92,16 +92,16 @@ ENABLE_TRANSFORM 指定是否支持坐标转换功能。
 option(ENABLE_TRANSFORM           "Enable transform functions" OFF)
 ```
 
-### 5.3.3 ENABLE_DOUBLE_RCVBUF
+### 5.3.3 ENABLE_MODIFY_RECVBUF
 
-ENABLE_DOUBLE_RCVBUF 指定是否增大接收MSOP/DIFOP的socket的接收缓存。
+ENABLE_MODIFY_RECVBUF 指定是否修改接收MSOP/DIFOP的socket的接收缓存。
 
 在某些平台上（如嵌入式Linux、Windows），默认的接收缓存比较小，会导致丢包。这时，使能这个宏可以避免丢包。
-+ ENABLE_DOUBLE_RCVBUF=OFF，不增大，保持系统的默认设置。这是默认值。
-+ ENABLE_DOUBLE_RCVBUF=ON，增大。目前的实现是改成默认值的`4`倍，`4`倍是针对部分平台测试的结果。如果需要，可以在代码中直接改变这个值。
++ ENABLE_MODIFY_RECVBUF=OFF，不修改，保持系统的默认设置。这是默认值。
++ ENABLE_MODIFY_RECVBUF=ON，修改。根据用户传入的大小（input_param_.socket_recv_buf）来修改接收缓存。
 
 ```
-option(ENABLE_DOUBLE_RCVBUF       "Enable double size of RCVBUF" OFF)
+option(ENABLE_MODIFY_RECVBUF       "Enable modify size of RCVBUF" OFF)
 ```
 
 ### 5.3.4 ENABLE_WAIT_IF_QUEUE_EMPTY
