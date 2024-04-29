@@ -211,7 +211,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   static bool isBpV4 = false;
   static bool isFirstPkt = true;
   this->temperature_ = parseTempInLe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
-
+  this->is_get_temperature_ = true;
   if(isFirstPkt)
   {
     isFirstPkt = false;

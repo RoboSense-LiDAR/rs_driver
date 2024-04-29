@@ -77,15 +77,63 @@ typedef struct
 
 struct DeviceInfo
 {
+  DeviceInfo()
+  {
+      init();
+  }
   uint8_t sn[6];
   uint8_t mac[6];
   uint8_t top_ver[5];
   uint8_t bottom_ver[5];
+  bool state;
+  
+  void init()
+  {
+    memset(sn, 0, sizeof(sn));
+    memset(mac, 0, sizeof(mac));
+    memset(top_ver, 0, sizeof(top_ver));
+    memset(bottom_ver, 0, sizeof(bottom_ver));
+    state = false;
+  }
+
+  DeviceInfo& operator=(const DeviceInfo& other)
+  {
+    if (this != &other) 
+    {
+      memcpy(sn, other.sn, sizeof(sn));
+      memcpy(mac, other.mac, sizeof(mac));
+      memcpy(top_ver, other.top_ver, sizeof(top_ver));
+      memcpy(bottom_ver, other.bottom_ver, sizeof(bottom_ver));
+      state = other.state;
+    }
+    return *this;
+  }
 };
 
 struct DeviceStatus
 {
+  DeviceStatus()
+  {
+      init();
+  }
   float voltage = 0.0f;
+    bool state;
+  
+  void init()
+  {
+    voltage = 0.0f;
+    state = false;
+  }
+
+  DeviceStatus& operator=(const DeviceStatus& other)
+  {
+    if (this != &other) 
+    {
+      voltage = other.voltage;
+      state = other.state;
+    }
+    return *this;
+  }
 };
 ```
 
@@ -132,8 +180,10 @@ inline void DecoderRSM1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
   memcpy (this->device_info_.top_ver, pkt.version.pl_ver, 5),
   memcpy (this->device_info_.bottom_ver, pkt.version.ps_ver, 5),
   
+  this->device_info_.state = true;
   // device status
   this->device_status_.voltage = ntohs(pkt.status.voltage_1);
+  this->device_status_.state = true;
 #endif
 } 
 ```
@@ -187,8 +237,10 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   memcpy (this->device_info_.top_ver, pkt.version.top_ver, 5), 
   memcpy (this->device_info_.bottom_ver, pkt.version.bottom_ver, 5),
   
+  this->device_info_.state = true;
   // device status
   this->device_status_.voltage = ntohs(pkt.status.vol_12v);
+  this->device_status_.state = true;
 #endif
 }
 ```

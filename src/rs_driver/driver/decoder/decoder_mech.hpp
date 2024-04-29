@@ -208,9 +208,10 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6);
   memcpy (this->device_info_.top_ver, pkt.version.top_ver, 5);
   memcpy (this->device_info_.bottom_ver, pkt.version.bottom_ver, 5);
-
+  this->device_info_.state = true;
   // device status
   this->device_status_.voltage = ntohs(pkt.status.vol_12v);
+  this->device_status_.state = true;
 #endif
 }
 
