@@ -273,7 +273,7 @@ inline bool DecoderRSP80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
       this->block_az_diff_, this->fov_blind_ts_diff_);
 
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
-  {this->is_get_temperature_ = true;
+  {
     const RSP80MsopBlock& block = pkt.blocks[blk];
 
     if (memcmp(this->const_param_.BLOCK_ID, block.id, 1) != 0)
