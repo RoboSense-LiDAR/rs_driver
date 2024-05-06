@@ -163,9 +163,11 @@ inline void DecoderRSM2<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
   memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6);
   memcpy (this->device_info_.top_ver, pkt.version.pl_ver, 5);
   memcpy (this->device_info_.bottom_ver, pkt.version.ps_ver, 5);
-
+  this->device_info_.state = true;
   // device status
   this->device_status_.voltage = ntohs(pkt.status.voltage_1);
+  this->device_status_.state = true;
+  
 #endif
 }
 
@@ -176,7 +178,7 @@ inline bool DecoderRSM2<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   bool ret = false;
 
   this->temperature_ = static_cast<float>((int)pkt.header.temperature - this->const_param_.TEMPERATURE_RES);
-
+  this->is_get_temperature_ = true;
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {

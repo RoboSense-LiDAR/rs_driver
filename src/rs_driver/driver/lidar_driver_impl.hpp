@@ -273,9 +273,7 @@ inline bool LidarDriverImpl<T_PointCloud>::getTemperature(float& temp)
   {
     return false;
   }
-
-  temp = decoder_ptr_->getTemperature();
-  return true;
+  return decoder_ptr_->getTemperature(temp);
 }
 
 template <typename T_PointCloud>
