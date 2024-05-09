@@ -162,7 +162,9 @@ TEST(TestDecoderRSBP, decodeMsopPkt)
   decoder.point_cloud_ = std::make_shared<PointCloud>();
 
   decoder.decodeMsopPkt(pkt, sizeof(pkt));
-  ASSERT_EQ(decoder.getTemperature(), 2.1875);
+  float temp = 0.0f;
+  ASSERT_EQ(decoder.getTemperature(temp), true);
+  ASSERT_EQ(temp, 2.1875);
   ASSERT_EQ(decoder.point_cloud_->points.size(), 32);
 
   PointT& point = decoder.point_cloud_->points[0];
