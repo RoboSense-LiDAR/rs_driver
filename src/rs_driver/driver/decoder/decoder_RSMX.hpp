@@ -107,7 +107,7 @@ class DecoderRSMX : public Decoder<T_PointCloud>
 {
 public:
 
-  constexpr static double FRAME_DURATION = 0.1;    ///?
+  constexpr static double FRAME_DURATION = 0.1;    
   constexpr static uint32_t SINGLE_PKT_NUM = 630;
   constexpr static int VECTOR_BASE =  32768;    //2^15
 

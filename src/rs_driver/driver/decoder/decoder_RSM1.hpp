@@ -38,7 +38,6 @@ namespace robosense
 namespace lidar
 {
 #pragma pack(push, 1)
-
 typedef struct
 {
   uint8_t id[4];

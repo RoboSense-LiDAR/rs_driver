@@ -62,7 +62,7 @@ TEST(TestDecoder, angles_from_file)
 
   RSDecoderParam param;
   param.config_from_file = true;
-  param.angle_path = "../rs_driver/test/res/angle.csv";
+  param.angle_path = "../test/res/angle.csv";
 
   errCode = ERRCODE_SUCCESS;
   MyDecoder decoder(const_param, param);
@@ -79,7 +79,7 @@ TEST(TestDecoder, angles_from_file_fail)
 
   RSDecoderParam param;
   param.config_from_file = true;
-  param.angle_path = "../rs_driver/test/res/non_exist.csv";
+  param.angle_path = "../test/res/non_exist.csv";
 
   MyDecoder decoder(const_param, param);
   decoder.regCallback(errCallback, nullptr);
