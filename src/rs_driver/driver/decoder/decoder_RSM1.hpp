@@ -38,6 +38,7 @@ namespace robosense
 namespace lidar
 {
 #pragma pack(push, 1)
+
 typedef struct
 {
   uint8_t id[4];
@@ -208,7 +209,6 @@ inline void DecoderRSM1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
   this->echo_mode_ = this->getEchoMode(pkt.return_mode);
 
 #ifdef ENABLE_DIFOP_PARSE
-
   // device info
   memcpy (this->device_info_.sn, pkt.sn.num, 6);
   memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6);
