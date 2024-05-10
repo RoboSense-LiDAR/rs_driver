@@ -240,6 +240,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
     }
 
   }
+   
 
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)

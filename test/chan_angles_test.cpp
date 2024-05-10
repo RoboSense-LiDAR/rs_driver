@@ -28,7 +28,7 @@ TEST(TestChanAngles, loadFromFile)
   std::vector<int32_t> vert_angles, horiz_angles;
 
   // load
-  ASSERT_EQ(ChanAngles::loadFromFile ("../rs_driver/test/res/angle.csv", 4, vert_angles, horiz_angles), 0);
+  ASSERT_EQ(ChanAngles::loadFromFile ("../test/res/angle.csv", 4, vert_angles, horiz_angles), 0);
   ASSERT_EQ(vert_angles.size(), 4);
   ASSERT_EQ(horiz_angles.size(), 4);
   ASSERT_EQ(vert_angles[0], 500);
@@ -42,12 +42,12 @@ TEST(TestChanAngles, loadFromFile)
   ASSERT_EQ(horiz_angles[3], -100);
 
   // load again
-  ASSERT_EQ(ChanAngles::loadFromFile ("../rs_driver/test/res/angle.csv", 4, vert_angles, horiz_angles), 0);
+  ASSERT_EQ(ChanAngles::loadFromFile ("../test/res/angle.csv", 4, vert_angles, horiz_angles), 0);
   ASSERT_EQ(vert_angles.size(), 4);
   ASSERT_EQ(horiz_angles.size(), 4);
 
   // load non-existing file
-  ASSERT_LT(ChanAngles::loadFromFile ("../rs_driver/test/res/non_exist.csv", 4, vert_angles, horiz_angles), 0);
+  ASSERT_LT(ChanAngles::loadFromFile ("../test/res/non_exist.csv", 4, vert_angles, horiz_angles), 0);
   ASSERT_EQ(vert_angles.size(), 0);
   ASSERT_EQ(horiz_angles.size(), 0);
 }
@@ -107,7 +107,7 @@ TEST(TestChanAngles, memberLoadFromFile)
   ASSERT_EQ(angles.user_chans_.size(), 4);
 
   // load
-  ASSERT_EQ(angles.loadFromFile ("../rs_driver/test/res/angle.csv"), 0);
+  ASSERT_EQ(angles.loadFromFile ("../test/res/angle.csv"), 0);
   ASSERT_EQ(angles.user_chans_.size(), 4);
   ASSERT_EQ(angles.toUserChan(0), 3);
   ASSERT_EQ(angles.toUserChan(1), 2);
@@ -121,7 +121,7 @@ TEST(TestChanAngles, memberLoadFromFile_fail)
   ASSERT_EQ(angles.chan_num_, 4);
 
   // load non-existing file
-  ASSERT_LT(angles.loadFromFile ("../rs_driver/test/res/non_exist.csv"), 0);
+  ASSERT_LT(angles.loadFromFile ("../test/res/non_exist.csv"), 0);
   ASSERT_EQ(angles.vert_angles_.size(), 4);
   ASSERT_EQ(angles.vert_angles_[0], 0);
 }
