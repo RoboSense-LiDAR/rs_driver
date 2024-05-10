@@ -314,6 +314,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
         float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->mech_const_param_.RX * SIN(angle_horiz);
         float z =  distance * SIN(angle_vert) + this->mech_const_param_.RZ;
         this->transformPoint(x, y, z);
+
         typename T_PointCloud::PointT point;
         setX(point, x);
         setY(point, y);
@@ -333,6 +334,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
         setIntensity(point, 0);
         setTimestamp(point, chan_ts);
         setRing(point, this->chan_angles_.toUserChan(chan));
+
         this->point_cloud_->points.emplace_back(point);
       }
 

@@ -40,7 +40,12 @@ TEST(TestDecoderRS32, RS32DifopPkt2Adapter)
   RS32DifopPkt src;
   src.rpm = 0;
   src.fov = {0};
-  src.return_mode = 0;
+  src.return_mode = {0};
+  src.sn = {0};
+  src.eth = {0};
+  src.version = {0};
+  src.status = {0};
+
   memcpy (src.vert_angle_cali, v_angle_cali, 32*sizeof(RSCalibrationAngle));
   memcpy (src.horiz_angle_cali, h_angle_cali, 32*sizeof(RSCalibrationAngle));
 

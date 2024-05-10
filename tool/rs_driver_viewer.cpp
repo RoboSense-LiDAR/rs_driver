@@ -243,8 +243,6 @@ int main(int argc, char* argv[])
 
   RSDriverParam param;
   parseParam(argc, argv, param);
-    // param.input_param.use_vlan = true;  
-  param.input_param.pcap_repeat = true;   
   param.print();
 
   pcl_viewer = std::make_shared<PCLVisualizer>("RSPointCloudViewer");
