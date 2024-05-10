@@ -120,7 +120,6 @@ typedef struct
   uint8_t reserved1[1];
   uint8_t frame_rate;
   RSM1DifopEther eth;
-  RSM1DifopFov fov;
   RSM1DifopVerInfo version;
   RSSN sn;
   uint8_t return_mode;
@@ -128,7 +127,7 @@ typedef struct
   RSM1DifopRunSts status;
   uint8_t reserved2[40];
   RSM1DifopCalibration cali_param[20];
-  uint8_t reserved3[71];
+  uint8_t reserved3[79];
 } RSM1DifopPkt;
 
 #pragma pack(pop)
