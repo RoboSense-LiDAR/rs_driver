@@ -211,7 +211,6 @@ inline bool DecoderRSMX<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
     this->first_point_ts_ = pkt_ts;
     ret = true;
   }
-  
   uint8_t loop_time;
   if((pkt.header.device_mode & 0xF) == 0)
   { 
@@ -225,16 +224,11 @@ inline bool DecoderRSMX<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   {
     const RSMXBlock& block = pkt.blocks[blk];
 
-    uint8_t block_time_offset = ntohs(block.time_offset);
-    double point_time = pkt_ts + ((block_time_offset & 0xF0) >> 4) * 1e-6; //channel1
+    double point_time = pkt_ts + block.time_offset * 1e-6;
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
       const RSMXChannel& channel = block.channel[chan];
       
-      if(chan == 1)
-      { 
-        point_time = pkt_ts + (block_time_offset & 0x0F)  * 1e-6;  //channel2
-      }
       float distance;
       uint8_t intensity;
      
