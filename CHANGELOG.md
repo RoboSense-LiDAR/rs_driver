@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## v1.5.14 2024-07-12
+### Added
+- Support multiple lidars with different multicast addresses and the same port.
+
 ## v1.5.13 2024-05-10
 ### Added
 - Support RSMX.
