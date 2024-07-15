@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-## v1.5.14 2024-07-12
+## v1.5.14 2024-07-15
 ### Added
 - Support multiple lidars with different multicast addresses and the same port.
+### Fixed
+- Fixed the bug of using multiple bp4.0.
 
 ## v1.5.13 2024-05-10
 ### Added
@@ -12,7 +14,7 @@
 ### Fixed
 - Update timestamp parsing unit and the number of packets per frame in decoder_RSE1.
 - Update firing_tss of Helios/Helios16P/RubyPlus.
-- Fix Compilation bug of unit test.
+- Fix compilation bug of unit test.
 
 ## v1.5.12 2023-12-28
 ### Fixed
