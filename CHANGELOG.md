@@ -6,7 +6,7 @@
 ### Added
 - Support multiple lidars with different multicast addresses and the same port.
 ### Fixed
-- Fixed the bug of using multiple bp4.0.
+- Fixed the bug that only one lidar was parsed correctly when multiple bp4.0 were used.
 
 ## v1.5.13 2024-05-10
 ### Added

@@ -105,7 +105,7 @@ protected:
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
   bool reversal_{false};
   bool isBpV4_{false};
-  bool isFirstPkt_{false};
+  bool isFirstPkt_{true};
 };
 
 template <typename T_PointCloud>
@@ -216,7 +216,7 @@ inline bool DecoderRSBP<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   if(isFirstPkt_)
   {
     isFirstPkt_ = false;
-      if ((pkt.header.lidar_type == 0x03) && (pkt.header.lidar_model == 0x04)) 
+    if ((pkt.header.lidar_type == 0x03) && (pkt.header.lidar_model == 0x04)) 
     {
       isBpV4_ = true;
       this->const_param_.DISTANCE_RES = 0.0025f;
