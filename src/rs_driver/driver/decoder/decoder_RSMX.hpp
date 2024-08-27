@@ -185,9 +185,9 @@ inline RSEchoMode DecoderRSMX<T_PointCloud>::getEchoMode(const uint8_t mode)
 template <typename T_PointCloud>
 inline void DecoderRSMX<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
-  const RSMXDifopPkt& pkt = *(RSMXDifopPkt*)packet;
 
   #ifdef ENABLE_DIFOP_PARSE
+    const RSMXDifopPkt& pkt = *(RSMXDifopPkt*)packet;
     // device info
     memcpy (this->device_info_.sn, pkt.sn.num, 4);
     this->device_info_.state = true;
