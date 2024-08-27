@@ -1,5 +1,13 @@
 # CHANGLOG
 
+## v1.5.16 2024-08-27
+### Added
+- Support sn parsing of RSMX.
+### Fixed
+- Updated msop protocol of RSMX.
+- Fix compilation bug in epoll socket.
+- Fix compilation warning for unit tests.
+
 ## v1.5.15 2024-08-07
 ### Added
 - Support RSM3.

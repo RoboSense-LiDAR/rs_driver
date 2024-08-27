@@ -179,11 +179,7 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
     goto failOption;
   }
 
-   if (hostIp != "0.0.0.0" && grpIp != "0.0.0.0")
-  {
-    inet_pton(AF_INET, grpIp.c_str(), &(host_addr.sin_addr));
-  }
-  
+
   struct sockaddr_in host_addr;
   memset(&host_addr, 0, sizeof(host_addr));
   host_addr.sin_family = AF_INET;
@@ -193,6 +189,12 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
   {
     inet_pton(AF_INET, hostIp.c_str(), &(host_addr.sin_addr));
   }
+
+  if (hostIp != "0.0.0.0" && grpIp != "0.0.0.0")
+  {
+    inet_pton(AF_INET, grpIp.c_str(), &(host_addr.sin_addr));
+  }
+  
 
   ret = bind(fd, (struct sockaddr*)&host_addr, sizeof(host_addr));
   if (ret < 0)

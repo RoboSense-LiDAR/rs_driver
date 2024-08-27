@@ -13,16 +13,21 @@ typedef PointCloudT<PointT> PointCloud;
 #pragma pack(push, 1)
 struct MyMsopPkt
 {
-  uint8_t id[8];
+  uint8_t id[8]{0};
 };
 
 struct MyDifopPkt
 {
   uint8_t id[8];
   uint16_t rpm;
+
   RSFOV fov;
   RSCalibrationAngle vert_angle_cali[2];
   RSCalibrationAngle horiz_angle_cali[2];
+  RSSN sn;
+  RSEthNetV2 eth;
+  RSVersionV2 version;
+  RSStatusV1 status;
 };
 #pragma pack(pop)
 
@@ -282,6 +287,10 @@ TEST(TestDecoder, processMsopPkt)
   memcpy (pkt.id, id, 8);
   errCode = ERRCODE_SUCCESS;
   decoder.processMsopPkt((const uint8_t*)&pkt, sizeof(pkt));
+#ifdef ENABLE_CRC32_CHECK
+  ASSERT_EQ(errCode, ERRCODE_WRONGCRC32);
+#else
   ASSERT_EQ(errCode, ERRCODE_SUCCESS);
+#endif
 }
 
