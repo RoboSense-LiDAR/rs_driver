@@ -1,5 +1,13 @@
 # CHANGLOG
 
+## v1.5.16 2024-08-27
+### Added
+- Support sn parsing of RSMX.
+### Fixed
+- Update msop protocol of RSMX.
+- Fix compilation bug in epoll socket.
+- Fix compilation warning for unit tests.
+
 ## v1.5.15 2024-08-07
 ### Added
 - Support RSM3.
@@ -8,7 +16,7 @@
 ### Added
 - Support multiple lidars with different multicast addresses and the same port.
 ### Fixed
-- Fixed the bug that only one lidar was parsed correctly when multiple bp4.0 were used.
+- Fix the bug that only one lidar was parsed correctly when multiple bp4.0 were used.
 
 ## v1.5.13 2024-05-10
 ### Added

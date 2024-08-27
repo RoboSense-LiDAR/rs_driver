@@ -65,9 +65,11 @@ typedef struct
 {
   uint8_t id[4];
   uint16_t pkt_seq;
-  uint8_t protocol_version;
-  uint8_t device_mode;
+  uint16_t protocol_version;
+  uint8_t return_mode;
+  uint8_t time_mode;
   RSTimestampUTC timestamp;
+  uint8_t reserved[10];
   uint8_t lidar_type;
   uint8_t temperature;
 } RSMXMsopHeader;
@@ -96,9 +98,18 @@ typedef struct
 {
   RSMXMsopHeader header;
   RSMXBlock blocks[50];
+  uint8_t reserved[16];
   uint8_t crc32[4];
   uint8_t rolling_counter[2];
 } RSMXMsopPkt;
+
+typedef struct
+{
+  uint8_t id[8];
+  uint8_t reserved1[30];
+  RSSN sn;
+  uint8_t reserved2[212];
+} RSMXDifopPkt;
 
 #pragma pack(pop)
 
@@ -129,7 +140,7 @@ inline RSDecoderConstParam& DecoderRSMX<T_PointCloud>::getConstParam()
 {
   static RSDecoderConstParam param = 
   {
-     1376// msop len
+     1404// msop len
       , 256 // difop len
       , 4 // msop id len
       , 8 // difop id len
@@ -175,6 +186,14 @@ template <typename T_PointCloud>
 inline void DecoderRSMX<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
 
+  #ifdef ENABLE_DIFOP_PARSE
+    const RSMXDifopPkt& pkt = *(RSMXDifopPkt*)packet;
+    // device info
+    memcpy (this->device_info_.sn, pkt.sn.num, 4);
+    this->device_info_.state = true;
+    // device status
+    this->device_status_.state = false;
+  #endif
 }
 
 template <typename T_PointCloud>
@@ -203,7 +222,7 @@ inline bool DecoderRSMX<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
     }
   } 
 
-
+  
   uint16_t pkt_seq = ntohs(pkt.header.pkt_seq);
   if (split_strategy_.newPacket(pkt_seq))
   {
@@ -211,8 +230,9 @@ inline bool DecoderRSMX<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
     this->first_point_ts_ = pkt_ts;
     ret = true;
   }
+
   uint8_t loop_time;
-  if((pkt.header.device_mode & 0xF) == 0)
+  if(pkt.header.return_mode == 0x0)
   { 
     loop_time = 2;  // dual return
   }else
@@ -243,6 +263,7 @@ inline bool DecoderRSMX<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
           distance = ntohs(channel.radius_sd) * this->const_param_.DISTANCE_RES;
           intensity = channel.intensity_sd;
         }
+
           if (this->distance_section_.in(distance))
         {
           uint16_t vector_x = RS_SWAP_INT16(channel.x);
