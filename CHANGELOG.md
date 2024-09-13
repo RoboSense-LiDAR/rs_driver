@@ -1,5 +1,10 @@
 # CHANGLOG
 
+# UnReleased
+
+### Fix 
+- Fix compilation bug in win/input_socket_select.
+
 ## v1.5.16 2024-08-27
 ### Added
 - Support sn parsing of RSMX.
