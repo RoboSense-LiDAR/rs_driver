@@ -216,7 +216,8 @@ inline bool DecoderRS128<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packe
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
+    std::pair<uint64_t, uint32_t> secAndNs = parseTimeUTCWithNs(&pkt.header.timestamp);
+    pkt_ts = secAndNs.first + secAndNs.second * 1e-9;
   }
   else
   {
