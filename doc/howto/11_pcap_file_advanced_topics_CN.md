@@ -10,7 +10,7 @@
 
 设置网络配置选项的前提，是先确定雷达工作在哪种场景。这一点，请参考[根据PCAP文件确定网络配置选项](./12_how_to_configure_by_pcap_file_CN.md)
 
-为了清晰，本文所有的图都只列出了MSOP端口，DIFOP端口的配置与MSOP类似。
+为了清晰，本文所有的图都只列出了MSOP端口，DIFOP/IMU端口的配置与MSOP类似。本文以支持IMU的RSAIRY雷达为例，若使用的雷达不支持IMU，则忽略IMU相关部分。
 
 
 
@@ -26,7 +26,8 @@ param.input_type = InputType::PCAP_FILE;          ///< get packet from online li
 param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap file path
 param.input_param.msop_port = 6699;               ///< Set the lidar msop port number, the default is 6699
 param.input_param.difop_port = 7788;              ///< Set the lidar difop port number, the default is 7788
-param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 ```
 
 一个`rs_driver`不支持的例外是：
@@ -51,7 +52,8 @@ param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap f
 param.input_param.msop_port = 6699;               ///< Set the lidar msop port number, the default is 6699
 param.input_param.difop_port = 7788;              ///< Set the lidar difop port number, the default is 7788
 param.input_param.use_vlan = true;                ///< Whether to use VLAN layer.
-param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 ```
 
 
@@ -72,9 +74,10 @@ param.input_type = InputType::PCAP_FILE;          ///< get packet from online li
 param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap file path
 param.input_param.msop_port = 6699;               ///< Set the lidar msop port number, the default is 6699
 param.input_param.difop_port = 7788;              ///< Set the lidar difop port number, the default is 7788
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
 param.input_param.user_layer_bytes = 8;           ///< user layer bytes. there is no user layer if it is 0
 param.input_param.tail_layer_bytes = 4;           ///< tail layer bytes. there is no user layer if it is 0
-param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 ```
 
 

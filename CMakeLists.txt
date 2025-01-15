@@ -33,11 +33,11 @@ option(ENABLE_DIFOP_PARSE         "Enable parsing DIFOP Packet" OFF)
 #=============================
 #  Compile Demos, Tools, Tests
 #=============================
-option(COMPILE_DEMOS "Build rs_driver demos" ON)
-option(COMPILE_TOOLS "Build rs_driver tools" ON)
-option(COMPILE_TOOL_VIEWER "Build point cloud visualization tool" ON)
-option(COMPILE_TOOL_PCDSAVER "Build point cloud pcd saver tool" ON)
-option(COMPILE_TESTS "Build rs_driver unit tests" ON)
+option(COMPILE_DEMOS "Build rs_driver demos" OFF)
+option(COMPILE_TOOLS "Build rs_driver tools" OFF)
+option(COMPILE_TOOL_VIEWER "Build point cloud visualization tool" OFF)
+option(COMPILE_TOOL_PCDSAVER "Build point cloud pcd saver tool" OFF)
+option(COMPILE_TESTS "Build rs_driver unit tests" OFF)
 
 #========================
 #  Platform cross setup

@@ -38,8 +38,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/msg/point_cloud_msg.hpp>
 #endif
 
-#define ENABLE_IMU_PARSE
 //#define ORDERLY_EXIT
+
+// Define the macro: 1 to enable IMU parsing, 0 to disable IMU parsing
+#define ENABLE_IMU_PARSE 1 
 
 typedef PointXYZI PointT;
 typedef PointCloudT<PointT> PointCloudMsg;
@@ -83,12 +85,13 @@ void driverReturnPointCloudToCallerCallback(std::shared_ptr<PointCloudMsg> msg)
 }
 
 //
-// @brief imu data callback function. The caller should register it to the lidar driver.
-//        Via this function, the driver gets/returns an imu data message to the caller. 
-// @param msg  The imu data message.
+// @brief IMU data callback function. The caller should register it to the lidar driver.
+//        Via this function, the driver gets/returns a stuffed IMU data message to the caller. 
+// @param msg  The stuffed IMU data message.
+//
 std::shared_ptr<ImuData> driverGetIMUDataFromCallerCallback(void)
 {
-  // Note: This callback function runs in the packet-parsing/imu-data-constructing thread of the driver, 
+   // Note: This callback function runs in the packet-parsing/imu-data-constructing thread of the driver, 
   //       so please DO NOT do time-consuming task here.
   std::shared_ptr<ImuData> msg = free_imu_data_queue.pop();
   if (msg.get() != NULL)
@@ -99,10 +102,15 @@ std::shared_ptr<ImuData> driverGetIMUDataFromCallerCallback(void)
   return std::make_shared<ImuData>();
 }
 
-// @brief imu data callback function. The caller should register it to the lidar driver.
-      
+//
+// @brief IMU data callback function. The caller should register it to the lidar driver.
+//        Via this function, the driver gets/returns a stuffed IMU data message to the caller. 
+// @param msg  The stuffed IMU data message.
+//
 void driverReturnImuDataToCallerCallback(const std::shared_ptr<ImuData>& msg)
 {
+  // Note: This callback function runs in the packet-parsing/imu-data-constructing thread of the driver, 
+  //       so please DO NOT do time-consuming task here. Instead, process it in caller's own thread. (see processImuData() below)
   stuffed_imu_data_queue.push(msg);
 }
 
@@ -119,7 +127,7 @@ void processImuData(void)
       continue;
     }
 
-    // Well, it is time to process the point cloud msg, even it is time-consuming.
+    // Well, it is time to process the IMU data msg, even it is time-consuming.
     RS_MSG << "msg: " << imu_cnt << " imu data ts: " <<std::dec<<std::to_string(msg->timestamp) << RS_REND;
 
     imu_cnt++;
@@ -185,7 +193,7 @@ int main(int argc, char* argv[])
   param.input_type = InputType::ONLINE_LIDAR;
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
-#ifdef ENABLE_IMU_PARSE
+#if ENABLE_IMU_PARSE
   param.input_param.imu_port = 6688;   ///< Set the lidar imu port number, the default is 0
 #endif
   param.lidar_type = LidarType::RSAIRY;   ///< Set the lidar type. Make sure this type is correct
@@ -194,7 +202,7 @@ int main(int argc, char* argv[])
   LidarDriver<PointCloudMsg> driver;               ///< Declare the driver object
   driver.regPointCloudCallback(driverGetPointCloudFromCallerCallback, driverReturnPointCloudToCallerCallback); ///< Register the point cloud callback functions
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function
-#ifdef ENABLE_IMU_PARSE
+#if ENABLE_IMU_PARSE
   driver.regImuDataCallback(driverGetIMUDataFromCallerCallback, driverReturnImuDataToCallerCallback);
 #endif
 
@@ -205,7 +213,7 @@ int main(int argc, char* argv[])
   }
 
   std::thread cloud_handle_thread = std::thread(processCloud);
-#ifdef ENABLE_IMU_PARSE
+#if ENABLE_IMU_PARSE
   std::thread imuData_handle_thread = std::thread(processImuData);
 #endif
   driver.start();  ///< The driver thread will start

@@ -10,7 +10,8 @@
 
    Before configure `rs_driver`, first find out what case the LiDAR is. Please refer to [How to configure rs_driver by PCAP file](./12_how_to_configure_by_pcap_file.md).
 
-+ Even if all configure are correct, some system settings may block `rs_driver` to receive MOSP/DIFOP packets. This document also list them.
++ Even if all configure are correct, some system settings may block `rs_driver` to receive MOSP/DIFOP/IMU packets. This document also list them.This document takes the RSAIRY lidar supporting IMU as an example. If your lidar used does not support IMU, ignore the IMU-related parts.
+
 
 
 
@@ -32,7 +33,8 @@ RSDriverParam param;                              ///< Create a parameter object
 param.input_type = InputType::ONLINE_LIDAR;       ///< get packet from online lidar
 param.input_param.msop_port = 6699;               ///< Set the lidar msop port number, the default is 6699
 param.input_param.difop_port = 7788;              ///< Set the lidar difop port number, the default is 7788
-param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 ```
 
 ### 9.2.2 Unicast mode
@@ -49,7 +51,8 @@ RSDriverParam param;                              ///< Create a parameter object
 param.input_type = InputType::ONLINE_LIDAR;       ///< get packet from online lidar
 param.input_param.msop_port = 6699;               ///< Set the lidar msop port number, the default is 6699
 param.input_param.difop_port = 7788;              ///< Set the lidar difop port number, the default is 7788
-param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 ```
 
 
@@ -70,7 +73,8 @@ param.input_param.group_address = "224.1.1.1";    ///< Set the multicast group a
 param.input_param.host_address = "192.168.1.102"; ///< Set the host address.
 param.input_param.msop_port = 6699;               ///< Set the lidar msop port number, the default is 6699
 param.input_param.difop_port = 7788;              ///< Set the lidar difop port number, the default is 7788
-param.lidar_type = LidarType::RS32;               ///< Set the lidar type. Make sure this type is correct 
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 ```
 
 
@@ -92,13 +96,15 @@ RSDriverParam param1;                              ///< Create a parameter objec
 param1.input_type = InputType::ONLINE_LIDAR;       ///< get packet from online lidar
 param1.input_param.msop_port = 6699;               ///< Set the lidar msop port number
 param1.input_param.difop_port = 7788;              ///< Set the lidar difop port number
-param1.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 
 RSDriverParam param2;                              ///< Create a parameter object for Lidar 192.168.1.201
 param2.input_type = InputType::ONLINE_LIDAR;       ///< get packet from online lidar
 param2.input_param.msop_port = 5599;               ///< Set the lidar msop port number
-param2.input_param.difop_port = 6688;              ///< Set the lidar difop port number
-param2.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param2.input_param.difop_port = 6687;              ///< Set the lidar difop port number
+param.input_param.imu_port = 5588;                         ///< Set the lidar imu port number, the default is 0
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 ```
 
 ### 9.3.2 Different remote IPs
@@ -118,14 +124,16 @@ param1.input_type = InputType::ONLINE_LIDAR;       ///< get packet from online l
 param1.input_param.host_address = "192.168.1.102"; ///< Set the host address.
 param1.input_param.msop_port = 6699;               ///< Set the lidar msop port number
 param1.input_param.difop_port = 7788;              ///< Set the lidar difop port number
-param1.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 
 RSDriverParam param2;                              ///< Create a parameter object for Lidar 192.168.1.201
 param2.input_type = InputType::ONLINE_LIDAR;       ///< get packet from online lidar
 param2.input_param.host_address = "192.168.1.103"; ///< Set the host address.
 param2.input_param.msop_port = 6699;               ///< Set the lidar msop port number
 param2.input_param.difop_port = 7788;              ///< Set the lidar difop port number
-param2.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 ```
 
 
@@ -163,7 +171,8 @@ RSDriverParam param;                              ///< Create a parameter object
 param.input_type = InputType::ONLINE_LIDAR;       ///< get packet from online lidar
 param.input_param.msop_port = 6699;               ///< Set the lidar msop port number, the default is 6699
 param.input_param.difop_port = 7788;              ///< Set the lidar difop port number, the default is 7788
-param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 ```
 
 
@@ -186,9 +195,10 @@ RSDriverParam param;                              ///< Create a parameter object
 param.input_type = InputType::ONLINE_LIDAR;       ///< get packet from online lidar
 param.input_param.msop_port = 6699;               ///< Set the lidar msop port number, the default is 6699
 param.input_param.difop_port = 7788;              ///< Set the lidar difop port number, the default is 7788
+param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
 param.input_param.user_layer_bytes = 8;           ///< user layer bytes. there is no user layer if it is 0
 param.input_param.tail_layer_bytes = 4;           ///< tail layer bytes. there is no user layer if it is 0
-param.lidar_type = LidarType::RS32;               ///< Set the lidar type.
+param.lidar_type = LidarType::RSAIRY;               ///< Set the lidar type.
 ```
 
 

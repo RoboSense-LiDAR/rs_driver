@@ -276,7 +276,6 @@ template <typename T_PointCloud>
 inline DecoderRSAIRY<T_PointCloud>::DecoderRSAIRY(const RSDecoderParam& param)
   : DecoderMech<T_PointCloud>(getConstParam(), param)
 {
-  RS_DEBUG <<"DIFOP LEN:" << sizeof(RSAIRYDifopPkt)<<RS_REND;
 }
 
 template <typename T_PointCloud>

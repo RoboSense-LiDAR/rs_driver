@@ -241,9 +241,9 @@ struct RSDecoderConstParam
   float TEMPERATURE_RES;
 
     // IMU parameters (new fields with default values)
-  uint16_t IMU_LEN{0};      // Default to 0 for older radars
-  uint16_t IMU_ID_LEN{0};   // Default to 0 for older radars
-  uint8_t IMU_ID[4]{0};     // Default to {0, 0, 0, 0} for older radars
+  uint16_t IMU_LEN{0};      // Default to 0 for lidar without IMU
+  uint16_t IMU_ID_LEN{0};   // Default to 0 for lidar without IMU
+  uint8_t IMU_ID[4]{0};     // Default to {0, 0, 0, 0} for lidar without IMU
 };
 
 #define INIT_ONLY_ONCE() \
