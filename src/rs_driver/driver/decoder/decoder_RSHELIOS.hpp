@@ -119,21 +119,22 @@ inline RSDecoderMechConstParam& DecoderRSHELIOS<T_PointCloud>::getConstParam()
 {
   static RSDecoderMechConstParam param = 
   {
-    1248 // msop len
+    {
+      1248 // msop len
       , 1248 // difop len
       , 4 // msop id len
       , 8 // difop id len
       , {0x55, 0xAA, 0x05, 0x5A} // msop id
-    , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-    , {0xFF, 0xEE} // block id
-    , 32 // laser number
-    , 12 // blocks per packet
+      , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+      , {0xFF, 0xEE} // block id
+      , 32 // laser number
+      , 12 // blocks per packet
       , 32 // channels per block
       , 0.1f // distance min
       , 180.0f // distance max
       , 0.0025f // distance resolution
       , 0.0625f // temperature resolution
-
+    }
       // lens center
       , 0.03498f // RX
       , -0.015f // RY

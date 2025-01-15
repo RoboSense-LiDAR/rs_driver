@@ -154,7 +154,8 @@ void parseParam(int argc, char* argv[], RSDriverParam& param)
 void printHelpMenu()
 {
   RS_MSG << "Arguments: " << RS_REND;
-  RS_MSG << "  -type   = LiDAR type(RS16, RS32, RSBP, RSHELIOS, RS128, RS80, RSM1)" << RS_REND;
+  RS_MSG << "  -type   = LiDAR type(RS16, RS32, RSBP, RSHELIOS, RSHELIOS_16P, RS48, RS80, RS128, RSP128, RSP80, RSP48, "
+              << "RSM1, RSM1_JUMBO, RSM2,RSM3, RSE1, RSMX, RSAIRY)" << RS_REND;
   RS_MSG << "  -pcap   = The path of the pcap file, off-line mode if it is true, else online mode." << RS_REND;
   RS_MSG << "  -msop   = LiDAR msop port number,the default value is 6699" << RS_REND;
   RS_MSG << "  -difop  = LiDAR difop port number,the default value is 7788" << RS_REND;

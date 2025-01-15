@@ -128,6 +128,16 @@ public:
     swap(empty, queue_);
   }
 
+  inline bool empty() {
+    std::lock_guard<std::mutex> lg(mtx_);
+    return queue_.empty();
+  }
+  
+  inline size_t size() {
+    std::lock_guard<std::mutex> lg(mtx_);
+    return queue_.size();
+  }
+
 private:
   std::queue<T> queue_;
   std::mutex mtx_;

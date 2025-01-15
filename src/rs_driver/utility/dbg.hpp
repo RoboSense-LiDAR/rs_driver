@@ -32,7 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <stdio.h>
-
 namespace robosense
 {
 namespace lidar
@@ -51,6 +50,8 @@ inline void hexdump(const uint8_t* data, size_t size, const char* desc = NULL)
 
   printf("\n---------------------------------\n");
 }
+
+
 
 }  // namespace lidar
 }  // namespace robosense

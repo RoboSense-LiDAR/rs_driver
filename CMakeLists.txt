@@ -6,7 +6,7 @@ if(WIN32)
   cmake_policy(SET CMP0074 NEW) # CMake 3.12 required
 endif(WIN32)
 
-project(rs_driver VERSION 1.5.16)
+project(rs_driver VERSION 1.5.17)
 
 #========================
 #  Project setup
@@ -33,11 +33,11 @@ option(ENABLE_DIFOP_PARSE         "Enable parsing DIFOP Packet" OFF)
 #=============================
 #  Compile Demos, Tools, Tests
 #=============================
-option(COMPILE_DEMOS "Build rs_driver demos" OFF)
-option(COMPILE_TOOLS "Build rs_driver tools" OFF)
-option(COMPILE_TOOL_VIEWER "Build point cloud visualization tool" OFF)
-option(COMPILE_TOOL_PCDSAVER "Build point cloud pcd saver tool" OFF)
-option(COMPILE_TESTS "Build rs_driver unit tests" OFF)
+option(COMPILE_DEMOS "Build rs_driver demos" ON)
+option(COMPILE_TOOLS "Build rs_driver tools" ON)
+option(COMPILE_TOOL_VIEWER "Build point cloud visualization tool" ON)
+option(COMPILE_TOOL_PCDSAVER "Build point cloud pcd saver tool" ON)
+option(COMPILE_TESTS "Build rs_driver unit tests" ON)
 
 #========================
 #  Platform cross setup
@@ -146,6 +146,8 @@ if(${ENABLE_TRANSFORM})
   include_directories(${EIGEN3_INCLUDE_DIR})
 
 endif(${ENABLE_TRANSFORM})
+
+
 
 #============================
 #  Build Demos, Tools, Tests

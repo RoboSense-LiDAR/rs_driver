@@ -36,7 +36,7 @@ Below are the supported LiDARS.
 - RS-LiDAR-M3
 - RS-LiDAR-E1
 - RS-LiDAR-MX
-
+- RS-LiDAR-AIRY
 
 
 ## 1.3 Supported Platforms

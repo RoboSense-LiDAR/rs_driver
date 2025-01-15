@@ -161,19 +161,19 @@ inline RSDecoderConstParam& DecoderRSM1<T_PointCloud>::getConstParam()
   static RSDecoderConstParam param = 
   {
     1210 // msop len
-      , 256 // difop len
-      , 4 // msop id len
-      , 8 // difop id len
-      , {0x55, 0xAA, 0x5A, 0xA5} // msop id
+    , 256 // difop len
+    , 4 // msop id len
+    , 8 // difop id len
+    , {0x55, 0xAA, 0x5A, 0xA5} // msop id
     , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
     , {0x00, 0x00}
     , 5  // laser number
     , 25 // blocks per packet
-      , 5 // channels per block
-      , 0.2f // distance min
-      , 200.0f // distance max
-      , 0.005f // distance resolution
-      , 80.0f // initial value of temperature 
+    , 5 // channels per block
+    , 0.2f // distance min
+    , 200.0f // distance max
+    , 0.005f // distance resolution
+    , 80.0f // initial value of temperature 
   };
 
   return param;

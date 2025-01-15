@@ -50,6 +50,8 @@ struct RSDecoderMechConstParam
   float RY;
   float RZ;
 
+
+
   // firing_ts/chan_ts
   double BLOCK_DURATION;
   double CHAN_TSS[128];
@@ -99,6 +101,7 @@ protected:
   uint16_t split_blks_per_frame_; // blocks in msop pkt per frame/round. 
   uint16_t block_az_diff_; // azimuth difference between adjacent blocks.
   double fov_blind_ts_diff_; // timestamp difference across blind section(defined by fov)
+  float lidar_lens_center_Rxy_;  // sqrt(Rx*Rx + Ry*Ry)
 };
 
 template <typename T_PointCloud>
@@ -147,6 +150,7 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& con
                  << " reset it to be false." << RS_REND;
     }
   }
+  this->lidar_lens_center_Rxy_ = std::sqrt(this->mech_const_param_.RX * this->mech_const_param_.RX + this->mech_const_param_.RY * this->mech_const_param_.RY);
 }
 
 template <typename T_PointCloud>
@@ -200,6 +204,8 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   {
     int ret = this->chan_angles_.loadFromDifop(pkt.vert_angle_cali, pkt.horiz_angle_cali);
     this->angles_ready_ = (ret == 0);
+
+      this->chan_angles_.print();
   }
 
 #ifdef ENABLE_DIFOP_PARSE
