@@ -204,8 +204,6 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   {
     int ret = this->chan_angles_.loadFromDifop(pkt.vert_angle_cali, pkt.horiz_angle_cali);
     this->angles_ready_ = (ret == 0);
-
-      this->chan_angles_.print();
   }
 
 #ifdef ENABLE_DIFOP_PARSE

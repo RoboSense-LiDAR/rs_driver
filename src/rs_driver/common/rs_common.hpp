@@ -79,11 +79,13 @@ inline int32_t u8ArrayToInt32(const uint8_t* data, uint8_t len) {
     uint32_t uintValue = ntohl(*reinterpret_cast<const uint32_t*>(data));
     return static_cast<int32_t>(uintValue);
 }
+
 inline float convertUint32ToFloat(uint32_t byteArray) {
     float floatValue;
     std::memcpy(&floatValue, &byteArray, sizeof(float));
     return floatValue;
 }
+
 }
 }
 

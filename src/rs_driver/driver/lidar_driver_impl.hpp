@@ -85,7 +85,6 @@ public:
   bool getDeviceStatus(DeviceStatus& status);
 
 private:
-
   void runPacketCallBack(uint8_t* data, size_t data_size, double timestamp, uint8_t is_difop, uint8_t is_frame_begin);
   void runExceptionCallback(const Error& error);
 

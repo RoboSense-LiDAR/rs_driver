@@ -468,6 +468,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pack
       int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan_id, angle_horiz);
       uint16_t u16RawDistance = ntohs(channel.distance);
       uint16_t u16Distance = u16RawDistance & 0x3FFF;
+      uint8_t feature = (u16RawDistance >> 14) & 0x03;
       float distance = u16Distance * this->const_param_.DISTANCE_RES;
       
       if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
@@ -484,6 +485,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pack
         setIntensity(point, channel.intensity);
         setRing(point, this->chan_angles_.toUserChan(chan_id));
         setTimestamp(point, chan_ts);
+		    setFeature(point, feature);
         this->point_cloud_->points.emplace_back(point);
       }
       else if (!this->param_.dense_points)
@@ -495,6 +497,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pack
         setIntensity(point, 0);
         setRing(point, this->chan_angles_.toUserChan(chan_id));
         setTimestamp(point, chan_ts);
+		    setFeature(point, feature);
         this->point_cloud_->points.emplace_back(point);
       }
 

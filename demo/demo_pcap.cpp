@@ -127,10 +127,10 @@ void processImuData(void)
     }
 
     // Well, it is time to process the IMU data msg, even it is time-consuming.
-    RS_MSG << "msg: " << imu_cnt << " imu data ts: " <<std::dec<<std::to_string(msg->timestamp) << RS_REND;
 
     imu_cnt++;
 #if 0
+    RS_MSG << "msg: " << imu_cnt << " imu data ts: " <<std::dec<<std::to_string(msg->timestamp) << RS_REND;
     RS_DEBUG  <<"imu data: " << " , linear_a_x" << msg->linear_acceleration_x 
       << " , linear_a_y " << msg->linear_acceleration_y << "  , linear_a_z" << msg->linear_acceleration_z   
       << " , angular_v_x " << msg->angular_velocity_x << " , angular_v_y" << msg->angular_velocity_y 
