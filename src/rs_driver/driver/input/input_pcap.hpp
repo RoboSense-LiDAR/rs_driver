@@ -185,53 +185,19 @@ inline void InputPcap::recvPacket()
       }
     }
 
-    if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
+     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0 || 
+      (difop_filter_valid_ && pcap_offline_filter(&difop_filter_, header, pkt_data) != 0) ||
+      (imu_filter_valid_ && pcap_offline_filter(&imu_filter_, header, pkt_data) != 0))
     {
       int dataLen = (int)(header->len - pcap_offset_ - pcap_tail_);
       if (dataLen < 0) {
-        cb_excep_(Error(ERRCODE_WRONGMSOPPCAPPARSE));
+        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
         continue;
       }
       std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
       if(static_cast<size_t>(dataLen) > pkt->bufSize())
       {
-        cb_excep_(Error(ERRCODE_WRONGMSOPPCAPPARSE));
-        continue;
-      }
-      memcpy(pkt->data(), pkt_data + pcap_offset_, dataLen);
-      pkt->setData(0, dataLen);
-      pushPacket(pkt);
-    }
-    else if (difop_filter_valid_ && (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
-    {
-      int dataLen = (int)(header->len - pcap_offset_ - pcap_tail_);
-      if (dataLen < 0) {
-        cb_excep_(Error(ERRCODE_WRONGDIFOPPCAPPARSE));
-        continue;
-      }
-
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
-      if(static_cast<size_t>(dataLen) > pkt->bufSize())
-      {
-        cb_excep_(Error(ERRCODE_WRONGDIFOPPCAPPARSE));
-        continue;
-      }
-
-      memcpy(pkt->data(), pkt_data + pcap_offset_, dataLen);
-      pkt->setData(0, dataLen);
-      pushPacket(pkt);
-    }
-    else if (imu_filter_valid_ && (pcap_offline_filter(&imu_filter_, header, pkt_data) != 0))
-    {
-      int dataLen = (int)(header->len - pcap_offset_ - pcap_tail_);
-      if (dataLen < 0) {
-        cb_excep_(Error(ERRCODE_WRONGIMUPCAPPARSE));
-        continue;
-      }
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
-      if(static_cast<size_t>(dataLen) > pkt->bufSize())
-      {
-        cb_excep_(Error(ERRCODE_WRONGIMUPCAPPARSE));
+        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
         continue;
       }
       memcpy(pkt->data(), pkt_data + pcap_offset_, dataLen);

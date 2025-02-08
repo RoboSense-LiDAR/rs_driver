@@ -86,14 +86,16 @@ Every event is defined as an error code. Please find their definitions in `commo
 ​		To avoid this, rs_driver checks the point cloud, and if it is too large, rs_driver clear it, and reports ERRCODE_CLOUDOVERFLOW.
 
 + ERRCODE_WRONGCRC32
-        When the ENABLE_CRC32_CHECK macro is enabled, the rs_driver will perform a CRC32 check on the MSOP/DIFOP Packet data, and if the verification fails, the rs_driver will report an error ERRCODE_WRONGCRC32.
+                When the ENABLE_CRC32_CHECK macro is enabled, the rs_driver will perform a CRC32 check on the MSOP/DIFOP Packet data, and if the verification fails, the rs_driver will report an error ERRCODE_WRONGCRC32.
 
 + ERRCODE_WRONGIMULEN
-        After receiving the IMU packet, rs_river first checks whether the packet length matches. If it does not match, it reports an error ERRCODE_WRONGIMULEN, and then checks the flag byte. If it does not match, it reports an error ERRCODE_WRONGIMULE.
+                After receiving the IMU packet, rs_river first checks whether the packet length matches. If it does not match, it reports an error ERRCODE_WRONGIMULEN, and then checks the flag byte. If it does not match, it reports an error ERRCODE_WRONGIMULE.
 
 + ERRCODE_WRONGIMUID
-        Please refer to the description of ERRCODE_WRONGIMULEN.
+                Please refer to the description of ERRCODE_WRONGIMULEN.
 
++ ERRCODE_WRONGPCAPPARSE
+                When there is a problem with parsing the data in the pcap file (message is too long or too short), rs_driver reports an error ERRCODE-WRONGPCAPRESE.
 
 + ERRCODE_STARTBEFOREINIT
 

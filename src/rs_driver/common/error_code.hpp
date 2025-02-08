@@ -68,9 +68,7 @@ enum ErrCode
   ERRCODE_WRONGCRC32      = 0x4A,  ///< Wrong CRC32 value of MSOP Packet
   ERRCODE_WRONGIMULEN   = 0x4B,  ///< Imu Packet length is wrong
   ERRCODE_WRONGIMUID    = 0x4C,  ///< Imu Packet ID is wrong
-  ERRCODE_WRONGMSOPPCAPPARSE  = 0x4D,   ///< Parse msop data frome pcap file failed
-  ERRCODE_WRONGDIFOPPCAPPARSE  = 0x4E,   ///< Parse difop data frome pcap file failed
-  ERRCODE_WRONGIMUPCAPPARSE  = 0x4F,   ///< Parse imu data frome pcap file failed
+  ERRCODE_WRONGPCAPPARSE  = 0x4D,   ///< Parse msop data frome pcap file failed
 
   // error
   ERRCODE_STARTBEFOREINIT = 0x80,  ///< User calls start() before init()
@@ -142,12 +140,8 @@ struct Error
         return "ERRCODE_WRONGIMULEN";
       case ERRCODE_WRONGIMUID:
         return "ERRCODE_WRONGIMUID";
-      case ERRCODE_WRONGMSOPPCAPPARSE:
-        return "ERRCODE_WRONGMSOPPCAPPARSE";
-      case ERRCODE_WRONGDIFOPPCAPPARSE:
-        return "ERRCODE_WRONGDIFOPPCAPPARSE";
-      case ERRCODE_WRONGIMUPCAPPARSE:
-        return "ERRCODE_WRONGIMUPCAPPARSE";
+      case ERRCODE_WRONGPCAPPARSE:
+        return "ERRCODE_WRONGPCAPPARSE";
 
       // error
       case ERRCODE_STARTBEFOREINIT:
