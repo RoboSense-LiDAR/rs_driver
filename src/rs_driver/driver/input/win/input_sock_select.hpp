@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
 #pragma warning(disable : 4244)
 
 namespace robosense
@@ -109,7 +108,7 @@ inline bool InputSock::init()
   return true;
 
 failImu:
-  close(difop_fd);
+  closesocket(difop_fd);
 failDifop:
   closesocket(msop_fd);
 failMsop:
@@ -145,7 +144,7 @@ inline InputSock::~InputSock()
   if (fds_[1] >= 0)
     closesocket(fds_[1]);
   if(fds_[2] >= 0)
-    close(fds_[2]);
+    closesocket(fds_[2]);
 }
 
 inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp)
@@ -244,7 +243,7 @@ failSocket:
 
 inline void InputSock::recvPacket()
 {
-  int max_fd = std::max(std::max(fds_[0], fds_[1]), fds_[2]);
+  int max_fd = std::max<int>(std::max<int>(fds_[0], fds_[1]), fds_[2]);
 
   while (!to_exit_recv_)
   {
