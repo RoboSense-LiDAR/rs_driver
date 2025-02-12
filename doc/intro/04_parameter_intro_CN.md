@@ -33,13 +33,32 @@ typedef struct RSDriverParam
 ```c++
 enum LidarType
 {
-  RS16 = 1,
+  // mechanical
+  RS_MECH = 0x01,
+  RS16 = RS_MECH,
   RS32,
   RSBP,
+  RSAIRY,
+  RSHELIOS,
+  RSHELIOS_16P,
   RS128,
   RS80,
-  RSHELIOS,
-  RSM1
+  RS48,
+  RSP128,
+  RSP80,
+  RSP48,
+
+  // mems
+  RS_MEMS = 0x20,
+  RSM1 = RS_MEMS,
+  RSM2,
+  RSM3,
+  RSE1,
+  RSMX,
+
+  // jumbo
+  RS_JUMBO = 0x100,
+  RSM1_JUMBO = RS_JUMBO + RSM1,
 };
 ```
 
@@ -64,10 +83,15 @@ RSInputParam指定`rs_driver`的网络配置选项。
 如下参数针对`ONLINE_LIDAR`和`PCAP_FILE`。
 + msop_port - 指定主机的本地端口，接收MSOP Packet
 + difop_port - 指定主机的本地端口，接收DIFOP Packet
++ imu_port - 指定主机的本地端口，接收IMU Packet
++ user_layer_bytes - 指定用户层数据的字节数。 用户层数据是MSOP Packet和DIFOP Packet中的一部分，这部分数据由用户自己定义。
++ tail_layer_bytes - 指定尾部数据的字节数。尾部数据是MSOP Packet的最后一部分，这部分数据由用户自己定义。
 
-如下参数仅针对`ONLINE_LIDAR`。
+如下参数仅针对 `ONLINE_LIDAR`。
+
 + host_address - 指定主机网卡的IP地址，接收MSOP/DIFOP Packet
-+ group_address - 指定一个组播组的IP地址。`rs_driver`将`host_address`指定的网卡加入这个组播组，以便接收MSOP/DIFOP Packet。
++ group_address - 指定一个组播组的IP地址。`rs_driver`将 `host_address`指定的网卡加入这个组播组，以便接收MSOP/DIFOP Packet。
++ socket_recv_buf - 指定socket的接收缓冲区大小。 `rs_driver`会接收MSOP Packet，因此需要足够大的缓冲区。
 
 如下参数仅针对`PCAP_FILE`。
 + pcap_path - PCAP文件的全路径
@@ -78,16 +102,41 @@ RSInputParam指定`rs_driver`的网络配置选项。
 ```c++
 typedef struct RSInputParam
 {
-  uint16_t msop_port = 6699;
-  uint16_t difop_port = 7788;
-  std::string host_address = "0.0.0.0";
-  std::string group_address = "0.0.0.0";
+  uint16_t msop_port = 6699;                   ///< Msop packet port number
+  uint16_t difop_port = 7788;                  ///< Difop packet port number
+  uint16_t imu_port = 0;                  ///< IMU packet port number, default disable
+  uint16_t user_layer_bytes = 0;    ///< Bytes of user layer. thers is no user layer if it is 0
+  uint16_t tail_layer_bytes = 0;    ///< Bytes of tail layer. thers is no tail layer if it is 0
 
-  // The following parameters are only for PCAP_FILE
-  std::string pcap_path = "";
-  bool pcap_repeat = true;
-  float pcap_rate = 1.0;
-  bool use_vlan = false;
+  ///< These parameters are valid when the input type is online lidar
+  std::string host_address = "0.0.0.0";        ///< Address of host
+  std::string group_address = "0.0.0.0";       ///< Address of multicast group
+  uint32_t socket_recv_buf = 106496;   //  <Bytes of socket receive buffer. 
+
+  ///< These parameters are valid when the input type is pcap file
+  std::string pcap_path = "";                  ///< Absolute path of pcap file
+  bool pcap_repeat = true;                     ///< true: The pcap bag will repeat play
+  float pcap_rate = 1.0f;                      ///< Rate to read the pcap file
+  bool use_vlan = false;                       ///< Vlan on-off
+
+  void print() const
+  {
+    RS_INFO << "------------------------------------------------------" << RS_REND;
+    RS_INFO << "             RoboSense Input Parameters " << RS_REND;
+    RS_INFOL << "msop_port: " << msop_port << RS_REND;
+    RS_INFOL << "difop_port: " << difop_port << RS_REND;
+    RS_INFOL << "imu_port: " << imu_port << RS_REND;
+    RS_INFOL << "user_layer_bytes: " << user_layer_bytes << RS_REND;
+    RS_INFOL << "tail_layer_bytes: " << tail_layer_bytes << RS_REND;
+    RS_INFOL << "host_address: " << host_address << RS_REND;
+    RS_INFOL << "group_address: " << group_address << RS_REND;
+    RS_INFOL << "socket_recv_buf: " << socket_recv_buf << RS_REND;
+    RS_INFOL << "pcap_path: " << pcap_path << RS_REND;
+    RS_INFOL << "pcap_rate: " << pcap_rate << RS_REND;
+    RS_INFOL << "pcap_repeat: " << pcap_repeat << RS_REND;
+    RS_INFOL << "use_vlan: " << use_vlan << RS_REND;
+    RS_INFO << "------------------------------------------------------" << RS_REND;
+  }
 } RSInputParam;
 ```
 
@@ -100,26 +149,51 @@ RSDecoderParam指定雷达解码器的配置选项。
 ```c++
 typedef struct RSDecoderParam
 {
-  bool use_lidar_clock = false;
-  bool dense_points = false;
-  bool ts_first_point = false;
-  bool wait_for_difop = true;
-  RSTransformParam transform_param;
-  bool config_from_file = false;
-  std::string angle_path = "";
-  float min_distance = 0.2f;
-  float max_distance = 200.0f;
+  float min_distance = 0.0f;     ///< min/max distances of point cloud range. valid if min distance or max distance > 0
+  float max_distance = 0.0f; 
+  bool use_lidar_clock = false;  ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
+  bool dense_points = false;     ///< true: discard NAN points; false: reserve NAN points
+  bool ts_first_point = false;   ///< true: time-stamp point cloud with the first point; false: with the last point;
+  bool wait_for_difop = true;    ///< true: start sending point cloud until receive difop packet
+  RSTransformParam transform_param; ///< Used to transform points
 
-  // The following parameters are only for mechanical Lidars.
-  SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;
-  float split_angle = 0.0f;
-  uint16_t num_blks_split = 1;
-  float start_angle = 0.0f;
-  float end_angle = 360.0f;
+  ///< Theses parameters are only for mechanical Lidars.
+  bool config_from_file = false; ///< Internal use only for debugging
+  std::string angle_path = "";   ///< Internal use only for debugging
+  float start_angle = 0.0f;      ///< Start angle of point cloud
+  float end_angle = 360.0f;      ///< End angle of point cloud
+  SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;  
+                                 ///< 1: Split frames by split_angle;
+                                 ///< 2: Split frames by fixed number of blocks;
+                                 ///< 3: Split frames by custom number of blocks (num_blks_split)
+  float split_angle = 0.0f;      ///< Split angle(degree) used to split frame, only be used when split_frame_mode=1
+  uint16_t num_blks_split = 1;   ///< Number of packets in one frame, only be used when split_frame_mode=3
+
+  void print() const
+  {
+    RS_INFO << "------------------------------------------------------" << RS_REND;
+    RS_INFO << "             RoboSense Decoder Parameters " << RS_REND;
+    RS_INFOL << "min_distance: " << min_distance << RS_REND;
+    RS_INFOL << "max_distance: " << max_distance << RS_REND;
+    RS_INFOL << "use_lidar_clock: " << use_lidar_clock << RS_REND;
+    RS_INFOL << "dense_points: " << dense_points << RS_REND;
+    RS_INFOL << "ts_first_point: " << ts_first_point << RS_REND;
+    RS_INFOL << "wait_for_difop: " << wait_for_difop << RS_REND;
+    RS_INFOL << "config_from_file: " << config_from_file << RS_REND;
+    RS_INFOL << "angle_path: " << angle_path << RS_REND;
+    RS_INFOL << "start_angle: " << start_angle << RS_REND;
+    RS_INFOL << "end_angle: " << end_angle << RS_REND;
+    RS_INFOL << "split_frame_mode: " << split_frame_mode << RS_REND;
+    RS_INFOL << "split_angle: " << split_angle << RS_REND;
+    RS_INFOL << "num_blks_split: " << num_blks_split << RS_REND;
+    RS_INFO << "------------------------------------------------------" << RS_REND;
+    transform_param.print();
+  }
 } RSDecoderParam;
 ```
 
 如下参数针对所有雷达。
++ min_distance、max_distance - 重置测距的最大、最小值。仅内部调试使用。
 + use_lidar_clock - 指定点云的时间采用MSOP Packet中的时间（雷达根据自身时间设置），还是主机的系统时间。
   + 如果`use_lidar_clock`=`true`，则采用MSOP Packet的，否则采用主机的。
 + dense_points - 指定点云是否是dense的。
@@ -143,13 +217,13 @@ typedef struct RSTransformParam
 } RSTransformParam;
 ```
 
+如下参数仅针对机械式雷达。
+
 + config_from_file - 指定雷达本身的配置参数是从文件中读入，还是从DIFOP Packet中得到。这个选项仅内部调试使用。
 + angle_path - 雷达的角度标定参数文件。仅内部调试使用。
-+ min_distance、max_distance - 重置测距的最大、最小值。仅内部调试使用。
-
-如下参数仅针对机械式雷达。
++ start_angle、end_angle - 机械式雷达一般输出的点云的水平角在[`0`, `360`]之间，这里可以指定一个更小的范围[`start_angle`, `end_angle`)。
 + split_frame_mode - 指定分帧模式
-  + `SPLIT_BY_ANGLE`是按`用户指定的角度`分帧；`SPLIT_BY_FIXED_BLKS`是按`理论上的每圈BLOCK数`分帧；`SPLIT_BY_CUSTOM_BLKS`按`用户指定的BLOCK数`分帧。默认值是`SPLIT_BY_ANGLE`。一般不建议使用其他两种模式。
+  + `SPLIT_BY_ANGLE`是按 `用户指定的角度`分帧；`SPLIT_BY_FIXED_BLKS`是按 `理论上的每圈BLOCK数`分帧；`SPLIT_BY_CUSTOM_BLKS`按 `用户指定的BLOCK数`分帧。默认值是 `SPLIT_BY_ANGLE`。一般不建议使用其他两种模式。
 
 ```c++
 enum SplitFrameMode
@@ -161,6 +235,4 @@ enum SplitFrameMode
 ```
 + split_angle - 如果`split_frame_mode`=`SPLIT_BY_ANGLE`, 则`split_angle`指定分帧的角度
 + num_blks_split - 如果`split_frame_mode`=`SPLIT_BY_CUSTOM_BLKS`，则`num_blks_split`指定每帧的BLOCK数。
-
-+ start_angle、end_angle - 机械式雷达一般输出的点云的水平角在[`0`, `360`]之间，这里可以指定一个更小的范围[`start_angle`, `end_angle`)。
 

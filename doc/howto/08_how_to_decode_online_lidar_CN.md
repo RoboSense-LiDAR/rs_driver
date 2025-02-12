@@ -112,9 +112,8 @@ int main()
 RSDriverParam定义LidarDriver的参数。这里定义RSDriverParam变量，并配置它。
 
 + `InputType::ONLINE_LIDAR`意味着从在线雷达得到MSOP/DIFOP包。
-+ `LidarType::RS16`是雷达类型
-+ 分别设置接收MSOP/DIFOP Packet的端口号。
-
++ `LidarType::RSAIRY`是雷达类型
++ 分别设置接收MSOP/DIFOP/IMU Packet的端口号， 若雷达不支持IMU，则将`#define ENABLE_IMU_PARSE 1` 改为`#define ENABLE_IMU_PARSE 0`。
 ```c++
 int main()
 {
@@ -123,7 +122,10 @@ int main()
   param.input_type = InputType::ONLINE_LIDAR;      /// get packet from online lidar
   param.input_param.msop_port = 6699;             ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;            ///< Set the lidar difop port number, the default is 7788
-  param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct
+#if ENABLE_IMU_PARSE
+  param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+#endif
+  param.lidar_type = LidarType::RSAIRY;             ///< Set the lidar type. Make sure this type is correct
   ...
 }
 ```
@@ -196,7 +198,87 @@ int main()
 }
 ```
 
-### 8.2.6 定义和注册异常回调函数
+### 8.2.6 定义和注册IMU回调函数(若雷达不支持IMU则忽略)
+
++ 和获取点云类似， `rs_driver`需要调用者通过回调函数，提供空闲的IMU实例。这里定义这第一个IMU回调函数。
+
+```c++
+SyncQueue<std::shared_ptr<ImuData>> free_imu_data_queue;
+
+std::shared_ptr<ImuData> driverGetIMUDataFromCallerCallback(void)
+{
+  std::shared_ptr<ImuData> msg = free_imu_data_queue.pop();
+  if (msg.get() != NULL)
+  {
+    return msg;
+  }
+
+  return std::make_shared<ImuData>();
+}
+
+```
+
++ `rs_driver`通过回调函数，将填充好的IMU数据返回给调用者。这里定义这第二个IMU回调函数。
+
+```c++
+SyncQueue<std::shared_ptr<ImuData>> stuffed_imu_data_queue;
+
+void driverReturnImuDataToCallerCallback(const std::shared_ptr<ImuData>& msg)
+{
+  stuffed_imu_data_queue.push(msg);
+}
+
+```
+
+注意这两个回调函数都运行在`rs_driver`的IMU Packet的处理线程中，所以它们不可以做太耗时的任务，否则会导致IMU Packet不能及时处理。
+
++ 使用者在自己的线程中，处理IMU数据。
+
+```c++
+void processImuData(void)
+{
+  uint32_t imu_cnt = 0;
+  while (!to_exit_process)
+  {
+    std::shared_ptr<ImuData> msg = stuffed_imu_data_queue.popWait();
+    if (msg.get() == NULL)
+    {
+      continue;
+    }
+
+    // Well, it is time to process the IMU data msg, even it is time-consuming.
+    RS_MSG << "msg: " << imu_cnt << " imu data ts: " <<std::dec<<std::to_string(msg->timestamp) << RS_REND;
+
+    imu_cnt++;
+#if 0
+    RS_DEBUG  <<"imu data: " << " , linear_a_x" << msg->linear_acceleration_x 
+      << " , linear_a_y " << msg->linear_acceleration_y << "  , linear_a_z" << msg->linear_acceleration_z   
+      << " , angular_v_x " << msg->angular_velocity_x << " , angular_v_y" << msg->angular_velocity_y 
+      << " , angular_v_z" <<msg->angular_velocity_z << RS_REND;
+#endif
+
+    free_imu_data_queue.push(msg);
+  }
+}
+
+```
+
++ 注册两个IMU回调函数。
+
+```c++
+int main()
+{
+  ...
+#if ENABLE_IMU_PARSE
+  driver.regImuDataCallback(driverGetIMUDataFromCallerCallback, driverReturnImuDataToCallerCallback);
+#endif
+  ...
+}
+```
+
+
+
+### 8.2.7 定义和注册异常回调函数
 
 + `rs_driver`检测到异常发生时，通过回调函数通知调用者。这里定义异常回调函数。
 
@@ -220,7 +302,7 @@ int main()
 }
 ```
 
-### 8.2.7 初始化LidarDriver对象
+### 8.2.8 初始化LidarDriver对象
 
 按照RSDriverParam指定的配置，初始化LidarDriver对象。
 
@@ -237,7 +319,7 @@ int main()
 }
 ```
 
-### 8.2.8 启动LidarDriver
+### 8.2.9 启动LidarDriver
 
 启动LidarDriver对象。
 
@@ -250,22 +332,22 @@ int main()
 }
 ```
 
-### 8.2.9 祝贺
+### 8.2.10 祝贺
 
 编译`demo_online`并运行。您应该可以看到类似如下点云打印了。
 
 ```c++
 RoboSense Lidar-Driver Linux online demo start......
 msg: 0 point cloud size: 96
-msg: 1 point cloud size: 28800
-msg: 2 point cloud size: 28800
-msg: 3 point cloud size: 28800
-msg: 4 point cloud size: 28800
-msg: 5 point cloud size: 28800
-msg: 6 point cloud size: 28800
-msg: 7 point cloud size: 28832
-msg: 8 point cloud size: 28800
-msg: 9 point cloud size: 28800
+msg: 1 point cloud size: 86400
+msg: 2 point cloud size: 86400
+msg: 3 point cloud size: 86400
+msg: 4 point cloud size: 86400
+msg: 5 point cloud size: 86400
+msg: 6 point cloud size: 86400
+msg: 7 point cloud size: 86400
+msg: 8 point cloud size: 86400
+msg: 9 point cloud size: 86400
 ```
 
 如果您没有看到，可能是因为网络选项的配置不正确，请参考[在线雷达-高级主题](./09_online_lidar_advanced_topics_CN.md)，获得正确的配置。

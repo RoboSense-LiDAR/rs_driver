@@ -104,7 +104,7 @@ public:
 
   int32_t horizAdjust(uint16_t chan, int32_t horiz)
   {
-    return (horiz + horiz_angles_[chan]);
+    return (horiz + round(horiz_angles_[chan]));
   }
 
   int32_t vertAdjust(uint16_t chan)
@@ -201,7 +201,6 @@ private:
       const RSCalibrationAngle& vert = vert_angle_arr[i];
       const RSCalibrationAngle& horiz = horiz_angle_arr[i];
       int32_t v;
-
       if (vert.sign == 0xFF)
         return -1;
 
@@ -213,6 +212,7 @@ private:
         return -1;
 
       v = ntohs(horiz.value);
+
       if (horiz.sign != 0) v = -v;
       horiz_angles.emplace_back(v);
 
@@ -225,8 +225,8 @@ private:
   }
 
   static bool angleCheck(int32_t v)
-  {
-    return ((-9000 <= v) && (v < 9000));
+  { 
+    return ((-9000 <= v) && (v < 18000));
   }
 
   uint16_t chan_num_;

@@ -68,6 +68,16 @@ public:
   {
     driver_ptr_->regPointCloudCallback(cb_get_cloud, cb_put_cloud);
   }
+  /**
+   * @brief Register the imu data callback function to driver. When imu data is ready, this function will be
+   * called
+   * @param callback The callback function
+   */
+  inline void regImuDataCallback(const std::function<std::shared_ptr<ImuData>(void)>& cb_get_imu_data, const std::function<void(const std::shared_ptr<ImuData> &)>& cb_put_imu_data)
+  {
+    driver_ptr_->regImuDataCallback(cb_get_imu_data, cb_put_imu_data);
+  }
+
 
   /**
    * @brief Register the lidar difop packet message callback function to driver. When lidar difop packet message is

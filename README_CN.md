@@ -36,6 +36,7 @@ git clone https://github.com/RoboSense-LiDAR/rs_driver.git
 + RS-LiDAR-M3
 + RS-LiDAR-E1
 + RS-LiDAR-MX
++ RS-LiDAR-AIRY
 
 
 

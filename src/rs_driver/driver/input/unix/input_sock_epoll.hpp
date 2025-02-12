@@ -67,7 +67,7 @@ private:
 protected:
   size_t pkt_buf_len_;
   int epfd_;
-  int fds_[2];
+  int fds_[3]{-1};
   size_t sock_offset_;
   size_t sock_tail_;
 };
@@ -79,7 +79,7 @@ inline bool InputSock::init()
     return true;
   }
 
-  int msop_fd = -1, difop_fd = -1;
+  int msop_fd = -1, difop_fd = -1, imu_fd = -1;
   int epfd = epoll_create(1);
   if (epfd < 0)
     goto failEpfd;
@@ -117,8 +117,22 @@ inline bool InputSock::init()
   fds_[0] = msop_fd;
   fds_[1] = difop_fd;
 
+  if ((input_param_.imu_port != 0) && (input_param_.imu_port != input_param_.msop_port) &&  (input_param_.imu_port != input_param_.difop_port))
+  {
+    imu_fd = createSocket(input_param_.imu_port, input_param_.host_address, input_param_.group_address);
+    if (imu_fd < 0)
+      goto failDifop;
+
+    struct epoll_event ev;
+    ev.data.fd = difop_fd;
+    ev.events = EPOLLIN; // level-triggered
+    epoll_ctl (epfd, EPOLL_CTL_ADD, imu_fd, &ev);
+  }
+
   init_flag_ = true;
   return true;
+failImu:
+  close(difop_fd);
 
 failDifop:
   close(msop_fd);
@@ -155,6 +169,8 @@ inline InputSock::~InputSock()
   close(fds_[0]);
   if (fds_[1] >= 0)
     close(fds_[1]);
+  if (fds_[2] >= 0)
+    close(fds_[2]);
 
   close(epfd_);
 }
@@ -188,11 +204,6 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
   if (hostIp != "0.0.0.0" && grpIp == "0.0.0.0")
   {
     inet_pton(AF_INET, hostIp.c_str(), &(host_addr.sin_addr));
-  }
-
-  if (hostIp != "0.0.0.0" && grpIp != "0.0.0.0")
-  {
-    inet_pton(AF_INET, grpIp.c_str(), &(host_addr.sin_addr));
   }
   
 

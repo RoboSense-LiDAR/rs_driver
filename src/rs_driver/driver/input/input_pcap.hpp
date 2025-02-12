@@ -50,8 +50,8 @@ class InputPcap : public Input
 {
 public:
   InputPcap(const RSInputParam& input_param, double sec_to_delay)
-    : Input(input_param), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), pcap_tail_(0), difop_filter_valid_(false), 
-    msec_to_delay_((uint64_t)(sec_to_delay / input_param.pcap_rate * 1000000))
+    : Input(input_param), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), pcap_tail_(0), difop_filter_valid_(false), imu_filter_valid_(false),
+     msec_to_delay_((uint64_t)(sec_to_delay / input_param.pcap_rate * 1000000))
   {
     if (input_param.use_vlan)
     {
@@ -61,7 +61,7 @@ public:
     pcap_offset_ += input_param.user_layer_bytes;
     pcap_tail_   += input_param.tail_layer_bytes;
 
-    std::stringstream msop_stream, difop_stream;
+    std::stringstream msop_stream, difop_stream, imu_stream;
     if (input_param_.use_vlan)
     {
       msop_stream << "vlan && ";
@@ -70,9 +70,11 @@ public:
 
     msop_stream << "udp dst port " << input_param_.msop_port;
     difop_stream << "udp dst port " << input_param_.difop_port;
+    imu_stream << "udp dst port " << input_param_.imu_port;
 
     msop_filter_str_ = msop_stream.str();
     difop_filter_str_ = difop_stream.str();
+    imu_filter_str_ = imu_stream.str();
   }
 
   virtual bool init();
@@ -88,9 +90,12 @@ private:
   size_t pcap_tail_;
   std::string msop_filter_str_;
   std::string difop_filter_str_;
+  std::string imu_filter_str_;
   bpf_program msop_filter_;
   bpf_program difop_filter_;
+  bpf_program imu_filter_;
   bool difop_filter_valid_;
+  bool imu_filter_valid_;
   uint64_t msec_to_delay_;
 };
 
@@ -113,6 +118,11 @@ inline bool InputPcap::init()
   {
     pcap_compile(pcap_, &difop_filter_, difop_filter_str_.c_str(), 1, 0xFFFFFFFF);
     difop_filter_valid_ = true;
+  }
+  if ((input_param_.imu_port != 0) && (input_param_.imu_port != input_param_.msop_port) &&  (input_param_.imu_port != input_param_.difop_port))
+  {
+    pcap_compile(pcap_, &imu_filter_, imu_filter_str_.c_str(), 1, 0xFFFFFFFF);
+    imu_filter_valid_ = true;
   }
 
   init_flag_ = true;
@@ -175,18 +185,23 @@ inline void InputPcap::recvPacket()
       }
     }
 
-    if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
+     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0 || 
+      (difop_filter_valid_ && pcap_offline_filter(&difop_filter_, header, pkt_data) != 0) ||
+      (imu_filter_valid_ && pcap_offline_filter(&imu_filter_, header, pkt_data) != 0))
     {
+      int dataLen = (int)(header->len - pcap_offset_ - pcap_tail_);
+      if (dataLen < 0) {
+        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
+        continue;
+      }
       std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
-      memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_ - pcap_tail_);
-      pkt->setData(0, header->len - pcap_offset_ - pcap_tail_);
-      pushPacket(pkt);
-    }
-    else if (difop_filter_valid_ && (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
-    {
-      std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
-      memcpy(pkt->data(), pkt_data + pcap_offset_, header->len - pcap_offset_ - pcap_tail_);
-      pkt->setData(0, header->len - pcap_offset_ - pcap_tail_);
+      if(static_cast<size_t>(dataLen) > pkt->bufSize())
+      {
+        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
+        continue;
+      }
+      memcpy(pkt->data(), pkt_data + pcap_offset_, dataLen);
+      pkt->setData(0, dataLen);
       pushPacket(pkt);
     }
     else
