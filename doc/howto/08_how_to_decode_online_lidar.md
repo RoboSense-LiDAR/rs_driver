@@ -198,7 +198,7 @@ int main()
 ### 8.2.6 Define and register the IMU callback function (ignore if the lidar does not support IMU)
 
 
-+ Similar to acquiring point clouds, the `rs_driver` requires the caller to provide an idle IMU instance through a callback function. Here, the first IMU callback function is defined.
++ Similar to acquiring point clouds, the `rs_driver` requires the caller to provide an free IMU data instance through a callback function. Here, the first IMU callback function is defined.
 
 ```c++
 SyncQueue<std::shared_ptr<ImuData>> free_imu_data_queue;
