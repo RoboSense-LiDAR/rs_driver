@@ -212,7 +212,6 @@ private:
         return -1;
 
       v = ntohs(horiz.value);
-
       if (horiz.sign != 0) v = -v;
       horiz_angles.emplace_back(v);
 

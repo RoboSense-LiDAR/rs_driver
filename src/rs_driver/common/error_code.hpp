@@ -66,8 +66,8 @@ enum ErrCode
   ERRCODE_PKTBUFOVERFLOW  = 0x48,  ///< Packet queue is overflow
   ERRCODE_CLOUDOVERFLOW   = 0x49,  ///< Point cloud buffer is overflow
   ERRCODE_WRONGCRC32      = 0x4A,  ///< Wrong CRC32 value of MSOP Packet
-  ERRCODE_WRONGIMULEN   = 0x4B,  ///< Imu Packet length is wrong
-  ERRCODE_WRONGIMUID    = 0x4C,  ///< Imu Packet ID is wrong
+  ERRCODE_WRONGIMULEN   = 0x4B,  ///< IMU Packet length is wrong
+  ERRCODE_WRONGIMUID    = 0x4C,  ///< IMU Packet ID is wrong
   ERRCODE_WRONGPCAPPARSE  = 0x4D,   ///< Parse msop data frome pcap file failed
 
   // error
