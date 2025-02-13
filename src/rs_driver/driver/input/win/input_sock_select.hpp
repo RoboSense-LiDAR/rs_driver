@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
 #pragma warning(disable : 4244)
 
 namespace robosense
@@ -64,7 +63,7 @@ private:
 
 protected:
   size_t pkt_buf_len_;
-  int fds_[2];
+  int fds_[3]{-1};
   size_t sock_offset_;
   size_t sock_tail_;
 };
@@ -76,7 +75,7 @@ inline bool InputSock::init()
     return true;
   }
 
-  int msop_fd = -1, difop_fd = -1;
+  int msop_fd = -1, difop_fd = -1, imu_fd = -1;
 
   WORD version = MAKEWORD(2, 2);
   WSADATA wsaData;
@@ -94,13 +93,22 @@ inline bool InputSock::init()
     if (difop_fd < 0)
       goto failDifop;
   }
+  if ((input_param_.imu_port != 0) && (input_param_.imu_port != input_param_.msop_port) &&  (input_param_.imu_port != input_param_.difop_port))
+  {
+    imu_fd = createSocket(input_param_.imu_port, input_param_.host_address, input_param_.group_address);
+    if (imu_fd < 0)
+      goto failImu;
+  }
 
   fds_[0] = msop_fd;
   fds_[1] = difop_fd;
+  fds_[2] = imu_fd;
 
   init_flag_ = true;
   return true;
 
+failImu:
+  closesocket(difop_fd);
 failDifop:
   closesocket(msop_fd);
 failMsop:
@@ -135,6 +143,8 @@ inline InputSock::~InputSock()
   closesocket(fds_[0]);
   if (fds_[1] >= 0)
     closesocket(fds_[1]);
+  if(fds_[2] >= 0)
+    closesocket(fds_[2]);
 }
 
 inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, const std::string& grpIp)
@@ -233,7 +243,7 @@ failSocket:
 
 inline void InputSock::recvPacket()
 {
-  int max_fd = ((fds_[0] > fds_[1]) ? fds_[0] : fds_[1]);
+  int max_fd = std::max<int>(std::max<int>(fds_[0], fds_[1]), fds_[2]);
 
   while (!to_exit_recv_)
   {
@@ -242,7 +252,10 @@ inline void InputSock::recvPacket()
     FD_SET(fds_[0], &rfds);
     if (fds_[1] >= 0)
       FD_SET(fds_[1], &rfds);
-
+    if(fds_[2] >= 0)
+    {
+      FD_SET(fds_[2], &rfds);
+    }
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
@@ -261,7 +274,7 @@ inline void InputSock::recvPacket()
       break;
     }
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3 ; i++)
     {
       if ((fds_[i] >= 0) && FD_ISSET(fds_[i], &rfds))
       {

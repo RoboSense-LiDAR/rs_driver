@@ -31,7 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
-
+#include <stdio.h>
+#include <cstring>  
 //
 // define ntohs()
 // 
@@ -40,19 +41,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else //__linux__
 #include <arpa/inet.h>
 #endif
-
-inline int16_t RS_SWAP_INT16(int16_t value)
-{
-  uint8_t* v = (uint8_t*)&value;
-
-  uint8_t temp;
-  temp = v[0];
-  v[0] = v[1];
-  v[1] = temp;
-
-  return value;
-}
-
 
 //
 // define M_PI
@@ -65,4 +53,40 @@ inline int16_t RS_SWAP_INT16(int16_t value)
 
 #define DEGREE_TO_RADIAN(deg)  ((deg) * M_PI / 180)
 #define RADIAN_TO_DEGREE(deg)  ((deg) * 180 / M_PI)
+
+namespace robosense
+{
+namespace lidar
+{
+inline int16_t RS_SWAP_INT16(int16_t value)
+{
+  uint8_t* v = (uint8_t*)&value;
+
+  uint8_t temp;
+  temp = v[0];
+  v[0] = v[1];
+  v[1] = temp;
+
+  return value;
+}
+
+inline int32_t u8ArrayToInt32(const uint8_t* data, uint8_t len) {
+    if(len != 4)
+    {
+      printf("u8ArrayToInt32: len is not 4\n");
+      return 0;
+    }
+    uint32_t uintValue = ntohl(*reinterpret_cast<const uint32_t*>(data));
+    return static_cast<int32_t>(uintValue);
+}
+
+inline float convertUint32ToFloat(uint32_t byteArray) {
+    float floatValue;
+    std::memcpy(&floatValue, &byteArray, sizeof(float));
+    return floatValue;
+}
+
+}
+}
+
 

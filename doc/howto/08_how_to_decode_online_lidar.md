@@ -108,8 +108,8 @@ int main()
 
 Define a RSDriverParam variable and configure it.
 + `InputType::ONLINE_LIDAR` means that the driver get packets from an online LiDAR.
-+ `LidarType::RS16` means a RS16 LiDAR.
-+ Also set the local MSOP/DIFOP ports.
++ `LidarType::RSAIRY` means a RSAIRY LiDAR.
++ Also set the local MSOP/DIFOP/IMU ports, if the lidar does not support IMU, change '#define ENABLE_IMU_PARSE 1' to '#define ENABLE_IMU_PARSE 0'.
 
 ```c++
 int main()
@@ -119,7 +119,10 @@ int main()
   param.input_type = InputType::ONLINE_LIDAR;      /// get packet from online lidar
   param.input_param.msop_port = 6699;             ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;            ///< Set the lidar difop port number, the default is 7788
-  param.lidar_type = LidarType::RS16;             ///< Set the lidar type. Make sure this type is correct
+#if ENABLE_IMU_PARSE
+  param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+#endif
+  param.lidar_type = LidarType::RSAIRY;             ///< Set the lidar type. Make sure this type is correct
   ...
 }
 ```
@@ -192,7 +195,84 @@ int main()
 }
 ```
 
-### 8.2.6 Define and register exception callbacks
+### 8.2.6 Define and register the IMU callback function (ignore if the lidar does not support IMU)
+
+
++ Similar to acquiring point clouds, the `rs_driver` requires the caller to provide an free IMU data instance through a callback function. Here, the first IMU callback function is defined.
+
+```c++
+SyncQueue<std::shared_ptr<ImuData>> free_imu_data_queue;
+
+std::shared_ptr<ImuData> driverGetIMUDataFromCallerCallback(void)
+{
+  std::shared_ptr<ImuData> msg = free_imu_data_queue.pop();
+  if (msg.get() != NULL)
+  {
+    return msg;
+  }
+
+  return std::make_shared<ImuData>();
+}
+```
+
++ `rs_driver` returns stuffed IMU data to user.  Here is the second callback.
+
+```c++
+SyncQueue<std::shared_ptr<ImuData>> stuffed_imu_data_queue;
+
+void driverReturnImuDataToCallerCallback(const std::shared_ptr<ImuData>& msg)
+{
+  stuffed_imu_data_queue.push(msg);
+}
+```
+
+Note: The driver calls these two callback functions in the IMU handling thread, so **don't do any time-consuming task** in them. 
+
++ User creates a new thread to processes the IMU data.
+
+```c++
+void processImuData(void)
+{
+  uint32_t imu_cnt = 0;
+  while (!to_exit_process)
+  {
+    std::shared_ptr<ImuData> msg = stuffed_imu_data_queue.popWait();
+    if (msg.get() == NULL)
+    {
+      continue;
+    }
+
+    // Well, it is time to process the IMU data msg, even it is time-consuming.
+    RS_MSG << "msg: " << imu_cnt << " imu data ts: " <<std::dec<<std::to_string(msg->timestamp) << RS_REND;
+
+    imu_cnt++;
+#if 0
+    RS_DEBUG  <<"imu data: " << " , linear_a_x" << msg->linear_acceleration_x 
+      << " , linear_a_y " << msg->linear_acceleration_y << "  , linear_a_z" << msg->linear_acceleration_z   
+      << " , angular_v_x " << msg->angular_velocity_x << " , angular_v_y" << msg->angular_velocity_y 
+      << " , angular_v_z" <<msg->angular_velocity_z << RS_REND;
+#endif
+
+    free_imu_data_queue.push(msg);
+  }
+}
+
+```
+
++ Register them to `rs_driver`.
+
+```c++
+int main()
+{
+  ...
+#if ENABLE_IMU_PARSE
+  driver.regImuDataCallback(driverGetIMUDataFromCallerCallback, driverReturnImuDataToCallerCallback);
+#endif
+  ...
+}
+```
+
+### 8.2.7 Define and register exception callbacks
 
 + When an error happens, `rs_driver` informs user. Here is the exception callback.
 
@@ -216,7 +296,7 @@ int main()
 }
 ```
 
-### 8.2.7 Initialize the driver
+### 8.2.8 Initialize the driver
 
 Initialize `rs_driver` with the the RSDriverParam object.
 
@@ -233,7 +313,7 @@ int main()
 }
 ```
 
-### 8.2.8 Start the driver
+### 8.2.9 Start the driver
 
 Start `rs_driver`.
 
@@ -246,22 +326,22 @@ int main()
 }
 ```
 
-### 8.2.9 Congratulation
+### 8.2.10 Congratulation
 
 Compile rs_driver and run it. It should print message as below.
 
 ```c++
 RoboSense Lidar-Driver Linux online demo start......
 msg: 0 point cloud size: 96
-msg: 1 point cloud size: 28800
-msg: 2 point cloud size: 28800
-msg: 3 point cloud size: 28800
-msg: 4 point cloud size: 28800
-msg: 5 point cloud size: 28800
-msg: 6 point cloud size: 28800
-msg: 7 point cloud size: 28832
-msg: 8 point cloud size: 28800
-msg: 9 point cloud size: 28800
+msg: 1 point cloud size: 86400
+msg: 2 point cloud size: 86400
+msg: 3 point cloud size: 86400
+msg: 4 point cloud size: 86400
+msg: 5 point cloud size: 86400
+msg: 6 point cloud size: 86400
+msg: 7 point cloud size: 86400
+msg: 8 point cloud size: 86400
+msg: 9 point cloud size: 86400
 ```
 
 Please refer to [Online LiDAR - Advanced Topics](09_online_lidar_advanced_topics.md) for more info about how to configure `rs_driver`.

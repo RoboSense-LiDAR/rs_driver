@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/trigon.hpp>
 #include <rs_driver/driver/decoder/section.hpp>
 #include <rs_driver/driver/decoder/basic_attr.hpp>
-
+#include "rs_driver/msg/imu_data_msg.hpp"
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
 #endif
@@ -238,6 +238,11 @@ struct RSDecoderConstParam
   float DISTANCE_MAX;
   float DISTANCE_RES;
   float TEMPERATURE_RES;
+
+    // IMU parameters (new fields with default values)
+  uint16_t IMU_LEN{0};      // Default to 0 for lidar without IMU
+  uint16_t IMU_ID_LEN{0};   // Default to 0 for lidar without IMU
+  uint8_t IMU_ID[4]{0};     // Default to {0, 0, 0, 0} for lidar without IMU
 };
 
 #define INIT_ONLY_ONCE() \
@@ -256,10 +261,12 @@ public:
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
+  virtual void decodeImuPkt(const uint8_t* pkt, size_t size){};
   virtual ~Decoder() = default;
 
   void processDifopPkt(const uint8_t* pkt, size_t size);
   bool processMsopPkt(const uint8_t* pkt, size_t size);
+  bool processImuPkt(const uint8_t* pkt, size_t size);
 
   explicit Decoder(const RSDecoderConstParam& const_param, const RSDecoderParam& param);
 
@@ -274,8 +281,10 @@ public:
   void regCallback(
       const std::function<void(const Error&)>& cb_excep,
       const std::function<void(uint16_t, double)>& cb_split_frame);
+  void regImuCallback(const std::function<void()>& cb_imu_data);
 
   std::shared_ptr<T_PointCloud> point_cloud_; // accumulated point cloud currently
+  std::shared_ptr<ImuData> imuDataPtr_;
 
 #ifndef UNIT_TEST
 protected:
@@ -287,7 +296,9 @@ protected:
   RSDecoderParam param_; // user param
   std::function<void(uint16_t, double)> cb_split_frame_;
   std::function<void(const Error&)> cb_excep_;
+  std::function<void()> cb_imu_data_;
   bool write_pkt_ts_;
+
 
 
 #ifdef ENABLE_TRANSFORM
@@ -320,6 +331,11 @@ inline void Decoder<T_PointCloud>::regCallback(
 {
   cb_excep_ = cb_excep;
   cb_split_frame_ = cb_split_frame;
+}
+template <typename T_PointCloud>
+inline void Decoder<T_PointCloud>::regImuCallback(const std::function<void()>& cb_imu_data)
+{
+  cb_imu_data_ = cb_imu_data;
 }
 
 template <typename T_PointCloud>
@@ -383,6 +399,7 @@ inline bool Decoder<T_PointCloud>::getDeviceStatus(DeviceStatus& status)
     return false;
   }
   status = device_status_;
+  device_status_.init();
   return true;
 }
 
@@ -432,6 +449,23 @@ inline void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t si
   }
 
   decodeDifopPkt(pkt, size);
+}
+template <typename T_PointCloud>
+inline bool Decoder<T_PointCloud>::processImuPkt(const uint8_t* pkt, size_t size)
+{
+  if (size != this->const_param_.IMU_LEN)
+  {
+     LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGIMULEN)), 1);
+     return false;
+  }
+
+  if (memcmp(pkt, this->const_param_.IMU_ID, this->const_param_.IMU_ID_LEN) != 0)
+  {
+    LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGIMUID)), 1);
+    return false;
+  }
+  decodeImuPkt(pkt, size);
+  return true;
 }
 
 template <typename T_PointCloud>
