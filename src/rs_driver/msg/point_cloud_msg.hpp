@@ -42,6 +42,7 @@ struct PointXYZI
   float z;
   uint8_t intensity;
 };
+
 struct PointXYZIRT
 {
   float x;
@@ -51,6 +52,7 @@ struct PointXYZIRT
   uint16_t ring;
   double timestamp;
 };
+
 struct PointXYZIF
 {
   float x;

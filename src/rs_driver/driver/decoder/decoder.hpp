@@ -217,7 +217,6 @@ enum RSEchoMode
 // decoder const param
 struct RSDecoderConstParam
 {
-
   // packet len
   uint16_t MSOP_LEN;
   uint16_t DIFOP_LEN;
@@ -278,6 +277,7 @@ public:
   void enableWritePktTs(bool value);
   double prevPktTs();
   void transformPoint(float& x, float& y, float& z);
+
   void regCallback(
       const std::function<void(const Error&)>& cb_excep,
       const std::function<void(uint16_t, double)>& cb_split_frame);
