@@ -188,7 +188,7 @@ TEST(TestChanAngles, memberLoadFromDifop_fail_angle)
                               0x01, 0x05, 0x06,
                               0x00, 0x07, 0x08};
 
-  // -9000 <= angle < 9000
+  // -9000 <= angle < 18000
   ChanAngles angles(4);
   ASSERT_EQ(angles.chan_num_, 4);
 
@@ -199,7 +199,7 @@ TEST(TestChanAngles, memberLoadFromDifop_fail_angle)
       0x00, 0x01, 0x11,
       0x01, 0x02, 0x22,
       0x00, 0x03, 0x33,
-      0x00, 0x23, 0x28
+      0x00, 0x46, 0x52   //18000
     };
 
     // load

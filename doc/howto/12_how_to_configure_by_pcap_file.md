@@ -54,9 +54,9 @@ The `ID` and the length of LiDARs is fixed as below.
 | ----                               | ----     | ----                        | ----    |
 | RS16/RS32/RSBP                     |  MSOP    |  55 aa 05 0a 5a a5 50 a0    |  1248   |
 |                                    |  DIFOP   |  a5 ff 00 5a 11 11 55 55    |  1248   |
-| RS128/RS80/RS48/RSP128/RSP80/RSP48/RSHELIOS/RSHELIOS_16P | MSOP |55 aa 05 5a|  1248   |
+| RS128/RS80/RS48/RSP128/RSP80/RSP48/RSHELIOS/RSHELIOS_16P/RSAIRY | MSOP |55 aa 05 5a|  1248   |
 |                                    |  DIFOP   |  a5 ff 00 5a 11 11 55 55    |  1248   |
-| RSM1/RSM2/RSE1                     |  MSOP    |  55 aa 5a a5                |  1210   |
+| RSM1/RSM2/RSE1/RSMX                |  MSOP    |  55 aa 5a a5                |  1210   |
 |                                    |  DIFOP   |  a5 ff 00 5a 11 11 55 55    |  256    |
 
 Note:  MSOP and DIFOP packets have different `ID`s, so we can determine which packet is MSOP or DIFOP.

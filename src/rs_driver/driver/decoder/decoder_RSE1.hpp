@@ -76,6 +76,24 @@ typedef struct
   uint8_t reserved[16];
 } RSEOSMsopPkt;
 
+
+typedef struct
+{
+  uint8_t id[8];
+  uint8_t reserved1[93];
+  uint8_t timeMode;
+  uint8_t timeSyncStatus;
+  RSTimestampUTC timestamp;
+  uint8_t reserved2[95];
+  uint32_t acceIx;
+  uint32_t acceIy;
+  uint32_t acceIz;
+  uint32_t gyrox;
+  uint32_t gyroy;
+  uint32_t gyroz;
+  uint8_t reserved3[24];
+} RSE1DifopPkt;
+
 #pragma pack(pop)
 
 template <typename T_PointCloud>
@@ -106,15 +124,15 @@ inline RSDecoderConstParam& DecoderRSE1<T_PointCloud>::getConstParam()
 {
   static RSDecoderConstParam param = 
   {
-    1200 // msop len
+      1200 // msop len
       , 256 // difop len
       , 4 // msop id len
       , 8 // difop id len
       , {0x55, 0xAA, 0x5A, 0xA5} // msop id
-    , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-    , {0x00, 0x00}
-    , 1  // laser number
-    , 96 // blocks per packet
+      , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
+      , {0x00, 0x00}
+      , 1  // laser number
+      , 96 // blocks per packet
       , 1 // channels per block
       , 0.2f // distance min
       , 200.0f // distance max
@@ -151,6 +169,36 @@ inline RSEchoMode DecoderRSE1<T_PointCloud>::getEchoMode(uint8_t mode)
 template <typename T_PointCloud>
 inline void DecoderRSE1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, size_t size)
 {
+  #ifdef ENABLE_DIFOP_PARSE
+    const RSE1DifopPkt& pkt = *(RSE1DifopPkt*)packet;
+  
+    if(this->imuDataPtr_ && this->cb_imu_data_ && !this->imuDataPtr_->state)
+    {
+      if (this->param_.use_lidar_clock)
+      {
+        this->imuDataPtr_->timestamp = parseTimeUTCWithUs(&pkt.timestamp) * 1e-6;
+      }
+      else
+      {
+        this->imuDataPtr_->timestamp = getTimeHost() * 1e-6;
+      }
+
+      this->imuDataPtr_->linear_acceleration_x = convertUint32ToFloat(ntohl(pkt.acceIx)) ;
+      this->imuDataPtr_->linear_acceleration_y = convertUint32ToFloat(ntohl(pkt.acceIy)) ;
+      this->imuDataPtr_->linear_acceleration_z = convertUint32ToFloat(ntohl(pkt.acceIz)) ;
+
+      this->imuDataPtr_->angular_velocity_x = convertUint32ToFloat(ntohl(pkt.gyrox)) ;
+      this->imuDataPtr_->angular_velocity_y = convertUint32ToFloat(ntohl(pkt.gyroy)) ;
+      this->imuDataPtr_->angular_velocity_z = convertUint32ToFloat(ntohl(pkt.gyroz)) ;
+      this->imuDataPtr_->state = true;
+      this->cb_imu_data_();
+    }
+
+
+    this->device_info_.state = true;
+    // device status
+    this->device_status_.state = true;
+    #endif
 }
 
 template <typename T_PointCloud>
@@ -198,7 +246,7 @@ inline bool DecoderRSE1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
       const RSEOSChannel& channel = block.channel[chan];
 
       float distance = ntohs(channel.distance) * this->const_param_.DISTANCE_RES;
-
+ 
       if (this->distance_section_.in(distance))
       {
         int16_t vector_x = RS_SWAP_INT16(channel.x);

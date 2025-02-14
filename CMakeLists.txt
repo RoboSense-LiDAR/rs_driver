@@ -6,7 +6,7 @@ if(WIN32)
   cmake_policy(SET CMP0074 NEW) # CMake 3.12 required
 endif(WIN32)
 
-project(rs_driver VERSION 1.5.16)
+project(rs_driver VERSION 1.5.17)
 
 #========================
 #  Project setup
@@ -91,6 +91,7 @@ set(DRIVER_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
 set(DRIVER_CMAKE_ROOT ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 if(WIN32)
+  list(APPEND EXTERNAL_LIBS ws2_32)
 else()
   if (CMAKE_SYSTEM_NAME STREQUAL "QNX")
     list(APPEND EXTERNAL_LIBS socket)
@@ -146,6 +147,8 @@ if(${ENABLE_TRANSFORM})
   include_directories(${EIGEN3_INCLUDE_DIR})
 
 endif(${ENABLE_TRANSFORM})
+
+
 
 #============================
 #  Build Demos, Tools, Tests

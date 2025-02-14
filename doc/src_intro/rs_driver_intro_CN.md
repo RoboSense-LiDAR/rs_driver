@@ -1,4 +1,4 @@
-# **rs_driver v1.5.9 源代码解析**
+# **rs_driver v1.5.17 源代码解析**
 
 
 
@@ -7,7 +7,7 @@
 ### 1.1 机械式雷达、MEMS雷达
 
 rs_driver支持RoboSense的两种雷达：
-+ 机械式雷达。如RS16/RS32/RSBP/RSHELIOS/RS80/RS128。机械式雷达有控制激光发射角度的旋转部件，有360°扫描视场。
++ 机械式雷达。如RS16/RS32/RSBP/RSHELIOS/RS80/RS128/RSAIRY。机械式雷达有控制激光发射角度的旋转部件，有360°扫描视场。
 + MEMS雷达。如RSM1。MEMS雷达是单轴、谐振式的MEMS扫描镜，其水平扫描角度可达120°。
 
 ### 1.2 通道 Channel
@@ -21,11 +21,12 @@ MEMS雷达的通道与机械式雷达不同，它的每个通道可能对应一�
 RoboSense雷达与电脑主机的通信协议有三种。
 + MSOP (Main data Stream Ouput Protocol)。 激光雷达将扫描出来的距离、角度、反射率等信息封装成MSOP Packet，输出给电脑主机。
 + DIFOP (Device Information Output Protocol)。激光雷达将自身的配置信息，以及当前的状态封装成DIFOP Packet，输出给电脑主机。
++ IMU Protocol。IMU数据由激光雷达直接输出, 有些雷达的imu信息放在difop里输出，例如E1,本文主要介绍的是IMU数据输出到单独端口的情况。
 + UCWP (User Configuration Write Protocol)。用户可以修改激光雷达的某些配置参数。
 
 rs_driver处理前两类协议的包，也就是MSOP Packet和DIFOP Packet。
 
-一般来说，激光雷达与电脑主机通过以太网连接，使用UDP协议。MSOP/DIFOP的格式，不同的雷达可能有较大差异。
+一般来说，激光雷达与电脑主机通过以太网连接，使用UDP协议。MSOP/DIFOP/IMU的格式，不同的雷达可能有较大差异。
 
 ### 1.4 点云帧
 
@@ -49,6 +50,7 @@ rs_driver主要由三部分组成： Input、Decoder、LidarDriverImpl。
   + LidarDriverImpl提供Packet队列。Input收到MSOP/DIFOP Packet后，调用LidarDriverImpl的回调函数。回调函数将它保存到Packet队列。
   + LidarDriverImpl提供Packet处理线程`handle_thread_`。在这个线程中，将MSOP Packet和DIFOP Packet分别派发给Decoder相应的处理函数。
   + Decoder解析完一帧点云时，通知LidarDriverImpl。后者再将点云传递给用户。
++ IMU数据的传递与点云数据类似，就不再过多介绍。
 
 
 
@@ -80,8 +82,8 @@ InputSock类从UDP Socket接收MSOP/DIFOP Packet。雷达将MSOP/DIFOP Packet发
 
 ![InputSock](./img/class_input_sock.png)
 
-+ 一般情况下，雷达将MSOP/DIFOP Packet发送到不同的目的Port，所以InputSock创建两个Socket来分别接收它们。
-  + 成员变量`fds_[2]`保存这两个Socket的描述符。`fds_[0]`是MSOP socket, `fds_[1]`是DIFOP socket。但也可以配置雷达将MSOP/DIFOP Packet发到同一个Port，这时一个Socket就够了，`fds_[1]`就是为无效值`-1`。
++ 一般情况下，雷达将MSOP/DIFOP/IMU Packet发送到不同的目的Port，所以InputSock创建三个Socket来分别接收它们。
+  + 成员变量`fds_[3]`保存这两个Socket的描述符。`fds_[0]`是MSOP socket, `fds_[1]`是DIFOP socket。但也可以配置雷达将MSOP/DIFOP Packet发到同一个Port，这时一个Socket就够了，`fds_[1]`就是为无效值`-1`。
   + MSOP/DIFOP对应的Port值可以在RSInputParam中设置，分别对应于`RSInputParam::msop_port`和`RSInputParam::difop_port`。
 + 一般情况下，MSOP/DIFOP Packet直接构建在UDP协议上。但在某些客户的场景下(如车联网)，MSOP/DIFOP Packet可能构建在客户的协议上，客户协议再构建在UDP协议上。这时，InputSock派发MSOP/DIFOP Packet之前，会先丢弃`USER_LAYER`的部分。成员变量`sock_offset_`保存了`USER_LAYER`部分的字节数。
   + `USER_LAYER`部分的字节数可以在RSInputParam中设置，对应于`RSInputParam::user_layer_bytes`。
@@ -100,15 +102,15 @@ createSocket()用于创建UDP Socket。
 
 该Socket的配置参数可以在RSInputParam中设置。根据设置的不同，createSocket()支持如下几种模式。
 
-| msop_port/difop_port       |    host_address            |  group_address          |               |
+| msop_port/difop_port/imu_port       |    host_address            |  group_address          |               |
 |:-----------:|:----------------------:|:-----------------:|:-------------|
-| 6699/7788       |    0.0.0.0            | 0.0.0.0          | 雷达的目的地址可以为广播地址、或电脑主机地址 |
-| 6699/7788       |    192.168.1.201      | 0.0.0.0          | 雷达的目的地址可以为电脑主机地址 |
-| 6699/7788       |    192.168.1.201      | 239.255.0.1      | 雷达的目的地址可以为组播地址、或电脑主机地址   |
+| 6699/7788/6688       |    0.0.0.0            | 0.0.0.0          | 雷达的目的地址可以为广播地址、或电脑主机地址 |
+| 6699/7788/6688       |    192.168.1.201      | 0.0.0.0          | 雷达的目的地址可以为电脑主机地址 |
+| 6699/7788/6688       |    192.168.1.201      | 239.255.0.1      | 雷达的目的地址可以为组播地址、或电脑主机地址   |
 
 #### 3.2.2 InputSock::init()
 
-init() 调用createSocket()，创建两个Socket,分别接收MSOP Packet和DIFOP Packet。
+init() 调用createSocket()，创建三个Socket,分别接收MSOP Packet、DIFOP Packet和IMU Packet。
 
 #### 3.2.3 InputSock::start()
 
@@ -120,7 +122,7 @@ start() 开始接收MSOP/DIFOP Packet。
 recvPacket() 接收MSOP/DIFOP Packet。
 在while()循环中，
 
-+ 调用FD_ZERO()初始化本地变量`rfds`，调用FD_SET()将`fds_[2]`中的两个fd加入`rfds`。当然，如果MSOP/DIFOP Packet共用一个socket， 无效的`fds_[1]`就不必加入了。
++ 调用FD_ZERO()初始化本地变量`rfds`，调用FD_SET()将`fds_[3]`中的两个fd加入`rfds`。当然，如果MSOP/DIFOP Packet共用一个socket， 无效的`fds_[1]`就不必加入了。
 + 调用select()在`rfds`上等待Packet, 超时值设置为`1`秒。
 如果select()的返回值提示`rfds`上有信号，调用FD_ISSET()检查是`fds_[]`中的哪一个fd可读。对这个fd，
 + 调用回调函数`cb_get_pkt_`， 得到大小为`MAX_PKT_LEN`的缓存。`MAX_PKT_LEN` = `1500`，对当前RoboSense雷达来说，够大了。
@@ -154,7 +156,6 @@ InputPcap解析PCAP文件得到MSOP/DIFOP Packet。使用第三方工具，如Wi
 
 | msop_port  |  difop_port  |     说明      |
 |:-----------:|:-------------:|:-------------|
-| 0          |    0         | 如果PCAP文件中只包含一个雷达的Packet |
 | 6699       |    7788      | 如果PCAP文件中包含多个雷达的Packet，则可以只提取指定雷达的Packet（该雷达MSOP/DIFOP端口不同） |
 | 6699       |    6699/0    | 如果PCAP文件中包含多个雷达的Packet，则可以只提取指定雷达的Packet（该雷达DIFOP/DIFOP端口相同）       |
 
@@ -162,9 +163,9 @@ InputPcap解析PCAP文件得到MSOP/DIFOP Packet。使用第三方工具，如Wi
 
 init()打开PCAP文件，构造PCAP过滤器。
 + 调用pcap_open_offline()打开PCAP文件，保存在成员变量`pcap_`中。
-+ 调用pcap_compile()构造MSOP/DIFOP Packet的PCAP过滤器。
-  + 如果它们使用不同端口，则需要两个过滤器，分别保存在`mosp_filter_`和`difop_filter_`中。
-  + 如果使用同一端口，那么`difop_filter_`就不需要了。
++ 调用pcap_compile()构造MSOP/DIFOP/IMU Packet的PCAP过滤器。
+  + 如果它们使用不同端口，则需要三个过滤器，分别保存在`mosp_filter_`、`difop_filter_`和`imu_filter_`。
+  + 如果使用同一端口，那么`difop_filter_`和`imu_filter_`就不需要了。
 
 #### 3.3.2 InputPcap::start()
 
@@ -186,7 +187,7 @@ recvPacket()解析PCAP文件。
   + 调用memcpy()将Packet数据复制到缓存中，并调用Buffer::setData()设置Packet的长度。复制时剥除了不需要的层，包括`USER_LAYER`和`TAIL_LAYER`（如果有的话）。
   + 调用回调函数`cb_put_pkt_`，将Packet派发给InputSock的使用者。
 
-如果是DIFOP Packet，处理与MSOP Packet一样。
+如果是DIFOP/IMU Packet，处理与MSOP Packet一样。
 
 + 调用this_thread::sleep_for()让解析线程睡眠一小会。这是为了模拟雷达发送MSOP Packet的间隔。这个间隔时间来自每个雷达的`Decoder`类，每个雷达有自己的值。在Decoder部分，会说明如何计算这个值。
 
@@ -1029,7 +1030,9 @@ RSDecoderConstParam是雷达配置参数，这些参数都是特定于雷达的�
 + `DISTANCE_MIN`、`DISTANCE_MAX`指定雷达测距范围
 + `DISTANCE_RES`指定MSOP格式中`distance`的解析度。
 + `TEMPERATURE_RES`指定MSOP格式中，雷达温度值的解析度。
-
++ `IMU_LEN`IMU Packet大小，当雷达不支持单独发送IMU数据时，不用设置这个值。
++ `IMU_ID_LEN`是IMU Packet大小，当雷达不支持单独发送IMU数据时，不用设置这个值。
++ `IMU_ID[]`是IMUPacket的标志字节, 用`IMU_ID_LEN`指定其长度，当雷达不支持单独发送IMU数据时，不用设置这个值。
 ```
 struct RSDecoderConstParam
 {
@@ -1054,6 +1057,11 @@ struct RSDecoderConstParam
   float DISTANCE_MAX;
   float DISTANCE_RES;
   float TEMPERATURE_RES;
+
+    // IMU parameters (new fields with default values)
+  uint16_t IMU_LEN{0};      // Default to 0 for lidar without IMU
+  uint16_t IMU_ID_LEN{0};   // Default to 0 for lidar without IMU
+  uint8_t IMU_ID[4]{0};     // Default to {0, 0, 0, 0} for lidar without IMU
 };
 ```
 
@@ -1074,7 +1082,15 @@ processMsopPkt()处理MSOP Packet。
 + 校验DIFOP Packet的标志字节是否匹配。
 + 如果以上校验通过，调用decodeMsopPkt()。这是一个纯虚拟函数，由各雷达的派生类提供自己的实现。
 
-##### 4.8.1.4 Decoder::transformPoint()
+##### 4.8.1.4 Decoder::processImuPkt()
+
+processImuPkt()处理IMU Packet。
++ 校验Packet的长度是否匹配。
++ 校验Packet的标志字节是否匹配。
++ 如果校验无误，调用decodeImuPkt()。这是一个纯虚拟函数，由各雷达的派生类提供自己的实现。
+
+
+##### 4.8.1.5 Decoder::transformPoint()
 
 transformPoint() 对点做坐标变换。它基于第三方开源库Eigen。
 
@@ -1327,16 +1343,34 @@ DecoderFactory是创建Decoder实例的工厂。
 Decoder/雷达的类型如下。
 
 ```
-num LidarType
+enum LidarType
 {
-  RS16 = 1,
+  // mechanical
+  RS_MECH = 0x01,
+  RS16 = RS_MECH,
   RS32,
   RSBP,
+  RSAIRY,
+  RSHELIOS,
+  RSHELIOS_16P,
   RS128,
   RS80,
-  RSHELIOS,
-  RSROCK,
-  RSM1 = 10
+  RS48,
+  RSP128,
+  RSP80,
+  RSP48,
+
+  // mems
+  RS_MEMS = 0x20,
+  RSM1 = RS_MEMS,
+  RSM2,
+  RSM3,
+  RSE1,
+  RSMX,
+
+  // jumbo
+  RS_JUMBO = 0x100,
+  RSM1_JUMBO = RS_JUMBO + RSM1,
 };
 ```
 
@@ -1349,7 +1383,7 @@ createDecoder() 根据指定的雷达类型，创建Decdoer实例。
 LidarDriverImpl组合Input部分和Decoder部分。
 + 成员`input_ptr_`是Input实例。成员`decoder_ptr_`是Decoder实例。
   + LidarDriverImpl只有一个Input实例和一个Decoder实例，所以一个LidarDriverImpl实例只支持一个雷达。如果需要支持多个雷达，就需要分别创建多个LidarDriverImpl实例。
-+ 成员`handle_thread_`是MSOP/DIFOP Packet的处理线程。
++ 成员`handle_thread_`是MSOP/DIFOP/IMU Packet的处理线程。
 + 成员`driver_param_`是RSDriverParam的实例。
   + RSDriverParam打包了RSInputParam和RSDecoderParam，它们分别是Input部分和Decoder部分的参数。  
   
@@ -1366,18 +1400,19 @@ typedef struct RSDriverParam
 ![lidar driver impl](./img/class_lidar_driver_impl.png)
 
 组合Input,
-+ 成员`free_pkt_queue_`、`pkt_queue_`分别保存空闲的Packet， 待处理的MSOP/DIFOP Packet。
++ 成员`free_pkt_queue_`、`pkt_queue_`分别保存空闲的Packet， 待处理的MSOP/DIFOP/IMU Packet。
   + 这2个队列是SyncQueue类的实例。SyncQueue提供多线程访问的互斥保护。
 + 函数packetGet()和packetPut()用来向input_ptr_注册。`input_ptr_`调用前者得到空闲的Buffer，调用后者派发填充好Packet的Buffer。
 
 组合Decoder,
 + 成员`cb_get_cloud_`和`cb_put_cloud_`是回调函数，由驱动的使用者提供。它们的作用类似于Input类的`cb_get_pkt_`和`cb_put_pkt_`。驱动调用`cb_get_cloud_`得到空闲的点云，调用`cb_put_cloud_`派发填充好的点云。
   + 驱动的使用者调用成员函数regPointCloudCallback()，设置`cb_get_cloud_`和`cb_put_cloud_`。
++ 成员`cb_get_imu_data_` /`cb_put_imu_data_`作用和`cb_get_cloud_`/`cb_put_cloud_`类似, 用来获取和派发imu数据。
 + 成员函数splitFrame()用来向`decoder_ptr_`注册。`decoder_ptr_`在需要分帧时，调用split_Frame()。这样LidarDriverImpl可以调用`cb_put_cloud_`将点云传给使用者，同时调用`cb_get_cloud_`得到空闲的点云，用于下一帧的累积。
 
 #### 4.9.1 LidarDriverImpl::getPointCloud()
 
-LidarriverImpl的成员`cb_get_cloud_`是rs_driver的使用者提供的。getPointCloud(对它加了一层包装，以便较验它是否合乎要求。
+LidarriverImpl的成员`cb_get_cloud_`是rs_driver的使用者提供的。getPointCloud（）对它加了一层包装，以便较验它是否合乎要求。
 在循环中，
 
 + 调用`cb_get_cloud_`，得到点云，
@@ -1449,7 +1484,7 @@ getTemperature()调用Decoder::getTemperature()， 得到雷达温度。
 
 与MSOP/DIFP Packet的录制与回放相关的逻辑，散布在rs_driver的各个模块中，所以这里单独分一个章节说明。
 
-![packet record and replay](./img/packet_record_replay.png)
+![packet record and replay](./img/cla.png)
 
 ### 5.1 录制
 

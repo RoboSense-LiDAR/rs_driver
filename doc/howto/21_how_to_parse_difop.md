@@ -81,11 +81,19 @@ struct DeviceInfo
   {
       init();
   }
+  bool state;
   uint8_t sn[6];
   uint8_t mac[6];
   uint8_t top_ver[5];
   uint8_t bottom_ver[5];
-  bool state;
+  
+  float qx{0.0f};
+  float qy{0.0f};
+  float qz{0.0f};
+  float qw{1.0f};
+  float x{0.0f};
+  float y{0.0f};
+  float z{0.0f};
   
   void init()
   {
@@ -93,6 +101,13 @@ struct DeviceInfo
     memset(mac, 0, sizeof(mac));
     memset(top_ver, 0, sizeof(top_ver));
     memset(bottom_ver, 0, sizeof(bottom_ver));
+    qx = 0.0f;
+    qy = 0.0f;
+    qz = 0.0f;
+    qw = 1.0f;
+    x = 0.0f;
+    y = 0.0f;
+    z = 0.0f;
     state = false;
   }
 
@@ -104,6 +119,13 @@ struct DeviceInfo
       memcpy(mac, other.mac, sizeof(mac));
       memcpy(top_ver, other.top_ver, sizeof(top_ver));
       memcpy(bottom_ver, other.bottom_ver, sizeof(bottom_ver));
+      qx = other.qx;
+      qy = other.qy;
+      qz = other.qz;
+      qw = other.qw;
+      x = other.x;
+      y = other.y;
+      z = other.z;
       state = other.state;
     }
     return *this;

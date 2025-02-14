@@ -82,6 +82,18 @@
 
 ​		如果Packet中的数据有问题，不能触发分帧，则`rs_driver`将在当前点云实例中持续累积点，并持续消耗内存。为了避免这个问题，`rs_driver`在收到解析MSOP Packet时，检查当前点云实例中点的数量，如果超过了指定的阈值，则报告错误ERRCODE_CLOUDOVERFLOW。
 
++ ERRCODE_WRONGCRC32
+                当开启ENABLE_CRC32_CHECK这个宏时，`rs_driver`会对MSOP/DIFOP Packet的数据作CRC32校验,如果校验失败，则`rs_driver`报告错误ERRCODE_WRONGCRC32。
+
++ ERRCODE_WRONGIMULEN
+                `rs_driver`接收到IMU Packet后，先检查包长是否匹配，如果不匹配，则报告错误ERRCODE_WRONGIMULEN，然后再检查标志字节，如果不匹配，则报告错误ERRCODE_WRONGIMUID。
+
++ ERRCODE_WRONGIMUID
+                请参考ERRCODE_WRONGIMULEN的说明。
+
++ ERRCODE_WRONGPCAPPARSE
+                当pcap文件里的数据解析出现问题（报文过长或过短），则`rs_driver`报告错误ERRCODE_WRONGPCAPPARSE。
+
 + ERRCODE_STARTBEFOREINIT
 
 ​		使用`rs_driver`包括三个步骤：创建实例、初始化Init()、和启动Start()。使用者调用Start()之前必须先调用Init()，如果没有遵循这个次序，则`rs_driver`报告错误ERRCODE_STARTBEFOREINIT。
