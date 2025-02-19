@@ -23,6 +23,12 @@ Run the tool.
 ./tool/rs_driver_viewer 
 ```
 
+Note: On Ubuntu 22.04, using PCL version 1.12 with VTK 9.0 causes runtime failures. It has been verified that PCL version 1.14 with VTK 9.0 works correctly. You can specify the PCL version by modifying the tool/CMakeLists.txt file.
+
+```cmake
+find_package(PCL 1.14  COMPONENTS common visualization io QUIET REQUIRED)
+```
+
 ### 14.2.1 Help Menu
 
 - -h
