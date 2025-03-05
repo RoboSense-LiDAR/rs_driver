@@ -47,6 +47,8 @@ std::mutex mtx_viewer;
 SyncQueue<std::shared_ptr<PointCloudMsg>> free_cloud_queue;
 SyncQueue<std::shared_ptr<PointCloudMsg>> stuffed_cloud_queue;
 
+int NUM_RAN_GLOBAL = 0;
+
 bool checkKeywordExist(int argc, const char* const* argv, const char* str)
 {
   for (int i = 1; i < argc; i++)
@@ -181,44 +183,57 @@ std::shared_ptr<PointCloudMsg> pointCloudGetCallback(void)
   {
     return msg;
   }
-
   return std::make_shared<PointCloudMsg>();
 }
 
 void pointCloudPutCallback(std::shared_ptr<PointCloudMsg> msg)
 {
-  stuffed_cloud_queue.push(msg);
+  //if (NUM_RAN_GLOBAL > 0)
+  //{
+    stuffed_cloud_queue.push(msg);
+  //}
 }
 
 bool to_exit_process = false;
 void processCloud(void)
 {
+  int num_ran = 0;
   while (!to_exit_process)
   {
     std::shared_ptr<PointCloudMsg> msg = stuffed_cloud_queue.popWait();
-    if (msg.get() == NULL)
+    
+    RS_MSG << "00 msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
+
+    if (msg.get() == NULL) //|| num_ran == 0)
     {
       continue;
     }
-
     //
     // show the point cloud
     //
-    pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl_pointcloud->points.swap(msg->points);
-    pcl_pointcloud->height = msg->height;
-    pcl_pointcloud->width = msg->width;
-    pcl_pointcloud->is_dense = msg->is_dense;
-
-    PointCloudColorHandlerGenericField<pcl::PointXYZI> point_color_handle(pcl_pointcloud, "intensity");
-
+    if (num_ran > 0)
     {
-      const std::lock_guard<std::mutex> lock(mtx_viewer);
-      pcl_viewer->removePointCloud("rslidar");
-      pcl_viewer->addPointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
-    }
+      pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud(new pcl::PointCloud<pcl::PointXYZI>);
+      pcl_pointcloud->points.swap(msg->points);
+      pcl_pointcloud->height = msg->height;
+      pcl_pointcloud->width = msg->width;
+      pcl_pointcloud->is_dense = msg->is_dense;
 
-    free_cloud_queue.push(msg);
+      PointCloudColorHandlerGenericField<pcl::PointXYZI> point_color_handle(pcl_pointcloud, "intensity");
+
+      {
+        const std::lock_guard<std::mutex> lock(mtx_viewer);
+        pcl_viewer->removePointCloud("rslidar");
+        pcl_viewer->addPointCloud<pcl::PointXYZI>(pcl_pointcloud, point_color_handle, "rslidar");
+      }
+      free_cloud_queue.push(msg);
+    }
+    else
+    {
+      
+    }
+    num_ran += 1;
+
   }
 }
 
@@ -243,7 +258,18 @@ int main(int argc, char* argv[])
   std::thread cloud_handle_thread = std::thread(processCloud);
 
   RSDriverParam param;
-  parseParam(argc, argv, param);
+  //parseParam(argc, argv, param);
+
+  // ATTEMPT TO FIX SEG FAULT
+  // RSDriverParam param;                  ///< Create a parameter object
+  param.input_type = InputType::ONLINE_LIDAR;
+  param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
+  param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
+  param.input_param.imu_port = 6688;   ///< Set the lidar imu port number, the default is 0
+  param.lidar_type = LidarType::RSE1;   ///< Set the lidar type. Make sure this type is correct
+  //param.print();
+
+
   param.print();
 
   pcl_viewer = std::make_shared<PCLVisualizer>("RSPointCloudViewer");
@@ -267,15 +293,31 @@ int main(int argc, char* argv[])
 
   driver.start();
 
+  // seg fault if this is enabled:
   while (!pcl_viewer->wasStopped())
   {
     {
       const std::lock_guard<std::mutex> lock(mtx_viewer);
-      pcl_viewer->spinOnce();
+      if (NUM_RAN_GLOBAL > 4)
+      {
+        RS_MSG << "Doing a viz..." << NUM_RAN_GLOBAL << RS_REND;
+        pcl_viewer->spinOnce();
+        RS_MSG << "Done a viz." << RS_REND;
+      }
     }
+    NUM_RAN_GLOBAL += 1;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+  
+  RS_MSG << "Viewer Stopped!" << NUM_RAN_GLOBAL << RS_REND;
+
+  // we added this, it works by itself:
+  while(true)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
 
   driver.stop();
 
