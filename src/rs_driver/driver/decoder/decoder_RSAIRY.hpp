@@ -175,7 +175,7 @@ protected:
   template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 
-  RSLidarModel lidarModel_{CHANNEL_96};;
+  RSLidarModel lidarModel_{CHANNEL_96};
   uint16_t u16ChannelNum_{96};
   bool bInit_{false};
 
