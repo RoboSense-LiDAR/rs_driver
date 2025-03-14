@@ -37,6 +37,7 @@ git clone https://github.com/RoboSense-LiDAR/rs_driver.git
 + RS-LiDAR-E1
 + RS-LiDAR-MX
 + RS-LiDAR-AIRY
++ RS-AC1
 
 
 
@@ -130,17 +131,20 @@ target_link_libraries(project ${rs_driver_LIBRARIES})
 
 Windows下，**rs_driver** 暂不支持安装。
 
-### 1.6.3 VS工程文件
+
+### 1.6.3 RS-AC1的VS工程
+在window下使用cmake指令生成相应的编译实例程序和工具的MSVS工程文件。
+
+### 1.6.4 其他雷达的VS工程文件
 
 工程目录`rs_driver/win`下，有编译实例程序和工具的MSVS工程文件。
 
 关于Windows下编译和使用**rs_driver**的更多说明，可以参考[如何在Windows下编译rs_driver](doc/howto/16_how_to_compile_on_windows_CN.md)
 
 
-
 ## 1.7 示例程序
 
-**rs_driver**在目录```rs_driver/demo``` 下，提供了两个示例程序。
+**rs_driver**在目录```rs_driver/demo``` 下，提供了三个示例程序。
 
 - `demo_online.cpp`
 
@@ -151,9 +155,12 @@ Windows下，**rs_driver** 暂不支持安装。
 
 ​	`demo_pcap`解析PCAP文件，输出点云。编译`demo_pcap`需要安装`libpcap`库。
 
+- `demo_usb.cpp`
+
+​	`demo_usb`解析RS-AC1的数据，输出点云，图像和IMU数据。
 
 
-要编译这两个程序，需使能`COMPILE_DEMOS`选项。
+要编译这三个程序，需使能`COMPILE_DEMOS`选项。
 
 ```bash
 cmake -DCOMPILE_DEMOS=ON ..
@@ -163,6 +170,7 @@ cmake -DCOMPILE_DEMOS=ON ..
 
 关于`demo_pcap`的更多说明，可以参考[如何解码PCAP文件](doc/howto/10_how_to_decode_pcap_file_CN.md)
 
+关于`demo_usb`的更多说明，可以参考[如何使用RS-AC1](doc/howto/22_how_to_use_rs-ac1_CN.md)
 
 
 ## 1.8 点云可视化工具

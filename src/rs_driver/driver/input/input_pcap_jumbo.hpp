@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else //__linux__
 #endif
 
+#ifndef DISABLE_PCAP_PARSE
 #include <pcap.h>
 
 namespace robosense
@@ -196,3 +197,5 @@ inline void InputPcapJumbo::recvPacket()
 
 }  // namespace lidar
 }  // namespace robosense
+
+#endif // DISABLE_PCAP_PARSE

@@ -37,6 +37,7 @@ Below are the supported LiDARS.
 - RS-LiDAR-E1
 - RS-LiDAR-MX
 - RS-LiDAR-AIRY
++ RS-AC1
 
 
 ## 1.3 Supported Platforms
@@ -130,11 +131,18 @@ Select the "Add PCL to the system PATH for xxx" option during the installation.
 
 Installation is not supported on Windows.
 
+### 1.6.3 VS Project for RS-AC1
+Use the cmake command to generate the MSVS project files on Windows.
 
+### 1.6.4 VS Project Files for Other Radars
+
+In the project directory `rs_driver/win`, there are MSVS project files for building programs and tools.
+
+For more information on compiling and using **rs_driver** on Windows, refer to [How to Compile rs_driver on Windows](doc/howto/16_how_to_compile_on_windows.md).
 
 ## 1.7 Quick Start
 
-**rs_driver** offers two demo programs in ```rs_driver/demo```.
+**rs_driver** offers three demo programs in ```rs_driver/demo```.
 
 - demo_online.cpp
 
@@ -144,9 +152,12 @@ Installation is not supported on Windows.
 
 ​	`demo_pcap` parses pcap file, and output point cloud. It is based on libpcap.
 
+- demo_usb.cpp
+
+​	`demo_usb` parse data from RS-AC1 and output point cloud, image, and IMU data.
 
 
-To build `demo_online` and `demo_pcap`, enable the CMake option `COMPILE_DEMOS`.
+To build `demo_online`, `demo_pcap` and `demo_usb`, enable the CMake option `COMPILE_DEMOS`.
 
 ```bash
 cmake -DCOMPILE_DEMOS=ON ..
@@ -155,6 +166,8 @@ cmake -DCOMPILE_DEMOS=ON ..
 For more info about `demo_online`, Please refer to [Decode online LiDAR](doc/howto/07_how_to_decode_online_lidar.md)
 
 For more info about `demo_pcap`, Please refer to [Decode pcap file](doc/howto/09_how_to_decode_pcap_file.md)
+
+For more info about `demo_usb`, Please refer to [How to use RS-AC1](doc/howto/22_how_to_use_rs-ac1.md)
 
 
 

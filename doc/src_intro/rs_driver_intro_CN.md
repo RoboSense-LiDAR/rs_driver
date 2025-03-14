@@ -187,7 +187,7 @@ recvPacket()解析PCAP文件。
   + 调用memcpy()将Packet数据复制到缓存中，并调用Buffer::setData()设置Packet的长度。复制时剥除了不需要的层，包括`USER_LAYER`和`TAIL_LAYER`（如果有的话）。
   + 调用回调函数`cb_put_pkt_`，将Packet派发给InputSock的使用者。
 
-如果是DIFOP/IMU Packet，处理与MSOP Packet一样。
+如果是DIFOP/IMU咯   Packet，处理与MSOP Packet一样。
 
 + 调用this_thread::sleep_for()让解析线程睡眠一小会。这是为了模拟雷达发送MSOP Packet的间隔。这个间隔时间来自每个雷达的`Decoder`类，每个雷达有自己的值。在Decoder部分，会说明如何计算这个值。
 
@@ -1208,7 +1208,7 @@ Block间的角度差 = 360 / 每帧Block数
 | RX             |    0.01473 | 光心相对于物理中心的X坐标  |
 | RY             |    0.0085  | 光心相对于物理中心的Y坐标  |
 | RZ             |    0.09427 | 光心相对于物理中心的Z坐标 |
-| BLOCK_DURATION |    55.52   | Block的持续时间，单位微秒 |
+| BLOCK_DURATION |    55.52   | Block的持续时间，单位纳秒 |
 | CHAN_TSS[]     |    -       | 从发射时间列表得到 |
 | CHAN_AZIS[]    |    -       | 从发射时间列表得到 |
 

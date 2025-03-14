@@ -18,7 +18,7 @@ endif()
 #=============================
 #  Compile Features
 #=============================
-option(DISABLE_PCAP_PARSE         "Disable PCAP file parse" OFF) 
+option(DISABLE_PCAP_PARSE         "Disable PCAP file parse" ON)
 option(ENABLE_TRANSFORM           "Enable transform functions" OFF)
 
 option(ENABLE_MODIFY_RECVBUF       "Enable modify size of RCVBUF" OFF)
@@ -30,10 +30,12 @@ option(ENABLE_PCL_POINTCLOUD      "Enable PCL Point Cloud" OFF)
 option(ENABLE_CRC32_CHECK         "Enable CRC32 Check on MSOP Packet" OFF)
 option(ENABLE_DIFOP_PARSE         "Enable parsing DIFOP Packet" OFF)
 
+option(ENABLE_USB                 "Enable usb interface" ON)
+
 #=============================
 #  Compile Demos, Tools, Tests
 #=============================
-option(COMPILE_DEMOS "Build rs_driver demos" OFF)
+option(COMPILE_DEMOS "Build rs_driver demos" ON)
 option(COMPILE_TOOLS "Build rs_driver tools" OFF)
 option(COMPILE_TOOL_VIEWER "Build point cloud visualization tool" OFF)
 option(COMPILE_TOOL_PCDSAVER "Build point cloud pcd saver tool" OFF)
@@ -62,6 +64,8 @@ if(MSVC)
   add_compile_definitions(_DISABLE_EXTENDED_ALIGNED_STORAGE) # to disable a msvc error
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:100000000")
 
+  add_definitions(-DPLATFORM_WINDOWS_MSVC=1)
+
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
   if(UNIX)
@@ -89,6 +93,7 @@ set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}/include)
 set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 set(DRIVER_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
 set(DRIVER_CMAKE_ROOT ${CMAKE_CURRENT_LIST_DIR}/cmake)
+set(INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 
 if(WIN32)
   list(APPEND EXTERNAL_LIBS ws2_32)
@@ -148,7 +153,31 @@ if(${ENABLE_TRANSFORM})
 
 endif(${ENABLE_TRANSFORM})
 
+if(${ENABLE_USB})
 
+  message(=============================================================)
+  message("-- Enable usb")
+  message(=============================================================)
+
+  add_definitions(-DENABLE_USB)
+
+  add_subdirectory(./thirdparty/libusb)
+  add_subdirectory(./thirdparty/libuvc)
+
+  if(MSVC)
+    add_library(rsac_usb STATIC ./src/rs_driver/driver/input/input_usb.cpp)
+  else()
+    add_library(rsac_usb SHARED ./src/rs_driver/driver/input/input_usb.cpp)
+  endif()
+  target_link_libraries(rsac_usb PRIVATE ${EXTERNAL_LIBS} uvc-static)
+  target_include_directories(rsac_usb PUBLIC
+  ./src
+  ./thirdparty/libusb/libusb
+  ./thirdparty/libuvc/include
+  ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/libuvc)
+
+  list(APPEND EXTERNAL_LIBS rsac_usb)
+endif(${ENABLE_USB})
 
 #============================
 #  Build Demos, Tools, Tests
@@ -233,6 +262,12 @@ if(UNIX AND ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   install(DIRECTORY src/
           DESTINATION ${INSTALL_DRIVER_DIR}
           FILES_MATCHING PATTERN "*.hpp")
+
+  if(${ENABLE_USB})
+    install(TARGETS rsac_usb
+    ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+    LIBRARY DESTINATION ${INSTALL_LIB_DIR})
+  endif(${ENABLE_USB})
 
   if(NOT TARGET uninstall)
     configure_file(

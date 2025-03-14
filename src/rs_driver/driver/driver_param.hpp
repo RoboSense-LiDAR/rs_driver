@@ -33,7 +33,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <rs_driver/common/rs_log.hpp>
-#include "rs_driver/msg/imu_data_msg.hpp"
+#include <rs_driver/msg/imu_data_msg.hpp>
+#include <rs_driver/msg/image_data_msg.hpp>
 #include <string>
 #include <map>
 #include <cstring>
@@ -70,6 +71,9 @@ enum LidarType  ///< LiDAR type
   // jumbo
   RS_JUMBO = 0x100,
   RSM1_JUMBO = RS_JUMBO + RSM1,
+
+  // active camer
+  RS_AC1,
 };
 
 inline bool isMech(LidarType type)
@@ -85,6 +89,11 @@ inline bool isMems (LidarType type)
 inline bool isJumbo (LidarType type)
 {
   return (LidarType::RS_JUMBO <= type);
+}
+
+inline bool isAC (LidarType type)
+{
+  return (LidarType::RS_AC1 <= type);
 }
 
 inline std::string lidarTypeToStr(const LidarType& type)
@@ -108,6 +117,7 @@ inline std::string lidarTypeToStr(const LidarType& type)
         {LidarType::RSE1, "RSE1"},
         {LidarType::RSMX, "RSMX"},
         {LidarType::RSM1_JUMBO, "RSM1_JUMBO"},
+        {LidarType::RS_AC1, "RS_AC1"},
     };
 
     auto it = lidarTypeMap.find(type);
@@ -141,6 +151,7 @@ inline LidarType strToLidarType(const std::string& type)
         {"RSMX", LidarType::RSMX},
         {"RSAIRY", LidarType::RSAIRY},
         {"RSM1_JUMBO", LidarType::RSM1_JUMBO},
+        {"RS_AC1", LidarType::RS_AC1},
     };
 
     auto it = strLidarTypeMap.find(type);
@@ -149,7 +160,8 @@ inline LidarType strToLidarType(const std::string& type)
     } else {
       RS_ERROR << "Wrong lidar type: " << type << RS_REND;
       RS_ERROR << "Please give correct type: RS16, RS32, RSBP, RSHELIOS, RSHELIOS_16P, RS48, RS80, RS128, RSP128, RSP80, RSP48, "
-              << "RSM1, RSM1_JUMBO, RSM2,RSM3, RSE1, RSMX, RSAIRY." 
+              << "RSM1, RSM1_JUMBO, RSM2,RSM3, RSE1, RSMX, RSAIRY,"
+              << "RS_AC1."
               << RS_REND;
       exit(-1);
     }
@@ -159,7 +171,8 @@ enum InputType
 {
   ONLINE_LIDAR = 1,
   PCAP_FILE,
-  RAW_PACKET
+  RAW_PACKET,
+  USB
 };
 
 inline std::string inputTypeToStr(const InputType& type)
@@ -175,6 +188,9 @@ inline std::string inputTypeToStr(const InputType& type)
       break;
     case InputType::RAW_PACKET:
       str = "RAW_PACKET";
+      break;
+    case InputType::USB:
+      str = "USB";
       break;
     default:
       str = "ERROR";
@@ -277,6 +293,14 @@ struct RSInputParam  ///< The LiDAR input parameter
   float pcap_rate = 1.0f;                      ///< Rate to read the pcap file
   bool use_vlan = false;                       ///< Vlan on-off
 
+  bool enable_image = true;
+  int image_width = 1920;
+  int image_height = 1080;
+  int image_fps = 30;
+  frame_format image_format = FRAME_FORMAT_NV12;
+
+  std::string device_uuid = "";
+
   void print() const
   {
     RS_INFO << "------------------------------------------------------" << RS_REND;
@@ -293,6 +317,12 @@ struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "pcap_rate: " << pcap_rate << RS_REND;
     RS_INFOL << "pcap_repeat: " << pcap_repeat << RS_REND;
     RS_INFOL << "use_vlan: " << use_vlan << RS_REND;
+    RS_INFOL << "enable_image: " << enable_image << RS_REND;
+    RS_INFOL << "image_format: " << (int)image_format << RS_REND;
+    RS_INFOL << "image_width: " << image_width << RS_REND;
+    RS_INFOL << "image_height: " << image_height << RS_REND;
+    RS_INFOL << "image_fps: " << image_fps << RS_REND;
+    RS_INFOL << "device_uuid: " << device_uuid << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
 

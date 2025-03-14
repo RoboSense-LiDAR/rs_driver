@@ -1,0 +1,42 @@
+units:
+  extension_unit:
+    type: vendor
+    description: Vendor-specific building blocks added to the specification.
+    control_prefix: XU
+    controls:
+      transfer_mode:
+        control: TRANSFER_MODE
+        length: 1
+        fields:
+          transfer_mode:
+            type: int
+            position: 0
+            length: 1
+            doc: '0: usb, 1: ethernet'
+      point_cloud_fps:
+        control: PC_FPS
+        length: 1
+        fields:
+          pc_fps:
+            type: int
+            position: 0
+            length: 1
+            doc: '10: 10Hz, 20: 20Hz, 30: 30Hz'
+      usb_mode_cfg:
+        control: USB_MODE_CFG
+        length: 1
+        fields:
+          usb_mode_cfg:
+            type: int
+            position: 0
+            length: 1
+            doc: '0: uvc, 1: adb, 2: eth_bridge'
+      sys_time:
+        control: SYS_TIME
+        length: 16
+        fields:
+          sys_time:
+            type: int
+            position: 0
+            length: 1
+            doc: '1: set x3 system time'

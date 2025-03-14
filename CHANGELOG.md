@@ -2,9 +2,6 @@
 
 # UnReleased
 
-### Fix 
-Fix the compilation issue of rs_driver_viewer on Ubuntu 22.04.
-
 
 ## v1.5.17 2025-02-14
 
@@ -16,7 +13,6 @@ Fix the compilation issue of rs_driver_viewer on Ubuntu 22.04.
 ### Changed
 - Add feature attribute to point type.
 - Update help document.
-- Update block_time_offset as us for RSE1
 
 ### Fix 
 - Fix compilation bug in win/input_socket_select.

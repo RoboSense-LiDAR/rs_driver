@@ -138,7 +138,6 @@ public:
     this->tss[blk] = this->tss[blk+1] = tss;
   }
 };
-
 template <typename T_Packet>
 class TwoInOneBlockIterator : public BlockIterator<T_Packet>
 {

@@ -37,6 +37,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/input/input_raw_jumbo.hpp>
 #include <rs_driver/driver/input/input_sock.hpp>
 #include <rs_driver/driver/input/input_sock_jumbo.hpp>
+#ifdef ENABLE_USB
+#include <rs_driver/driver/input/input_usb.hpp>
+#endif // ENABLE_USB
 
 #ifndef DISABLE_PCAP_PARSE
 #include <rs_driver/driver/input/input_pcap.hpp>
@@ -98,6 +101,14 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RS
       }
       break;
 
+#ifdef ENABLE_USB
+    case InputType::USB:
+      {
+        input = std::make_shared<InputUsb>(param);
+      }
+      break;
+#endif
+
     default:
 
       RS_ERROR << "Wrong Input Type " << type << "." << RS_REND;
@@ -107,7 +118,12 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RS
         RS_ERROR << "To use InputType::PCAP_FILE, please do not specify the make option DISABLE_PCAP_PARSE." << RS_REND;
       }
 
-      exit(-1);
+      if (type == InputType::USB)
+      {
+        RS_ERROR << "To use InputType::USB, please do not specify the make option ENABLE_USB." << RS_REND;
+      }
+
+      // exit(-1);
   }
 
   return input;

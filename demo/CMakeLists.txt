@@ -17,6 +17,7 @@ endif (${ENABLE_PCL_POINTCLOUD})
 
 include_directories(${DRIVER_INCLUDE_DIRS})
 
+
 add_executable(demo_online
               demo_online.cpp)
 
@@ -28,6 +29,15 @@ add_executable(demo_online_multi_lidars
 
 target_link_libraries(demo_online_multi_lidars
                     ${EXTERNAL_LIBS})
+
+if(${ENABLE_USB})
+
+add_executable(demo_usb
+              demo_usb.cpp)
+
+target_link_libraries(demo_usb
+                    ${EXTERNAL_LIBS})
+endif()
 
 if(NOT ${DISABLE_PCAP_PARSE})
 

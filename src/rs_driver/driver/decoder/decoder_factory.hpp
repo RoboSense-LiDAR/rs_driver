@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/decoder_RSE1.hpp>
 #include <rs_driver/driver/decoder/decoder_RSM1_Jumbo.hpp>
 #include <rs_driver/driver/decoder/decoder_RSMX.hpp>
+#include <rs_driver/driver/decoder/decoder_RSAC1.hpp>
 
 namespace robosense
 {
@@ -128,9 +129,12 @@ inline std::shared_ptr<Decoder<T_PointCloud>> DecoderFactory<T_PointCloud>::crea
     case LidarType::RSMX:
       ret_ptr = std::make_shared<DecoderRSMX<T_PointCloud>>(param);
       break;
+    case LidarType::RS_AC1:
+      ret_ptr = std::make_shared<DecoderRSAC1<T_PointCloud>>(param);
+      break;
     default:
       RS_ERROR << "Wrong LiDAR Type. Please check your LiDAR Version! " << RS_REND;
-      exit(-1);
+      // exit(-1);
   }
 
   return ret_ptr;

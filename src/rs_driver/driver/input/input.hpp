@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rs_driver/driver/driver_param.hpp>
 #include <rs_driver/utility/buffer.hpp>
+#include <rs_driver/common/error_code.hpp>
 
 #include <functional>
 #include <thread>
@@ -59,6 +60,14 @@ public:
       const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
       const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt);
 
+  inline void regCallback2(
+      const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
+      const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt);
+
+  inline void regCallback3(
+      const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
+      const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt);
+
   virtual bool init() = 0;
   virtual bool start() = 0;
   virtual void stop();
@@ -68,10 +77,17 @@ public:
 
 protected:
   inline void pushPacket(std::shared_ptr<Buffer> pkt, bool stuffed = true);
+  inline void pushPacket2(std::shared_ptr<Buffer> pkt, bool stuffed = true);
+  inline void pushPacket3(std::shared_ptr<Buffer> pkt, bool stuffed = true);
 
   RSInputParam input_param_;
   std::function<std::shared_ptr<Buffer>(size_t size)> cb_get_pkt_;
   std::function<void(std::shared_ptr<Buffer>, bool)> cb_put_pkt_;
+  std::function<std::shared_ptr<Buffer>(size_t size)> cb_get_pkt_2_;
+  std::function<void(std::shared_ptr<Buffer>, bool)> cb_put_pkt_2_;
+  std::function<std::shared_ptr<Buffer>(size_t size)> cb_get_pkt_3_;
+  std::function<void(std::shared_ptr<Buffer>, bool)> cb_put_pkt_3_;
+
   std::function<void(const Error&)> cb_excep_;
   std::thread recv_thread_;
   bool to_exit_recv_;
@@ -87,12 +103,28 @@ inline Input::Input(const RSInputParam& input_param)
 
 inline void Input::regCallback(
     const std::function<void(const Error&)>& cb_excep,
-    const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt, 
+    const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
     const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt)
 {
   cb_excep_   = cb_excep;
   cb_get_pkt_ = cb_get_pkt;
   cb_put_pkt_ = cb_put_pkt;
+}
+
+inline void Input::regCallback2(
+    const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
+    const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt)
+{
+  cb_get_pkt_2_ = cb_get_pkt;
+  cb_put_pkt_2_ = cb_put_pkt;
+}
+
+inline void Input::regCallback3(
+    const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
+    const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt)
+{
+  cb_get_pkt_3_ = cb_get_pkt;
+  cb_put_pkt_3_ = cb_put_pkt;
 }
 
 inline void Input::stop()
@@ -109,6 +141,16 @@ inline void Input::stop()
 inline void Input::pushPacket(std::shared_ptr<Buffer> pkt, bool stuffed)
 {
   cb_put_pkt_(pkt, stuffed);
+}
+
+inline void Input::pushPacket2(std::shared_ptr<Buffer> pkt, bool stuffed)
+{
+  cb_put_pkt_2_(pkt, stuffed);
+}
+
+inline void Input::pushPacket3(std::shared_ptr<Buffer> pkt, bool stuffed)
+{
+  cb_put_pkt_3_(pkt, stuffed);
 }
 
 }  // namespace lidar

@@ -25,5 +25,10 @@ set(RS_DRIVER_INCLUDE_DIRS "@DRIVER_INCLUDE_DIRS@;@INSTALL_DRIVER_DIR@")
 set(rs_driver_LIBRARIES "@EXTERNAL_LIBS@")
 set(RS_DRIVER_LIBRARIES "@EXTERNAL_LIBS@")
 
+if(${ENABLE_USB})
+  list(APPEND rs_driver_LIBRARIES "/usr/local/lib/librsac_usb.so")
+  list(APPEND RS_DRIVER_LIBRARIES "/usr/local/lib/librsac_usb.so")
+endif(${ENABLE_USB})
+
 set(rs_driver_FOUND true)
 set(RS_DRIVER_FOUND true)
