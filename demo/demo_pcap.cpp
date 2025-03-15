@@ -188,13 +188,13 @@ int main(int argc, char* argv[])
 
   RSDriverParam param;                                         ///< Create a parameter object
   param.input_type = InputType::PCAP_FILE;
-  param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap file directory
+  param.input_param.pcap_path = "/home/csaba-padma/projects/rs_driver/build/a2.pcap";  ///< Set the pcap file directory
   param.input_param.msop_port = 6699;                          ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;                         ///< Set the lidar difop port number, the default is 7788
 #if ENABLE_IMU_PARSE
   param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
 #endif
-  param.lidar_type = LidarType::RSAIRY;                          ///< Set the lidar type. Make sure this type is correct
+  param.lidar_type = LidarType::RSE1;                          ///< Set the lidar type. Make sure this type is correct
   param.input_param.pcap_rate = 1.0;
   param.print();
   
