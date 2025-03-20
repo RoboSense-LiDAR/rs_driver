@@ -88,7 +88,7 @@ bool InputUsb::init()
     return false;
   }
 
-  if(!_is_usb_300)
+  if(!_is_usb_300 && !input_param_.enable_usb200)
   {
     RS_ERROR << "USB mode is not USB_3.0!" << RS_REND;
     return false;

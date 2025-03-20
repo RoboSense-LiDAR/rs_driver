@@ -298,6 +298,7 @@ struct RSInputParam  ///< The LiDAR input parameter
   int image_height = 1080;
   int image_fps = 30;
   frame_format image_format = FRAME_FORMAT_NV12;
+  bool enable_usb200 = false;
 
   std::string device_uuid = "";
 
@@ -322,6 +323,7 @@ struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "image_width: " << image_width << RS_REND;
     RS_INFOL << "image_height: " << image_height << RS_REND;
     RS_INFOL << "image_fps: " << image_fps << RS_REND;
+    RS_INFOL << "enable_usb200: " << image_fps << RS_REND;
     RS_INFOL << "device_uuid: " << device_uuid << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
