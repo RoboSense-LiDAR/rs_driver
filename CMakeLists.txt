@@ -66,6 +66,12 @@ if(MSVC)
 
   add_definitions(-DPLATFORM_WINDOWS_MSVC=1)
 
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+
+  set(CMAKE_C_STANDARD 99)
+  set(CMAKE_CXX_STANDARD 14)
+  set(COMPILER "MAC Compiler")
+
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
   if(UNIX)
