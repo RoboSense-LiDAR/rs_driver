@@ -175,7 +175,7 @@ if(${ENABLE_USB})
   else()
     add_library(rsac_usb SHARED ./src/rs_driver/driver/input/input_usb.cpp)
   endif()
-  target_link_libraries(rsac_usb PRIVATE ${EXTERNAL_LIBS} uvc-static)
+  target_link_libraries(rsac_usb PRIVATE ${EXTERNAL_LIBS} uvc-ac-static)
   target_include_directories(rsac_usb PUBLIC
   ./src
   ./thirdparty/libusb/libusb

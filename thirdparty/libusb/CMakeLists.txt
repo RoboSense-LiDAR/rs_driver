@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(USB VERSION 0.0.1 LANGUAGES C CXX)
+project(USB-AC VERSION 0.0.1 LANGUAGES C CXX)
 
 if(EXTRA_CMAKE)
     include("${EXTRA_CMAKE}")
