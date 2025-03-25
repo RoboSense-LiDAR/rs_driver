@@ -673,10 +673,21 @@ void InputUsb::recvPacket()
 
 bool InputUsb::imuStreamStart()
 {
-  if (!send_cmd(HID_REQ_IMU_UPLOAD_START))
+  if (input_param_.imu_fps == 200)
   {
-      RS_ERROR << "imu start error!!" << RS_REND;
-      return false;
+    if (!send_cmd(HID_REQ_IMU_UPLOAD_START_200HZ))
+    {
+        RS_ERROR << "imu start error!!" << RS_REND;
+        return false;
+    }
+  }
+  else
+  {
+    if (!send_cmd(HID_REQ_IMU_UPLOAD_START_100HZ))
+    {
+        RS_ERROR << "imu start error!!" << RS_REND;
+        return false;
+    }
   }
 
   return true;
@@ -700,62 +711,69 @@ bool InputUsb::send_cmd(hid_req req)
   int len = 0;
   switch (req)
   {
-  case HID_REQ_IMU_UPLOAD_START:
-  {
-    req_data[8] = 0x2E;
-    req_data[9] = 0x00;
-    req_data[10] = 0x02;
-    len = 11;
-    creat_frame_header(req_data, len);
-  }
-  break;
-
-  case HID_REQ_IMU_UPLOAD_STOP:
-  {
-    req_data[8] = 0x2E;
-    req_data[9] = 0x00;
-    req_data[10] = 0x00;
-    len = 11;
-    creat_frame_header(req_data, len);
-  }
-  break;
-
-  case HID_REQ_SYNC:
-  case HID_REQ_DELAY_RESP:
-  {
-    req_data[8] = 0x31;
-    if (req == HID_REQ_SYNC)
+    case HID_REQ_IMU_UPLOAD_START_100HZ:
+    case HID_REQ_IMU_UPLOAD_START_200HZ:
     {
-        req_data[9] = 0x00;
+      req_data[8] = 0x2E;
+      req_data[9] = 0x00;
+      req_data[10] = 0x02;
+      req_data[11] = 0x00;
+      if(req == HID_REQ_IMU_UPLOAD_START_200HZ)
+      {
+        req_data[11] = 0x01;
+      }
+      len = 12;
+      creat_frame_header(req_data, len);
     }
-    else if (req == HID_REQ_DELAY_RESP)
-    {
-        req_data[9] = 0x01;
-    }
-    struct timespec ts;
-
-    #ifdef PLATFORM_WINDOWS_MSVC
-      FILETIME ft;
-      unsigned __int64 tmpres = 0;
-      GetSystemTimeAsFileTime(&ft);
-      tmpres |= ft.dwHighDateTime;
-      tmpres <<= 32;
-      tmpres |= ft.dwLowDateTime;
-      tmpres -= 116444736000000000Ui64;
-      ts.tv_sec = (long)(tmpres / 10000000UL);
-      ts.tv_nsec = (long)(tmpres % 10000000UL) * 100;
-    #else
-      clock_gettime(CLOCK_REALTIME, &ts);
-    #endif
-
-    memcpy(req_data + 10, &ts, sizeof(struct timespec));
-    len = 26;
-    creat_frame_header(req_data, len);
-  }
-  break;
-
-  default:
     break;
+
+    case HID_REQ_IMU_UPLOAD_STOP:
+    {
+      req_data[8] = 0x2E;
+      req_data[9] = 0x00;
+      req_data[10] = 0x00;
+      req_data[11] = 0x00;
+      len = 12;
+      creat_frame_header(req_data, len);
+    }
+    break;
+
+    case HID_REQ_SYNC:
+    case HID_REQ_DELAY_RESP:
+    {
+      req_data[8] = 0x31;
+      if (req == HID_REQ_SYNC)
+      {
+          req_data[9] = 0x00;
+      }
+      else if (req == HID_REQ_DELAY_RESP)
+      {
+          req_data[9] = 0x01;
+      }
+      struct timespec ts;
+
+      #ifdef PLATFORM_WINDOWS_MSVC
+        FILETIME ft;
+        unsigned __int64 tmpres = 0;
+        GetSystemTimeAsFileTime(&ft);
+        tmpres |= ft.dwHighDateTime;
+        tmpres <<= 32;
+        tmpres |= ft.dwLowDateTime;
+        tmpres -= 116444736000000000Ui64;
+        ts.tv_sec = (long)(tmpres / 10000000UL);
+        ts.tv_nsec = (long)(tmpres % 10000000UL) * 100;
+      #else
+        clock_gettime(CLOCK_REALTIME, &ts);
+      #endif
+
+      memcpy(req_data + 10, &ts, sizeof(struct timespec));
+      len = 26;
+      creat_frame_header(req_data, len);
+    }
+    break;
+
+    default:
+      break;
   }
 
   res = libusb_interrupt_transfer(_devh, _hid_endpoint_out_num, req_data, len, &transfer_length, 100);

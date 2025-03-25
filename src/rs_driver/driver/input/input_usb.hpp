@@ -57,7 +57,8 @@ namespace lidar
 
 typedef enum hid_req
 {
-    HID_REQ_IMU_UPLOAD_START = 0,         /**< Request to start the operation. */
+    HID_REQ_IMU_UPLOAD_START_100HZ = 0,         /**< Request to start the operation. */
+    HID_REQ_IMU_UPLOAD_START_200HZ,         /**< Request to start the operation. */
     HID_REQ_IMU_UPLOAD_STOP,              /**< Request to stop the operation. */
     HID_REQ_SYNC,                         /**< Request to synchronize. */
     HID_REQ_DELAY_RESP,                   /**< Request for a delayed response. */

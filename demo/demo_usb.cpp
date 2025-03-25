@@ -260,6 +260,7 @@ int main(int argc, char* argv[])
   // param.input_param.image_width = 1920;
   // param.input_param.image_height = 1080;
   // param.input_param.image_fps = 15;
+  // param.input_param.imu_fps = 200;
 
   param.print();
    
