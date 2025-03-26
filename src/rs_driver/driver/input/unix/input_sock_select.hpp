@@ -48,12 +48,10 @@ namespace lidar
 class InputSock : public Input
 {
 public:
-  InputSock(const RSInputParam& input_param)
-    : Input(input_param), pkt_buf_len_(ETH_LEN),
-      sock_offset_(0), sock_tail_(0)
+  InputSock(const RSInputParam& input_param) : Input(input_param), pkt_buf_len_(ETH_LEN), sock_offset_(0), sock_tail_(0)
   {
     sock_offset_ += input_param.user_layer_bytes;
-    sock_tail_   += input_param.tail_layer_bytes;
+    sock_tail_ += input_param.tail_layer_bytes;
   }
 
   virtual bool init();
@@ -66,7 +64,7 @@ private:
 
 protected:
   size_t pkt_buf_len_;
-  int fds_[3]{-1};
+  int fds_[3]{ -1 };
   size_t sock_offset_;
   size_t sock_tail_;
 };
@@ -93,7 +91,8 @@ inline bool InputSock::init()
   fds_[0] = msop_fd;
   fds_[1] = difop_fd;
 
-  if ((input_param_.imu_port != 0) && (input_param_.imu_port != input_param_.msop_port) &&  (input_param_.imu_port != input_param_.difop_port))
+  if ((input_param_.imu_port != 0) && (input_param_.imu_port != input_param_.msop_port) &&
+      (input_param_.imu_port != input_param_.difop_port))
   {
     imu_fd = createSocket(input_param_.imu_port, input_param_.host_address, input_param_.group_address);
     if (imu_fd < 0)
@@ -101,7 +100,7 @@ inline bool InputSock::init()
   }
 
   fds_[2] = imu_fd;
-  
+
   init_flag_ = true;
   return true;
 
@@ -141,8 +140,8 @@ inline InputSock::~InputSock()
   close(fds_[0]);
   if (fds_[1] >= 0)
     close(fds_[1]);
-  
-  if(fds_[2] >= 0)
+
+  if (fds_[2] >= 0)
     close(fds_[2]);
 }
 
@@ -209,17 +208,36 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
 
 #ifdef ENABLE_MODIFY_RECVBUF
   {
-    uint32_t opt_val = input_param_.socket_recv_buf, before_set_val,after_set_val = 0;
-    if(opt_val < 1024)
+    uint32_t opt_val = input_param_.socket_recv_buf;
+    uint32_t before_set_val = 0;
+    uint32_t after_set_val = 0;
+    if (opt_val < 1024)
     {
       opt_val = 106496;
     }
     socklen_t opt_len = sizeof(uint32_t);
-    getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&before_set_val, &opt_len);
-    // RS_INFO << "before: recv buf opt_val:" <<before_set_val << std::endl;
-    setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&opt_val, opt_len);
-    getsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&after_set_val, &opt_len);
-    // RS_INFO << "aftert: recv buf opt_val:" <<after_set_val << std::endl;
+    // get original value
+    if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &before_set_val, &opt_len) == -1)
+    {
+      perror("getsockopt before");
+      return -1;
+    }
+    RS_INFO << "Original receive buffer size: " << before_set_val << " bytes" << RS_REND;
+
+    // set new value
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &opt_val, opt_len) == -1)
+    {
+      perror("setsockopt");
+      return -1;
+    }
+
+    // get new value
+    if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &after_set_val, &opt_len) == -1)
+    {
+      perror("getsockopt after");
+      return -1;
+    }
+    RS_INFO << "After setting: receive buffer size: " << after_set_val << " bytes" << RS_REND;
   }
 #endif
 
@@ -246,7 +264,6 @@ failSocket:
 
 inline void InputSock::recvPacket()
 {
-
   int max_fd = std::max(std::max(fds_[0], fds_[1]), fds_[2]);
 
   while (!to_exit_recv_)
@@ -257,7 +274,7 @@ inline void InputSock::recvPacket()
     if (fds_[1] >= 0)
       FD_SET(fds_[1], &rfds);
 
-    if(fds_[2] >= 0)
+    if (fds_[2] >= 0)
     {
       FD_SET(fds_[2], &rfds);
     }
