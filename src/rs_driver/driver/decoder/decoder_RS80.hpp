@@ -89,7 +89,7 @@ public:
   virtual ~DecoderRS80() = default;
 
   explicit DecoderRS80(const RSDecoderParam& param);
-
+  virtual bool isNewFrame(const uint8_t* packet) override;
 #ifndef UNIT_TEST
 protected:
 #endif
@@ -306,6 +306,26 @@ inline bool DecoderRS80<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   this->prev_pkt_ts_ = pkt_ts;
   return ret;
 }
+template <typename T_PointCloud>
+inline bool DecoderRS80<T_PointCloud>::isNewFrame(const uint8_t* packet)
+{
+  const RS80MsopPkt& pkt = *(const RS80MsopPkt*)(packet);
+  for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
+  {
+    const RS80MsopBlock& block = pkt.blocks[blk];
+    if (memcmp(this->const_param_.BLOCK_ID, block.id, 1) != 0)
+    {
+      break;
+    }
 
+    int32_t block_az = ntohs(block.azimuth);
+    if (this->pre_split_strategy_->newBlock(block_az))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
 }  // namespace lidar
 }  // namespace robosense

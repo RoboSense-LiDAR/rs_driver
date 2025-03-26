@@ -58,6 +58,7 @@ public:
       const std::function<void(const Error&)>& cb_excep,
       const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
       const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt);
+  inline void regPcapSplitFrameCallback(const std::function<bool(const uint8_t* )>& cb_pcap_split_frame);
 
   virtual bool init() = 0;
   virtual bool start() = 0;
@@ -73,6 +74,7 @@ protected:
   std::function<std::shared_ptr<Buffer>(size_t size)> cb_get_pkt_;
   std::function<void(std::shared_ptr<Buffer>, bool)> cb_put_pkt_;
   std::function<void(const Error&)> cb_excep_;
+  std::function<bool(const uint8_t*)> cb_pcap_split_frame_; // for split frame judegment
   std::thread recv_thread_;
   bool to_exit_recv_;
   bool init_flag_;
@@ -111,5 +113,10 @@ inline void Input::pushPacket(std::shared_ptr<Buffer> pkt, bool stuffed)
   cb_put_pkt_(pkt, stuffed);
 }
 
+inline void Input::regPcapSplitFrameCallback(const std::function<bool(const uint8_t*)>& cb_pcap_split_frame)
+{
+  cb_pcap_split_frame_ = cb_pcap_split_frame;
+
+}
 }  // namespace lidar
 }  // namespace robosense

@@ -38,9 +38,7 @@ namespace robosense
 {
 namespace lidar
 {
-
 #pragma pack(push, 1)
-
 
 typedef struct
 {
@@ -59,7 +57,6 @@ typedef struct
   RSTemperature topboard_temp;
 } RSAIRYHeader;
 
-
 typedef struct
 {
   uint16_t distance;
@@ -76,11 +73,11 @@ typedef struct
 {
   RSAIRYHeader header;
   RSAIRYMsopBlock blocks[8];
-  uint8_t  tail[6];
+  uint8_t tail[6];
   uint8_t reserved_4[16];
 } RSAIRYMsopPkt;
 
-typedef struct 
+typedef struct
 {
   uint16_t vol_main;
   uint16_t vol_12v;
@@ -88,7 +85,7 @@ typedef struct
   uint16_t vol_1v;
   uint16_t current_main;
   uint8_t reserved[16];
-}RSAIRYStatus;
+} RSAIRYStatus;
 
 typedef struct
 {
@@ -118,7 +115,6 @@ typedef struct
   uint16_t tail;
 } RSAIRYDifopPkt;
 
-
 typedef struct
 {
   uint8_t id[4];
@@ -130,109 +126,118 @@ typedef struct
   uint8_t gyroy[4];
   uint8_t gyroz[4];
   int32_t temperature;
-  uint8_t odr; // output data rate
-  uint8_t acceIFsr; // accel full scale range 
-                    // 0: +/- 2g
-                    // 1: +/- 4g
-                    // 2: +/- 8g
-                    // 3: +/- 16g
-    
-    
-  uint8_t gyroIFsr; // gyro full scale range
-                    // 0: +/- 250 dps
-                    // 1: +/- 500 dps
-                    // 2: +/- 1000 dps
-                    // 3: +/- 2000 dps
+  uint8_t odr;       // output data rate
+  uint8_t acceIFsr;  // accel full scale range
+                     // 0: +/- 2g
+                     // 1: +/- 4g
+                     // 2: +/- 8g
+                     // 3: +/- 16g
+
+  uint8_t gyroIFsr;  // gyro full scale range
+                     // 0: +/- 250 dps
+                     // 1: +/- 500 dps
+                     // 2: +/- 1000 dps
+                     // 3: +/- 2000 dps
   uint32_t cnt;
   uint16_t tail;
 } RSAIRYImuPkt;
 #pragma pack(pop)
 
-enum RSLidarModel
+enum RSAIRYLidarModel
 {
-  CHANNEL_48 = 0,
-  CHANNEL_96 = 1,
-  CHANNEL_192 = 2,
+  RSAIRY_CHANNEL_48 = 0,
+  RSAIRY_CHANNEL_96 = 1,
+  RSAIRY_CHANNEL_192 = 2,
 };
 template <typename T_PointCloud>
 class DecoderRSAIRY : public DecoderMech<T_PointCloud>
 {
 public:
-
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
   void decodeImuPkt(const uint8_t* pkt, size_t size) override;
   virtual ~DecoderRSAIRY() = default;
 
   explicit DecoderRSAIRY(const RSDecoderParam& param);
+  virtual bool isNewFrame(const uint8_t* packet) override;
 #ifndef UNIT_TEST
 protected:
 #endif
 
   static RSDecoderMechConstParam& getConstParam();
   static RSEchoMode getEchoMode(uint8_t mode);
-  RSLidarModel getLidarModel(uint8_t mode);
+  RSAIRYLidarModel getLidarModel(uint8_t mode);
   template <typename T_BlockIterator>
   bool internDecodeMsopPkt(const uint8_t* pkt, size_t size);
 
-  RSLidarModel lidarModel_{CHANNEL_96};;
-  uint16_t u16ChannelNum_{96};
-  bool bInit_{false};
-
+  RSAIRYLidarModel lidarModel_{ RSAIRY_CHANNEL_96 };
+  uint16_t u16ChannelNum_{ 96 };
+  bool bInit_{ false };
 };
 
 template <typename T_PointCloud>
 inline RSDecoderMechConstParam& DecoderRSAIRY<T_PointCloud>::getConstParam()
 {
-
-  static RSDecoderMechConstParam param = 
-  {
+  static RSDecoderMechConstParam param = {
     {
-      1248 // msop len
-      , 1248 // difop len
-      , 4 // msop id len
-      , 8 // difop id len
-      , {0x55, 0xAA, 0x05, 0x5A} // msop id
-      , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-      , {0xFF, 0xEE} // block id
-      , 96 // laser number 
-      , 8 // blocks per packet
-      , 48 // channels per block
-      , 0.1f // distance min
-      , 150.0f // distance max
-      , 0.005f // distance resolution
-      , 0.0625f // temperature resolution
-      , 51 // imu len
-      , 4 // imu id len
-      , {0xAA, 0x55, 0x5A, 0x05} // imu id
-    }
-      // lens center
-      , 0.0108f // RX
-      , 0.00375f // RY
-      , 0.06056f // RZ
+        1248  // msop len
+        ,
+        1248  // difop len
+        ,
+        4  // msop id len
+        ,
+        8  // difop id len
+        ,
+        { 0x55, 0xAA, 0x05, 0x5A }  // msop id
+        ,
+        { 0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 }  // difop id
+        ,
+        { 0xFF, 0xEE }  // block id
+        ,
+        96  // laser number
+        ,
+        8  // blocks per packet
+        ,
+        48  // channels per block
+        ,
+        0.1f  // distance min
+        ,
+        60.0f  // distance max
+        ,
+        0.005f  // distance resolution
+        ,
+        0.0625f  // temperature resolution
+        ,
+        51  // imu len
+        ,
+        4  // imu id len
+        ,
+        { 0xAA, 0x55, 0x5A, 0x05 }  // imu id
+    }                               // lens center
+    ,
+    0.0075f  // RX
+    ,
+    0.00664f  // RY
+    ,
+    0.04532f  // RZ
   };
 
   INIT_ONLY_ONCE();
 
   float blk_ts = 111.080f;
-  float firing_tss[] = 
-  {
-    0.00f,  0.00f,  0.00f,  0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 
-    7.616f, 7.616f, 7.616f, 7.616f, 7.616f,7.616f,7.616f,7.616f,
-    16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f,
-    24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f,
-    33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f,
-    42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f,
-    52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f,
-    61.880f, 61.880f, 61.880f, 61.880f, 61.880f, 61.880f, 61.880f, 61.880f,
-    71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f,
-    79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f,
-    88.536f, 88.536f, 88.536f, 88.536f, 88.536f, 88.536f, 88.536f, 88.536f,
-    97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f,
+  float firing_tss[] = {
+    0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   7.616f,  7.616f,  7.616f,  7.616f,
+    7.616f,  7.616f,  7.616f,  7.616f,  16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f,
+    24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 33.320f, 33.320f, 33.320f, 33.320f,
+    33.320f, 33.320f, 33.320f, 33.320f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f,
+    52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 61.880f, 61.880f, 61.880f, 61.880f,
+    61.880f, 61.880f, 61.880f, 61.880f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f,
+    79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 88.536f, 88.536f, 88.536f, 88.536f,
+    88.536f, 88.536f, 88.536f, 88.536f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f,
   };
 
   param.BLOCK_DURATION = blk_ts / 1000000;
-  for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)
+  for (uint16_t i = 0; i < sizeof(firing_tss) / sizeof(firing_tss[0]); i++)
   {
     param.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
     param.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
@@ -246,7 +251,7 @@ inline RSEchoMode DecoderRSAIRY<T_PointCloud>::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
-    case 0x03: // dual return
+    case 0x03:  // dual return
       return RSEchoMode::ECHO_DUAL;
     default:
       return RSEchoMode::ECHO_SINGLE;
@@ -254,22 +259,22 @@ inline RSEchoMode DecoderRSAIRY<T_PointCloud>::getEchoMode(uint8_t mode)
 }
 
 template <typename T_PointCloud>
-inline RSLidarModel DecoderRSAIRY<T_PointCloud>::getLidarModel(uint8_t mode)
+inline RSAIRYLidarModel DecoderRSAIRY<T_PointCloud>::getLidarModel(uint8_t mode)
 {
   switch (mode)
   {
-    case 0x01: 
+    case 0x01:
       this->u16ChannelNum_ = 48;
-      return RSLidarModel::CHANNEL_48;
+      return RSAIRYLidarModel::RSAIRY_CHANNEL_48;
     case 0x02:
       this->u16ChannelNum_ = 96;
-      return RSLidarModel::CHANNEL_96;
+      return RSAIRYLidarModel::RSAIRY_CHANNEL_96;
     case 0x03:
       this->u16ChannelNum_ = 192;
-      return RSLidarModel::CHANNEL_192;
+      return RSAIRYLidarModel::RSAIRY_CHANNEL_192;
     default:
       this->u16ChannelNum_ = 96;
-      return RSLidarModel::CHANNEL_96;
+      return RSAIRYLidarModel::RSAIRY_CHANNEL_96;
   }
 }
 template <typename T_PointCloud>
@@ -281,11 +286,10 @@ inline DecoderRSAIRY<T_PointCloud>::DecoderRSAIRY(const RSDecoderParam& param)
 template <typename T_PointCloud>
 inline void DecoderRSAIRY<T_PointCloud>::decodeImuPkt(const uint8_t* packet, size_t size)
 {
-
   const RSAIRYImuPkt& pkt = *(const RSAIRYImuPkt*)(packet);
-  if(this->imuDataPtr_ && this->cb_imu_data_ && !this->imuDataPtr_->state)
+  if (this->imuDataPtr_ && this->cb_imu_data_ && !this->imuDataPtr_->state)
   {
-      if (this->param_.use_lidar_clock)
+    if (this->param_.use_lidar_clock)
     {
       this->imuDataPtr_->timestamp = parseTimeUTCWithUs(&pkt.timestamp) * 1e-6;
     }
@@ -304,8 +308,8 @@ inline void DecoderRSAIRY<T_PointCloud>::decodeImuPkt(const uint8_t* packet, siz
     float gyroUnit = gyroFsr / 32768.0 * M_PI / 180;
     this->imuDataPtr_->angular_velocity_x = u8ArrayToInt32(pkt.gyrox, 4) * gyroUnit;
     this->imuDataPtr_->angular_velocity_y = u8ArrayToInt32(pkt.gyroy, 4) * gyroUnit;
-    this->imuDataPtr_->angular_velocity_z =u8ArrayToInt32(pkt.gyroz, 4) * gyroUnit;
-    
+    this->imuDataPtr_->angular_velocity_z = u8ArrayToInt32(pkt.gyroz, 4) * gyroUnit;
+
     this->imuDataPtr_->state = true;
 
     this->cb_imu_data_();
@@ -317,14 +321,14 @@ inline void DecoderRSAIRY<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, s
   const RSAIRYDifopPkt& pkt = *(const RSAIRYDifopPkt*)(packet);
   this->template decodeDifopCommon<RSAIRYDifopPkt>(pkt);
 
-  this->device_info_.qx = convertUint32ToFloat(ntohl(pkt.qx)) ;
-  this->device_info_.qy = convertUint32ToFloat(ntohl(pkt.qy)) ;
-  this->device_info_.qz = convertUint32ToFloat(ntohl(pkt.qz)) ;
-  this->device_info_.qw = convertUint32ToFloat(ntohl(pkt.qw)) ;
+  this->device_info_.qx = convertUint32ToFloat(ntohl(pkt.qx));
+  this->device_info_.qy = convertUint32ToFloat(ntohl(pkt.qy));
+  this->device_info_.qz = convertUint32ToFloat(ntohl(pkt.qz));
+  this->device_info_.qw = convertUint32ToFloat(ntohl(pkt.qw));
 
-  this->device_info_.x = convertUint32ToFloat(ntohl(pkt.x)) ;
-  this->device_info_.y = convertUint32ToFloat(ntohl(pkt.y)) ;
-  this->device_info_.z = convertUint32ToFloat(ntohl(pkt.z)) ;
+  this->device_info_.x = convertUint32ToFloat(ntohl(pkt.x));
+  this->device_info_.y = convertUint32ToFloat(ntohl(pkt.y));
+  this->device_info_.z = convertUint32ToFloat(ntohl(pkt.z));
   this->device_info_.state = true;
 }
 
@@ -332,50 +336,43 @@ template <typename T_PointCloud>
 inline bool DecoderRSAIRY<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_t size)
 {
   const RSAIRYMsopPkt& msopPkt = *(const RSAIRYMsopPkt*)(pkt);
-  if(msopPkt.header.data_type[0]  != 0)
+  if (msopPkt.header.data_type[0] != 0)
   {
     return false;
   }
 
-  if(!bInit_)
+  if (!bInit_)
   {
-    
-    this->echo_mode_ = getEchoMode (msopPkt.header.data_type[1]);
-    this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
-      (this->blks_per_frame_ << 1) : this->blks_per_frame_;
-    
+    this->echo_mode_ = getEchoMode(msopPkt.header.data_type[1]);
+    this->split_blks_per_frame_ =
+        (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? (this->blks_per_frame_ << 1) : this->blks_per_frame_;
+
     lidarModel_ = getLidarModel(msopPkt.header.lidar_mode);
 
-    if(lidarModel_ ==  RSLidarModel::CHANNEL_48)
+    if (lidarModel_ == RSAIRYLidarModel::RSAIRY_CHANNEL_48)
     {
-
       float blk_ts = 111.080f;
-      float firing_tss[] = 
-      {
-        0.00f,  0.00f,  0.00f,  0.00f, 7.616f, 7.616f, 7.616f, 7.616f, 
-        16.184f, 16.184f, 16.184f, 16.184f, 24.752f, 24.752f, 24.752f, 24.752f, 
-        33.320f, 33.320f, 33.320f, 33.320f, 42.840f, 42.840f, 42.840f, 42.840f,
-        52.360f, 52.360f, 52.360f, 52.360f, 61.880f, 61.880f, 61.880f, 61.880f,
-        71.400f, 71.400f, 71.400f, 71.400f, 79.968f, 79.968f, 79.968f, 79.968f,
-        88.536f, 88.536f, 88.536f, 88.536f, 97.104f, 97.104f, 97.104f, 97.104f,
+      float firing_tss[] = {
+        0.00f,   0.00f,   0.00f,   0.00f,   7.616f,  7.616f,  7.616f,  7.616f,  16.184f, 16.184f, 16.184f, 16.184f,
+        24.752f, 24.752f, 24.752f, 24.752f, 33.320f, 33.320f, 33.320f, 33.320f, 42.840f, 42.840f, 42.840f, 42.840f,
+        52.360f, 52.360f, 52.360f, 52.360f, 61.880f, 61.880f, 61.880f, 61.880f, 71.400f, 71.400f, 71.400f, 71.400f,
+        79.968f, 79.968f, 79.968f, 79.968f, 88.536f, 88.536f, 88.536f, 88.536f, 97.104f, 97.104f, 97.104f, 97.104f,
       };
 
       this->mech_const_param_.BLOCK_DURATION = blk_ts / 1000000;
-      for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)
+      for (uint16_t i = 0; i < sizeof(firing_tss) / sizeof(firing_tss[0]); i++)
       {
         this->mech_const_param_.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
         this->mech_const_param_.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
       }
-
     }
-
 
     bInit_ = true;
   }
-  
-  if(lidarModel_ ==  RSLidarModel::CHANNEL_48)
+
+  if (lidarModel_ == RSAIRYLidarModel::RSAIRY_CHANNEL_48)
   {
-      if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
+    if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
     {
       return internDecodeMsopPkt<SingleReturnBlockIterator<RSAIRYMsopPkt>>(pkt, size);
     }
@@ -383,9 +380,10 @@ inline bool DecoderRSAIRY<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_
     {
       return internDecodeMsopPkt<DualReturnBlockIterator<RSAIRYMsopPkt>>(pkt, size);
     }
-  }else if(lidarModel_ ==  RSLidarModel::CHANNEL_96)
+  }
+  else if (lidarModel_ == RSAIRYLidarModel::RSAIRY_CHANNEL_96)
   {
-     if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
+    if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
     {
       return internDecodeMsopPkt<TwoInOneBlockIterator<RSAIRYMsopPkt>>(pkt, size);
     }
@@ -393,18 +391,18 @@ inline bool DecoderRSAIRY<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_
     {
       return internDecodeMsopPkt<FourInOneBlockIterator<RSAIRYMsopPkt>>(pkt, size);
     }
-  }else{
+  }
+  else
+  {
     RS_ERROR << "Unsupported lidar model:" << lidarModel_ << RS_REND;
     return false;
   }
-
 }
 
 template <typename T_PointCloud>
 template <typename T_BlockIterator>
 inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet, size_t size)
 {
-
   const RSAIRYMsopPkt& pkt = *(const RSAIRYMsopPkt*)(packet);
   bool ret = false;
   this->temperature_ = parseTempInLe(&(pkt.header.temp)) * this->const_param_.TEMPERATURE_RES;
@@ -413,7 +411,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pack
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs ((RSTimestampUTC*)&pkt.header.timestamp) * 1e-6;
+    pkt_ts = parseTimeUTCWithUs((RSTimestampUTC*)&pkt.header.timestamp) * 1e-6;
   }
   else
   {
@@ -424,11 +422,11 @@ inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pack
 
     if (this->write_pkt_ts_)
     {
-      createTimeUTCWithUs (ts, (RSTimestampUTC*)&pkt.header.timestamp);
+      createTimeUTCWithUs(ts, (RSTimestampUTC*)&pkt.header.timestamp);
     }
   }
-  T_BlockIterator iter(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION, 
-      this->block_az_diff_, this->fov_blind_ts_diff_);
+  T_BlockIterator iter(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION, this->block_az_diff_,
+                       this->fov_blind_ts_diff_);
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
     const RSAIRYMsopBlock& block = pkt.blocks[blk];
@@ -437,8 +435,8 @@ inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pack
     {
       this->cb_excep_(Error(ERRCODE_WRONGMSOPBLKID));
       break;
-    } 
-    
+    }
+
     int32_t block_az_diff;
     double block_ts_off;
     iter.get(blk, block_az_diff, block_ts_off);
@@ -455,27 +453,26 @@ inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pack
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
-      const RSAIRYChannel& channel = block.channels[chan]; 
+      const RSAIRYChannel& channel = block.channels[chan];
       uint16_t chan_id = chan;
-      if(lidarModel_ == RSLidarModel::CHANNEL_96 && (blk % 2) == 1)
-      { 
-          chan_id = chan +  48; 
+      if (lidarModel_ == RSAIRYLidarModel::RSAIRY_CHANNEL_96 && (blk % 2) == 1)
+      {
+        chan_id = chan + 48;
       }
       double chan_ts = block_ts + this->mech_const_param_.CHAN_TSS[chan_id];
       int32_t angle_horiz = block_az + (int32_t)((float)block_az_diff * this->mech_const_param_.CHAN_AZIS[chan_id]);
-   
+
       int32_t angle_vert = this->chan_angles_.vertAdjust(chan_id);
       int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan_id, angle_horiz);
       uint16_t u16RawDistance = ntohs(channel.distance);
       uint16_t u16Distance = u16RawDistance & 0x3FFF;
       uint8_t feature = (u16RawDistance >> 14) & 0x03;
       float distance = u16Distance * this->const_param_.DISTANCE_RES;
-      
+
       if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
       {
-      
-        float x = distance * COS(angle_vert) * COS(angle_horiz_final) + this->lidar_lens_center_Rxy_* COS(angle_horiz);
-        float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->lidar_lens_center_Rxy_* SIN(angle_horiz);
+        float x = distance * COS(angle_vert) * COS(angle_horiz_final) + this->lidar_lens_center_Rxy_ * COS(angle_horiz);
+        float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->lidar_lens_center_Rxy_ * SIN(angle_horiz);
         float z = distance * SIN(angle_vert) + this->mech_const_param_.RZ;
         this->transformPoint(x, y, z);
         typename T_PointCloud::PointT point;
@@ -485,7 +482,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pack
         setIntensity(point, channel.intensity);
         setRing(point, this->chan_angles_.toUserChan(chan_id));
         setTimestamp(point, chan_ts);
-		    setFeature(point, feature);
+        setFeature(point, feature);
         this->point_cloud_->points.emplace_back(point);
       }
       else if (!this->param_.dense_points)
@@ -497,7 +494,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pack
         setIntensity(point, 0);
         setRing(point, this->chan_angles_.toUserChan(chan_id));
         setTimestamp(point, chan_ts);
-		    setFeature(point, feature);
+        setFeature(point, feature);
         this->point_cloud_->points.emplace_back(point);
       }
 
@@ -509,7 +506,35 @@ inline bool DecoderRSAIRY<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pack
   return ret;
 }
 
+template <typename T_PointCloud>
+inline bool DecoderRSAIRY<T_PointCloud>::isNewFrame(const uint8_t* packet)
+{
+  const RSAIRYMsopPkt& pkt = *(const RSAIRYMsopPkt*)(packet);
 
+  int data_type_ = (int)(pkt.header.data_type[0]);
+  if (data_type_ > 0)
+  {
+    return false;
+  }
+
+  for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
+  {
+    const RSAIRYMsopBlock& block = pkt.blocks[blk];
+
+    if (memcmp(this->const_param_.BLOCK_ID, block.id, 1) != 0)
+    {
+      break;
+    }
+
+    int32_t block_az = ntohs(block.azimuth);
+    if (this->pre_split_strategy_->newBlock(block_az))
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 }  // namespace lidar
 }  // namespace robosense

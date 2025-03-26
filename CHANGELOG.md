@@ -2,6 +2,10 @@
 
 # UnReleased
 
+### Fix 
+- Fix PCAP playback speed issue.
+- Fix the compilation issue of rs_driver_viewer on Ubuntu 22.04.
+
 
 ## v1.5.17 2025-02-14
 

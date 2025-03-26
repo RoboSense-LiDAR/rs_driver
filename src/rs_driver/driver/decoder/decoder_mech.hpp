@@ -32,7 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/driver/decoder/decoder.hpp>
-#include <rs_driver/driver/decoder/split_strategy.hpp>
 #include <rs_driver/driver/decoder/block_iterator.hpp>
 #include <rs_driver/driver/decoder/chan_angles.hpp>
 
@@ -40,7 +39,6 @@ namespace robosense
 {
 namespace lidar
 {
-
 struct RSDecoderMechConstParam
 {
   RSDecoderConstParam base;
@@ -73,7 +71,6 @@ template <typename T_PointCloud>
 class DecoderMech : public Decoder<T_PointCloud>
 {
 public:
-
   constexpr static int32_t RS_ONE_ROUND = 36000;
 
   virtual ~DecoderMech() = default;
@@ -89,22 +86,21 @@ protected:
   template <typename T_Difop>
   void decodeDifopCommon(const T_Difop& pkt);
 
-  RSDecoderMechConstParam mech_const_param_; // const param 
-  ChanAngles chan_angles_; // vert_angles/horiz_angles adjustment
-  AzimuthSection scan_section_; // valid azimuth section
-  std::shared_ptr<SplitStrategy> split_strategy_; // split strategy
-
-  uint16_t rps_; // rounds per second
-  uint16_t blks_per_frame_; // blocks per frame/round
-  uint16_t split_blks_per_frame_; // blocks in msop pkt per frame/round. 
-  uint16_t block_az_diff_; // azimuth difference between adjacent blocks.
-  double fov_blind_ts_diff_; // timestamp difference across blind section(defined by fov)
-  float lidar_lens_center_Rxy_;  // sqrt(Rx*Rx + Ry*Ry)
+  RSDecoderMechConstParam mech_const_param_;       // const param
+  ChanAngles chan_angles_;                         // vert_angles/horiz_angles adjustment
+  AzimuthSection scan_section_;                    // valid azimuth section
+  std::shared_ptr<SplitStrategy> split_strategy_;  // split strategy
+  std::shared_ptr<SplitStrategy> pre_split_strategy_;
+  uint16_t rps_;                   // rounds per second
+  uint16_t blks_per_frame_;        // blocks per frame/round
+  uint16_t split_blks_per_frame_;  // blocks in msop pkt per frame/round.
+  uint16_t block_az_diff_;         // azimuth difference between adjacent blocks.
+  double fov_blind_ts_diff_;       // timestamp difference across blind section(defined by fov)
+  float lidar_lens_center_Rxy_;    // sqrt(Rx*Rx + Ry*Ry)
 };
 
 template <typename T_PointCloud>
-inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& const_param, 
-    const RSDecoderParam& param)
+inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& const_param, const RSDecoderParam& param)
   : Decoder<T_PointCloud>(const_param.base, param)
   , mech_const_param_(const_param)
   , chan_angles_(this->const_param_.LASER_NUM)
@@ -115,23 +111,25 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& con
   , block_az_diff_(20)
   , fov_blind_ts_diff_(0.0)
 {
-  this->packet_duration_ = 
-    this->mech_const_param_.BLOCK_DURATION * this->const_param_.BLOCKS_PER_PKT;
+  this->packet_duration_ = this->mech_const_param_.BLOCK_DURATION * this->const_param_.BLOCKS_PER_PKT;
 
   switch (this->param_.split_frame_mode)
   {
     case SplitFrameMode::SPLIT_BY_FIXED_BLKS:
       split_strategy_ = std::make_shared<SplitStrategyByNum>(&this->split_blks_per_frame_);
+      pre_split_strategy_ = std::make_shared<SplitStrategyByNum>(&this->split_blks_per_frame_);
       break;
 
     case SplitFrameMode::SPLIT_BY_CUSTOM_BLKS:
       split_strategy_ = std::make_shared<SplitStrategyByNum>(&this->param_.num_blks_split);
+      pre_split_strategy_ = std::make_shared<SplitStrategyByNum>(&this->param_.num_blks_split);
       break;
 
     case SplitFrameMode::SPLIT_BY_ANGLE:
     default:
       uint16_t angle = (uint16_t)(this->param_.split_angle * 100);
       split_strategy_ = std::make_shared<SplitStrategyByAngle>(angle);
+      pre_split_strategy_ = std::make_shared<SplitStrategyByAngle>(angle);
       break;
   }
 
@@ -148,21 +146,23 @@ inline DecoderMech<T_PointCloud>::DecoderMech(const RSDecoderMechConstParam& con
                  << " reset it to be false." << RS_REND;
     }
   }
-  this->lidar_lens_center_Rxy_ = std::sqrt(this->mech_const_param_.RX * this->mech_const_param_.RX + this->mech_const_param_.RY * this->mech_const_param_.RY);
+  this->is_mech_ = true;
+  this->lidar_lens_center_Rxy_ = std::sqrt(this->mech_const_param_.RX * this->mech_const_param_.RX +
+                                           this->mech_const_param_.RY * this->mech_const_param_.RY);
 }
 
 template <typename T_PointCloud>
 inline void DecoderMech<T_PointCloud>::print()
 {
   std::cout << "-----------------------------------------" << std::endl
-    << "rps:\t\t\t" << this->rps_ << std::endl
-    << "echo_mode:\t\t" << this->echo_mode_ << std::endl
-    << "blks_per_frame:\t\t" << this->blks_per_frame_ << std::endl
-    << "split_blks_per_frame:\t" << this->split_blks_per_frame_ << std::endl
-    << "block_az_diff:\t\t" << this->block_az_diff_ << std::endl
-    << "fov_blind_ts_diff:\t" << this->fov_blind_ts_diff_ << std::endl
-    << "angle_from_file:\t" << this->param_.config_from_file << std::endl
-    << "angles_ready:\t\t" << this->angles_ready_ << std::endl;
+            << "rps:\t\t\t" << this->rps_ << std::endl
+            << "echo_mode:\t\t" << this->echo_mode_ << std::endl
+            << "blks_per_frame:\t\t" << this->blks_per_frame_ << std::endl
+            << "split_blks_per_frame:\t" << this->split_blks_per_frame_ << std::endl
+            << "block_az_diff:\t\t" << this->block_az_diff_ << std::endl
+            << "fov_blind_ts_diff:\t" << this->fov_blind_ts_diff_ << std::endl
+            << "angle_from_file:\t" << this->param_.config_from_file << std::endl
+            << "angles_ready:\t\t" << this->angles_ready_ << std::endl;
 
   this->chan_angles_.print();
 }
@@ -183,19 +183,17 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
   this->blks_per_frame_ = (uint16_t)(1 / (this->rps_ * this->mech_const_param_.BLOCK_DURATION));
 
   // block diff of azimuth
-  this->block_az_diff_ = 
-    (uint16_t)std::round(RS_ONE_ROUND * this->rps_ * this->mech_const_param_.BLOCK_DURATION);
+  this->block_az_diff_ = (uint16_t)std::round(RS_ONE_ROUND * this->rps_ * this->mech_const_param_.BLOCK_DURATION);
 
   // fov related
   uint16_t fov_start_angle = ntohs(pkt.fov.start_angle);
   uint16_t fov_end_angle = ntohs(pkt.fov.end_angle);
-  uint16_t fov_range = (fov_start_angle < fov_end_angle) ? 
-    (fov_end_angle - fov_start_angle) : (fov_end_angle + RS_ONE_ROUND - fov_start_angle);
+  uint16_t fov_range = (fov_start_angle < fov_end_angle) ? (fov_end_angle - fov_start_angle) :
+                                                           (fov_end_angle + RS_ONE_ROUND - fov_start_angle);
   uint16_t fov_blind_range = RS_ONE_ROUND - fov_range;
 
   // fov blind diff of timestamp
-  this->fov_blind_ts_diff_ = 
-    (double)fov_blind_range / ((double)RS_ONE_ROUND * (double)this->rps_);
+  this->fov_blind_ts_diff_ = (double)fov_blind_range / ((double)RS_ONE_ROUND * (double)this->rps_);
 
   // load angles
   if (!this->param_.config_from_file && !this->angles_ready_)
@@ -206,10 +204,10 @@ inline void DecoderMech<T_PointCloud>::decodeDifopCommon(const T_Difop& pkt)
 
 #ifdef ENABLE_DIFOP_PARSE
   // device info
-  memcpy (this->device_info_.sn, pkt.sn.num, 6);
-  memcpy (this->device_info_.mac, pkt.eth.mac_addr, 6);
-  memcpy (this->device_info_.top_ver, pkt.version.top_ver, 5);
-  memcpy (this->device_info_.bottom_ver, pkt.version.bottom_ver, 5);
+  memcpy(this->device_info_.sn, pkt.sn.num, 6);
+  memcpy(this->device_info_.mac, pkt.eth.mac_addr, 6);
+  memcpy(this->device_info_.top_ver, pkt.version.top_ver, 5);
+  memcpy(this->device_info_.bottom_ver, pkt.version.bottom_ver, 5);
   this->device_info_.state = true;
   // device status
   this->device_status_.voltage = ntohs(pkt.status.vol_12v);

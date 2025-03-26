@@ -48,12 +48,10 @@ namespace lidar
 class InputSock : public Input
 {
 public:
-  InputSock(const RSInputParam& input_param)
-    : Input(input_param), pkt_buf_len_(ETH_LEN), 
-      sock_offset_(0), sock_tail_(0)
+  InputSock(const RSInputParam& input_param) : Input(input_param), pkt_buf_len_(ETH_LEN), sock_offset_(0), sock_tail_(0)
   {
     sock_offset_ += input_param.user_layer_bytes;
-    sock_tail_   += input_param.tail_layer_bytes;
+    sock_tail_ += input_param.tail_layer_bytes;
   }
 
   virtual bool init();
@@ -67,7 +65,7 @@ private:
 protected:
   size_t pkt_buf_len_;
   int epfd_;
-  int fds_[3]{-1};
+  int fds_[3]{ -1 };
   size_t sock_offset_;
   size_t sock_tail_;
 };
@@ -94,8 +92,8 @@ inline bool InputSock::init()
 
     struct epoll_event ev;
     ev.data.fd = msop_fd;
-    ev.events = EPOLLIN; // level-triggered
-    epoll_ctl (epfd, EPOLL_CTL_ADD, msop_fd, &ev);
+    ev.events = EPOLLIN;  // level-triggered
+    epoll_ctl(epfd, EPOLL_CTL_ADD, msop_fd, &ev);
   }
 
   //
@@ -109,24 +107,25 @@ inline bool InputSock::init()
 
     struct epoll_event ev;
     ev.data.fd = difop_fd;
-    ev.events = EPOLLIN; // level-triggered
-    epoll_ctl (epfd, EPOLL_CTL_ADD, difop_fd, &ev);
+    ev.events = EPOLLIN;  // level-triggered
+    epoll_ctl(epfd, EPOLL_CTL_ADD, difop_fd, &ev);
   }
 
   epfd_ = epfd;
   fds_[0] = msop_fd;
   fds_[1] = difop_fd;
 
-  if ((input_param_.imu_port != 0) && (input_param_.imu_port != input_param_.msop_port) &&  (input_param_.imu_port != input_param_.difop_port))
+  if ((input_param_.imu_port != 0) && (input_param_.imu_port != input_param_.msop_port) &&
+      (input_param_.imu_port != input_param_.difop_port))
   {
     imu_fd = createSocket(input_param_.imu_port, input_param_.host_address, input_param_.group_address);
     if (imu_fd < 0)
-      goto failDifop;
+      goto failImu;
 
     struct epoll_event ev;
     ev.data.fd = difop_fd;
-    ev.events = EPOLLIN; // level-triggered
-    epoll_ctl (epfd, EPOLL_CTL_ADD, imu_fd, &ev);
+    ev.events = EPOLLIN;  // level-triggered
+    epoll_ctl(epfd, EPOLL_CTL_ADD, imu_fd, &ev);
   }
 
   init_flag_ = true;
@@ -195,7 +194,6 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
     goto failOption;
   }
 
-
   struct sockaddr_in host_addr;
   memset(&host_addr, 0, sizeof(host_addr));
   host_addr.sin_family = AF_INET;
@@ -205,7 +203,6 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
   {
     inet_pton(AF_INET, hostIp.c_str(), &(host_addr.sin_addr));
   }
-  
 
   ret = bind(fd, (struct sockaddr*)&host_addr, sizeof(host_addr));
   if (ret < 0)
@@ -260,7 +257,7 @@ inline void InputSock::recvPacket()
   while (!to_exit_recv_)
   {
     struct epoll_event events[8];
-    int retval = epoll_wait (epfd_, events, 8, 1000);
+    int retval = epoll_wait(epfd_, events, 8, 1000);
     if (retval == 0)
     {
       cb_excep_(Error(ERRCODE_MSOPTIMEOUT));
@@ -271,11 +268,11 @@ inline void InputSock::recvPacket()
       if (errno == EINTR)
         continue;
 
-       perror("epoll_wait: ");
+      perror("epoll_wait: ");
       break;
     }
 
-    for(int i = 0; i < retval; i++)
+    for (int i = 0; i < retval; i++)
     {
       if (events[i].events & EPOLLIN)
       {
