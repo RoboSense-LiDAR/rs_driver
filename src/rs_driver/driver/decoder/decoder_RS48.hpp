@@ -44,9 +44,11 @@ class DecoderRS48 : public DecoderMech<T_PointCloud>
 public:
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
-  virtual ~DecoderRS48() = default;
 
   explicit DecoderRS48(const RSDecoderParam& param);
+  virtual ~DecoderRS48() = default;
+
+  virtual bool isNewFrame(const uint8_t* packet) override;
 
 #ifndef UNIT_TEST
 protected:
@@ -62,46 +64,57 @@ protected:
 template <typename T_PointCloud>
 inline RSDecoderMechConstParam& DecoderRS48<T_PointCloud>::getConstParam()
 {
-  static RSDecoderMechConstParam param = 
-  {
+  static RSDecoderMechConstParam param = {
     {
-      1268 // msop len
-      , 1248 // difop len
-      , 4 // msop id len
-      , 8 // difop id len
-      , {0x55, 0xAA, 0x05, 0x5A} // msop id
-      , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-      , {0xFE} // block id
-      , 48 // laser number
-      , 8 // blocks per packet
-      , 48 // channels per block
-      , 0.4f // distance min
-      , 250.0f // distance max
-      , 0.005f // distance resolution
-      , 0.0625f // temperature resolution
-    }
-      // lens center
-      , 0.03615f // RX
-      , -0.017f // RY
-      , 0.0f // RZ
+        1268  // msop len
+        ,
+        1248  // difop len
+        ,
+        4  // msop id len
+        ,
+        8  // difop id len
+        ,
+        { 0x55, 0xAA, 0x05, 0x5A }  // msop id
+        ,
+        { 0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 }  // difop id
+        ,
+        { 0xFE }  // block id
+        ,
+        48  // laser number
+        ,
+        8  // blocks per packet
+        ,
+        48  // channels per block
+        ,
+        0.4f  // distance min
+        ,
+        250.0f  // distance max
+        ,
+        0.005f  // distance resolution
+        ,
+        0.0625f  // temperature resolution
+    }            // lens center
+    ,
+    0.03615f  // RX
+    ,
+    -0.017f  // RY
+    ,
+    0.0f  // RZ
   };
 
   INIT_ONLY_ONCE();
 
   float blk_ts = 55.552f;
-  float firing_tss[48] = 
-  {
-     0.0f,    3.236f,  6.472f,  9.708f, 12.944f, 12.944f, 16.18f, 16.18f,  
-    19.416f, 19.416f, 22.652f, 22.652f, 25.888f, 29.124f, 32.36f, 35.596f,
-    38.832f, 38.832f, 42.068f, 42.068f, 45.304f, 45.304f, 48.54f, 48.54f, 
+  float firing_tss[48] = {
+    0.0f,    3.236f,  6.472f, 9.708f,  12.944f, 12.944f, 16.18f,  16.18f,  19.416f, 19.416f, 22.652f, 22.652f,
+    25.888f, 29.124f, 32.36f, 35.596f, 38.832f, 38.832f, 42.068f, 42.068f, 45.304f, 45.304f, 48.54f,  48.54f,
 
-     0.0f,    3.236f,  6.472f,  9.708f, 12.944f, 12.944f, 16.18f, 16.18f, 
-    19.416f, 19.416f, 22.652f, 22.652f, 25.888f, 29.124f, 32.36f, 35.596f, 
-    38.832f, 38.832f, 42.068f, 42.068f, 45.304f, 45.304f, 48.54f, 48.54f, 
+    0.0f,    3.236f,  6.472f, 9.708f,  12.944f, 12.944f, 16.18f,  16.18f,  19.416f, 19.416f, 22.652f, 22.652f,
+    25.888f, 29.124f, 32.36f, 35.596f, 38.832f, 38.832f, 42.068f, 42.068f, 45.304f, 45.304f, 48.54f,  48.54f,
   };
 
   param.BLOCK_DURATION = blk_ts / 1000000;
-  for (uint16_t i = 0; i < sizeof(firing_tss)/sizeof(firing_tss[0]); i++)
+  for (uint16_t i = 0; i < sizeof(firing_tss) / sizeof(firing_tss[0]); i++)
   {
     param.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
     param.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
@@ -115,10 +128,10 @@ inline RSEchoMode DecoderRS48<T_PointCloud>::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
-    case 0x03: // dual return
+    case 0x03:  // dual return
       return RSEchoMode::ECHO_DUAL;
-    case 0x01: // strongest return
-    case 0x02: // last return
+    case 0x01:  // strongest return
+    case 0x02:  // last return
     default:
       return RSEchoMode::ECHO_SINGLE;
   }
@@ -130,9 +143,9 @@ inline void DecoderRS48<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
   const RSP48DifopPkt& pkt = *(const RSP48DifopPkt*)(packet);
   this->template decodeDifopCommon<RSP48DifopPkt>(pkt);
 
-  this->echo_mode_ = getEchoMode (pkt.return_mode);
-  this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
-    (this->blks_per_frame_ << 1) : this->blks_per_frame_;
+  this->echo_mode_ = getEchoMode(pkt.return_mode);
+  this->split_blks_per_frame_ =
+      (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? (this->blks_per_frame_ << 1) : this->blks_per_frame_;
 }
 
 template <typename T_PointCloud>
@@ -177,12 +190,12 @@ inline bool DecoderRS48<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
     if (this->write_pkt_ts_)
     {
-      createTimeUTCWithUs (ts, (RSTimestampUTC*)&pkt.header.timestamp);
+      createTimeUTCWithUs(ts, (RSTimestampUTC*)&pkt.header.timestamp);
     }
   }
 
   T_BlockIterator iter(pkt, this->const_param_.BLOCKS_PER_PKT, this->mech_const_param_.BLOCK_DURATION,
-      this->block_az_diff_, this->fov_blind_ts_diff_);
+                       this->block_az_diff_, this->fov_blind_ts_diff_);
 
   for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
   {
@@ -209,11 +222,10 @@ inline bool DecoderRS48<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
     for (uint16_t chan = 0; chan < this->const_param_.CHANNELS_PER_BLOCK; chan++)
     {
-      const RSChannel& channel = block.channels[chan]; 
+      const RSChannel& channel = block.channels[chan];
 
       double chan_ts = block_ts + this->mech_const_param_.CHAN_TSS[chan];
-      int32_t angle_horiz = block_az + 
-        (int32_t)((float)block_az_diff * this->mech_const_param_.CHAN_AZIS[chan]);
+      int32_t angle_horiz = block_az + (int32_t)((float)block_az_diff * this->mech_const_param_.CHAN_AZIS[chan]);
 
       int32_t angle_vert = this->chan_angles_.vertAdjust(chan);
       int32_t angle_horiz_final = this->chan_angles_.horizAdjust(chan, angle_horiz);
@@ -221,9 +233,9 @@ inline bool DecoderRS48<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
       if (this->distance_section_.in(distance) && this->scan_section_.in(angle_horiz_final))
       {
-        float x =  distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
+        float x = distance * COS(angle_vert) * COS(angle_horiz_final) + this->mech_const_param_.RX * COS(angle_horiz);
         float y = -distance * COS(angle_vert) * SIN(angle_horiz_final) - this->mech_const_param_.RX * SIN(angle_horiz);
-        float z =  distance * SIN(angle_vert) + this->mech_const_param_.RZ;
+        float z = distance * SIN(angle_vert) + this->mech_const_param_.RZ;
         this->transformPoint(x, y, z);
 
         typename T_PointCloud::PointT point;
@@ -255,6 +267,28 @@ inline bool DecoderRS48<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
 
   this->prev_pkt_ts_ = pkt_ts;
   return ret;
+}
+
+template <typename T_PointCloud>
+inline bool DecoderRS48<T_PointCloud>::isNewFrame(const uint8_t* packet)
+{
+  const RSP48MsopPkt& pkt = *(const RSP48MsopPkt*)(packet);
+
+  for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
+  {
+    const RSP48MsopBlock& block = pkt.blocks[blk];
+    if (memcmp(this->const_param_.BLOCK_ID, block.id, 1) != 0)
+    {
+      break;
+    }
+
+    int32_t block_az = ntohs(block.azimuth);
+    if (this->pre_split_strategy_->newBlock(block_az))
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace lidar
