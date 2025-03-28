@@ -483,7 +483,11 @@ inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt
   if (sz > PACKET_POOL_MAX)
   {
     LIMIT_CALL(runExceptionCallback(Error(ERRCODE_PKTBUFOVERFLOW)), 1);
+#ifdef ENABLE_USB
+    pkt_queue_.pop();
+#else
     pkt_queue_.clear();
+#endif
   }
 }
 
@@ -502,7 +506,7 @@ inline std::shared_ptr<Buffer> LidarDriverImpl<T_PointCloud>::packet2Get(size_t 
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::packet2Put(std::shared_ptr<Buffer> pkt, bool stuffed)
 {
-  constexpr static int PACKET_POOL_MAX = 1024;
+  constexpr static int PACKET_POOL_MAX = 512;
 
   if (!stuffed)
   {
@@ -514,7 +518,11 @@ inline void LidarDriverImpl<T_PointCloud>::packet2Put(std::shared_ptr<Buffer> pk
   if (sz > PACKET_POOL_MAX)
   {
     LIMIT_CALL(runExceptionCallback(Error(ERRCODE_PKTBUFOVERFLOW)), 1);
+#ifdef ENABLE_USB
+    pkt_queue_2_.pop();
+#else
     pkt_queue_2_.clear();
+#endif
   }
 }
 
@@ -533,7 +541,7 @@ inline std::shared_ptr<Buffer> LidarDriverImpl<T_PointCloud>::packet3Get(size_t 
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::packet3Put(std::shared_ptr<Buffer> pkt, bool stuffed)
 {
-  constexpr static int PACKET_POOL_MAX = 1024;
+  constexpr static int PACKET_POOL_MAX = 512;
 
   if (!stuffed)
   {
@@ -545,7 +553,11 @@ inline void LidarDriverImpl<T_PointCloud>::packet3Put(std::shared_ptr<Buffer> pk
   if (sz > PACKET_POOL_MAX)
   {
     LIMIT_CALL(runExceptionCallback(Error(ERRCODE_PKTBUFOVERFLOW)), 1);
+#ifdef ENABLE_USB
+    pkt_queue_3_.pop();
+#else
     pkt_queue_3_.clear();
+#endif
   }
 }
 
