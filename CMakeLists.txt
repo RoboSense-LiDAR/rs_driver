@@ -170,7 +170,7 @@ if(${ENABLE_USB})
   add_subdirectory(./thirdparty/libusb)
   add_subdirectory(./thirdparty/libuvc)
 
-  if(MSVC)
+  if(WIN32)
     add_library(rsac_usb STATIC ./src/rs_driver/driver/input/input_usb.cpp)
   else()
     add_library(rsac_usb SHARED ./src/rs_driver/driver/input/input_usb.cpp)

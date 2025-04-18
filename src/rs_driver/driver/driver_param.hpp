@@ -324,7 +324,7 @@ struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "image_width: " << image_width << RS_REND;
     RS_INFOL << "image_height: " << image_height << RS_REND;
     RS_INFOL << "image_fps: " << image_fps << RS_REND;
-    RS_INFOL << "enable_usb200: " << image_fps << RS_REND;
+    RS_INFOL << "enable_usb200: " << enable_usb200 << RS_REND;
     RS_INFOL << "device_uuid: " << device_uuid << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
