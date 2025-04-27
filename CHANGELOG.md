@@ -2,6 +2,10 @@
 
 # UnReleased
 
+### Added
+- Update RSAIRY firing tss data according to the Install Mode.
+- Update PCAP Error Code.
+
 ### Fix 
 - Fix PCAP playback speed issue.
 - Fix the compilation issue of rs_driver_viewer on Ubuntu 22.04.

@@ -209,13 +209,13 @@ inline void InputPcap::recvPacket()
       int dataLen = (int)(header->len - pcap_offset_ - pcap_tail_);
       if (dataLen < 0)
       {
-        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
+        cb_excep_(Error(ERRCODE_WRONGMSOPPCAPPARSE));
         continue;
       }
       std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
       if (static_cast<size_t>(dataLen) > pkt->bufSize())
       {
-        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
+        cb_excep_(Error(ERRCODE_WRONGMSOPPCAPPARSE));
         continue;
       }
       memcpy(pkt->data(), pkt_data + pcap_offset_, dataLen);
@@ -239,14 +239,14 @@ inline void InputPcap::recvPacket()
       int dataLen = (int)(header->len - pcap_offset_ - pcap_tail_);
       if (dataLen < 0)
       {
-        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
+        cb_excep_(Error(ERRCODE_WRONGDIFOPPCAPPARSE));
         continue;
       }
 
       std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
       if (static_cast<size_t>(dataLen) > pkt->bufSize())
       {
-        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
+        cb_excep_(Error(ERRCODE_WRONGDIFOPPCAPPARSE));
         continue;
       }
 
@@ -259,13 +259,13 @@ inline void InputPcap::recvPacket()
       int dataLen = (int)(header->len - pcap_offset_ - pcap_tail_);
       if (dataLen < 0)
       {
-        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
+        cb_excep_(Error(ERRCODE_WRONGIMUPCAPPARSE));
         continue;
       }
       std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
       if (static_cast<size_t>(dataLen) > pkt->bufSize())
       {
-        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
+        cb_excep_(Error(ERRCODE_WRONGIMUPCAPPARSE));
         continue;
       }
       memcpy(pkt->data(), pkt_data + pcap_offset_, dataLen);
