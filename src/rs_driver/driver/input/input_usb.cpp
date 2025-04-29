@@ -241,7 +241,6 @@ bool InputUsb::findDevices(std::string device_uuid)
       }
       if (desc.idVendor == VENDOR_ID && desc.idProduct == PRODUCT_ID)
       {
-
         libusb_device_handle *handle;
         std::string uuid_;
         if (libusb_open(device, &handle) == 0)
@@ -270,22 +269,25 @@ bool InputUsb::findDevices(std::string device_uuid)
           find_flag = true;
           RS_INFO << "Find device : " << uuid_ << RS_REND;
         }
-        else
-        {
-          return false;
-        }
+        // else
+        // {
+        //   return false;
+        // }
 
-        if (desc.bcdUSB >= 0x0300)
+        if(find_flag)
         {
-          // RS_INFO << "USB mode is USB3.0" << RS_REND;
-          _is_usb_300 = true;
-        }
-        else
-        {
-          // RS_INFO << "USB mode is USB2.0" << RS_REND;
-          _is_usb_300 = false;
-        }
-          
+          if (desc.bcdUSB >= 0x0300)
+          {
+            // RS_INFO << "USB mode is USB3.0" << RS_REND;
+            _is_usb_300 = true;
+          }
+          else
+          {
+            // RS_INFO << "USB mode is USB2.0" << RS_REND;
+            _is_usb_300 = false;
+          }
+          break; 
+        } 
       }
   }
 
