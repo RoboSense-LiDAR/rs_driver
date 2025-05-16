@@ -159,6 +159,7 @@ template <typename T_PointCloud>
 class DecoderRSAIRY : public DecoderMech<T_PointCloud>
 {
 public:
+  constexpr static float FSR_BASE = 32768.0;
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
   void decodeImuPkt(const uint8_t* pkt, size_t size) override;
@@ -181,14 +182,7 @@ protected:
   bool bInit_{ false };
   bool loaded_install_info_{false};
   uint16_t install_mode_{0xFF};
-#ifdef ENABLE_TRANSFORM
-  double user_roll_{0.0};
-  double user_pitch_{0.0};
-  double user_yaw_{0.0};
-  double user_x_{0.0};
-  double user_y_{0.0};
-  double user_z_{0.0};
-#endif
+
 };
 
 template <typename T_PointCloud>
@@ -244,8 +238,8 @@ inline RSDecoderMechConstParam& DecoderRSAIRY<T_PointCloud>::getConstParam()
 
   float firing_tss_airy_m[] = 
   {
-    0.00f,  0.00f,  0.00f,  0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 
-    7.616f, 7.616f, 7.616f, 7.616f, 7.616f,7.616f,7.616f,7.616f,
+    0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 
+    7.616f, 7.616f, 7.616f, 7.616f, 7.616f, 7.616f, 7.616f, 7.616f,
     16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f,
     24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f,
     33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f,
@@ -302,16 +296,7 @@ inline RSAIRYLidarModel DecoderRSAIRY<T_PointCloud>::getLidarModel(uint8_t mode)
 template <typename T_PointCloud>
 inline DecoderRSAIRY<T_PointCloud>::DecoderRSAIRY(const RSDecoderParam& param)
   : DecoderMech<T_PointCloud>(getConstParam(), param)
-{
-#ifdef ENABLE_TRANSFORM
-  user_roll_ = param.transform_param.roll;
-  user_pitch_ = param.transform_param.pitch;
-  user_yaw_ = param.transform_param.yaw;
-  user_x_ = param.transform_param.x;
-  user_y_ = param.transform_param.y;
-  user_z_ = param.transform_param.z;
-#endif
-}
+{}
 
 template <typename T_PointCloud>
 inline void DecoderRSAIRY<T_PointCloud>::decodeImuPkt(const uint8_t* packet, size_t size)
@@ -328,14 +313,14 @@ inline void DecoderRSAIRY<T_PointCloud>::decodeImuPkt(const uint8_t* packet, siz
       this->imuDataPtr_->timestamp = getTimeHost() * 1e-6;
     }
     uint8_t acclFsr = 1 << (pkt.acceIFsr + 1);
-    float acceUnit = acclFsr / 32768.0;
+    float acceUnit = acclFsr / FSR_BASE;
 
     this->imuDataPtr_->linear_acceleration_x = u8ArrayToInt32(pkt.acceIx, 4) * acceUnit;
     this->imuDataPtr_->linear_acceleration_y = u8ArrayToInt32(pkt.acceIy, 4) * acceUnit;
     this->imuDataPtr_->linear_acceleration_z = u8ArrayToInt32(pkt.acceIz, 4) * acceUnit;
 
     uint16_t gyroFsr = 250 * (1 << pkt.gyroIFsr);
-    float gyroUnit = gyroFsr / 32768.0 * M_PI / 180;
+    float gyroUnit = gyroFsr / FSR_BASE * M_PI / 180;
     this->imuDataPtr_->angular_velocity_x = u8ArrayToInt32(pkt.gyrox, 4) * gyroUnit;
     this->imuDataPtr_->angular_velocity_y = u8ArrayToInt32(pkt.gyroy, 4) * gyroUnit;
     this->imuDataPtr_->angular_velocity_z = u8ArrayToInt32(pkt.gyroz, 4) * gyroUnit;
@@ -366,10 +351,12 @@ inline void DecoderRSAIRY<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, s
   double difop_pitch = DEGREE_TO_RADIAN(convertUint32ToFloat(ntohl(pkt.pitch)));
   double difop_yaw = DEGREE_TO_RADIAN(convertUint32ToFloat(ntohl(pkt.yaw)));
  
-  Eigen::AngleAxisd current_rotation_x(difop_roll + user_roll_, Eigen::Vector3d::UnitX());
-  Eigen::AngleAxisd current_rotation_y(difop_pitch + user_pitch_, Eigen::Vector3d::UnitY());
-  Eigen::AngleAxisd current_rotation_z(difop_yaw + user_yaw_, Eigen::Vector3d::UnitZ());
-  Eigen::Translation3d current_translation(user_x_, user_y_, user_z_);
+  Eigen::AngleAxisd current_rotation_x(difop_roll + this->param_.transform_param.roll, Eigen::Vector3d::UnitX());
+  Eigen::AngleAxisd current_rotation_y(difop_pitch + this->param_.transform_param.pitch, Eigen::Vector3d::UnitY());
+  Eigen::AngleAxisd current_rotation_z(difop_yaw + this->param_.transform_param.yaw, Eigen::Vector3d::UnitZ());
+  Eigen::Translation3d current_translation(this->param_.transform_param.x, 
+                                           this->param_.transform_param.y, 
+                                           this->param_.transform_param.z);
   this->trans_ = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
 #endif
   if ((uint16_t)(pkt.install_mode) != 0xFF)
@@ -401,7 +388,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_
 
     float firing_tss_48L[] = 
     {
-      0.00f,  0.00f,  0.00f,  0.00f, 7.616f, 7.616f, 7.616f, 7.616f, 
+      0.00f, 0.00f, 0.00f, 0.00f, 7.616f, 7.616f, 7.616f, 7.616f, 
       16.184f, 16.184f, 16.184f, 16.184f, 24.752f, 24.752f, 24.752f, 24.752f, 
       33.320f, 33.320f, 33.320f, 33.320f, 42.840f, 42.840f, 42.840f, 42.840f,
       52.360f, 52.360f, 52.360f, 52.360f, 61.880f, 61.880f, 61.880f, 61.880f,
@@ -411,7 +398,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_
 
     float firing_tss_side[] = 
     {
-      0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   
+      0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f,   
       11.424f, 11.424f, 11.424f, 11.424f, 11.424f, 11.424f, 11.424f, 11.424f, 
       22.848f, 22.848f, 22.848f, 22.848f, 22.848f, 22.848f, 22.848f, 22.848f, 
       34.272f, 34.272f, 34.272f, 34.272f, 34.272f, 34.272f, 34.272f, 34.272f, 
@@ -427,7 +414,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_
 
     float firing_tss_normal[] = 
     {
-      0.00f,  0.00f,  0.00f,  0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 
+      0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 
       5.712f, 5.712f, 5.712f, 5.712f, 5.712f, 5.712f, 5.712f, 5.712f, 
       12.376f, 12.376f, 12.376f, 12.376f, 12.376f, 12.376f, 12.376f, 12.376f,
       19.040f, 19.040f, 19.040f, 19.040f, 19.040f, 19.040f, 19.040f, 19.040f,
@@ -453,7 +440,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_
 
     if(lidarModel_ ==  RSAIRYLidarModel::RSAIRY_CHANNEL_96)
     {
-      // side
+      // AIRY: side
       if ((loaded_install_info_) && (this->install_mode_ == 0x1))
       {
         for (uint16_t i = 0; i < sizeof(firing_tss_side)/sizeof(firing_tss_side[0]); i++)
@@ -463,7 +450,7 @@ inline bool DecoderRSAIRY<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_
         }
         bInit_ = true;
       }
-      // normal
+      // AIRY: normal
       else if((loaded_install_info_) && (this->install_mode_ == 0x0))
       {
         for (uint16_t i = 0; i < sizeof(firing_tss_normal)/sizeof(firing_tss_normal[0]); i++)

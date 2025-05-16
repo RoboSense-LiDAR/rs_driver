@@ -1,6 +1,6 @@
 # CHANGLOG
 
-# UnReleased
+## v1.5.18 2025-05-16
 
 ### Added
 - Update RSAIRY firing tss data according to the Install Mode.
