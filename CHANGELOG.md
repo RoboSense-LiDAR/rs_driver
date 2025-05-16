@@ -1,6 +1,10 @@
 # CHANGLOG
 
-# UnReleased
+## v1.5.18 2025-05-16
+
+### Added
+- Update RSAIRY firing tss data according to the Install Mode.
+- Update PCAP Error Code.
 
 ### Fix 
 - Fix PCAP playback speed issue.

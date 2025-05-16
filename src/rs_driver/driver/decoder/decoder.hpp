@@ -361,7 +361,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param, co
   Eigen::AngleAxisd current_rotation_z(param_.transform_param.yaw, Eigen::Vector3d::UnitZ());
   Eigen::Translation3d current_translation(param_.transform_param.x, param_.transform_param.y,
                                            param_.transform_param.z);
-  trans_ = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
+  this->trans_ = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
 #endif
 }
 
@@ -429,7 +429,7 @@ inline void Decoder<T_PointCloud>::transformPoint(float& x, float& y, float& z)
 {
 #ifdef ENABLE_TRANSFORM
   Eigen::Vector4d target_ori(x, y, z, 1);
-  Eigen::Vector4d target_rotate = trans_ * target_ori;
+  Eigen::Vector4d target_rotate = this->trans_ * target_ori;
   x = target_rotate(0);
   y = target_rotate(1);
   z = target_rotate(2);
