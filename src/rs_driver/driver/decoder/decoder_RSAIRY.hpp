@@ -95,14 +95,16 @@ typedef struct
   RSFOV fov;
   uint8_t reserved_1[4];
   RSVersionV1 version;
-  uint8_t reserved_2[242];
+  uint8_t reserved_2[239];
+  uint8_t install_mode;
+  uint8_t reserved_3[2];
   RSSN sn;
   uint16_t zero_cal;
   uint8_t return_mode;
-  uint8_t reserved_3[167];
+  uint8_t reserved_4[167];
   RSCalibrationAngle vert_angle_cali[96];
   RSCalibrationAngle horiz_angle_cali[96];
-  uint8_t reserved_4[22];
+  uint8_t reserved_5[22];
   RSAIRYStatus status;
   uint32_t qx;
   uint32_t qy;
@@ -111,7 +113,11 @@ typedef struct
   uint32_t x;
   uint32_t y;
   uint32_t z;
-  uint8_t reserved_5[126];
+  uint8_t ptp_err[4];
+  uint32_t pitch;
+  uint32_t yaw;
+  uint32_t roll;
+  uint8_t reserved_6[110];
   uint16_t tail;
 } RSAIRYDifopPkt;
 
@@ -153,6 +159,7 @@ template <typename T_PointCloud>
 class DecoderRSAIRY : public DecoderMech<T_PointCloud>
 {
 public:
+  constexpr static float FSR_BASE = 32768.0;
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
   void decodeImuPkt(const uint8_t* pkt, size_t size) override;
@@ -173,6 +180,9 @@ protected:
   RSAIRYLidarModel lidarModel_{ RSAIRY_CHANNEL_96 };
   uint16_t u16ChannelNum_{ 96 };
   bool bInit_{ false };
+  bool loaded_install_info_{false};
+  uint16_t install_mode_{0xFF};
+
 };
 
 template <typename T_PointCloud>
@@ -225,22 +235,28 @@ inline RSDecoderMechConstParam& DecoderRSAIRY<T_PointCloud>::getConstParam()
   INIT_ONLY_ONCE();
 
   float blk_ts = 111.080f;
-  float firing_tss[] = {
-    0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   0.00f,   7.616f,  7.616f,  7.616f,  7.616f,
-    7.616f,  7.616f,  7.616f,  7.616f,  16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f,
-    24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 33.320f, 33.320f, 33.320f, 33.320f,
-    33.320f, 33.320f, 33.320f, 33.320f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f,
-    52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 61.880f, 61.880f, 61.880f, 61.880f,
-    61.880f, 61.880f, 61.880f, 61.880f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f,
-    79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 88.536f, 88.536f, 88.536f, 88.536f,
-    88.536f, 88.536f, 88.536f, 88.536f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f,
+
+  float firing_tss_airy_m[] = 
+  {
+    0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 
+    7.616f, 7.616f, 7.616f, 7.616f, 7.616f, 7.616f, 7.616f, 7.616f,
+    16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f, 16.184f,
+    24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f, 24.752f,
+    33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f,
+    42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f, 42.840f,
+    52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f, 52.360f,
+    61.880f, 61.880f, 61.880f, 61.880f, 61.880f, 61.880f, 61.880f, 61.880f,
+    71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f,
+    79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f, 79.968f,
+    88.536f, 88.536f, 88.536f, 88.536f, 88.536f, 88.536f, 88.536f, 88.536f,
+    97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f, 97.104f,
   };
 
   param.BLOCK_DURATION = blk_ts / 1000000;
-  for (uint16_t i = 0; i < sizeof(firing_tss) / sizeof(firing_tss[0]); i++)
+  for (uint16_t i = 0; i < sizeof(firing_tss_airy_m)/sizeof(firing_tss_airy_m[0]); i++)
   {
-    param.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
-    param.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
+    param.CHAN_TSS[i] = (double)firing_tss_airy_m[i] / 1000000;
+    param.CHAN_AZIS[i] = firing_tss_airy_m[i] / blk_ts;
   }
 
   return param;
@@ -280,8 +296,7 @@ inline RSAIRYLidarModel DecoderRSAIRY<T_PointCloud>::getLidarModel(uint8_t mode)
 template <typename T_PointCloud>
 inline DecoderRSAIRY<T_PointCloud>::DecoderRSAIRY(const RSDecoderParam& param)
   : DecoderMech<T_PointCloud>(getConstParam(), param)
-{
-}
+{}
 
 template <typename T_PointCloud>
 inline void DecoderRSAIRY<T_PointCloud>::decodeImuPkt(const uint8_t* packet, size_t size)
@@ -298,14 +313,14 @@ inline void DecoderRSAIRY<T_PointCloud>::decodeImuPkt(const uint8_t* packet, siz
       this->imuDataPtr_->timestamp = getTimeHost() * 1e-6;
     }
     uint8_t acclFsr = 1 << (pkt.acceIFsr + 1);
-    float acceUnit = acclFsr / 32768.0;
+    float acceUnit = acclFsr / FSR_BASE;
 
     this->imuDataPtr_->linear_acceleration_x = u8ArrayToInt32(pkt.acceIx, 4) * acceUnit;
     this->imuDataPtr_->linear_acceleration_y = u8ArrayToInt32(pkt.acceIy, 4) * acceUnit;
     this->imuDataPtr_->linear_acceleration_z = u8ArrayToInt32(pkt.acceIz, 4) * acceUnit;
 
     uint16_t gyroFsr = 250 * (1 << pkt.gyroIFsr);
-    float gyroUnit = gyroFsr / 32768.0 * M_PI / 180;
+    float gyroUnit = gyroFsr / FSR_BASE * M_PI / 180;
     this->imuDataPtr_->angular_velocity_x = u8ArrayToInt32(pkt.gyrox, 4) * gyroUnit;
     this->imuDataPtr_->angular_velocity_y = u8ArrayToInt32(pkt.gyroy, 4) * gyroUnit;
     this->imuDataPtr_->angular_velocity_z = u8ArrayToInt32(pkt.gyroz, 4) * gyroUnit;
@@ -330,6 +345,25 @@ inline void DecoderRSAIRY<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, s
   this->device_info_.y = convertUint32ToFloat(ntohl(pkt.y));
   this->device_info_.z = convertUint32ToFloat(ntohl(pkt.z));
   this->device_info_.state = true;
+
+#ifdef ENABLE_TRANSFORM
+  double difop_roll = DEGREE_TO_RADIAN(convertUint32ToFloat(ntohl(pkt.roll)));
+  double difop_pitch = DEGREE_TO_RADIAN(convertUint32ToFloat(ntohl(pkt.pitch)));
+  double difop_yaw = DEGREE_TO_RADIAN(convertUint32ToFloat(ntohl(pkt.yaw)));
+ 
+  Eigen::AngleAxisd current_rotation_x(difop_roll + this->param_.transform_param.roll, Eigen::Vector3d::UnitX());
+  Eigen::AngleAxisd current_rotation_y(difop_pitch + this->param_.transform_param.pitch, Eigen::Vector3d::UnitY());
+  Eigen::AngleAxisd current_rotation_z(difop_yaw + this->param_.transform_param.yaw, Eigen::Vector3d::UnitZ());
+  Eigen::Translation3d current_translation(this->param_.transform_param.x, 
+                                           this->param_.transform_param.y, 
+                                           this->param_.transform_param.z);
+  this->trans_ = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
+#endif
+  if ((uint16_t)(pkt.install_mode) != 0xFF)
+  {
+    this->install_mode_ = (uint16_t)(pkt.install_mode);
+    this->loaded_install_info_ = true;
+  }
 }
 
 template <typename T_PointCloud>
@@ -341,35 +375,98 @@ inline bool DecoderRSAIRY<T_PointCloud>::decodeMsopPkt(const uint8_t* pkt, size_
     return false;
   }
 
-  if (!bInit_)
+  if(!bInit_)
   {
-    this->echo_mode_ = getEchoMode(msopPkt.header.data_type[1]);
-    this->split_blks_per_frame_ =
-        (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? (this->blks_per_frame_ << 1) : this->blks_per_frame_;
-
+    this->echo_mode_ = getEchoMode (msopPkt.header.data_type[1]);
+    this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
+      (this->blks_per_frame_ << 1) : this->blks_per_frame_;
+    
     lidarModel_ = getLidarModel(msopPkt.header.lidar_mode);
+    
+    float blk_ts = 111.080f;
+    this->mech_const_param_.BLOCK_DURATION = blk_ts / 1000000;
 
-    if (lidarModel_ == RSAIRYLidarModel::RSAIRY_CHANNEL_48)
+    float firing_tss_48L[] = 
     {
-      float blk_ts = 111.080f;
-      float firing_tss[] = {
-        0.00f,   0.00f,   0.00f,   0.00f,   7.616f,  7.616f,  7.616f,  7.616f,  16.184f, 16.184f, 16.184f, 16.184f,
-        24.752f, 24.752f, 24.752f, 24.752f, 33.320f, 33.320f, 33.320f, 33.320f, 42.840f, 42.840f, 42.840f, 42.840f,
-        52.360f, 52.360f, 52.360f, 52.360f, 61.880f, 61.880f, 61.880f, 61.880f, 71.400f, 71.400f, 71.400f, 71.400f,
-        79.968f, 79.968f, 79.968f, 79.968f, 88.536f, 88.536f, 88.536f, 88.536f, 97.104f, 97.104f, 97.104f, 97.104f,
-      };
+      0.00f, 0.00f, 0.00f, 0.00f, 7.616f, 7.616f, 7.616f, 7.616f, 
+      16.184f, 16.184f, 16.184f, 16.184f, 24.752f, 24.752f, 24.752f, 24.752f, 
+      33.320f, 33.320f, 33.320f, 33.320f, 42.840f, 42.840f, 42.840f, 42.840f,
+      52.360f, 52.360f, 52.360f, 52.360f, 61.880f, 61.880f, 61.880f, 61.880f,
+      71.400f, 71.400f, 71.400f, 71.400f, 79.968f, 79.968f, 79.968f, 79.968f,
+      88.536f, 88.536f, 88.536f, 88.536f, 97.104f, 97.104f, 97.104f, 97.104f,
+    };
 
-      this->mech_const_param_.BLOCK_DURATION = blk_ts / 1000000;
-      for (uint16_t i = 0; i < sizeof(firing_tss) / sizeof(firing_tss[0]); i++)
+    float firing_tss_side[] = 
+    {
+      0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f,   
+      11.424f, 11.424f, 11.424f, 11.424f, 11.424f, 11.424f, 11.424f, 11.424f, 
+      22.848f, 22.848f, 22.848f, 22.848f, 22.848f, 22.848f, 22.848f, 22.848f, 
+      34.272f, 34.272f, 34.272f, 34.272f, 34.272f, 34.272f, 34.272f, 34.272f, 
+      45.696f, 45.696f, 45.696f, 45.696f, 45.696f, 45.696f, 45.696f, 45.696f, 
+      54.264f, 54.264f, 54.264f, 54.264f, 54.264f, 54.264f, 54.264f, 54.264f, 
+      62.832f, 62.832f, 62.832f, 62.832f, 62.832f, 62.832f, 62.832f, 62.832f, 
+      71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 71.400f, 
+      79.016f, 79.016f, 79.016f, 79.016f, 79.016f, 79.016f, 79.016f, 79.016f, 
+      85.680f, 85.680f, 85.680f, 85.680f, 85.680f, 85.680f, 85.680f, 85.680f, 
+      92.344f, 92.344f, 92.344f, 92.344f, 92.344f, 92.344f, 92.344f, 92.344f, 
+      99.008f, 99.008f, 99.008f, 99.008f, 99.008f, 99.008f, 99.008f, 99.008f, 
+    };
+
+    float firing_tss_normal[] = 
+    {
+      0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 
+      5.712f, 5.712f, 5.712f, 5.712f, 5.712f, 5.712f, 5.712f, 5.712f, 
+      12.376f, 12.376f, 12.376f, 12.376f, 12.376f, 12.376f, 12.376f, 12.376f,
+      19.040f, 19.040f, 19.040f, 19.040f, 19.040f, 19.040f, 19.040f, 19.040f,
+      25.704f, 25.704f, 25.704f, 25.704f, 25.704f, 25.704f, 25.704f, 25.704f,
+      33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f, 33.320f,
+      41.888f, 41.888f, 41.888f, 41.888f, 41.888f, 41.888f, 41.888f, 41.888f,
+      50.456f, 50.456f, 50.456f, 50.456f, 50.456f, 50.456f, 50.456f, 50.456f,
+      59.024f, 59.024f, 59.024f, 59.024f, 59.024f, 59.024f, 59.024f, 59.024f,
+      70.448f, 70.448f, 70.448f, 70.448f, 70.448f, 70.448f, 70.448f, 70.448f,
+      81.872f, 81.872f, 81.872f, 81.872f, 81.872f, 81.872f, 81.872f, 81.872f,
+      93.296f, 93.296f, 93.296f, 93.296f, 93.296f, 93.296f, 93.296f, 93.296f
+    };
+
+    if(lidarModel_ ==  RSAIRYLidarModel::RSAIRY_CHANNEL_48)
+    {
+      for (uint16_t i = 0; i < sizeof(firing_tss_48L)/sizeof(firing_tss_48L[0]); i++)
       {
-        this->mech_const_param_.CHAN_TSS[i] = (double)firing_tss[i] / 1000000;
-        this->mech_const_param_.CHAN_AZIS[i] = firing_tss[i] / blk_ts;
+        this->mech_const_param_.CHAN_TSS[i] = (double)firing_tss_48L[i] / 1000000;
+        this->mech_const_param_.CHAN_AZIS[i] = firing_tss_48L[i] / blk_ts;
       }
+      bInit_ = true;
     }
 
-    bInit_ = true;
+    if(lidarModel_ ==  RSAIRYLidarModel::RSAIRY_CHANNEL_96)
+    {
+      // AIRY: side
+      if ((loaded_install_info_) && (this->install_mode_ == 0x1))
+      {
+        for (uint16_t i = 0; i < sizeof(firing_tss_side)/sizeof(firing_tss_side[0]); i++)
+        {
+          this->mech_const_param_.CHAN_TSS[i] = (double)firing_tss_side[i] / 1000000;
+          this->mech_const_param_.CHAN_AZIS[i] = firing_tss_side[i] / blk_ts;
+        }
+        bInit_ = true;
+      }
+      // AIRY: normal
+      else if((loaded_install_info_) && (this->install_mode_ == 0x0))
+      {
+        for (uint16_t i = 0; i < sizeof(firing_tss_normal)/sizeof(firing_tss_normal[0]); i++)
+        {
+          this->mech_const_param_.CHAN_TSS[i] = (double)firing_tss_normal[i] / 1000000;
+          this->mech_const_param_.CHAN_AZIS[i] = firing_tss_normal[i] / blk_ts;
+        }
+        bInit_ = true;
+      }
+      // Airy M
+      else if((loaded_install_info_) && (this->install_mode_ == 0x2))
+      {
+        bInit_ = true;
+      }
+    }
   }
-
   if (lidarModel_ == RSAIRYLidarModel::RSAIRY_CHANNEL_48)
   {
     if (this->echo_mode_ == RSEchoMode::ECHO_SINGLE)
