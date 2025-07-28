@@ -149,7 +149,9 @@ inline void DecoderRSAC1<T_PointCloud>::decodePcPkt(const uint8_t* packet, size_
       int p_num = 0;
       float dist = 0;
       int width = POINT_WIDTH_NUMS * 12 + 10;
-      int height = POINT_HEIGHT_NUMS;
+      int height = POINT_HEIGHT_NUMS; 
+      int dense_point_cnt = 0; 
+      int point_index = 0; 
       struct timeval time_tmp;
       for (int j = 0; j < height; ++j)
       {
@@ -170,22 +172,25 @@ inline void DecoderRSAC1<T_PointCloud>::decodePcPkt(const uint8_t* packet, size_
                 auto y = dist * (int16_t)((uint16_t)(data[width * j + i + 6]) << 8 | data[width * j + i + 7]) / VECTOR_BASE;
                 auto z = dist * (int16_t)((uint16_t)(data[width * j + i + 8]) << 8 | data[width * j + i + 9]) / VECTOR_BASE;
                 auto intensity = (uint16_t)data[width * j + i + 10];
-                
-                setX(this->point_cloud_->points[p_num], x);
-                setY(this->point_cloud_->points[p_num], y);
-                setZ(this->point_cloud_->points[p_num], z);
-                setIntensity(this->point_cloud_->points[p_num], intensity);
-                setTimestamp(this->point_cloud_->points[p_num], timestamp);
-                setRing(this->point_cloud_->points[p_num], 0);
+
+                setX(this->point_cloud_->points[point_index], x);
+                setY(this->point_cloud_->points[point_index], y);
+                setZ(this->point_cloud_->points[point_index], z);
+                setIntensity(this->point_cloud_->points[point_index], intensity);
+                setTimestamp(this->point_cloud_->points[point_index], timestamp);
+                setRing(this->point_cloud_->points[point_index], 0);
+                ++dense_point_cnt; 
+                ++point_index; 
               }
               else if(!this->param_.dense_points)
               {
-                setX(this->point_cloud_->points[p_num], NAN);
-                setY(this->point_cloud_->points[p_num], NAN);
-                setZ(this->point_cloud_->points[p_num], NAN);
-                setIntensity(this->point_cloud_->points[p_num], 0);
-                setTimestamp(this->point_cloud_->points[p_num], timestamp);
-                setRing(this->point_cloud_->points[p_num], 0);
+                setX(this->point_cloud_->points[point_index], NAN);
+                setY(this->point_cloud_->points[point_index], NAN);
+                setZ(this->point_cloud_->points[point_index], NAN);
+                setIntensity(this->point_cloud_->points[point_index], 0);
+                setTimestamp(this->point_cloud_->points[point_index], timestamp);
+                setRing(this->point_cloud_->points[point_index], 0);
+                ++point_index; 
               }
               if(p_num == 0)
               {
@@ -197,6 +202,10 @@ inline void DecoderRSAC1<T_PointCloud>::decodePcPkt(const uint8_t* packet, size_
               }
               p_num++;
           }
+      }
+      if(this->param_.dense_points)
+      {
+        this->point_cloud_->points.resize(dense_point_cnt); 
       }
 
       this->cb_split_frame_(POINT_NUMS, this->cloudTs());
