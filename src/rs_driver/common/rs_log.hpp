@@ -35,42 +35,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iostream>
 
 #ifdef _WIN32
-    #include <WinSock2.h>
-    #include <windows.h>
+#define RS_ERROR std::cout << "[E]:"
+#define RS_WARNING std::cout << "[W]"
+#define RS_INFO std::cout << "[I]:"
+#define RS_INFOL std::cout << "[I]:"
+#define RS_DEBUG std::cout << "[D]:"
+#define RS_REND "" << std::endl
 
-    void inline enableANSI() {
-        static bool enable = false;
-        if(!enable)
-        {
-            HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-            DWORD dwMode = 0;
-            GetConsoleMode(hOut, &dwMode);
-            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-            SetConsoleMode(hOut, dwMode);
-            enable = true;
-        }
-    }
-
-    #define ENABLE_ANSI() enableANSI()
-
-    #define RS_ERROR   ENABLE_ANSI(); std::cout << "\033[1m\033[31m"  // bold red
-    #define RS_WARNING ENABLE_ANSI(); std::cout << "\033[1m\033[33m"  // bold yellow
-    #define RS_INFO    ENABLE_ANSI(); std::cout << "\033[1m\033[32m"  // bold green
-    #define RS_INFOL   ENABLE_ANSI(); std::cout << "\033[32m"         // green
-    #define RS_DEBUG   ENABLE_ANSI(); std::cout << "\033[1m\033[36m"  // bold cyan
-    #define RS_REND    "\033[0m" << std::endl
-
-    #define RS_TITLE   ENABLE_ANSI(); std::cout << "\033[1m\033[35m"  // bold magenta
-    #define RS_MSG     ENABLE_ANSI(); std::cout << "\033[1m\033[37m"  // bold white
+#define RS_TITLE std::cout << "[T]:"
+#define RS_MSG std::cout << "[M]:"
 #else
-    #define RS_ERROR   std::cout << "\033[1m\033[31m"  // bold red
-    #define RS_WARNING std::cout << "\033[1m\033[33m"  // bold yellow
-    #define RS_INFO    std::cout << "\033[1m\033[32m"  // bold green
-    #define RS_INFOL   std::cout << "\033[32m"         // green
-    #define RS_DEBUG   std::cout << "\033[1m\033[36m"  // bold cyan
-    #define RS_REND    "\033[0m" << std::endl
+#define RS_ERROR std::cout << "\033[1m\033[31m"    // bold red
+#define RS_WARNING std::cout << "\033[1m\033[33m"  // bold yellow
+#define RS_INFO std::cout << "\033[1m\033[32m"     // bold green
+#define RS_INFOL std::cout << "\033[32m"           // green
+#define RS_DEBUG std::cout << "\033[1m\033[36m"    // bold cyan
+#define RS_REND "\033[0m" << std::endl
 
-    #define RS_TITLE   std::cout << "\033[1m\033[35m"  // bold magenta
-    #define RS_MSG     std::cout << "\033[1m\033[37m"  // bold white
+#define RS_TITLE std::cout << "\033[1m\033[35m"  // bold magenta
+#define RS_MSG std::cout << "\033[1m\033[37m"    // bold white
 #endif
-

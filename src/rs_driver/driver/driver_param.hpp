@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <rs_driver/common/rs_log.hpp>
 #include <rs_driver/msg/imu_data_msg.hpp>
-#include <rs_driver/msg/image_data_msg.hpp>
+#include <rs_driver/msg/image_msg.hpp>
 #include <string>
 #include <map>
 #include <cstring>
@@ -74,6 +74,7 @@ enum LidarType  ///< LiDAR type
 
   // active camer
   RS_AC1,
+  RS_AC2,
 };
 
 inline bool isMech(LidarType type)
@@ -81,90 +82,85 @@ inline bool isMech(LidarType type)
   return ((LidarType::RS_MECH <= type) && (type < LidarType::RS_MEMS));
 }
 
-inline bool isMems (LidarType type)
+inline bool isMems(LidarType type)
 {
   return ((LidarType::RS_MEMS <= type) && (type < LidarType::RS_JUMBO));
 }
 
-inline bool isJumbo (LidarType type)
+inline bool isJumbo(LidarType type)
 {
   return (LidarType::RS_JUMBO <= type);
 }
 
-inline bool isAC (LidarType type)
+inline bool isAC(LidarType type)
 {
   return (LidarType::RS_AC1 <= type);
 }
 
 inline std::string lidarTypeToStr(const LidarType& type)
 {
-   static const std::unordered_map<LidarType, std::string> lidarTypeMap = {
-        {LidarType::RS16, "RS16"},
-        {LidarType::RS32, "RS32"},
-        {LidarType::RSBP, "RSBP"},
-        {LidarType::RSAIRY, "RSAIRY"},
-        {LidarType::RSHELIOS, "RSHELIOS"},
-        {LidarType::RSHELIOS_16P, "RSHELIOS_16P"},
-        {LidarType::RS128, "RS128"},
-        {LidarType::RS80, "RS80"},
-        {LidarType::RS48, "RS48"},
-        {LidarType::RSP128, "RSP128"},
-        {LidarType::RSP80, "RSP80"},
-        {LidarType::RSP48, "RSP48"},
-        {LidarType::RSM1, "RSM1"},
-        {LidarType::RSM2, "RSM2"},
-        {LidarType::RSM3, "RSM3"},
-        {LidarType::RSE1, "RSE1"},
-        {LidarType::RSMX, "RSMX"},
-        {LidarType::RSM1_JUMBO, "RSM1_JUMBO"},
-        {LidarType::RS_AC1, "RS_AC1"},
-    };
+  static const std::unordered_map<LidarType, std::string> lidarTypeMap = {
+    { LidarType::RS16, "RS16" },     { LidarType::RS32, "RS32" },         { LidarType::RSBP, "RSBP" },
+    { LidarType::RSAIRY, "RSAIRY" }, { LidarType::RSHELIOS, "RSHELIOS" }, { LidarType::RSHELIOS_16P, "RSHELIOS_16P" },
+    { LidarType::RS128, "RS128" },   { LidarType::RS80, "RS80" },         { LidarType::RS48, "RS48" },
+    { LidarType::RSP128, "RSP128" }, { LidarType::RSP80, "RSP80" },       { LidarType::RSP48, "RSP48" },
+    { LidarType::RSM1, "RSM1" },     { LidarType::RSM2, "RSM2" },         { LidarType::RSM3, "RSM3" },
+    { LidarType::RSE1, "RSE1" },     { LidarType::RSMX, "RSMX" },         { LidarType::RSM1_JUMBO, "RSM1_JUMBO" },
+    { LidarType::RS_AC1, "RS_AC1" }, { LidarType::RS_AC2, "RS_AC2" },
+  };
 
-    auto it = lidarTypeMap.find(type);
-    if (it != lidarTypeMap.end()) {
-        return it->second;
-    } else {
-        RS_ERROR << "RS_ERROR" << RS_REND;
-        std::string str = "ERROR";
-        return str;
-    }
+  auto it = lidarTypeMap.find(type);
+  if (it != lidarTypeMap.end())
+  {
+    return it->second;
+  }
+  else
+  {
+    RS_ERROR << "RS_ERROR" << RS_REND;
+    std::string str = "ERROR";
+    return str;
+  }
 }
 
 inline LidarType strToLidarType(const std::string& type)
 {
-   static const std::unordered_map<std::string, LidarType> strLidarTypeMap = {
-        {"RS16", LidarType::RS16},
-        {"RS32", LidarType::RS32},
-        {"RSBP", LidarType::RSBP},
-        {"RSHELIOS", LidarType::RSHELIOS},
-        {"RSHELIOS_16P", LidarType::RSHELIOS_16P},
-        {"RS128", LidarType::RS128},
-        {"RS80", LidarType::RS80},
-        {"RS48", LidarType::RS48},
-        {"RSP128", LidarType::RSP128},
-        {"RSP80", LidarType::RSP80},
-        {"RSP48", LidarType::RSP48},
-        {"RSM1", LidarType::RSM1},
-        {"RSM2", LidarType::RSM2},
-        {"RSM3", LidarType::RSM3},
-        {"RSE1", LidarType::RSE1},
-        {"RSMX", LidarType::RSMX},
-        {"RSAIRY", LidarType::RSAIRY},
-        {"RSM1_JUMBO", LidarType::RSM1_JUMBO},
-        {"RS_AC1", LidarType::RS_AC1},
-    };
+  static const std::unordered_map<std::string, LidarType> strLidarTypeMap = {
+    { "RS16", LidarType::RS16 },
+    { "RS32", LidarType::RS32 },
+    { "RSBP", LidarType::RSBP },
+    { "RSHELIOS", LidarType::RSHELIOS },
+    { "RSHELIOS_16P", LidarType::RSHELIOS_16P },
+    { "RS128", LidarType::RS128 },
+    { "RS80", LidarType::RS80 },
+    { "RS48", LidarType::RS48 },
+    { "RSP128", LidarType::RSP128 },
+    { "RSP80", LidarType::RSP80 },
+    { "RSP48", LidarType::RSP48 },
+    { "RSM1", LidarType::RSM1 },
+    { "RSM2", LidarType::RSM2 },
+    { "RSM3", LidarType::RSM3 },
+    { "RSE1", LidarType::RSE1 },
+    { "RSMX", LidarType::RSMX },
+    { "RSAIRY", LidarType::RSAIRY },
+    { "RSM1_JUMBO", LidarType::RSM1_JUMBO },
+    { "RS_AC1", LidarType::RS_AC1 },
+    { "RS_AC2", LidarType::RS_AC2 },
+  };
 
-    auto it = strLidarTypeMap.find(type);
-    if (it != strLidarTypeMap.end()) {
-        return it->second;
-    } else {
-      RS_ERROR << "Wrong lidar type: " << type << RS_REND;
-      RS_ERROR << "Please give correct type: RS16, RS32, RSBP, RSHELIOS, RSHELIOS_16P, RS48, RS80, RS128, RSP128, RSP80, RSP48, "
-              << "RSM1, RSM1_JUMBO, RSM2,RSM3, RSE1, RSMX, RSAIRY,"
-              << "RS_AC1."
-              << RS_REND;
-      exit(-1);
-    }
+  auto it = strLidarTypeMap.find(type);
+  if (it != strLidarTypeMap.end())
+  {
+    return it->second;
+  }
+  else
+  {
+    RS_ERROR << "Wrong lidar type: " << type << RS_REND;
+    RS_ERROR << "Please give correct type: RS16, RS32, RSBP, RSHELIOS, RSHELIOS_16P, RS48, RS80, RS128, RSP128, RSP80, "
+                "RSP48, "
+             << "RSM1, RSM1_JUMBO, RSM2,RSM3, RSE1, RSMX, RSAIRY,"
+             << "RS_AC1, RS_AC2." << RS_REND;
+    exit(-1);
+  }
 }
 
 enum InputType
@@ -172,7 +168,8 @@ enum InputType
   ONLINE_LIDAR = 1,
   PCAP_FILE,
   RAW_PACKET,
-  USB
+  USB,
+  GMSL,
 };
 
 inline std::string inputTypeToStr(const InputType& type)
@@ -191,6 +188,9 @@ inline std::string inputTypeToStr(const InputType& type)
       break;
     case InputType::USB:
       str = "USB";
+      break;
+    case InputType::GMSL:
+      str = "GMSL";
       break;
     default:
       str = "ERROR";
@@ -231,25 +231,29 @@ struct RSTransformParam  ///< The Point transform parameter
 
 struct RSDecoderParam  ///< LiDAR decoder parameter
 {
-  float min_distance = 0.0f;     ///< min/max distances of point cloud range. valid if min distance or max distance > 0
-  float max_distance = 0.0f; 
-  bool use_lidar_clock = false;  ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
-  bool dense_points = false;     ///< true: discard NAN points; false: reserve NAN points
-  bool ts_first_point = false;   ///< true: time-stamp point cloud with the first point; false: with the last point;
-  bool wait_for_difop = true;    ///< true: start sending point cloud until receive difop packet
-  RSTransformParam transform_param; ///< Used to transform points
+  float min_distance = 0.0f;  ///< min/max distances of point cloud range. valid if min distance or max distance > 0
+  float max_distance = 0.0f;
+  bool use_lidar_clock = false;      ///< true: use LiDAR clock as timestamp; false: use system clock as timestamp
+  bool dense_points = false;         ///< true: discard NAN points; false: reserve NAN points
+  bool ts_first_point = false;       ///< true: time-stamp point cloud with the first point; false: with the last point;
+  bool wait_for_difop = true;        ///< true: start sending point cloud until receive difop packet
+  RSTransformParam transform_param;  ///< Used to transform points
 
   ///< Theses parameters are only for mechanical Lidars.
-  bool config_from_file = false; ///< Internal use only for debugging
-  std::string angle_path = "";   ///< Internal use only for debugging
-  float start_angle = 0.0f;      ///< Start angle of point cloud
-  float end_angle = 360.0f;      ///< End angle of point cloud
-  SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;  
-                                 ///< 1: Split frames by split_angle;
-                                 ///< 2: Split frames by fixed number of blocks;
-                                 ///< 3: Split frames by custom number of blocks (num_blks_split)
-  float split_angle = 0.0f;      ///< Split angle(degree) used to split frame, only be used when split_frame_mode=1
-  uint16_t num_blks_split = 1;   ///< Number of packets in one frame, only be used when split_frame_mode=3
+  bool config_from_file = false;  ///< Internal use only for debugging
+  std::string angle_path = "";    ///< Internal use only for debugging
+  float start_angle = 0.0f;       ///< Start angle of point cloud
+  float end_angle = 360.0f;       ///< End angle of point cloud
+  SplitFrameMode split_frame_mode = SplitFrameMode::SPLIT_BY_ANGLE;
+  ///< 1: Split frames by split_angle;
+  ///< 2: Split frames by fixed number of blocks;
+  ///< 3: Split frames by custom number of blocks (num_blks_split)
+  float split_angle = 0.0f;     ///< Split angle(degree) used to split frame, only be used when split_frame_mode=1
+  uint16_t num_blks_split = 1;  ///< Number of packets in one frame, only be used when split_frame_mode=3
+
+  bool enable_point_cloud = true;  ///< true: enable point cloud; false: disable point cloud
+  bool enable_imu = true;          ///< true: enable imu; false: disable imu
+  int image_mode = 0;              ///< 0:all enable; 1:enable left image; 2:enable right image; 3:disable image
 
   void print() const
   {
@@ -268,30 +272,32 @@ struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFOL << "split_frame_mode: " << split_frame_mode << RS_REND;
     RS_INFOL << "split_angle: " << split_angle << RS_REND;
     RS_INFOL << "num_blks_split: " << num_blks_split << RS_REND;
+    RS_INFOL << "enable_point_cloud: " << enable_point_cloud << RS_REND;
+    RS_INFOL << "enable_imu: " << enable_imu << RS_REND;
+    RS_INFOL << "image_mode: " << image_mode << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
     transform_param.print();
   }
-
 };
 
 struct RSInputParam  ///< The LiDAR input parameter
 {
-  uint16_t msop_port = 6699;                   ///< Msop packet port number
-  uint16_t difop_port = 7788;                  ///< Difop packet port number
-  uint16_t imu_port = 0;                  ///< IMU packet port number, default disable
-  uint16_t user_layer_bytes = 0;    ///< Bytes of user layer. thers is no user layer if it is 0
-  uint16_t tail_layer_bytes = 0;    ///< Bytes of tail layer. thers is no tail layer if it is 0
+  uint16_t msop_port = 6699;      ///< Msop packet port number
+  uint16_t difop_port = 7788;     ///< Difop packet port number
+  uint16_t imu_port = 0;          ///< IMU packet port number, default disable
+  uint16_t user_layer_bytes = 0;  ///< Bytes of user layer. thers is no user layer if it is 0
+  uint16_t tail_layer_bytes = 0;  ///< Bytes of tail layer. thers is no tail layer if it is 0
 
   ///< These parameters are valid when the input type is online lidar
-  std::string host_address = "0.0.0.0";        ///< Address of host
-  std::string group_address = "0.0.0.0";       ///< Address of multicast group
-  uint32_t socket_recv_buf = 106496;   //  <Bytes of socket receive buffer. 
+  std::string host_address = "0.0.0.0";   ///< Address of host
+  std::string group_address = "0.0.0.0";  ///< Address of multicast group
+  uint32_t socket_recv_buf = 106496;      //  <Bytes of socket receive buffer.
 
   ///< These parameters are valid when the input type is pcap file
-  std::string pcap_path = "";                  ///< Absolute path of pcap file
-  bool pcap_repeat = true;                     ///< true: The pcap bag will repeat play
-  float pcap_rate = 1.0f;                      ///< Rate to read the pcap file
-  bool use_vlan = false;                       ///< Vlan on-off
+  std::string pcap_path = "";  ///< Absolute path of pcap file
+  bool pcap_repeat = true;     ///< true: The pcap bag will repeat play
+  float pcap_rate = 1.0f;      ///< Rate to read the pcap file
+  bool use_vlan = false;       ///< Vlan on-off
 
   bool enable_image = true;
   int image_width = 1920;
@@ -300,8 +306,10 @@ struct RSInputParam  ///< The LiDAR input parameter
   frame_format image_format = FRAME_FORMAT_NV12;
   bool enable_usb200 = false;
   int imu_fps = 100;
+  bool sync_timestamps = true;
 
   std::string device_uuid = "";
+  std::string device_path = "";
 
   void print() const
   {
@@ -325,19 +333,21 @@ struct RSInputParam  ///< The LiDAR input parameter
     RS_INFOL << "image_height: " << image_height << RS_REND;
     RS_INFOL << "image_fps: " << image_fps << RS_REND;
     RS_INFOL << "enable_usb200: " << enable_usb200 << RS_REND;
+    RS_INFOL << "imu_fps: " << imu_fps << RS_REND;
+    RS_INFOL << "sync_timestamps: " << sync_timestamps << RS_REND;
     RS_INFOL << "device_uuid: " << device_uuid << RS_REND;
+    RS_INFOL << "device_path: " << device_path << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
   }
-
 };
 
 struct RSDriverParam  ///< The LiDAR driver parameter
 {
-  LidarType lidar_type = LidarType::RS16;  ///< Lidar type
-  InputType input_type = InputType::ONLINE_LIDAR; ///< Input type
-  std::string frame_id = "rslidar";  ///< The frame id of LiDAR mesage
-  RSInputParam input_param;          ///< Input parameter
-  RSDecoderParam decoder_param;      ///< Decoder parameter
+  LidarType lidar_type = LidarType::RS16;          ///< Lidar type
+  InputType input_type = InputType::ONLINE_LIDAR;  ///< Input type
+  std::string frame_id = "rslidar";                ///< The frame id of LiDAR mesage
+  RSInputParam input_param;                        ///< Input parameter
+  RSDecoderParam decoder_param;                    ///< Decoder parameter
 
   void print() const
   {
@@ -345,21 +355,60 @@ struct RSDriverParam  ///< The LiDAR driver parameter
     RS_INFO << "             RoboSense Driver Parameters " << RS_REND;
     RS_INFOL << "input type: " << inputTypeToStr(input_type) << RS_REND;
     RS_INFOL << "lidar_type: " << lidarTypeToStr(lidar_type) << RS_REND;
-    RS_INFOL << "frame_id: "   << frame_id << RS_REND;
+    RS_INFOL << "frame_id: " << frame_id << RS_REND;
     RS_INFOL << "------------------------------------------------------" << RS_REND;
 
     input_param.print();
     decoder_param.print();
   }
-
 };
 
+struct Transform
+{
+  // Quaternion (rotation)
+  float qw{ 1.0f };
+  float qx{ 0.0f };
+  float qy{ 0.0f };
+  float qz{ 0.0f };
+
+  // Translation vector
+  float tx{ 0.0f };
+  float ty{ 0.0f };
+  float tz{ 0.0f };
+
+  // Initialization function
+  void init()
+  {
+    qw = 1.0f;  // Unit quaternion (no rotation)
+    qx = 0.0f;
+    qy = 0.0f;
+    qz = 0.0f;
+    tx = 0.0f;
+    ty = 0.0f;
+    tz = 0.0f;
+  }
+
+  Transform& operator=(const Transform& other)
+  {
+    if (this != &other)
+    {
+      qw = other.qw;
+      qx = other.qx;
+      qy = other.qy;
+      qz = other.qz;
+      tx = other.tx;
+      ty = other.ty;
+      tz = other.tz;
+    }
+    return *this;
+  }
+};
 
 struct DeviceInfo
 {
   DeviceInfo()
   {
-      init();
+    init();
   }
   bool state;
   uint8_t sn[6];
@@ -367,57 +416,47 @@ struct DeviceInfo
   uint8_t top_ver[5];
   uint8_t bottom_ver[5];
 
-  float qx{0.0f};
-  float qy{0.0f};
-  float qz{0.0f};
-  float qw{1.0f};
-  float x{0.0f};
-  float y{0.0f};
-  float z{0.0f};
-  
+  Transform transform;
+  std::map<std::string, double> calib_params;
+  std::string device_id;
+  std::string calib_params_str;
+
   void init()
   {
     memset(sn, 0, sizeof(sn));
     memset(mac, 0, sizeof(mac));
     memset(top_ver, 0, sizeof(top_ver));
     memset(bottom_ver, 0, sizeof(bottom_ver));
-    qx = 0.0f;
-    qy = 0.0f;
-    qz = 0.0f;
-    qw = 1.0f;
-    x = 0.0f;
-    y = 0.0f;
-    z = 0.0f;
+    calib_params.clear();
+    transform.init();
+    device_id = "";
+    calib_params_str = "";
     state = false;
   }
 
   DeviceInfo& operator=(const DeviceInfo& other)
   {
-    if (this != &other) 
+    if (this != &other)
     {
       memcpy(sn, other.sn, sizeof(sn));
       memcpy(mac, other.mac, sizeof(mac));
       memcpy(top_ver, other.top_ver, sizeof(top_ver));
       memcpy(bottom_ver, other.bottom_ver, sizeof(bottom_ver));
-      qx = other.qx;
-      qy = other.qy;
-      qz = other.qz;
-      qw = other.qw;
-      x = other.x;
-      y = other.y;
-      z = other.z;
+      calib_params = other.calib_params;
+      transform = other.transform;
+      device_id = other.device_id;
       state = other.state;
+      calib_params_str = other.calib_params_str;
     }
     return *this;
   }
 };
 
-
 struct DeviceStatus
 {
   DeviceStatus()
   {
-      init();
+    init();
   }
   float voltage = 0.0f;
   bool state;
@@ -429,7 +468,7 @@ struct DeviceStatus
 
   DeviceStatus& operator=(const DeviceStatus& other)
   {
-    if (this != &other) 
+    if (this != &other)
     {
       voltage = other.voltage;
       state = other.state;

@@ -71,6 +71,7 @@ public:
   virtual bool init() = 0;
   virtual bool start() = 0;
   virtual void stop();
+  virtual bool customCmd(const std::vector<uint8_t> &send, std::vector<uint8_t> &receive);
   virtual ~Input()
   {
   }
@@ -151,6 +152,11 @@ inline void Input::pushPacket2(std::shared_ptr<Buffer> pkt, bool stuffed)
 inline void Input::pushPacket3(std::shared_ptr<Buffer> pkt, bool stuffed)
 {
   cb_put_pkt_3_(pkt, stuffed);
+}
+
+inline bool Input::customCmd(const std::vector<uint8_t> &send, std::vector<uint8_t> &receive)
+{
+  return false;
 }
 
 }  // namespace lidar

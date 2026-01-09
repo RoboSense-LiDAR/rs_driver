@@ -12,7 +12,7 @@ Here the definitions of point and point cloud, is from the project file.
 
 `rs_driver/src/rs_driver/msg/point_cloud_msg.hpp`, 
 `rs_driver/src/rs_driver/msg/pcl_point_cloud_msg.hpp`, 
-```rs_driver/src/rs_driver/msg/image_data_msg.hpp```,
+```rs_driver/src/rs_driver/msg/image_msg.hpp```,
 ```rs_driver/src/rs_driver/msg/imu_data_msg.hpp```
 
 
@@ -281,26 +281,26 @@ int main()
 + Similar to acquiring point clouds, the `rs_driver` requires the caller to provide an free Image data instance through a callback function. Here, the first Image callback function is defined.
 
 ```c++
-SyncQueue<std::shared_ptr<ImageData>> free_image_data_queue;;
+SyncQueue<std::shared_ptr<ImageMsg>> free_image_data_queue;;
 
-std::shared_ptr<ImageData> driverGetImageDataFromCallerCallback(void)
+std::shared_ptr<ImageMsg> driverGetImageDataFromCallerCallback(void)
 {
-  std::shared_ptr<ImageData> msg = free_image_data_queue.pop();
+  std::shared_ptr<ImageMsg> msg = free_image_data_queue.pop();
   if (msg.get() != NULL)
   {
     return msg;
   }
 
-  return std::make_shared<ImageData>();
+  return std::make_shared<ImageMsg>();
 }
 ```
 
 + `rs_driver` returns stuffed Image data to user.  Here is the second callback.
 
 ```c++
-SyncQueue<std::shared_ptr<ImageData>> stuffed_image_data_queue;
+SyncQueue<std::shared_ptr<ImageMsg>> stuffed_image_data_queue;
 
-void driverReturnImageDataToCallerCallback(const std::shared_ptr<ImageData>& msg)
+void driverReturnImageDataToCallerCallback(const std::shared_ptr<ImageMsg>& msg)
 {
   stuffed_image_data_queue.push(msg);
 }
@@ -316,7 +316,7 @@ void processImageData(void)
   uint32_t image_cnt = 0;
   while (!to_exit_process)
   {
-    std::shared_ptr<ImageData> msg = stuffed_image_data_queue.popWait();
+    std::shared_ptr<ImageMsg> msg = stuffed_image_data_queue.popWait();
     if (msg.get() == NULL)
     {
       continue;

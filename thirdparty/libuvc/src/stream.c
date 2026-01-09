@@ -158,6 +158,8 @@ struct format_table_entry *_get_format_entry(enum uvc_frame_format format) {
       {'M',  'J',  'P',  'G'})
     FMT(UVC_FRAME_FORMAT_H264,
       {'H',  '2',  '6',  '4', 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71})
+    FMT(UVC_FRAME_FORMAT_XR24,
+      {'X',  'R',  '2',  '4', 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71})
 
     default:
       return NULL;
@@ -1425,6 +1427,9 @@ void _uvc_populate_frame(uvc_stream_handle_t *strmh) {
   case UVC_FRAME_FORMAT_H264:
     frame->step = 0;
     break;
+  case UVC_FRAME_FORMAT_XR24:
+    frame->step = frame->width * 4;
+    break;
   default:
     frame->step = 0;
     break;
@@ -1441,8 +1446,8 @@ void _uvc_populate_frame(uvc_stream_handle_t *strmh) {
   memcpy(frame->data, strmh->holdbuf, frame->data_bytes);
 
   if (strmh->meta_hold_bytes > 0)
-      if (frame->metadata_bytes < strmh->meta_hold_bytes)
   {
+      if (frame->metadata_bytes < strmh->meta_hold_bytes)
       {
           frame->metadata = realloc(frame->metadata, strmh->meta_hold_bytes);
       }
@@ -1603,8 +1608,7 @@ uvc_error_t uvc_stream_stop(uvc_stream_handle_t *strmh) {
   pthread_mutex_unlock(&strmh->cb_mutex);
 
   /** @todo stop the actual stream, camera side? */
-
-  if (strmh->user_cb) {
+  if (strmh->user_m_get && strmh->user_m_put) {
     /* wait for the thread to stop (triggered by
      * LIBUSB_TRANSFER_CANCELLED transfer) */
     pthread_join(strmh->cb_thread, NULL);

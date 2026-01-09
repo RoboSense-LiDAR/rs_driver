@@ -1,4 +1,4 @@
-# **rs_driver v1.5.17 源代码解析**
+# **rs_driver v1.5.18 源代码解析**
 
 
 
@@ -1087,7 +1087,7 @@ processMsopPkt()处理MSOP Packet。
 processImuPkt()处理IMU Packet。
 + 校验Packet的长度是否匹配。
 + 校验Packet的标志字节是否匹配。
-+ 如果校验无误，调用decodeImuPkt()。这是一个纯虚拟函数，由各雷达的派生类提供自己的实现。
++ 如果校验无误，调用decodeImuFrame()。这是一个纯虚拟函数，由各雷达的派生类提供自己的实现。
 
 
 ##### 4.8.1.5 Decoder::transformPoint()

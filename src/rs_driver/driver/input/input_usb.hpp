@@ -32,8 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/driver/input/input.hpp>
-
+#include <mutex>
+#include <condition_variable>
 #include <sstream>
+#include <atomic>
 
 #ifdef _WIN32
 #define WIN32
@@ -54,17 +56,16 @@ namespace robosense
 {
 namespace lidar
 {
-
-typedef enum hid_req
+enum class HidReqType
 {
     HID_REQ_IMU_UPLOAD_START_100HZ = 0,         /**< Request to start the operation. */
     HID_REQ_IMU_UPLOAD_START_200HZ,         /**< Request to start the operation. */
     HID_REQ_IMU_UPLOAD_STOP,              /**< Request to stop the operation. */
     HID_REQ_SYNC,                         /**< Request to synchronize. */
     HID_REQ_DELAY_RESP,                   /**< Request for a delayed response. */
-} hid_req_t;
+};
 
-typedef enum hid_resp
+enum class HidRespType
 {
     HID_RESP_ERROR = 0,                   /**< Response indicating an error. */
     HID_RESP_HEAD_ERROR,
@@ -74,7 +75,7 @@ typedef enum hid_resp
     HID_RESP_DELAY,                       /**< Response for a delay request. */
     HID_RESP_IMU,                         /**< Response containing IMU data. */
     HID_RESP_OTHER
-} hid_resp_t;
+};
 
 class InputUsb : public Input
 {
@@ -82,26 +83,28 @@ public:
   InputUsb(const RSInputParam& input_param)
     : Input(input_param) 
   {
-    _kill_handler_thread = 0;
-    _usb_ctx = nullptr;
-    _dev = nullptr;
-    _devh = nullptr;
+    kill_handler_thread_ = 0;
+    usb_ctx_ = nullptr;
+    dev_ = nullptr;
+    devh_ = nullptr;
 
-    _uvc_ctx_image = nullptr;
-    _uvc_ctrl_image = nullptr;
-    _uvc_dev_image = nullptr;
-    _uvc_devh_image = nullptr;
+    uvc_ctx_image_ = nullptr;
+    uvc_ctrl_image_ = nullptr;
+    uvc_dev_image_ = nullptr;
+    uvc_devh_image_ = nullptr;
 
-    _uvc_ctx_pc = nullptr;
-    _uvc_ctrl_pc = nullptr;
-    _uvc_dev_pc = nullptr;
-    _uvc_devh_pc = nullptr;
+    uvc_ctx_pc_ = nullptr;
+    uvc_ctrl_pc_ = nullptr;
+    uvc_dev_pc_ = nullptr;
+    uvc_devh_pc_ = nullptr;
   }
 
   virtual bool init();
   virtual bool start();
   virtual void stop();
   virtual ~InputUsb();
+
+  bool customCmd(const std::vector<uint8_t> &send, std::vector<uint8_t> &receive) override final;
 
 private:
   void recvPacket();
@@ -116,44 +119,49 @@ private:
   bool imuStreamInit();
   bool imuStreamStart();
   void imuStreamClose();
-  bool send_cmd(hid_req req);
-  hid_resp parse_cmd(const uint8_t *data, int len);
-  void creat_frame_header(uint8_t* data, int len);
-
+  void hidStop();
+  bool sendHidCmd(HidReqType type);
+  HidRespType parseHidResp(const uint8_t *data, int len);
+  void buildHidFrameHeader(uint8_t* data, int len);
+  bool usbTransferTx(libusb_device_handle *devh, int endpoint_out, uint8_t *data, int len);
+  void clearHidRecvCache();
+  HidRespType usbTransferRx(libusb_device_handle *devh, int endpoint_in, uint8_t* data, int len, int &transfer_length, int time_out = 100);
 private:
-  std::shared_ptr<Buffer> _pkt_image;
-  std::shared_ptr<Buffer> _pkt_pc;
 
-  uint64_t _msec_to_delay_ = 1000000;
+  libusb_context *usb_ctx_;
+  libusb_device *dev_;
+  libusb_device_handle *devh_;
+
+  uvc_context *uvc_ctx_image_;
+  uvc_device *uvc_dev_image_;
+  uvc_device_handle *uvc_devh_image_;
+  struct uvc_stream_ctrl *uvc_ctrl_image_;
+
+  uvc_context *uvc_ctx_pc_;
+  uvc_device *uvc_dev_pc_;
+  uvc_device_handle *uvc_devh_pc_;
+  struct uvc_stream_ctrl *uvc_ctrl_pc_;
+
+  std::shared_ptr<Buffer> image_buf_ptr_{nullptr};
+  std::shared_ptr<Buffer> pc_buf_ptr_{nullptr};
   
-  int _kill_handler_thread = 1;
+  std::thread usbEventProcThead_;
+  int hid_intface_num_;
+  int hid_endpoint_in_num_;
+  int hid_endpoint_out_num_;
 
-  std::thread _usb_thread;
+  int image_width_{640};
+  int image_height_{480};
+  int image_fps_{30};
+  int image_frame_format_{0};
 
-  libusb_context *_usb_ctx;
-  libusb_device *_dev;
-  libusb_device_handle *_devh;
-
-  uvc_context *_uvc_ctx_image;
-  uvc_device *_uvc_dev_image;
-  uvc_device_handle *_uvc_devh_image;
-  struct uvc_stream_ctrl *_uvc_ctrl_image;
-
-  uvc_context *_uvc_ctx_pc;
-  uvc_device *_uvc_dev_pc;
-  uvc_device_handle *_uvc_devh_pc;
-  struct uvc_stream_ctrl *_uvc_ctrl_pc;
-
-  int _hid_intface_num;
-  int _hid_endpoint_in_num;
-  int _hid_endpoint_out_num;
-
-  int _width = 640;
-  int _height = 480;
-  int _fps = 30;
-  int _frame_format = 0;
-
-  bool _is_usb_300 = false;
+  bool is_usb_300_{false};
+  int kill_handler_thread_{1};
+  std::atomic<bool> hid_start_flag_{false};       
+  std::atomic<bool> is_ac2_{false};            
+  std::atomic<bool> transfer_custom_cmd_{false};
+  std::condition_variable cond_;
+  std::mutex mtx_;
 };
 
 }  // namespace lidar

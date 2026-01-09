@@ -28,7 +28,8 @@ add_executable(rs_driver_test
               decoder_rs32_test.cpp
               decoder_rs16_test.cpp
               dbg_test.cpp
-              rs_common_test.cpp)
+              rs_common_test.cpp
+              simd_test.cpp)
 
 target_link_libraries(rs_driver_test
                       ${GTEST_LIBRARIES}

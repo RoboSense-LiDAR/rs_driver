@@ -41,13 +41,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <signal.h>
 #include <atomic>
 
-#define ORDERLY_EXIT
+// #define ORDERLY_EXIT
 
 // Define the macro: 1 to enable IMU parsing, 0 to disable IMU parsing
 #define ENABLE_IMU_PARSE 1
 #define ENABLE_IMAGE_PARSE 1
-
-#define PRINT_SENSOR_INFO 1
 
 typedef PointXYZIRT PointT;
 typedef PointCloudT<PointT> PointCloudMsg;
@@ -332,7 +330,6 @@ std::function<std::shared_ptr<ImageMsg>()> createImageDataCallback(LidarType lid
   };
 }
 
-#define USE_AC1 0
 int main(int argc, char* argv[])
 {
   RS_TITLE << "------------------------------------------------------" << RS_REND;
@@ -341,28 +338,16 @@ int main(int argc, char* argv[])
 
   signal(SIGINT, signalHandler);
   RSDriverParam param;  ///< Create a parameter object
-  param.input_type = InputType::USB;
-  
-#if USE_AC1
-  param.lidar_type = LidarType::RS_AC1;  ///< Set the lidar type. Make sure this type is correct
-  // param.input_param.device_uuid = "00000000";
-#else
+  param.input_type = InputType::GMSL;
   param.lidar_type = LidarType::RS_AC2;  ///< Set the lidar type. Make sure this type is correct
-
   param.decoder_param.ts_first_point = true;
-  param.input_param.image_width = 1616;
-  param.input_param.image_height = 2636;
-  param.input_param.image_format = FRAME_FORMAT_XR24;
+  param.input_param.image_width = 6464;
+  param.input_param.image_height = 2592;
+  param.input_param.image_format = FRAME_FORMAT_GREY;
   param.input_param.image_fps = 15;
-  param.input_param.enable_usb200 = true;
-  param.input_param.sync_timestamps = true;
-  param.decoder_param.use_lidar_clock = false;
-  param.decoder_param.config_from_file = false;
-  param.decoder_param.angle_path = "/home/sti/Desktop/angle/";
-  param.decoder_param.enable_imu = true;
-  param.decoder_param.image_mode = 0;  ///< 0:all enable; 1:enable left image; 2:enable right image; 3:disable image
-  param.decoder_param.enable_point_cloud = true;
-#endif
+  param.input_param.device_path = "/dev/video31";
+  param.decoder_param.config_from_file = true;
+  param.decoder_param.angle_path = "/home/nvidia/Desktop/angle/";
   param.print();
 
   RS_DEBUG << "Compiled on " << __DATE__ << " at " << __TIME__ << RS_REND;
@@ -409,28 +394,10 @@ int main(int argc, char* argv[])
 #if ENABLE_IMAGE_PARSE
     imageData_handle_thread.join();
 #endif
-    RS_INFO << "Driver Stop Error..." << RS_REND;
     return -1;
   }
-  RS_DEBUG << "RoboSense Lidar-Driver Linux usb demo start......" << RS_REND;
+  RS_DEBUG << "RoboSense Lidar-Driver Linux gmsl demo start......" << RS_REND;
 
-  std::this_thread::sleep_for(std::chrono::seconds(2));
-  DeviceInfo device_info;
-  RS_DEBUG << "Get device info..." << RS_REND;
-  if (driver.getDeviceInfo(device_info))
-  {
-    RS_INFO << "DEVICE_ID: " << device_info.device_id << RS_REND;
-    for (auto it = device_info.calib_params.begin(); it != device_info.calib_params.end(); it++)
-    {
-      RS_INFO << std::fixed << std::setprecision(6) << it->first << " : " << it->second << RS_REND;
-    }
-    RS_INFO << "CALIB_PARAMS_STR: " << device_info.calib_params_str << RS_REND;
-  }
-  else
-  {
-    RS_ERROR << "Get device info failed" << RS_REND;
-  }
-  
 #ifdef ORDERLY_EXIT
   const int MAX_WAIT_SECONDS = 15;
 #else
@@ -443,7 +410,7 @@ int main(int argc, char* argv[])
     std::this_thread::sleep_for(std::chrono::seconds(1));
     wait_seconds++;
   }
-  RS_DEBUG << "RoboSense Lidar-Driver Linux usb demo exit......" << RS_REND;
+  RS_DEBUG << "RoboSense Lidar-Driver Linux gmsl demo exit......" << RS_REND;
   driver.stop();
 
   to_exit_process = true;
@@ -451,6 +418,7 @@ int main(int argc, char* argv[])
 #if ENABLE_IMU_PARSE
   imuData_handle_thread.join();
 #endif
+
 #if ENABLE_IMAGE_PARSE
   imageData_handle_thread.join();
 #endif

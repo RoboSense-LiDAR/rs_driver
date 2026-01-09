@@ -37,6 +37,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/input/input_raw_jumbo.hpp>
 #include <rs_driver/driver/input/input_sock.hpp>
 #include <rs_driver/driver/input/input_sock_jumbo.hpp>
+
+#ifdef ENABLE_GMSL
+#include <rs_driver/driver/input/input_gmsl.hpp>
+#endif // ENABLE_GMSL
+
 #ifdef ENABLE_USB
 #include <rs_driver/driver/input/input_usb.hpp>
 #endif // ENABLE_USB
@@ -109,6 +114,14 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RS
       break;
 #endif
 
+#ifdef ENABLE_GMSL
+    case InputType::GMSL:
+    {
+      input = std::make_shared<InputGMSL>(param);
+    }
+    break;
+#endif // ENABLE_GMSL
+
     default:
 
       RS_ERROR << "Wrong Input Type " << type << "." << RS_REND;
@@ -120,7 +133,12 @@ inline std::shared_ptr<Input> InputFactory::createInput(InputType type, const RS
 
       if (type == InputType::USB)
       {
-        RS_ERROR << "To use InputType::USB, please do not specify the make option ENABLE_USB." << RS_REND;
+        RS_ERROR << "To use InputType::USB, please set the make option ENABLE_USB as ON." << RS_REND;
+      }
+
+      if (type == InputType::GMSL)
+      {
+        RS_ERROR << "To use InputType::GMSL, please set the make option ENABLE_GMSL as ON." << RS_REND;
       }
 
       // exit(-1);

@@ -39,6 +39,17 @@ target_link_libraries(demo_usb
                     ${EXTERNAL_LIBS})
 endif()
 
+if(${ENABLE_GMSL})
+  if(WIN32)
+  else()
+    add_executable(demo_gmsl
+                demo_gmsl.cpp)
+
+    target_link_libraries(demo_gmsl
+                        ${EXTERNAL_LIBS})
+  endif(WIN32)
+endif()
+
 if(NOT ${DISABLE_PCAP_PARSE})
 
 add_executable(demo_pcap

@@ -31,7 +31,8 @@ option(ENABLE_CRC32_CHECK         "Enable CRC32 Check on MSOP Packet" OFF)
 option(ENABLE_DIFOP_PARSE         "Enable parsing DIFOP Packet" OFF)
 
 option(ENABLE_USB                 "Enable usb interface" ON)
-
+option(ENABLE_GMSL                "Enable gmsl interface" ON)
+option(ENABLE_SIMD_ACCELERATION   "Enable SIMD acceleration for performance critical functions" ON)
 #=============================
 #  Compile Demos, Tools, Tests
 #=============================
@@ -90,6 +91,52 @@ endif()
 message(=============================================================)
 message("-- CMake run for ${COMPILER}")
 message(=============================================================)
+
+
+if(ENABLE_SIMD_ACCELERATION)
+  add_compile_definitions(ENABLE_SIMD_ACCELERATION)
+  message(STATUS "SIMD acceleration enabled")
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86" OR CMAKE_SYSTEM_PROCESSOR MATCHES "amd64")
+      set(X86_PLATFORM 1)
+      message(STATUS "Building for x86 platform")
+      
+      include(CheckCXXCompilerFlag)
+      
+      check_cxx_compiler_flag("-mssse3" COMPILER_SUPPORTS_SSSE3)
+      check_cxx_compiler_flag("-mavx2" COMPILER_SUPPORTS_AVX2)
+      if(COMPILER_SUPPORTS_SSSE3)
+          add_compile_definitions(ENABLE_SSSE3)
+          set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
+          message(STATUS "SSSE3 optimization enabled")
+      elseif(COMPILER_SUPPORTS_AVX2)
+          add_compile_definitions(ENABLE_AVX2)
+          set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
+          message(STATUS "AVX2 optimization enabled")
+      endif()
+      
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+      set(ARM64_PLATFORM 1)
+      add_compile_definitions(ENABLE_ARM_NEON ENABLE_ARM64)
+      message(STATUS "Building for ARM64 platform with NEON optimization")
+      
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
+      set(ARM_PLATFORM 1)
+      
+      include(CheckCXXCompilerFlag)
+      check_cxx_compiler_flag("-mfpu=neon" COMPILER_SUPPORTS_NEON)
+      
+      if(COMPILER_SUPPORTS_NEON)
+          add_compile_definitions(ENABLE_ARM_NEON)
+          set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon")
+          message(STATUS "ARM NEON optimization enabled")
+      endif()
+      
+  else()
+      message(STATUS "Building for generic platform")
+  endif()
+else()
+  message(STATUS "SIMD acceleration disabled, using generic implementation")
+endif()
 
 #========================
 #  Path Setup
@@ -159,6 +206,25 @@ if(${ENABLE_TRANSFORM})
 
 endif(${ENABLE_TRANSFORM})
 
+if(${ENABLE_GMSL})
+  if(WIN32)
+    message(STATUS "GMSL not supported on Windows, skipping.")
+  else()
+    message(=============================================================)
+    message("-- Enable GMSL")
+    message(=============================================================)
+
+    add_definitions(-DENABLE_GMSL)
+    add_definitions(-DENABLE_IMAGE)
+    
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+    find_package(V4L2 REQUIRED)
+    add_library(rsac_gmsl STATIC ./src/rs_driver/driver/input/gmsl/video_v4l2.cpp)
+    target_include_directories(rsac_gmsl PRIVATE V4L2::V4L2)
+    list(APPEND EXTERNAL_LIBS rsac_gmsl)
+  endif(WIN32)
+endif(${ENABLE_GMSL})
+
 if(${ENABLE_USB})
 
   message(=============================================================)
@@ -166,15 +232,12 @@ if(${ENABLE_USB})
   message(=============================================================)
 
   add_definitions(-DENABLE_USB)
+  add_definitions(-DENABLE_IMAGE)
 
   add_subdirectory(./thirdparty/libusb)
   add_subdirectory(./thirdparty/libuvc)
 
-  if(WIN32)
-    add_library(rsac_usb STATIC ./src/rs_driver/driver/input/input_usb.cpp)
-  else()
-    add_library(rsac_usb SHARED ./src/rs_driver/driver/input/input_usb.cpp)
-  endif()
+  add_library(rsac_usb STATIC ./src/rs_driver/driver/input/input_usb.cpp)
   target_link_libraries(rsac_usb PRIVATE ${EXTERNAL_LIBS} uvc-ac-static)
   target_include_directories(rsac_usb PUBLIC
   ./src

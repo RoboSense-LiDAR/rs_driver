@@ -53,9 +53,9 @@ struct RSDecoderMechConstParam
 
 
   // firing_ts/chan_ts
-  double BLOCK_DURATION;
-  double CHAN_TSS[128];
-  float CHAN_AZIS[128];
+  double BLOCK_DURATION{0.0f};
+  double CHAN_TSS[128]{0.0f};
+  float CHAN_AZIS[128]{0.0f};
 };
 
 typedef struct

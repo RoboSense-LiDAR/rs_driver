@@ -66,9 +66,9 @@ struct PointXYZIRTF
   float y;
   float z;
   uint8_t intensity;
+  uint8_t feature;
   uint16_t ring;
   double timestamp;
-  uint8_t feature;
 };
 
 template <typename T_Point>
@@ -81,7 +81,10 @@ public:
   uint32_t height = 0;    ///< Height of point cloud
   uint32_t width = 0;     ///< Width of point cloud
   bool is_dense = false;  ///< If is_dense is true, the point cloud does not contain NAN points,
-  double timestamp = 0.0;
+  double timestamp = 0.0;   ///< Timestamp of point cloud
+  double sot_timestamp = 0.0; ///< Timestamp when data was received
+  double sot_timestamp_rt = 0.0; ///< Timestamp when data was received in real time
+
   uint32_t seq = 0;           ///< Sequence number of message
   std::string frame_id = "";  ///< Point cloud frame id
 

@@ -284,6 +284,11 @@ static uvc_error_t uvc_open_internal(uvc_device_t *dev,
     struct libusb_device_handle *usb_devh,
     uvc_device_handle_t **devh);
 
+static uvc_error_t uvc_open_internal2(uvc_device_t *dev,
+    int interface_selector,
+    struct libusb_device_handle *usb_devh,
+    uvc_device_handle_t **devh);
+
 #if LIBUSB_API_VERSION >= 0x01000107
 /** @brief Wrap a platform-specific system device handle and obtain a UVC device handle.
  * The handle allows you to use libusb to perform I/O on the device in question.
@@ -364,12 +369,95 @@ uvc_error_t uvc_open2(
     uvc_device_handle_t **devh){
   uvc_error_t ret;
   UVC_ENTER();
-  ret = uvc_open_internal(dev, interface_selector, usb_devh, devh);
+  ret = uvc_open_internal2(dev, interface_selector, usb_devh, devh);
   UVC_EXIT(ret);
   return ret;
 }
 
 static uvc_error_t uvc_open_internal(
+    uvc_device_t *dev,
+    int interface_selector,
+    struct libusb_device_handle *usb_devh,
+    uvc_device_handle_t **devh) {
+  uvc_error_t ret;
+  uvc_device_handle_t *internal_devh;
+  struct libusb_device_descriptor desc;
+
+  UVC_ENTER();
+
+  uvc_ref_device(dev);
+
+  internal_devh = calloc(1, sizeof(*internal_devh));
+  internal_devh->dev = dev;
+  internal_devh->usb_devh = usb_devh;
+
+  pthread_mutex_init(&internal_devh->cb_mutex, NULL);
+  pthread_cond_init(&internal_devh->cb_cond, NULL);
+
+  ret = uvc_get_device_info(interface_selector, internal_devh, &(internal_devh->info));
+
+  if (ret != UVC_SUCCESS)
+    goto fail;
+
+  UVC_DEBUG("claiming control interface %d", internal_devh->info->ctrl_if.bInterfaceNumber);
+  ret = uvc_claim_if(internal_devh, internal_devh->info->ctrl_if.bInterfaceNumber);
+  if (ret != UVC_SUCCESS)
+    goto fail;
+
+  libusb_get_device_descriptor(dev->usb_dev, &desc);
+  internal_devh->is_isight = (desc.idVendor == 0x05ac && desc.idProduct == 0x8501);
+
+  if (internal_devh->info->ctrl_if.bEndpointAddress) {
+    internal_devh->status_xfer = libusb_alloc_transfer(0);
+    if (!internal_devh->status_xfer) {
+      ret = UVC_ERROR_NO_MEM;
+      goto fail;
+    }
+
+    libusb_fill_interrupt_transfer(internal_devh->status_xfer,
+                                   usb_devh,
+                                   internal_devh->info->ctrl_if.bEndpointAddress,
+                                   internal_devh->status_buf,
+                                   sizeof(internal_devh->status_buf),
+                                   _uvc_status_callback,
+                                   internal_devh,
+                                   0);
+    ret = libusb_submit_transfer(internal_devh->status_xfer);
+    UVC_DEBUG("libusb_submit_transfer() = %d", ret);
+
+    if (ret) {
+      fprintf(stderr,
+              "uvc: device has a status interrupt endpoint, but unable to read from it\n");
+      goto fail;
+    }
+  }
+
+  if (dev->ctx->own_usb_ctx && dev->ctx->open_devices == NULL) {
+    /* Since this is our first device, we need to spawn the event handler thread */
+    uvc_start_handler_thread(dev->ctx);
+  }
+
+  DL_APPEND(dev->ctx->open_devices, internal_devh);
+  *devh = internal_devh;
+
+  UVC_EXIT(ret);
+
+  return ret;
+
+ fail:
+  if ( internal_devh->info ) {
+    uvc_release_if(internal_devh, internal_devh->info->ctrl_if.bInterfaceNumber);
+  }
+  libusb_close(usb_devh);
+  uvc_unref_device(dev);
+  uvc_free_devh(internal_devh);
+
+  UVC_EXIT(ret);
+
+  return ret;
+}
+
+static uvc_error_t uvc_open_internal2(
     uvc_device_t *dev,
     int interface_selector,
     struct libusb_device_handle *usb_devh,
@@ -1057,31 +1145,41 @@ uvc_error_t uvc_release_if(uvc_device_handle_t *devh, int idx) {
     UVC_EXIT(ret);
     return ret;
   }
+  
+  int is_ac2 = 0;
+  uvc_device_descriptor_t *desc;
 
-  /* libusb_release_interface *should* reset the alternate setting to the first available,
+  if (uvc_get_device_descriptor(devh->dev, &desc) == UVC_SUCCESS)
+  {
+    if(desc->idProduct == 0x1020)
+    {
+      is_ac2 = 1;
+    }
+    uvc_free_device_descriptor(desc);
+  }
+  
+  if(is_ac2 == 0){
+      /* libusb_release_interface *should* reset the alternate setting to the first available,
      but sometimes (e.g. on Darwin) it doesn't. Thus, we do it explicitly here.
      This is needed to de-initialize certain cameras. */
-  ret = UVC_SUCCESS; //TODO: Do not alt setting for the USB3.X on x3m platform
-                     //Otherwise, the host cannot claim again
-                     //To be honest, it is causing memory leak in the driver of x3m platform
-  libusb_set_interface_alt_setting(devh->usb_devh, idx, 0);
-  ret = libusb_release_interface(devh->usb_devh, idx);
-
-  // if (UVC_SUCCESS == ret) {
-  //   devh->claimed &= ~( 1 << idx );
-  //   /* Reattach any kernel drivers that were disabled when we claimed this interface */
-  //   ret = libusb_attach_kernel_driver(devh->usb_devh, idx);
-
-  //   if (ret == UVC_SUCCESS) {
-  //     UVC_DEBUG("reattached kernel driver to interface %d", idx);
-  //   } else if (ret == LIBUSB_ERROR_NOT_FOUND || ret == LIBUSB_ERROR_NOT_SUPPORTED) {
-  //     ret = UVC_SUCCESS;  /* NOT_FOUND and NOT_SUPPORTED are OK: nothing to do */
-  //   } else {
-  //     UVC_DEBUG("error reattaching kernel driver to interface %d: %s",
-  //               idx, uvc_strerror(ret));
-  //   }
-  // }
-
+    libusb_set_interface_alt_setting(devh->usb_devh, idx, 0);
+    ret = libusb_release_interface(devh->usb_devh, idx);
+  }else{
+    if (UVC_SUCCESS == ret) {
+      devh->claimed &= ~( 1 << idx );
+      /* Reattach any kernel drivers that were disabled when we claimed this interface */
+      ret = libusb_attach_kernel_driver(devh->usb_devh, idx);
+  
+      if (ret == UVC_SUCCESS) {
+        UVC_DEBUG("reattached kernel driver to interface %d", idx);
+      } else if (ret == LIBUSB_ERROR_NOT_FOUND || ret == LIBUSB_ERROR_NOT_SUPPORTED) {
+        ret = UVC_SUCCESS;  /* NOT_FOUND and NOT_SUPPORTED are OK: nothing to do */
+      } else {
+        UVC_DEBUG("error reattaching kernel driver to interface %d: %s",
+                  idx, uvc_strerror(ret));
+      }
+    }
+  }
   UVC_EXIT(ret);
   return ret;
 }

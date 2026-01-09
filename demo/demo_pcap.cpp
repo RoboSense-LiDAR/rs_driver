@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  std::thread cloud_handle_thread = std::thread(processCloud);
+  std::thread point_cloud_handle_thread = std::thread(processCloud);
 
 #if ENABLE_IMU_PARSE
   std::thread imuData_handle_thread = std::thread(processImuData);
@@ -227,7 +227,17 @@ int main(int argc, char* argv[])
   driver.stop();
 
   to_exit_process = true;
-  cloud_handle_thread.join();
+  if (point_cloud_handle_thread.joinable())
+  {
+    point_cloud_handle_thread.join();
+  }
+  
+#if ENABLE_IMU_PARSE
+  if(imuData_handle_thread.joinable())
+  {
+    imuData_handle_thread.join();
+  }
+#endif
 #else
   while (true)
   {

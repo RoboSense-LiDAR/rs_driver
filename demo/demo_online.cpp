@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/msg/point_cloud_msg.hpp>
 #endif
 
-//#define ORDERLY_EXIT
+#define ORDERLY_EXIT
 
 // Define the macro: 1 to enable IMU parsing, 0 to disable IMU parsing
 #define ENABLE_IMU_PARSE 1 
@@ -196,7 +196,8 @@ int main(int argc, char* argv[])
 #if ENABLE_IMU_PARSE
   param.input_param.imu_port = 6688;   ///< Set the lidar imu port number, the default is 0
 #endif
-  param.lidar_type = LidarType::RSAIRY;   ///< Set the lidar type. Make sure this type is correct
+  param.decoder_param.wait_for_difop = true;
+  param.lidar_type = LidarType::RS_AC2;   ///< Set the lidar type. Make sure this type is correct
   param.print();
    
   LidarDriver<PointCloudMsg> driver;               ///< Declare the driver object
@@ -212,7 +213,7 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  std::thread cloud_handle_thread = std::thread(processCloud);
+  std::thread point_cloud_handle_thread = std::thread(processCloud);
 #if ENABLE_IMU_PARSE
   std::thread imuData_handle_thread = std::thread(processImuData);
 #endif
@@ -225,7 +226,17 @@ int main(int argc, char* argv[])
   driver.stop();
 
   to_exit_process = true;
-  cloud_handle_thread.join();
+  if (point_cloud_handle_thread.joinable())
+  {
+    point_cloud_handle_thread.join();
+  }
+  
+#if ENABLE_IMU_PARSE
+  if(imuData_handle_thread.joinable())
+  {
+    imuData_handle_thread.join();
+  }
+#endif
 #else
   while (true)
   {

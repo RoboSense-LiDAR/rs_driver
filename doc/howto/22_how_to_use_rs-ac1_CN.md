@@ -12,7 +12,7 @@
 
  ```rs_driver/src/rs_driver/msg/point_cloud_msg.hpp```, 
  ```rs_driver/src/rs_driver/msg/pcl_point_cloud_msg.hpp```,
- ```rs_driver/src/rs_driver/msg/image_data_msg.hpp```,
+ ```rs_driver/src/rs_driver/msg/image_msg.hpp```,
  ```rs_driver/src/rs_driver/msg/imu_data_msg.hpp```
 
 
@@ -285,26 +285,26 @@ int main()
 + 和获取点云类似， `rs_driver`需要调用者通过回调函数，提供空闲的Image实例。这里定义这第一个Image回调函数。
 
 ```c++
-SyncQueue<std::shared_ptr<ImageData>> free_image_data_queue;;
+SyncQueue<std::shared_ptr<ImageMsg>> free_image_data_queue;;
 
-std::shared_ptr<ImageData> driverGetImageDataFromCallerCallback(void)
+std::shared_ptr<ImageMsg> driverGetImageDataFromCallerCallback(void)
 {
-  std::shared_ptr<ImageData> msg = free_image_data_queue.pop();
+  std::shared_ptr<ImageMsg> msg = free_image_data_queue.pop();
   if (msg.get() != NULL)
   {
     return msg;
   }
 
-  return std::make_shared<ImageData>();
+  return std::make_shared<ImageMsg>();
 }
 ```
 
 + `rs_driver`通过回调函数，将填充好的Image数据返回给调用者。这里定义这第二个Image回调函数。
 
 ```c++
-SyncQueue<std::shared_ptr<ImageData>> stuffed_image_data_queue;
+SyncQueue<std::shared_ptr<ImageMsg>> stuffed_image_data_queue;
 
-void driverReturnImageDataToCallerCallback(const std::shared_ptr<ImageData>& msg)
+void driverReturnImageDataToCallerCallback(const std::shared_ptr<ImageMsg>& msg)
 {
   stuffed_image_data_queue.push(msg);
 }
@@ -320,7 +320,7 @@ void processImageData(void)
   uint32_t image_cnt = 0;
   while (!to_exit_process)
   {
-    std::shared_ptr<ImageData> msg = stuffed_image_data_queue.popWait();
+    std::shared_ptr<ImageMsg> msg = stuffed_image_data_queue.popWait();
     if (msg.get() == NULL)
     {
       continue;

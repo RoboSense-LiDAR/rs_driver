@@ -111,9 +111,9 @@ typedef struct
   uint32_t qy;
   uint32_t qz;
   uint32_t qw;
-  uint32_t x;
-  uint32_t y;
-  uint32_t z;
+  uint32_t tx;
+  uint32_t ty;
+  uint32_t tz;
   uint8_t reserved_5[126];
   uint16_t tail;
 } RSAIRYDifopPkt;
@@ -161,7 +161,7 @@ public:
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size);
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size);
-  void decodeImuPkt(const uint8_t* pkt, size_t size) override;
+  void decodeImuFrame(const uint8_t* src_data, size_t data_len) override;
   virtual ~DecoderRSAIRY() = default;
 
   explicit DecoderRSAIRY(const RSDecoderParam& param);
@@ -279,7 +279,7 @@ inline DecoderRSAIRY<T_PointCloud>::DecoderRSAIRY(const RSDecoderParam& param)
 }
 
 template <typename T_PointCloud>
-inline void DecoderRSAIRY<T_PointCloud>::decodeImuPkt(const uint8_t* packet, size_t size)
+inline void DecoderRSAIRY<T_PointCloud>::decodeImuFrame(const uint8_t* packet, size_t size)
 {
 
   const RSAIRYImuPkt& pkt = *(const RSAIRYImuPkt*)(packet);
@@ -317,14 +317,14 @@ inline void DecoderRSAIRY<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, s
   const RSAIRYDifopPkt& pkt = *(const RSAIRYDifopPkt*)(packet);
   this->template decodeDifopCommon<RSAIRYDifopPkt>(pkt);
 
-  this->device_info_.qx = convertUint32ToFloat(ntohl(pkt.qx)) ;
-  this->device_info_.qy = convertUint32ToFloat(ntohl(pkt.qy)) ;
-  this->device_info_.qz = convertUint32ToFloat(ntohl(pkt.qz)) ;
-  this->device_info_.qw = convertUint32ToFloat(ntohl(pkt.qw)) ;
+  this->device_info_.transform.qx = convertUint32ToFloat(ntohl(pkt.qx)) ;
+  this->device_info_.transform.qy = convertUint32ToFloat(ntohl(pkt.qy)) ;
+  this->device_info_.transform.qz = convertUint32ToFloat(ntohl(pkt.qz)) ;
+  this->device_info_.transform.qw = convertUint32ToFloat(ntohl(pkt.qw)) ;
 
-  this->device_info_.x = convertUint32ToFloat(ntohl(pkt.x)) ;
-  this->device_info_.y = convertUint32ToFloat(ntohl(pkt.y)) ;
-  this->device_info_.z = convertUint32ToFloat(ntohl(pkt.z)) ;
+  this->device_info_.transform.tx = convertUint32ToFloat(ntohl(pkt.tx)) ;
+  this->device_info_.transform.ty = convertUint32ToFloat(ntohl(pkt.ty)) ;
+  this->device_info_.transform.tz = convertUint32ToFloat(ntohl(pkt.tz)) ;
   this->device_info_.state = true;
 }
 

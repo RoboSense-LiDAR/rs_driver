@@ -37,6 +37,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef pcl::PointXYZI PointXYZI;
 
+struct PointXYZIF 
+{
+  PCL_ADD_POINT4D;
+  float intensity;
+  std::uint8_t feature; 
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+}; 
+
 struct PointXYZIRT
 {
   PCL_ADD_POINT4D;
@@ -46,12 +54,38 @@ struct PointXYZIRT
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN16;
 
+struct PointXYZIRTF
+{
+  PCL_ADD_POINT4D;
+  float intensity;
+  std::uint16_t ring;
+  std::uint8_t feature; 
+  double timestamp;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIF, 
+    (float, x, x)
+    (float, y, y)
+    (float, z, z)
+    (float, intensity, intensity)
+    (std::uint8_t, feature, feature))
+
 POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRT, 
     (float, x, x)
     (float, y, y)
     (float, z, z)
     (float, intensity, intensity)
     (std::uint16_t, ring, ring)
+    (double, timestamp, timestamp))
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIRTF, 
+    (float, x, x)
+    (float, y, y)
+    (float, z, z)
+    (float, intensity, intensity)
+    (std::uint16_t, ring, ring)
+    (std::uint8_t, feature, feature)
     (double, timestamp, timestamp))
 
 template <typename T_Point>
@@ -61,7 +95,9 @@ public:
   typedef T_Point PointT;
   typedef typename pcl::PointCloud<T_Point>::VectorType VectorT;
 
-  double timestamp = 0.0;
+  double timestamp = 0.0;   ///< Timestamp of point cloud
+  double sot_timestamp = 0.0; ///< Timestamp when data was received
+  double sot_timestamp_rt = 0.0; ///< Timestamp when data was received in real time
   uint32_t seq = 0;           ///< Sequence number of message
   std::string frame_id = "";  ///< Point cloud frame id
 };

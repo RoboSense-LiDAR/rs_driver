@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/section.hpp>
 #include <rs_driver/driver/decoder/basic_attr.hpp>
 #include "rs_driver/msg/imu_data_msg.hpp"
-#include "rs_driver/msg/image_data_msg.hpp"
+#include "rs_driver/msg/image_msg.hpp"
 #ifndef _USE_MATH_DEFINES
 #define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
 #endif
@@ -263,22 +263,22 @@ public:
 
   virtual void decodeDifopPkt(const uint8_t* pkt, size_t size) = 0;
   virtual bool decodeMsopPkt(const uint8_t* pkt, size_t size) = 0;
-  virtual void decodeImuPkt(const uint8_t* pkt, size_t size){};
-  virtual void decodeImagePkt(const uint8_t* pkt, size_t size){};
-  virtual void decodePcPkt(const uint8_t* pkt, size_t size){};
+  virtual void decodeImuFrame(const uint8_t* src_data, size_t data_len){};
+  virtual void decodeImageFrame(const uint8_t* src_data, size_t data_len){};
+  virtual void decodePcFrame(const uint8_t* src_data, size_t data_len){};
+  virtual bool getDeviceInfo(DeviceInfo& info);
   virtual ~Decoder() = default;
 
   void processDifopPkt(const uint8_t* pkt, size_t size);
   bool processMsopPkt(const uint8_t* pkt, size_t size);
-  bool processImuPkt(const uint8_t* pkt, size_t size);
-  bool processImagePkt(const uint8_t* pkt, size_t size);
-  bool processPcPkt(const uint8_t* pkt, size_t size);
+  bool processImuFrame(const uint8_t* src_data, size_t data_len);
+  bool processImageFrame(const uint8_t* src_data, size_t data_len);
+  bool processPcFrame(const uint8_t* src_data, size_t data_len);
 
 
   explicit Decoder(const RSDecoderConstParam& const_param, const RSDecoderParam& param);
 
   bool getTemperature(float& temp);
-  bool getDeviceInfo(DeviceInfo& info);
   bool getDeviceStatus(DeviceStatus& status);
   double getPacketDuration();
   void enableWritePktTs(bool value);
@@ -289,10 +289,10 @@ public:
       const std::function<void(uint16_t, double)>& cb_split_frame);
   void regImuCallback(const std::function<void()>& cb_imu_data);
   void regImageCallback(const std::function<void()>& cb_image_data);
-
+  void regInputCallback(const std::function<bool(const std::vector<uint8_t> &send, std::vector<uint8_t> &receive)>& cb_custom_cmd);
   std::shared_ptr<T_PointCloud> point_cloud_; // accumulated point cloud currently
   std::shared_ptr<ImuData> imuDataPtr_;
-  std::shared_ptr<ImageData> imageDataPtr_;
+  std::shared_ptr<ImageMsg> imageDataPtr_;
 
 #ifndef UNIT_TEST
 protected:
@@ -331,6 +331,8 @@ protected:
   double prev_point_ts_; // timestamp of previous point
   double first_point_ts_; // timestamp of first point
   bool is_get_temperature_{false};
+  
+  std::function<bool(const std::vector<uint8_t> &send, std::vector<uint8_t> &receive)> cb_custom_cmd_;
 };
 
 template <typename T_PointCloud>
@@ -352,6 +354,12 @@ template <typename T_PointCloud>
 inline void Decoder<T_PointCloud>::regImageCallback(const std::function<void()>& cb_image_data)
 {
   cb_image_data_ = cb_image_data;
+}
+
+template <typename T_PointCloud>
+inline void Decoder<T_PointCloud>::regInputCallback(const std::function<bool(const std::vector<uint8_t> &send, std::vector<uint8_t> &receive)>& cb_custom_cmd)
+{
+  cb_custom_cmd_ = cb_custom_cmd;
 }
 
 template <typename T_PointCloud>
@@ -468,36 +476,24 @@ inline void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t si
 }
 
 template <typename T_PointCloud>
-inline bool Decoder<T_PointCloud>::processImuPkt(const uint8_t* pkt, size_t size)
+inline bool Decoder<T_PointCloud>::processImuFrame(const uint8_t* src_data, size_t data_len)
 {
-  // if (size != this->const_param_.IMU_LEN)
-  // {
-  //    LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGIMULEN)), 1);
-  //    return false;
-  // }
-
-  // if (memcmp(pkt, this->const_param_.IMU_ID, this->const_param_.IMU_ID_LEN) != 0)
-  // {
-  //   LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGIMUID)), 1);
-  //   return false;
-  // }
-  decodeImuPkt(pkt, size);
+  decodeImuFrame(src_data, data_len);
   return true;
 }
 
 template <typename T_PointCloud>
-inline bool Decoder<T_PointCloud>::processImagePkt(const uint8_t* pkt, size_t size)
+inline bool Decoder<T_PointCloud>::processImageFrame(const uint8_t* src_data, size_t data_len)
 {
-
-  decodeImagePkt(pkt, size);
+  decodeImageFrame(src_data, data_len);
   return true;
 }
 
 template <typename T_PointCloud>
-inline bool Decoder<T_PointCloud>::processPcPkt(const uint8_t* pkt, size_t size)
+inline bool Decoder<T_PointCloud>::processPcFrame(const uint8_t* src_data, size_t data_len)
 {
 
-  decodePcPkt(pkt, size);
+  decodePcFrame(src_data, data_len);
   return true;
 }
 

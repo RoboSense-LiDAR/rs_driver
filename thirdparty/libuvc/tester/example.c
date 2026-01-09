@@ -1,12 +1,14 @@
 #include "libuvc/libuvc.h"
 #if defined(SDL2_FOUND) && (SDL2_FOUND != 0)
   #include <SDL2/SDL.h>
+  #undef main
 #endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#define SDL2_FOUND 0
 static int print_usage(char *argv[])
 {
   printf("Usage:\n");
@@ -107,11 +109,7 @@ static void cb(uvc_frame_t *frame, void *ptr) {
     break;
   default:
     break;
-  }
-
-  if (frame->sequence % 30 == 0) {
-    printf(" * got image %u\n",  frame->sequence);
-  }
+  } 
 
   /* Call a user function:
    *
@@ -173,6 +171,8 @@ static enum uvc_frame_format convert_frame_format(const char *format) {
     return UVC_FRAME_FORMAT_YUYV;
   if (strcasecmp(buffer, "yuy2") == 0)
     return UVC_FRAME_FORMAT_YUYV;
+  if (strcasecmp(buffer, "xr24") == 0)
+    return UVC_FRAME_FORMAT_XR24;
 
   return UVC_FRAME_FORMAT_UNKNOWN;
 }
@@ -202,6 +202,62 @@ static int hanlder_uvc_ctrl_set_req(uvc_device_handle_t *devh, const char *req, 
   }
   return 0;
 }
+#define POOL_SIZE 4
+typedef struct {
+  uint8_t *pool[POOL_SIZE];
+  size_t size[POOL_SIZE];
+  int is_init[POOL_SIZE];
+  int idx;
+  int used_idx;
+} FrameCtx;
+
+
+static void init_pool(FrameCtx *ctx)
+{
+    for (int i = 0; i < POOL_SIZE; i++) {
+        ctx->is_init[i] = 0;
+        ctx->size[i] = 0;
+    }
+    ctx->idx = 0;
+    ctx->used_idx = 0;
+}
+
+static uint8_t* getData(size_t size, void *user_ptr)
+{
+    FrameCtx *ctx = (FrameCtx*)user_ptr;
+
+    int idx = ctx->idx;
+    if (ctx->is_init[idx] == 0) {
+        ctx->size[idx] = size;
+        ctx->pool[idx] = (uint8_t*)malloc(size);
+        ctx->is_init[idx] = 1;
+        printf("[getData] Frame allocated, size=%zu\n", size);
+    }
+    printf("[getData] Frame, size=%zu\n", size);
+    uint8_t *buf = ctx->pool[idx];
+    ctx->idx = (ctx->idx + 1) % POOL_SIZE;
+    return buf;
+}
+void free_pool(FrameCtx *ctx)
+{
+    for (int i = 0; i < POOL_SIZE; i++) {
+        free(ctx->pool[i]);
+    }
+}
+static void putData(void *user_ptr)
+{
+    FrameCtx *ctx = (FrameCtx*)user_ptr;
+
+    uint8_t* data = ctx->pool[ctx->used_idx];
+    for(int i = 0; i < 30; i++)
+    {
+      printf("%02x ", data[i]);
+    }
+    printf("\n");
+    ctx->used_idx = (ctx->used_idx + 1) % POOL_SIZE;
+}
+
+
 
 int main(int argc, char **argv) {
 #if defined(SDL2_FOUND) && (SDL2_FOUND != 0)
@@ -209,6 +265,7 @@ int main(int argc, char **argv) {
   SDL_Renderer *renderer = NULL;
   int sdl_initialized = 0;
 #endif
+  printf("Compiled on %s at %s\n", __DATE__, __TIME__);
   uvc_context_t *ctx;
   uvc_device_t *dev;
   uvc_device_handle_t *devh;
@@ -216,18 +273,20 @@ int main(int argc, char **argv) {
   uvc_error_t res;
   const char *ctl_format_str = NULL;
   const char *string;
-  int usb_vid = 0x1d6b;
-  int usb_pid = 0x0104;
+  int usb_vid = 0x3840;
+  int usb_pid = 0x1020;
   int usb_intf = -1;
   int ctl_width = 0;
   int ctl_height = 0;
+  int ctl_fps = 0;
   int live_time = 10;
   enum uvc_frame_format ctl_format;
   int i;
   const char *get_ctrl = NULL;
   const char *set_ctrl = NULL;
   int is_uvc_ctrl_req = 0;
-
+  FrameCtx frame_ctx = {0};
+  init_pool(&frame_ctx);
   for (i = 1; i < argc; i++) {
     if (strcasecmp(argv[i], "--help") == 0) {
       print_usage(argv);
@@ -268,6 +327,10 @@ int main(int argc, char **argv) {
       if ((++i) >= argc)
         break;
       live_time = atoi(argv[i]);
+    } else if (strcmp(argv[i], "-n") == 0) {
+      if ((++i) >= argc)
+        break;
+      ctl_fps = atoi(argv[i]);
     } else if (strcmp(argv[i], "-C") == 0) {
       if ((++i) >= argc)
         break;
@@ -372,14 +435,14 @@ int main(int argc, char **argv) {
 
       /* Print out a message containing all the information that libuvc
        * knows about the device */
-      uvc_print_diag(devh, stderr);
+      // uvc_print_diag(devh, stderr);
 
       const uvc_format_desc_t *format_desc = uvc_get_format_descs(devh);
       const uvc_frame_desc_t *frame_desc = format_desc->frame_descs;
       enum uvc_frame_format frame_format;
-      int width = 640;
-      int height = 480;
-      int fps = 30;
+      int width = 1616;
+      int height = 2592;
+      int fps = 15;
 
       switch (format_desc->bDescriptorSubtype) {
       case UVC_VS_FORMAT_MJPEG:
@@ -407,6 +470,16 @@ int main(int argc, char **argv) {
         fps = 10000000 / frame_desc->dwDefaultFrameInterval;
       }
 
+      if ((frame_desc != NULL) && (frame_desc->intervals != NULL)) {
+        for (int i = 0; frame_desc->intervals[i] != 0; i++) {
+          int value = 10000000 / frame_desc->intervals[i];
+          if (value == ctl_fps) {
+            fps = ctl_fps;
+            break;
+          }
+        }
+      }
+
       printf("\nFirst format: (%4s) %dx%d %dfps\n", format_desc->fourccFormat, width, height, fps);
 
       if (ctl_width > 0) {
@@ -420,10 +493,10 @@ int main(int argc, char **argv) {
       }
 
       if (ctl_format != UVC_FRAME_FORMAT_UNKNOWN) {
-        printf("ctl format: %s\n", ctl_format_str);
+        printf("ctl format: %s, ctl_format: %d\n", ctl_format_str, (int)ctl_format);
         frame_format = ctl_format;
       }
-
+      printf("frame_format%d, width:%d. height:%d, fps:%d\n", frame_format, width, height, fps);
       /* Try to negotiate first stream profile */
       res = uvc_get_stream_ctrl_format_size(
           devh, &ctrl, /* result stored in ctrl */
@@ -432,7 +505,7 @@ int main(int argc, char **argv) {
       );
 
       /* Print out the result */
-      uvc_print_stream_ctrl(&ctrl, stderr);
+      // uvc_print_stream_ctrl(&ctrl, stderr);
 
       if (res < 0) {
         uvc_perror(res, "get_mode"); /* device doesn't provide a matching stream */
@@ -467,11 +540,14 @@ int main(int argc, char **argv) {
          *   cb(frame, (void *) argument)
          */
 #if defined(SDL2_FOUND) && (SDL2_FOUND != 0)
-        res = uvc_start_streaming(devh, &ctrl, cb, renderer, 0);
+        // res = uvc_start_streaming(devh, &ctrl, cb, renderer, 0);
 #else
-        res = uvc_start_streaming(devh, &ctrl, cb, NULL, 0);
-#endif
+        // res = uvc_start_streaming(devh, &ctrl, cb, NULL, 0);
 
+       
+
+#endif
+        res = uvc_start_streaming(devh,  &ctrl, getData,putData, &frame_ctx , 0); 
         if (res < 0) {
           uvc_perror(res, "start_streaming"); /* unable to start stream */
         } else {
@@ -519,7 +595,7 @@ int main(int argc, char **argv) {
    * and it closes the libusb context if one was not provided. */
   uvc_exit(ctx);
   puts("UVC exited");
-
+  free_pool(&frame_ctx);
 #if defined(SDL2_FOUND) && (SDL2_FOUND != 0)
   if (renderer != NULL)
     SDL_DestroyRenderer(renderer);

@@ -48,20 +48,47 @@ typedef enum frame_format
   FRAME_FORMAT_BGR24,
   FRAME_FORMAT_RGB24,
   FRAME_FORMAT_YUV422,
+  FRAME_FORMAT_XR24,
+  FRAME_FORMAT_GREY,
 } frame_format_t;
 
-
-class ImageData {
-public:
-  bool state = false;
-  std::shared_ptr<uint8_t> data;
-  uint32_t data_bytes;                                /**< Size of the image data buffer in bytes */
-  uint32_t width = 0;                                 /**< Width of the image in pixels */
-  uint32_t height = 0;                                /**< Height of the image in pixels */
-  frame_format_t frame_format = FRAME_FORMAT_ANY;     /**< Format of the pixel data */
-  // uint32_t sequence = 0;                           /**< Frame sequence number */
-  double timestamp = 0.0;
+enum class CameraMode {
+  MONO = 0,   
+  STEREO,
 };
+class ImageMsg {
+  public:
+      bool state = false;                  // State of the image
+      uint32_t data_bytes = 0;             // Bytes of the image data
+      uint32_t width = 0;                  // Width of the image
+      uint32_t height = 0;                 // Height of the image
+      frame_format_t frame_format;         // Format of the image
+      double timestamp = 0.0;              // Timestamp of the image
+      double sot_timestamp = 0.0;          // Timestamp when data was received
+      double sot_timestamp_rt = 0.0;      // Timestamp when data was received in real time
 
+      CameraMode camera_mode = CameraMode::MONO; 
+      virtual ~ImageMsg() = default;
+  
+  };
+  
+  class MonoImageMsg : public ImageMsg {
+  public:
+      std::shared_ptr<uint8_t> data;      
+  };
+  class StereoImageMsg : public ImageMsg {
+  public:
+      double left_timestamp = 0.0;  // Timestamp of the left image
+      double right_timestamp = 0.0; // Timestamp of the right image
+      double left_sot_timestamp = 0.0;  // Timestamp when data was received of the left image
+      double left_sot_timestamp_rt = 0.0;  // Timestamp when data was received in real time of the left image
+      double right_sot_timestamp = 0.0; // Timestamp when data was received of the right image
+      double right_sot_timestamp_rt = 0.0; // Timestamp when data was received in real time of the right image
+      std::shared_ptr<uint8_t> left_data;  // Data of the left image
+      std::shared_ptr<uint8_t> right_data; // Data of the right image
+  };
+  
 } // namespace lidar
 } // namespace robosense
+
+

@@ -84,7 +84,7 @@ public:
    * called
    * @param callback The callback function
    */
-  inline void regImageDataCallback(const std::function<std::shared_ptr<ImageData>(void)>& cb_get_image_data, const std::function<void(const std::shared_ptr<ImageData> &)>& cb_put_image_data)
+  inline void regImageDataCallback(const std::function<std::shared_ptr<ImageMsg>(void)>& cb_get_image_data, const std::function<void(const std::shared_ptr<ImageMsg> &)>& cb_put_image_data)
   {
     driver_ptr_->regImageDataCallback(cb_get_image_data, cb_put_image_data);
   }

@@ -93,6 +93,7 @@ enum uvc_frame_format {
   UVC_FRAME_FORMAT_NV12,
   /** YUV: P010 */
   UVC_FRAME_FORMAT_P010,
+  UVC_FRAME_FORMAT_XR24, 
   /** Number of formats understood */
   UVC_FRAME_FORMAT_COUNT,
 };
@@ -110,6 +111,7 @@ enum uvc_frame_format {
 #define UVC_COLOR_FORMAT_GRAY8 UVC_FRAME_FORMAT_GRAY8
 #define UVC_COLOR_FORMAT_GRAY16 UVC_FRAME_FORMAT_GRAY16
 #define UVC_COLOR_FORMAT_NV12 UVC_FRAME_FORMAT_NV12
+#define UVC_COLOR_FORMAT_XR24 UVC_FRAME_FORMAT_XR24
 
 /** VideoStreaming interface descriptor subtype (A.6) */
 enum uvc_vs_desc_subtype {

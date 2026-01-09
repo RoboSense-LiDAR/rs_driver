@@ -45,20 +45,30 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "libusb.h"
 #include "libuvc/libuvc.h"
 
-#define VENDOR_ID 0x3840
-#define PRODUCT_ID 0x1010
+#define ROBOSENSE_VENDOR_ID 0x3840
+#define RS_AC1_PRODUCT_ID 0x1010
+#define RS_AC2_PRODUCT_ID 0x1020
 
-#define ALIGN_UP(V_, ALIGN_)        (((V_) + ((ALIGN_) - 1U)) & (~((ALIGN_) - 1U)))
-#define POINT_WIDTH_NUMS            96U
-#define POINT_HEIGHT_NUMS           288U
-#define POINT_NUMS                  POINT_WIDTH_NUMS * POINT_HEIGHT_NUMS
-#define DEPTH_DATA_BYTES_BEFORE            (10U + POINT_WIDTH_NUMS * 12U) * POINT_HEIGHT_NUMS
+#define ALIGN_UP(V_, ALIGN_) (((V_) + ((ALIGN_) - 1U)) & (~((ALIGN_) - 1U)))
+#define RS_AC1_POINT_CLOUD_WIDTH 96U
+#define RS_AC1_POINT_CLOUD_HEIGHT 288U
+#define POINT_NUMS RS_AC1_POINT_CLOUD_WIDTH* RS_AC1_POINT_CLOUD_HEIGHT
+#define RS_AC1_DEPTH_DATA_BYTES_BEFORE (10U + RS_AC1_POINT_CLOUD_WIDTH * 12U) * RS_AC1_POINT_CLOUD_HEIGHT
 /**
  * Extra 10 bytes: TimeBase
  * Every pixel contains 12 bytes:
  *  TimeOffset, X, Y, Z, Distance, Reflectivity, Attribute
  */
-#define DEPTH_DATA_BYTES            ALIGN_UP(DEPTH_DATA_BYTES_BEFORE, 2048U)
+#define RS_AC1_DEPTH_DATA_BYTES ALIGN_UP(RS_AC1_DEPTH_DATA_BYTES_BEFORE, 2048U)
+
+#define USE_LIBUSB_RESET
+constexpr int kMaxHidBufferSize = 1024;
+constexpr uint8_t kHidFrameHead1 = 0xFE;
+constexpr uint8_t kHidFrameHead2 = 0xAA;
+constexpr int kFrameHeaderSize = 8;
+constexpr int kCustomCmdTimeout = 1000;
+constexpr int kClearRecvCacheTimes = 3;
+constexpr int kMaxCustomCmdSize = kMaxHidBufferSize - kFrameHeaderSize;
 
 namespace robosense
 {
@@ -71,60 +81,66 @@ bool InputUsb::init()
   if (init_flag_)
     return true;
 
-  if (!_usb_ctx)
+  if (!usb_ctx_)
   {
-      res = libusb_init(&_usb_ctx);
-      if (res < 0)
-      {
-          RS_ERROR << "Failed to initialize libusb:" << libusb_strerror(res) << RS_REND;
-          _usb_ctx = nullptr;
-          return false;
-      }
+    res = libusb_init(&usb_ctx_);
+    if (res < 0)
+    {
+      RS_ERROR << "Failed to initialize libusb:" << libusb_strerror(res) << RS_REND;
+      usb_ctx_ = nullptr;
+      return false;
+    }
   }
-  
-  if(findDevices(input_param_.device_uuid) == false)
+
+  if (findDevices(input_param_.device_uuid) == false)
   {
     RS_ERROR << "Device is not found, please check!" << RS_REND;
     return false;
   }
 
-  if(!_is_usb_300 && !input_param_.enable_usb200)
+  if (!is_usb_300_ && !input_param_.enable_usb200)
   {
     RS_ERROR << "USB mode is not USB_3.0!" << RS_REND;
     return false;
   }
 
-  _kill_handler_thread = 0;
-  _usb_thread = std::thread(std::bind(&InputUsb::usbEventHandler, this));
+  kill_handler_thread_ = 0;
+  usbEventProcThead_ = std::thread(std::bind(&InputUsb::usbEventHandler, this));
 
-  res = libusb_open(_dev, &_devh);
+  res = libusb_open(dev_, &devh_);
 
-  if(res != 0)
+  if (res != 0)
   {
     RS_ERROR << "Failed to open device: " << libusb_strerror(res) << RS_REND;
     return false;
   }
 
-  if(imuStreamInit() == false)
+  if (imuStreamInit() == false)
   {
     RS_ERROR << "Depth stream init failed!" << RS_REND;
     return false;
   }
 
-  if(input_param_.enable_image)
+  if (input_param_.enable_image)
   {
-    if(imageStreamInit() == false)
+    if (imageStreamInit() == false)
     {
       RS_ERROR << "Image stream init failed!" << RS_REND;
       return false;
     }
   }
 
-  if(pcStreamInit() == false)
+  if (pcStreamInit() == false)
   {
     RS_ERROR << "Depth stream init failed!" << RS_REND;
     return false;
   }
+
+#ifdef USE_LIBUSB_RESET
+  RS_DEBUG << "[USE_LIBUSB_RESET=ON] Driver will call libusb_reset_device() on stop." << RS_REND;
+#else
+  RS_DEBUG << "[USE_LIBUSB_RESET=OFF] Driver will NOT call libusb_reset_device() on stop." << RS_REND;
+#endif
 
   init_flag_ = true;
   return true;
@@ -141,22 +157,22 @@ bool InputUsb::start()
     return false;
   }
 
-  if(imuStreamStart() == false)
+  if (imuStreamStart() == false)
   {
     RS_ERROR << "Imu stream start failed!" << RS_REND;
     return false;
   }
 
-  if(input_param_.enable_image)
+  if (input_param_.enable_image)
   {
-    if(imageStreamStart() == false)
+    if (imageStreamStart() == false)
     {
       RS_ERROR << "Image stream start failed!" << RS_REND;
       return false;
     }
   }
 
-  if(pcStreamStart() == false)
+  if (pcStreamStart() == false)
   {
     RS_ERROR << "Depth stream start failed!" << RS_REND;
     return false;
@@ -176,55 +192,71 @@ void InputUsb::stop()
     to_exit_recv_ = true;
     if (recv_thread_.joinable())
     {
-        recv_thread_.join();
+      recv_thread_.join();
     }
   }
 
   imuStreamClose();
 
-  if (!_kill_handler_thread)
+  if (!kill_handler_thread_)
   {
-    _kill_handler_thread = 1;
-    if (_usb_thread.joinable())
+    kill_handler_thread_ = 1;
+    if (usbEventProcThead_.joinable())
     {
-        _usb_thread.join();
+      usbEventProcThead_.join();
     }
   }
 
-  if(_devh)
+  if (devh_)
   {
-    libusb_close(_devh);
-    _devh = nullptr;
+#ifdef USE_LIBUSB_RESET
+    int res = libusb_reset_device(devh_);
+    if (res == 0)
+    {
+      RS_DEBUG << "Device reset successful" << RS_REND;
+    }
+    else
+    {
+      RS_ERROR << "Failed to reset device: " << libusb_error_name(res) << RS_REND;
+    }
+#endif
+
+    libusb_close(devh_);
+    devh_ = nullptr;
   }
 
-  if (_usb_ctx)
+  if (dev_)
   {
-      libusb_exit(_usb_ctx);
-      _usb_ctx = nullptr;
+    libusb_unref_device(dev_);
+    dev_ = nullptr;
+  }
+
+  if (usb_ctx_)
+  {
+    libusb_exit(usb_ctx_);
+    usb_ctx_ = nullptr;
   }
 }
 
 InputUsb::~InputUsb()
 {
   stop();
-  // RS_INFO << "--- ~InputUsb() ---" << RS_REND;
 }
 
 void InputUsb::usbEventHandler()
 {
-
-  struct timeval tv = {0, 100000};
-  while (!_kill_handler_thread)
+  struct timeval tv = { 0, 100000 };
+  while (!kill_handler_thread_)
   {
-    libusb_handle_events_timeout_completed(_usb_ctx, &tv, &_kill_handler_thread);
+    libusb_handle_events_timeout_completed(usb_ctx_, &tv, &kill_handler_thread_);
   }
 }
 
 bool InputUsb::findDevices(std::string device_uuid)
 {
   bool find_flag = false;
-  libusb_device **usb_dev_list;
-  ssize_t num_usb_devices = libusb_get_device_list(_usb_ctx, &usb_dev_list);
+  libusb_device** usb_dev_list;
+  ssize_t num_usb_devices = libusb_get_device_list(usb_ctx_, &usb_dev_list);
   if (num_usb_devices < 0)
   {
     RS_ERROR << "Failed to get device list: " << libusb_strerror((int)num_usb_devices) << RS_REND;
@@ -232,63 +264,62 @@ bool InputUsb::findDevices(std::string device_uuid)
 
   for (int i = 0; i < num_usb_devices; i++)
   {
-      libusb_device *device = usb_dev_list[i];
-      libusb_device_descriptor desc;
+    libusb_device* device = usb_dev_list[i];
+    libusb_device_descriptor desc;
 
-      if (libusb_get_device_descriptor(device, &desc) != LIBUSB_SUCCESS)
+    if (libusb_get_device_descriptor(device, &desc) != LIBUSB_SUCCESS)
+    {
+      continue;
+    }
+    if (desc.idVendor == ROBOSENSE_VENDOR_ID &&
+        (desc.idProduct == RS_AC1_PRODUCT_ID || desc.idProduct == RS_AC2_PRODUCT_ID))
+    {
+      libusb_device_handle* handle;
+      std::string uuid_;
+      if (libusb_open(device, &handle) == 0)
       {
-          continue;
+        unsigned char serial[256];
+        int ret = libusb_get_string_descriptor_ascii(handle, desc.iSerialNumber, serial, sizeof(serial));
+        if (ret > 0)
+        {
+          uuid_ = std::string(reinterpret_cast<char*>(serial));
+        }
+        libusb_close(handle);
       }
-      if (desc.idVendor == VENDOR_ID && desc.idProduct == PRODUCT_ID)
+
+      if (device_uuid == "")
       {
-        libusb_device_handle *handle;
-        std::string uuid_;
-        if (libusb_open(device, &handle) == 0)
-        {
-          unsigned char serial[256];
-          int ret = libusb_get_string_descriptor_ascii(handle, desc.iSerialNumber, serial, sizeof(serial));
-          if (ret > 0)
-          {
-              uuid_ = std::string(reinterpret_cast<char *>(serial));
-          }
-          libusb_close(handle);
-        }
-
-        if (device_uuid == "")
-        {
-          _dev = device;
-          libusb_ref_device(device);
-          find_flag = true;
-          RS_INFO << "Find device, uuid is : " << uuid_ << RS_REND;
-
-        }
-        else if (device_uuid == uuid_)
-        {
-          _dev = device;
-          libusb_ref_device(device);
-          find_flag = true;
-          RS_INFO << "Find device : " << uuid_ << RS_REND;
-        }
-        // else
-        // {
-        //   return false;
-        // }
-
-        if(find_flag)
-        {
-          if (desc.bcdUSB >= 0x0300)
-          {
-            // RS_INFO << "USB mode is USB3.0" << RS_REND;
-            _is_usb_300 = true;
-          }
-          else
-          {
-            // RS_INFO << "USB mode is USB2.0" << RS_REND;
-            _is_usb_300 = false;
-          }
-          break; 
-        } 
+        dev_ = device;
+        libusb_ref_device(device);
+        find_flag = true;
+        RS_INFO << "Find device, uuid is : " << uuid_ << RS_REND;
       }
+      else if (device_uuid == uuid_)
+      {
+        dev_ = device;
+        libusb_ref_device(device);
+        find_flag = true;
+        RS_INFO << "Find device : " << uuid_ << RS_REND;
+      }
+      // else
+      // {
+      //   return false;
+      // }
+
+      if (find_flag)
+      {
+        if (desc.bcdUSB >= 0x0300)
+        {
+          is_usb_300_ = true;
+        }
+        else
+        {
+          is_usb_300_ = false;
+        }
+        is_ac2_ = (desc.idProduct == RS_AC2_PRODUCT_ID);
+        break;
+      }
+    }
   }
 
   libusb_free_device_list(usb_dev_list, 1);
@@ -297,112 +328,127 @@ bool InputUsb::findDevices(std::string device_uuid)
 
 bool InputUsb::imageStreamInit()
 {
-  _uvc_ctrl_image = new uvc_stream_ctrl_t();
+  uvc_ctrl_image_ = new uvc_stream_ctrl_t();
 
   uvc_error_t res;
-  if (!_uvc_ctx_image)
+  if (!uvc_ctx_image_)
   {
-    res = uvc_init(&_uvc_ctx_image, _usb_ctx);
+    res = uvc_init(&uvc_ctx_image_, usb_ctx_);
     if (res < 0)
     {
       RS_ERROR << "Failed to initialize UVC: " << uvc_strerror(res) << RS_REND;
-      _uvc_ctx_image = nullptr;
+      uvc_ctx_image_ = nullptr;
       return false;
     }
   }
 
-  _uvc_dev_image = usb_device_creat_uvc_device(_uvc_ctx_image, _dev);
-  res = uvc_open2(_uvc_dev_image, 0, _devh, &_uvc_devh_image);
+  uvc_dev_image_ = usb_device_creat_uvc_device(uvc_ctx_image_, dev_);
+
+#ifdef WIN32
+  res = uvc_open2(uvc_dev_image_, 0, devh_, &uvc_devh_image_);
+#else
+  if (is_ac2_)
+  {
+    res = uvc_open(uvc_dev_image_, 0, &uvc_devh_image_);
+  }
+  else
+  {
+    res = uvc_open2(uvc_dev_image_, 0, devh_, &uvc_devh_image_);
+  }
+#endif
+
   if (res < 0)
   {
     RS_ERROR << "Failed to open device: " << uvc_strerror(res) << RS_REND;
     return false;
   }
-  
+
   return true;
 }
 
 bool InputUsb::imageStreamStart()
 {
-  if (!_uvc_devh_image)
+  if (!uvc_devh_image_)
   {
-      return false;
+    return false;
   }
 
   uvc_frame_format frame_format = UVC_FRAME_FORMAT_ANY;
   switch (input_param_.image_format)
   {
-  case int(FRAME_FORMAT_NV12):
+    case int(FRAME_FORMAT_NV12):
       frame_format = UVC_FRAME_FORMAT_NV12;
       break;
 
-  case int(FRAME_FORMAT_BGR24):
+    case int(FRAME_FORMAT_BGR24):
       frame_format = UVC_FRAME_FORMAT_BGR;
       break;
 
-  case int(FRAME_FORMAT_RGB24):
+    case int(FRAME_FORMAT_RGB24):
       frame_format = UVC_FRAME_FORMAT_RGB;
       break;
 
-  case int(FRAME_FORMAT_YUV422):
+    case int(FRAME_FORMAT_YUV422):
       frame_format = UVC_FRAME_FORMAT_YUYV;
       break;
-
-  default:
+    case int(FRAME_FORMAT_XR24):
+      frame_format = UVC_FRAME_FORMAT_XR24;
+      break;
+    default:
       break;
   }
 
   uvc_error_t res;
-  res = uvc_get_stream_ctrl_format_size(
-      _uvc_devh_image, _uvc_ctrl_image, frame_format,
-      input_param_.image_width, input_param_.image_height, input_param_.image_fps);
-
+  res = uvc_get_stream_ctrl_format_size(uvc_devh_image_, uvc_ctrl_image_, frame_format, input_param_.image_width,
+                                        input_param_.image_height, input_param_.image_fps);
+  RS_INFO << "frame_format:" << frame_format << ",image_width: " << input_param_.image_width
+          << ", image_height: " << input_param_.image_height << ", image_fps: " << input_param_.image_fps << RS_REND;
   if (res < 0)
   {
     RS_ERROR << "Error in setting parameters for the image stream!" << RS_REND;
-    _uvc_ctx_image = nullptr;
+    uvc_ctx_image_ = nullptr;
     return false;
   }
+  res = uvc_start_streaming(
+      uvc_devh_image_, uvc_ctrl_image_,
+      [](size_t size, void* ptr) -> uint8_t* {
+        auto* self = static_cast<InputUsb*>(ptr);
+        self->image_buf_ptr_ = self->cb_get_pkt_2_(size);
+        return self->image_buf_ptr_->data();
+      },
+      [](void* ptr) {
+        auto* self = static_cast<InputUsb*>(ptr);
+        self->image_buf_ptr_->buf()[0] = 0xAA;
+        self->image_buf_ptr_->buf()[1] = 0x66;
 
-  res = uvc_start_streaming(_uvc_devh_image, _uvc_ctrl_image, 
-          [](size_t size, void *ptr)-> uint8_t* 
-          {
-            auto* self = static_cast<InputUsb*>(ptr);
-            self->_pkt_image = self->cb_get_pkt_2_(size);
-            return self->_pkt_image->data();
-          }, 
-          [](void *ptr) 
-          {
-            auto* self = static_cast<InputUsb*>(ptr);
-            self->_pkt_image->buf()[0] = 0xAA;
-            self->_pkt_image->buf()[1] = 0x66;
+        switch ((uint8_t)(self->image_buf_ptr_->buf()[2]))
+        {
+          case UVC_COLOR_FORMAT_NV12:
+            self->image_buf_ptr_->buf()[2] = (uint8_t)FRAME_FORMAT_NV12;
+            break;
 
-            switch ((uint8_t)(self->_pkt_image->buf()[2]))
-            {
-            case UVC_COLOR_FORMAT_NV12:
-              self->_pkt_image->buf()[2] = (uint8_t)FRAME_FORMAT_NV12;
-              break;
+          case UVC_FRAME_FORMAT_BGR:
+            self->image_buf_ptr_->buf()[2] = (uint8_t)FRAME_FORMAT_BGR24;
+            break;
 
-            case UVC_FRAME_FORMAT_BGR:
-              self->_pkt_image->buf()[2] = (uint8_t)FRAME_FORMAT_BGR24;
-              break;
+          case UVC_FRAME_FORMAT_RGB:
+            self->image_buf_ptr_->buf()[2] = (uint8_t)FRAME_FORMAT_RGB24;
+            break;
 
-            case UVC_FRAME_FORMAT_RGB:
-              self->_pkt_image->buf()[2] = (uint8_t)FRAME_FORMAT_RGB24;
-              break;
+          case UVC_FRAME_FORMAT_YUYV:
+            self->image_buf_ptr_->buf()[2] = (uint8_t)FRAME_FORMAT_YUV422;
+            break;
+          case UVC_FRAME_FORMAT_XR24:
+            self->image_buf_ptr_->buf()[2] = (uint8_t)FRAME_FORMAT_XR24;
+            break;
 
-            case UVC_FRAME_FORMAT_YUYV:
-              self->_pkt_image->buf()[2] = (uint8_t)FRAME_FORMAT_YUV422;
-              break;
-
-            default:
-              break;
-            }
-
-            self->_pkt_image->setData(0, self->_pkt_image->bufSize());
-            self->pushPacket2(self->_pkt_image);
-          }, this, 0);
-
+          default:
+            break;
+        }
+        self->image_buf_ptr_->setData(0, self->image_buf_ptr_->bufSize());
+        self->pushPacket2(self->image_buf_ptr_);
+      },
+      this, 0);
   if (res < 0)
   {
     RS_ERROR << "Failed to start streaming image: " << uvc_strerror(res) << RS_REND;
@@ -414,50 +460,83 @@ bool InputUsb::imageStreamStart()
 
 void InputUsb::imageStreamClose()
 {
-  if (_uvc_devh_image)
+#ifdef WIN32
+  if (uvc_devh_image_)
   {
-      uvc_close2(_uvc_devh_image);
-      _uvc_devh_image = nullptr;
+    uvc_close2(uvc_devh_image_);
+    uvc_devh_image_ = nullptr;
   }
 
-  if (_uvc_ctx_image)
+  if (uvc_ctx_image_)
   {
-      uvc_exit2(_uvc_ctx_image);
-      _uvc_ctx_image = nullptr;
+    uvc_exit2(uvc_ctx_image_);
+    uvc_ctx_image_ = nullptr;
+  }
+#else
+  if (uvc_devh_image_)
+  {
+    if (is_ac2_)
+    {
+      uvc_stop_streaming(uvc_devh_image_);
+      uvc_close(uvc_devh_image_);
+    }
+    else
+    {
+      uvc_close2(uvc_devh_image_);
+    }
+    uvc_devh_image_ = nullptr;
   }
 
-  if (_uvc_dev_image)
+  if (uvc_ctx_image_)
   {
-      free_uvc_device(_uvc_dev_image);
-      _uvc_dev_image = nullptr;
+    if (is_ac2_)
+    {
+      uvc_exit(uvc_ctx_image_);
+    }
+    else
+    {
+      uvc_exit2(uvc_ctx_image_);
+    }
+    uvc_ctx_image_ = nullptr;
+  }
+#endif
+
+  if (uvc_dev_image_)
+  {
+    free_uvc_device(uvc_dev_image_);
+    uvc_dev_image_ = nullptr;
   }
 
-  if (_uvc_ctrl_image)
+  if (uvc_ctrl_image_)
   {
-      delete _uvc_ctrl_image;
-      _uvc_ctrl_image = nullptr;
+    delete uvc_ctrl_image_;
+    uvc_ctrl_image_ = nullptr;
   }
 }
 
-
 bool InputUsb::pcStreamInit()
 {
-  _uvc_ctrl_pc = new uvc_stream_ctrl_t();
+  if (is_ac2_)
+  {
+    return true;
+  }
+  uvc_ctrl_pc_ = new uvc_stream_ctrl_t();
 
   uvc_error_t res;
-  if (!_uvc_ctx_pc)
+  if (!uvc_ctx_pc_)
   {
-    res = uvc_init(&_uvc_ctx_pc, _usb_ctx);
+    res = uvc_init(&uvc_ctx_pc_, usb_ctx_);
     if (res < 0)
     {
       RS_ERROR << "Failed to initialize UVC: " << uvc_strerror(res) << RS_REND;
-      _uvc_ctx_pc = nullptr;
+      uvc_ctx_pc_ = nullptr;
       return false;
     }
   }
 
-  _uvc_dev_pc = usb_device_creat_uvc_device(_uvc_ctx_pc, _dev);
-  res = uvc_open2(_uvc_dev_pc, 1, _devh, &_uvc_devh_pc);
+  uvc_dev_pc_ = usb_device_creat_uvc_device(uvc_ctx_pc_, dev_);
+
+  res = uvc_open2(uvc_dev_pc_, 1, devh_, &uvc_devh_pc_);
   if (res < 0)
   {
     RS_ERROR << "Failed to open device: " << uvc_strerror(res) << RS_REND;
@@ -469,39 +548,41 @@ bool InputUsb::pcStreamInit()
 
 bool InputUsb::pcStreamStart()
 {
-  if (!_uvc_devh_pc)
+  if (is_ac2_)
   {
-      return false;
+    return true;
+  }
+  if (!uvc_devh_pc_)
+  {
+    return false;
   }
 
   uvc_error_t res;
-  res = uvc_get_stream_ctrl_format_size(
-        _uvc_devh_pc, _uvc_ctrl_pc, UVC_FRAME_FORMAT_ANY,
-        DEPTH_DATA_BYTES >> 11U, 1024, 10);
+  res = uvc_get_stream_ctrl_format_size(uvc_devh_pc_, uvc_ctrl_pc_, UVC_FRAME_FORMAT_ANY,
+                                        RS_AC1_DEPTH_DATA_BYTES >> 11U, 1024, 10);
 
   if (res < 0)
   {
     RS_ERROR << "Error in setting parameters for the depth stream!" << RS_REND;
-    _uvc_ctx_pc = nullptr;
+    uvc_ctx_pc_ = nullptr;
     return false;
   }
 
-  res = uvc_start_streaming(_uvc_devh_pc, _uvc_ctrl_pc, 
-        [](size_t size, void *ptr)-> uint8_t* 
-        {
-          auto* self = static_cast<InputUsb*>(ptr);
-          self->_pkt_pc = self->cb_get_pkt_3_(size);
-          return self->_pkt_pc->data();
-        }, 
-        [](void *ptr) 
-        {
-          auto* self = static_cast<InputUsb*>(ptr);
-          self->_pkt_pc->buf()[0] = 0xAA;
-          self->_pkt_pc->buf()[1] = 0x77;
-          self->_pkt_pc->setData(0, self->_pkt_pc->bufSize());
-          self->pushPacket3(self->_pkt_pc);
-        }, this, 0);
-
+  res = uvc_start_streaming(
+      uvc_devh_pc_, uvc_ctrl_pc_,
+      [](size_t size, void* ptr) -> uint8_t* {
+        auto* self = static_cast<InputUsb*>(ptr);
+        self->pc_buf_ptr_ = self->cb_get_pkt_3_(size);
+        return self->pc_buf_ptr_->data();
+      },
+      [](void* ptr) {
+        auto* self = static_cast<InputUsb*>(ptr);
+        self->pc_buf_ptr_->buf()[0] = 0xAA;
+        self->pc_buf_ptr_->buf()[1] = 0x77;
+        self->pc_buf_ptr_->setData(0, self->pc_buf_ptr_->bufSize());
+        self->pushPacket3(self->pc_buf_ptr_);
+      },
+      this, 0);
 
   if (res < 0)
   {
@@ -514,87 +595,90 @@ bool InputUsb::pcStreamStart()
 
 void InputUsb::pcStreamClose()
 {
-  if (_uvc_devh_pc)
+  if (is_ac2_)
   {
-      uvc_close2(_uvc_devh_pc);
-      _uvc_devh_pc = nullptr;
+    return;
+  }
+  if (uvc_devh_pc_)
+  {
+    uvc_close2(uvc_devh_pc_);
+    uvc_devh_pc_ = nullptr;
   }
 
-  if (_uvc_ctx_pc)
+  if (uvc_ctx_pc_)
   {
-      uvc_exit2(_uvc_ctx_pc);
-      _uvc_ctx_pc = nullptr;
+    uvc_exit2(uvc_ctx_pc_);
+    uvc_ctx_pc_ = nullptr;
   }
 
-  if (_uvc_dev_pc)
+  if (uvc_dev_pc_)
   {
-      free_uvc_device(_uvc_dev_pc);
-      _uvc_dev_pc = nullptr;
+    free_uvc_device(uvc_dev_pc_);
+    uvc_dev_pc_ = nullptr;
   }
 
-  if (_uvc_ctrl_pc)
+  if (uvc_ctrl_pc_)
   {
-      delete _uvc_ctrl_pc;
-      _uvc_ctrl_pc = nullptr;
+    delete uvc_ctrl_pc_;
+    uvc_ctrl_pc_ = nullptr;
   }
 }
-
 
 bool InputUsb::imuStreamInit()
 {
   int res;
 
   libusb_device_descriptor desc;
-  res = libusb_get_device_descriptor(_dev, &desc);
+  res = libusb_get_device_descriptor(dev_, &desc);
   if (res < 0)
   {
-      RS_ERROR << "Failed to get device descriptor." << RS_REND;
-      return false;
+    RS_ERROR << "Failed to get device descriptor." << RS_REND;
+    return false;
   }
 
-  libusb_config_descriptor *config;
-  res = libusb_get_config_descriptor(_dev, 0, &config);
+  libusb_config_descriptor* config;
+  res = libusb_get_config_descriptor(dev_, 0, &config);
   if (res < 0)
   {
-      libusb_free_config_descriptor(config);
-      RS_ERROR << "Failed to get config descriptor." << RS_REND;
-      return false;
+    libusb_free_config_descriptor(config);
+    RS_ERROR << "Failed to get config descriptor." << RS_REND;
+    return false;
   }
 
-  const libusb_interface_descriptor *if_desc;
+  const libusb_interface_descriptor* if_desc;
   for (int interface_idx = 0; interface_idx < config->bNumInterfaces; ++interface_idx)
   {
-      if_desc = &config->interface[interface_idx].altsetting[0];
+    if_desc = &config->interface[interface_idx].altsetting[0];
 
-      if (if_desc->bInterfaceClass == 3 && if_desc->bInterfaceSubClass == 1)
-      {
-          RS_DEBUG << "Potential HID device found, interface_num :" << interface_idx << RS_REND;
-          _hid_intface_num = interface_idx;
-          _hid_endpoint_in_num = if_desc->endpoint[0].bEndpointAddress;
-          _hid_endpoint_out_num = if_desc->endpoint[1].bEndpointAddress;
-          break;
-      }
+    if (if_desc->bInterfaceClass == 3 && if_desc->bInterfaceSubClass == 1)
+    {
+      RS_DEBUG << "Potential HID device found, interface_num :" << interface_idx << RS_REND;
+      hid_intface_num_ = interface_idx;
+      hid_endpoint_in_num_ = if_desc->endpoint[0].bEndpointAddress;
+      hid_endpoint_out_num_ = if_desc->endpoint[1].bEndpointAddress;
+      break;
+    }
   }
   libusb_free_config_descriptor(config);
 
-  if (_hid_intface_num < 0)
+  if (hid_intface_num_ < 0)
   {
-      return false;
+    return false;
   }
 
-  if (libusb_kernel_driver_active(_devh, _hid_intface_num))
+  if (libusb_kernel_driver_active(devh_, hid_intface_num_))
   {
-      res = libusb_detach_kernel_driver(_devh, _hid_intface_num);
-      if (res != 0)
-      {
-        RS_ERROR << "Failed to detach kernel driver: " << libusb_error_name(res) << RS_REND;
-      }
+    res = libusb_detach_kernel_driver(devh_, hid_intface_num_);
+    if (res != 0)
+    {
+      RS_ERROR << "Failed to detach kernel driver: " << libusb_error_name(res) << RS_REND;
+    }
   }
 
-  res = libusb_claim_interface(_devh, _hid_intface_num);
+  res = libusb_claim_interface(devh_, hid_intface_num_);
   if (res != 0)
   {
-    RS_ERROR << "Failed to detach kernel driver: " << libusb_error_name(res) << RS_REND;
+    RS_ERROR << "Failed to claim interface: " << libusb_error_name(res) << RS_REND;
     return false;
   }
 
@@ -608,179 +692,217 @@ bool InputUsb::imuStreamInit()
 
 void InputUsb::recvPacket()
 {
-  uint8_t data[100];
-  int transfer_length;
+  uint8_t recv_hid_data_buf[kMaxHidBufferSize];
   const auto interval = std::chrono::milliseconds(1000);
   auto last_time = std::chrono::steady_clock::now() - interval;
-  while (!to_exit_recv_)
+  while (1)
   {
-    /* ptp */
-    auto current_time = std::chrono::steady_clock::now();
-    if (current_time - last_time >= interval)
+    if (to_exit_recv_)
     {
-        // RS_INFO << "start SS_HID_REQ_SYNC!" << RS_REND;
-        if (!send_cmd(HID_REQ_SYNC))
-        {
-          RS_ERROR << "send SS_HID_REQ_SYNC error!" << RS_REND;
-        }
-        last_time = current_time;
+      RS_INFO << "input usb recv thread exit!" << RS_REND;
+      break;
     }
 
-    // get hid data
-    int res = libusb_interrupt_transfer(_devh, _hid_endpoint_in_num, data, sizeof(data), &transfer_length, 10);
-
-    if (res == 0 && transfer_length > 0)
+    if (!transfer_custom_cmd_)
     {
-        switch (parse_cmd(data, transfer_length))
+      /* ptp */
+      if (input_param_.sync_timestamps)
+      {
+        auto current_time = std::chrono::steady_clock::now();
+        if (current_time - last_time >= interval)
         {
-        case HID_RESP_START_STOP:
-            // RS_DEBUG << "start_stop receive!" << RS_REND;
+          if (sendHidCmd(HidReqType::HID_REQ_SYNC))
+          {
+            // nothing to do
+          }
+          else
+          {
+            RS_ERROR << "send SS_HID_REQ_SYNC error!" << RS_REND;
+          }
+          last_time = current_time;
+        }
+      }
+
+      // get hid recv_hid_data_buf
+      int transfer_length = 0;
+      const auto& resp_ret =
+          usbTransferRx(devh_, hid_endpoint_in_num_, recv_hid_data_buf, kMaxHidBufferSize, transfer_length, 10);
+      switch (resp_ret)
+      {
+        case HidRespType::HID_RESP_START_STOP:
+          break;
+        case HidRespType::HID_RESP_SYNC: {
+          if (!sendHidCmd(HidReqType::HID_REQ_DELAY_RESP))
+          {
+            RS_ERROR << "send SS_HID_REQ_DELAY_RESP error!" << RS_REND;
+          }
+        }
+        break;
+
+        case HidRespType::HID_RESP_DELAY: {
+        }
+        break;
+
+        case HidRespType::HID_RESP_IMU: {
+          if (!cb_get_pkt_)
+          {
+            RS_ERROR << "cb_get_pkt_ callback not set!" << RS_REND;
             break;
-        case HID_RESP_SYNC:
-        {
-            if (!send_cmd(HID_REQ_DELAY_RESP))
-            {
-              RS_ERROR << "send SS_HID_REQ_DELAY_RESP error!" << RS_REND;
-            }
-        }
-        break;
-
-        case HID_RESP_DELAY:
-        {
-          // RS_DEBUG << "ptp success!" << RS_REND;
-        }
-        break;
-
-        case HID_RESP_IMU:
-        {
-          // RS_INFO << "HID_RESP_IMU!" << RS_REND;
+          }
           std::shared_ptr<Buffer> pkt = cb_get_pkt_(transfer_length);
-
-          memcpy(pkt->buf(), data, transfer_length);
-          pkt->buf()[0] = 0xAA;
-          pkt->buf()[1] = 0x55;
-          pkt->setData(0, transfer_length);
-          pushPacket(pkt);
+          if (pkt)
+          {
+            memcpy(pkt->buf(), recv_hid_data_buf, transfer_length);
+            pkt->buf()[0] = 0xAA;
+            pkt->buf()[1] = 0x55;
+            pkt->setData(0, transfer_length);
+            pushPacket(pkt);
+          }
         }
         break;
 
         default:
-            break;
-        }
+          break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    else
+    {
+      std::unique_lock<std::mutex> lock(mtx_);
+      cond_.wait_for(lock, std::chrono::milliseconds(10), [this]() { return !transfer_custom_cmd_; });
     }
   }
   return;
 }
 
-
 bool InputUsb::imuStreamStart()
 {
-  if (input_param_.imu_fps == 200)
+  if (hid_start_flag_)
   {
-    if (!send_cmd(HID_REQ_IMU_UPLOAD_START_200HZ))
-    {
-        RS_ERROR << "imu start error!!" << RS_REND;
-        return false;
-    }
+    return true;
   }
-  else
+  HidReqType hid_req_type = HidReqType::HID_REQ_IMU_UPLOAD_START_100HZ;
+  switch (input_param_.imu_fps)
   {
-    if (!send_cmd(HID_REQ_IMU_UPLOAD_START_100HZ))
-    {
-        RS_ERROR << "imu start error!!" << RS_REND;
-        return false;
-    }
+  case 100:
+      hid_req_type = HidReqType::HID_REQ_IMU_UPLOAD_START_100HZ;
+      break;
+  case 200:
+      hid_req_type = HidReqType::HID_REQ_IMU_UPLOAD_START_200HZ;
+      break;
+  default:
+      RS_ERROR << "imu fps set error, only support 100Hz and 200Hz!" << RS_REND;
+      return false;
   }
-
+  if (!sendHidCmd(hid_req_type))
+  {
+    RS_ERROR << "imu start error!!" << RS_REND;
+    return false;
+  }
+  hid_start_flag_ = true;
   return true;
+}
+
+void InputUsb::hidStop()
+{
+  if (hid_start_flag_)
+  {
+    sendHidCmd(HidReqType::HID_REQ_IMU_UPLOAD_STOP);
+    hid_start_flag_ = false;
+  }
 }
 
 void InputUsb::imuStreamClose()
 {
-  if(_devh)
-    send_cmd(HID_REQ_IMU_UPLOAD_STOP);
+  if (devh_)
+  {
+    hidStop();
+  }
 
-  _hid_intface_num = -1;
-  _hid_endpoint_in_num = -1;
-  _hid_endpoint_out_num = -1;
+  hid_intface_num_ = -1;
+  hid_endpoint_in_num_ = -1;
+  hid_endpoint_out_num_ = -1;
 }
 
-bool InputUsb::send_cmd(hid_req req)
+bool InputUsb::sendHidCmd(HidReqType type)
 {
   int res = 0;
   int transfer_length;
-  uint8_t req_data[1024];
+  uint8_t req_data[kMaxHidBufferSize];
   int len = 0;
-  switch (req)
+  switch (type)
   {
-    case HID_REQ_IMU_UPLOAD_START_100HZ:
-    case HID_REQ_IMU_UPLOAD_START_200HZ:
+    case HidReqType::HID_REQ_IMU_UPLOAD_START_100HZ:
     {
       req_data[8] = 0x2E;
       req_data[9] = 0x00;
       req_data[10] = 0x02;
       req_data[11] = 0x00;
-      if(req == HID_REQ_IMU_UPLOAD_START_200HZ)
-      {
-        req_data[11] = 0x01;
-      }
       len = 12;
-      creat_frame_header(req_data, len);
+      buildHidFrameHeader(req_data, len);
+    }
+    break;
+    case HidReqType::HID_REQ_IMU_UPLOAD_START_200HZ: 
+    {
+      req_data[8] = 0x2E;
+      req_data[9] = 0x00;
+      req_data[10] = 0x02;
+      req_data[11] = 0x01;
+      len = 12;
+      buildHidFrameHeader(req_data, len);
     }
     break;
 
-    case HID_REQ_IMU_UPLOAD_STOP:
+    case HidReqType::HID_REQ_IMU_UPLOAD_STOP: 
     {
       req_data[8] = 0x2E;
       req_data[9] = 0x00;
       req_data[10] = 0x00;
       req_data[11] = 0x00;
       len = 12;
-      creat_frame_header(req_data, len);
+      buildHidFrameHeader(req_data, len);
     }
     break;
 
-    case HID_REQ_SYNC:
-    case HID_REQ_DELAY_RESP:
+    case HidReqType::HID_REQ_SYNC:
+    case HidReqType::HID_REQ_DELAY_RESP: 
     {
       req_data[8] = 0x31;
-      if (req == HID_REQ_SYNC)
+      if (type == HidReqType::HID_REQ_SYNC)
       {
-          req_data[9] = 0x00;
+        req_data[9] = 0x00;
       }
-      else if (req == HID_REQ_DELAY_RESP)
+      else if (type == HidReqType::HID_REQ_DELAY_RESP)
       {
-          req_data[9] = 0x01;
+        req_data[9] = 0x01;
       }
       struct timespec ts;
 
-      #ifdef PLATFORM_WINDOWS_MSVC
-        FILETIME ft;
-        unsigned __int64 tmpres = 0;
-        GetSystemTimeAsFileTime(&ft);
-        tmpres |= ft.dwHighDateTime;
-        tmpres <<= 32;
-        tmpres |= ft.dwLowDateTime;
-        tmpres -= 116444736000000000Ui64;
-        ts.tv_sec = (long)(tmpres / 10000000UL);
-        ts.tv_nsec = (long)(tmpres % 10000000UL) * 100;
-      #else
-        clock_gettime(CLOCK_REALTIME, &ts);
-      #endif
+#ifdef PLATFORM_WINDOWS_MSVC
+      FILETIME ft;
+      unsigned __int64 tmpres = 0;
+      GetSystemTimeAsFileTime(&ft);
+      tmpres |= ft.dwHighDateTime;
+      tmpres <<= 32;
+      tmpres |= ft.dwLowDateTime;
+      tmpres -= 116444736000000000Ui64;
+      ts.tv_sec = (long)(tmpres / 10000000UL);
+      ts.tv_nsec = (long)(tmpres % 10000000UL) * 100;
+#else
+      clock_gettime(CLOCK_REALTIME, &ts);
+#endif
 
       memcpy(req_data + 10, &ts, sizeof(struct timespec));
       len = 26;
-      creat_frame_header(req_data, len);
+      buildHidFrameHeader(req_data, len);
     }
     break;
 
     default:
       break;
   }
-
-  res = libusb_interrupt_transfer(_devh, _hid_endpoint_out_num, req_data, len, &transfer_length, 100);
-
-  if(res == LIBUSB_ERROR_NO_DEVICE || res == LIBUSB_ERROR_IO)
+  res = libusb_interrupt_transfer(devh_, hid_endpoint_out_num_, req_data, len, &transfer_length, 100);
+  if (res == LIBUSB_ERROR_NO_DEVICE || res == LIBUSB_ERROR_IO)
   {
     cb_excep_(Error(ERRCODE_DEVICE_DISCONNECTED));
     return true;
@@ -789,68 +911,180 @@ bool InputUsb::send_cmd(hid_req req)
   return res < 0 ? false : true;
 }
 
-hid_resp InputUsb::parse_cmd(const uint8_t *data, int len)
+HidRespType InputUsb::parseHidResp(const uint8_t* data, int len)
 {
-  if (!(data[0] == 0xFE && data[1] == 0xAA))
+  constexpr int kMinFrameSize = 10;
+  if (!data || len < kMinFrameSize)
   {
-      RS_DEBUG << "Hid frame head error!" << RS_REND;
-      return HID_RESP_HEAD_ERROR;
+    RS_ERROR << "Invalid HID data (null or too short)!" << RS_REND;
+    return HidRespType::HID_RESP_ERROR;
+  }
+  if (!(data[0] == kHidFrameHead1 && data[1] == kHidFrameHead2))
+  {
+    RS_ERROR << "Hid frame head error!" << RS_REND;
+    return HidRespType::HID_RESP_HEAD_ERROR;
   }
 
-    if (len > 8)
+  if (len > kFrameHeaderSize)
   {
-      uint16_t crc16_recv = (uint16_t)data[7] << 8 | data[6];
-      uint16_t crc16 = crc_16(data + 8, len - 8);
-      if (crc16_recv != crc16)
-      {
-          return HID_RESP_CRC_ERROR;
-      }
+    uint16_t crc16_recv = (uint16_t)data[7] << 8 | data[6];
+    uint16_t crc16 = crc_16(data + kFrameHeaderSize, len - kFrameHeaderSize);
+    if (crc16_recv != crc16)
+    {
+      return HidRespType::HID_RESP_CRC_ERROR;
+    }
   }
 
   switch (data[8])
   {
-  case 0x6E:
-      return HID_RESP_START_STOP;
+    case 0x6E:
+      return HidRespType::HID_RESP_START_STOP;
 
-  case 0x71:
+    case 0x71:
       if (data[9] == 0x00)
-          return HID_RESP_SYNC;
+        return HidRespType::HID_RESP_SYNC;
       else if (data[9] == 0x01)
-          return HID_RESP_DELAY;
+        return HidRespType::HID_RESP_DELAY;
+      else if (data[9] == 0x04)
+        return HidRespType::HID_RESP_OTHER;
       break;
 
-  case 0x75:
+    case 0x75:
       if (data[9] == 0x01)
-          return HID_RESP_IMU;
+        return HidRespType::HID_RESP_IMU;
       break;
 
-  case 0x7f:
-      return HID_RESP_ERROR;
+    case 0x7f:
+      return HidRespType::HID_RESP_ERROR;
 
-  default:
+    default:
       break;
   }
 
-  return HID_RESP_ERROR;
+  return HidRespType::HID_RESP_OTHER;
 }
 
-void InputUsb::creat_frame_header(uint8_t* data, int len)
+void InputUsb::buildHidFrameHeader(uint8_t* data, int len)
 {
-  data[0] = 0xFE;
-  data[1] = 0xAA;
+  if (!data || len < kFrameHeaderSize)
+  {
+    return;
+  }
+  data[0] = kHidFrameHead1;
+  data[1] = kHidFrameHead2;
   data[2] = 0x00;
   data[3] = 0x00;
-  data[4] = (len - 8) & 0xFF;
-  data[5] = ((len - 8) >> 8) & 0xFF;
+  data[4] = (len - kFrameHeaderSize) & 0xFF;
+  data[5] = ((len - kFrameHeaderSize) >> 8) & 0xFF;
   data[6] = 0x00;
   data[7] = 0x00;
 
-  uint16_t crc16 = crc_16(data + 8, len - 8);
+  uint16_t crc16 = crc_16(data + kFrameHeaderSize, len - kFrameHeaderSize);
   data[6] = crc16 & 0xFF;
   data[7] = (crc16 >> 8) & 0xFF;
+}
+
+#define DEBUG_HID
+bool InputUsb::usbTransferTx(libusb_device_handle* devh, int endpoint_out, uint8_t* data, int len)
+{
+  int transfer_length;
+  int res = libusb_interrupt_transfer(devh, endpoint_out, data, len, &transfer_length, 100);
+
+  return res < 0 ? false : true;
+}
+
+HidRespType InputUsb::usbTransferRx(libusb_device_handle* devh, int endpoint_in, uint8_t* data, int len,
+                                     int& transfer_length, int time_out)
+{
+  int res = libusb_interrupt_transfer(devh, endpoint_in, data, len, &transfer_length, time_out);
+  if (res == 0 && transfer_length > 0)
+  {
+    return parseHidResp(data, transfer_length);
+  }
+
+  return HidRespType::HID_RESP_ERROR;
+}
+
+void InputUsb::clearHidRecvCache()
+{
+  std::vector<uint8_t> dummy_data(kMaxHidBufferSize);
+  int transfer_length = 0;
+  for (int i = 0; i < kClearRecvCacheTimes; ++i)
+  {
+    usbTransferRx(devh_, hid_endpoint_in_num_, dummy_data.data(), kMaxHidBufferSize, transfer_length);
+  }
+}
+bool InputUsb::customCmd(const std::vector<uint8_t>& send, std::vector<uint8_t>& receive)
+{
+  if (is_ac2_)
+  {
+    RS_ERROR << "AC2 device does not support custom cmd!" << RS_REND;
+    return false;
+  }
+  if (send.size() > kMaxCustomCmdSize)
+  {
+    RS_ERROR << "Custom cmd size exceed max limit! Max: " << kMaxCustomCmdSize << ", Actual: " << send.size()
+             << RS_REND;
+    return false;
+  }
+  bool need_restart_imu = hid_start_flag_;
+  hidStop();
+
+  {
+    std::lock_guard<std::mutex> lock(mtx_);
+    transfer_custom_cmd_.store(true); 
+  }
+
+  bool ret = true;
+  try
+  {
+    clearHidRecvCache();
+
+    std::vector<uint8_t> req_data(kMaxHidBufferSize, 0);
+    memcpy(req_data.data() + kFrameHeaderSize, send.data(), send.size());
+    int len = kFrameHeaderSize + send.size();
+    buildHidFrameHeader(req_data.data(), len);
+
+    if (!usbTransferTx(devh_, hid_endpoint_out_num_, req_data.data(), len))
+    {
+      throw std::runtime_error("Custom cmd send failed");
+    }
+
+    std::vector<uint8_t> receive_data(kMaxHidBufferSize);
+    int transfer_length = 0;
+    const auto& resp = usbTransferRx(devh_, hid_endpoint_in_num_, receive_data.data(), kMaxHidBufferSize,
+                                       transfer_length, kCustomCmdTimeout);
+    if (resp == HidRespType::HID_RESP_HEAD_ERROR || resp == HidRespType::HID_RESP_CRC_ERROR || resp == HidRespType::HID_RESP_ERROR)
+    {
+      throw std::runtime_error("Custom cmd resp error: " + std::to_string(static_cast<uint8_t>(resp)));
+    }
+
+    if (receive_data.size() > kFrameHeaderSize)
+    {
+      receive.assign(receive_data.begin() + kFrameHeaderSize, receive_data.begin() + transfer_length);
+    }
+  }
+  catch (const std::exception& e)
+  {
+    RS_ERROR << "Custom cmd exception: " << e.what() << RS_REND;
+    ret = false;
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(mtx_);
+    transfer_custom_cmd_.store(false);
+    cond_.notify_one(); 
+  }
+
+  if (need_restart_imu)
+  {
+    imuStreamStart();
+  }
+
+  return ret;
 }
 
 }  // namespace lidar
 }  // namespace robosense
 
-#endif // ENABLE_USB
+#endif  // ENABLE_USB

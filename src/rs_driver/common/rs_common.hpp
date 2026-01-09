@@ -32,27 +32,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <stdio.h>
-#include <cstring>  
+#include <cstring>
 //
 // define ntohs()
-// 
+//
 #ifdef _WIN32
 #include <ws2tcpip.h>
-#else //__linux__
+#else  //__linux__
 #include <arpa/inet.h>
 #endif
 
 //
 // define M_PI
-// 
+//
 #ifndef _USE_MATH_DEFINES
-#define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
+#define _USE_MATH_DEFINES  // for VC++, required to use const M_IP in <math.h>
 #endif
 
 #include <math.h>
 
-#define DEGREE_TO_RADIAN(deg)  ((deg) * M_PI / 180)
-#define RADIAN_TO_DEGREE(deg)  ((deg) * 180 / M_PI)
+#define DEGREE_TO_RADIAN(deg) ((deg) * M_PI / 180)
+#define RADIAN_TO_DEGREE(deg) ((deg) * 180 / M_PI)
 
 namespace robosense
 {
@@ -70,23 +70,29 @@ inline int16_t RS_SWAP_INT16(int16_t value)
   return value;
 }
 
-inline int32_t u8ArrayToInt32(const uint8_t* data, uint8_t len) {
-    if(len != 4)
-    {
-      printf("u8ArrayToInt32: len is not 4\n");
-      return 0;
-    }
-    uint32_t uintValue = ntohl(*reinterpret_cast<const uint32_t*>(data));
-    return static_cast<int32_t>(uintValue);
+inline int32_t u8ArrayToInt32(const uint8_t* data, uint8_t len)
+{
+  if (len != 4)
+  {
+    printf("u8ArrayToInt32: len is not 4\n");
+    return 0;
+  }
+  uint32_t uintValue = ntohl(*reinterpret_cast<const uint32_t*>(data));
+  return static_cast<int32_t>(uintValue);
 }
 
-inline float convertUint32ToFloat(uint32_t byteArray) {
-    float floatValue;
-    std::memcpy(&floatValue, &byteArray, sizeof(float));
-    return floatValue;
+inline float convertUint32ToFloat(uint32_t byteArray)
+{
+  float floatValue;
+  std::memcpy(&floatValue, &byteArray, sizeof(float));
+  return floatValue;
 }
 
+inline uint32_t convertFloatToUint32(float floatValue)
+{
+  uint32_t byteArray;
+  std::memcpy(&byteArray, &floatValue, sizeof(uint32_t));
+  return byteArray;
 }
-}
-
-
+}  // namespace lidar
+}  // namespace robosense
