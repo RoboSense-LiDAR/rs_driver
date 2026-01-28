@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3)
 project(UVC-AC VERSION 0.0.7 LANGUAGES C CXX)
 
-if(EXTRA_CMAKE)
-    include("${EXTRA_CMAKE}")
-    message(STATUS "Including extra cmake from ${EXTRA_CMAKE}")
-endif()
-
 # Used to configure generated files.
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)

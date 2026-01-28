@@ -128,6 +128,20 @@ inline void DecoderRSM3<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
 #ifdef ENABLE_DIFOP_PARSE
   const RRSM3DifopPkt& pkt = *(RRSM3DifopPkt*)packet;
   double difop_pkt_ts = parseTimeUTCWithUs(&pkt.time_info.timestamp) * 1e-6;
+  double pkt_ts = 0;
+  if (this->param_.use_lidar_clock)
+  {
+    pkt_ts = parseTimeUTCWithUs(&pkt.time_info.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+  }
+  else
+  {
+    pkt_ts = getTimeHost() * 1e-6;
+  }
+  if (this->write_pkt_ts_)
+  {
+    createTimeUTCWithUs (pkt_ts, (RSTimestampUTC*)&pkt.time_info.timestamp);
+  }
+  this->prev_difop_pkt_ts_ = pkt_ts;
   if(0)
   {
     RS_DEBUG << "difop_pkt_ts:" << difop_pkt_ts << RS_REND;
@@ -148,7 +162,11 @@ inline bool DecoderRSM3<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
+    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+    if (this->write_pkt_ts_)
+    {
+      createTimeUTCWithUs(pkt_ts, (RSTimestampUTC*)&pkt.header.timestamp);
+    }
   }
   else
   {

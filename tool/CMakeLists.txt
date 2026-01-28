@@ -24,7 +24,9 @@ if(WIN32)
   file(COPY ${OPENNI_ROOT}\\Redist\\OpenNI2.dll DESTINATION ${PROJECT_BINARY_DIR}\\Debug)
 endif(WIN32)
 
+
 find_package(PCL COMPONENTS common visualization io QUIET REQUIRED)
+# find_package(PCL 1.14  COMPONENTS common visualization io QUIET REQUIRED)
 add_definitions(${PCL_DEFINITIONS})
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})

@@ -121,7 +121,7 @@ public:
   virtual ~DecoderRS32() = default;
 
   explicit DecoderRS32(const RSDecoderParam& param);
-
+  virtual bool isNewFrame(const uint8_t* packet) override;
 #ifndef UNIT_TEST
 protected:
 #endif
@@ -213,6 +213,20 @@ inline void DecoderRS32<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
   this->echo_mode_ = getEchoMode (adapter.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
+  double pkt_ts = 0;
+  if (this->param_.use_lidar_clock)
+  {
+    pkt_ts = parseTimeYMD(&orig.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+  }
+  else
+  {
+    pkt_ts = getTimeHost() * 1e-6;
+  }
+  if (this->write_pkt_ts_)
+  {
+    createTimeYMD (pkt_ts, (RSTimestampYMD*)&orig.timestamp);
+  }
+  this->prev_difop_pkt_ts_ = pkt_ts;
 }
 
 template <typename T_PointCloud>
@@ -240,7 +254,11 @@ inline bool DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeYMD(&pkt.header.timestamp) * 1e-6;
+    pkt_ts = parseTimeYMD(&pkt.header.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+    if (this->write_pkt_ts_)
+    {
+      createTimeYMD (pkt_ts, (RSTimestampYMD*)&pkt.header.timestamp);
+    }
   }
   else
   {
@@ -330,6 +348,26 @@ inline bool DecoderRS32<T_PointCloud>::internDecodeMsopPkt(const uint8_t* packet
   this->prev_pkt_ts_ = pkt_ts;
   return ret;
 }
+template <typename T_PointCloud>
+inline bool DecoderRS32<T_PointCloud>::isNewFrame(const uint8_t* packet)
+{
+  const RS32MsopPkt& pkt = *(const RS32MsopPkt*)(packet);
+  for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
+  {
+    const RS32MsopBlock& block = pkt.blocks[blk];
 
+    if (memcmp(this->const_param_.BLOCK_ID, block.id, 2) != 0)
+    {
+      break;
+    }
+
+    int32_t block_az = ntohs(block.azimuth);
+    if (this->pre_split_strategy_->newBlock(block_az))
+    {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace lidar
 }  // namespace robosense

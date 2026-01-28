@@ -136,6 +136,30 @@ void driverReturnImuDataToCallerCallback(const std::shared_ptr<ImuData>& msg)
   stuffed_imu_data_queue.push(msg);
 }
 
+// @brief Image data callback function. The caller should register it to the lidar driver.
+//        Via this function, the driver gets/returns a stuffed Image data message to the caller.
+// @param msg  The stuffed Image data message.
+//
+std::function<std::shared_ptr<ImageMsg>()> createImageDataCallback(LidarType lidar_type)
+{
+  return [lidar_type]() -> std::shared_ptr<ImageMsg> {
+    std::shared_ptr<ImageMsg> msg = free_image_data_queue.pop();
+    if (msg)
+    {
+      return msg;
+    }
+
+    switch (lidar_type)
+    {
+      case LidarType::RS_AC1:
+        return std::make_shared<MonoImageMsg>();
+      default:
+        return std::make_shared<StereoImageMsg>();
+    }
+  };
+}
+
+
 //
 // @brief Image data callback function. The caller should register it to the lidar driver.
 //        Via this function, the driver gets/returns a stuffed Image data message to the caller.
@@ -177,25 +201,15 @@ void processImuData(void)
     // Well, it is time to process the IMU data msg, even it is time-consuming.
 
     imu_cnt++;
-
-#if 0
-  static double last_ts = 0.0;
-  double ts = msg->timestamp;
-  double dt = ts - last_ts;
-  if(imu_cnt % 200 == 0)
-  {
-
-    if(last_ts != 0.0)
+    if(imu_cnt % 200 == 0)
     {
-      RS_DEBUG << "imu msg: " << imu_cnt << " imu data ts: " << msg->timestamp << " dt: " << dt<< RS_REND;
+      RS_MSG << "imu cnt: " << imu_cnt << " , timestamp: " << msg->timestamp << RS_REND;
     }
-    // RS_DEBUG  <<std::fixed << std::setprecision(8)  <<"imu data: " << " linear_a_x " << msg->linear_acceleration_x 
-    //   << " , linear_a_y " << msg->linear_acceleration_y << "  , linear_a_z " << msg->linear_acceleration_z   
-    //   << " , angular_v_x " << msg->angular_velocity_x << " , angular_v_y " << msg->angular_velocity_y 
-    //   << " , angular_v_z " <<msg->angular_velocity_z << RS_REND;
-  }
-  last_ts = ts;
-
+#if 0
+    RS_DEBUG  <<std::fixed << std::setprecision(8)  <<"imu data:, timestamp: " << msg->timestamp << " , linear_a_x " << msg->linear_acceleration_x 
+      << " , linear_a_y " << msg->linear_acceleration_y << "  , linear_a_z " << msg->linear_acceleration_z   
+      << " , angular_v_x " << msg->angular_velocity_x << " , angular_v_y " << msg->angular_velocity_y 
+      << " , angular_v_z " <<msg->angular_velocity_z << RS_REND;
 #endif
 
     free_imu_data_queue.push(msg);
@@ -232,34 +246,7 @@ void processImageData(void)
 
     image_cnt++;
 
-#if 0
-    static double last_ts = 0;
-    double ts = msg->timestamp;
-    double dt = ts - last_ts;
-
-    static double last_recv_ts = 0;
-    double recv_ts = getTimeHost() * 1e-6;
-    double recv_dt = recv_ts - last_recv_ts;
-    last_recv_ts = recv_ts;
-    
-    if(image_cnt % EXPECT_FPS == 0)
-    {
-      RS_INFO << "image seq: " << image_cnt << " image data ts: " << msg->timestamp << " dt: " << dt << ", recv_dt: " << recv_dt  << ", fps:" << 1.0 / dt  << ", recv_fps:" << 1.0 / recv_dt << RS_REND;
-    }
-
-    if(ts == 0)
-    {
-      RS_WARNING << "image ts is zero seq: " << image_cnt << " image data ts: " << msg->timestamp << " dt: " << dt << ", recv_dt: " << recv_dt  << RS_REND;
-    }
-    if(last_ts != 0)
-    {
-      if(dt < 0.09 || dt > 0.11)
-      {
-        RS_WARNING <<  "image fps error, seq: " << image_cnt << " image data ts: " << msg->timestamp << " dt: " << dt << ", recv_dt: " << recv_dt  << RS_REND;
-      }
-    }
-    last_ts = ts;
-#endif
+    RS_MSG << "image seq: " << image_cnt << " image data ts: " << msg->timestamp << RS_REND;
 
     free_image_data_queue.push(msg);
   }
@@ -267,7 +254,6 @@ void processImageData(void)
 
 void processCloud(void)
 {
-  uint32_t cloud_cnt = 0;
   while (!to_exit_process)
   {
     std::shared_ptr<PointCloudMsg> msg = stuffed_cloud_queue.popWait();
@@ -276,60 +262,10 @@ void processCloud(void)
       continue;
     }
 
-    cloud_cnt++;
+    RS_MSG << "cloud seq: " << msg->seq << " cloud data ts: " << msg->timestamp << RS_REND;
     // Well, it is time to process the point cloud msg, even it is time-consuming.
-#if 1
-    static double last_ts = 0;
-    double ts = msg->timestamp;
-    double dt = ts - last_ts;
-
-    static double last_recv_ts = 0;
-    double recv_ts = getTimeHost() * 1e-6;
-    double recv_dt = recv_ts - last_recv_ts;
-    last_recv_ts = recv_ts;
-    if (cloud_cnt % EXPECT_FPS == 0)
-    {
-      if (dt != 0 && recv_dt != 0)
-      {
-        RS_INFO << "cloud seq: " << cloud_cnt << " cloud data ts: " << msg->timestamp << " dt: " << dt
-                << ", recv_dt: " << recv_dt << ", fps:" << 1.0 / dt << ", recv_fps:" << 1.0 / recv_dt << RS_REND;
-      }
-    }
-    if (ts == 0)
-    {
-      RS_WARNING << "cloud ts is zero seq: " << cloud_cnt << " cloud data ts: " << msg->timestamp << " dt: " << dt
-                 << ", recv_dt: " << recv_dt << RS_REND;
-    }
-    if (last_ts != 0)
-    {
-      if (dt < 0.09 || dt > 0.11)
-      {
-        RS_WARNING << "cloud fps error, seq: " << cloud_cnt << " cloud data ts: " << msg->timestamp << " dt: " << dt
-                   << ", recv_dt: " << recv_dt << RS_REND;
-      }
-    }
-    last_ts = ts;
-#endif
     free_cloud_queue.push(msg);
   }
-}
-std::function<std::shared_ptr<ImageMsg>()> createImageDataCallback(LidarType lidar_type)
-{
-  return [lidar_type]() -> std::shared_ptr<ImageMsg> {
-    std::shared_ptr<ImageMsg> msg = free_image_data_queue.pop();
-    if (msg)
-    {
-      return msg;
-    }
-
-    switch (lidar_type)
-    {
-      case LidarType::RS_AC1:
-        return std::make_shared<MonoImageMsg>();
-      default:
-        return std::make_shared<StereoImageMsg>();
-    }
-  };
 }
 
 #define USE_AC1 0
@@ -348,20 +284,10 @@ int main(int argc, char* argv[])
   // param.input_param.device_uuid = "00000000";
 #else
   param.lidar_type = LidarType::RS_AC2;  ///< Set the lidar type. Make sure this type is correct
-
-  param.decoder_param.ts_first_point = true;
-  param.input_param.image_width = 1616;
-  param.input_param.image_height = 2636;
-  param.input_param.image_format = FRAME_FORMAT_XR24;
-  param.input_param.image_fps = 15;
-  param.input_param.enable_usb200 = true;
-  param.input_param.sync_timestamps = true;
-  param.decoder_param.use_lidar_clock = false;
-  param.decoder_param.config_from_file = false;
-  param.decoder_param.angle_path = "/home/sti/Desktop/angle/";
-  param.decoder_param.enable_imu = true;
-  param.decoder_param.image_mode = 0;  ///< 0:all enable; 1:enable left image; 2:enable right image; 3:disable image
-  param.decoder_param.enable_point_cloud = true;
+  param.input_param.image_width = 1616;  ///< Set the image width. Make sure this value is correct
+  param.input_param.image_height = 2636;  ///< Set the image height. Make sure this value is correct
+  param.input_param.image_format = FRAME_FORMAT_XR24;  ///< Set the image format. Make sure this value is correct
+  param.input_param.image_fps = 15;  ///< Set the image fps. Make sure this value is correct
 #endif
   param.print();
 
@@ -378,8 +304,7 @@ int main(int argc, char* argv[])
 
 #if ENABLE_IMAGE_PARSE
 
-  auto get_image_callback = createImageDataCallback(param.lidar_type);
-  driver.regImageDataCallback(get_image_callback, driverReturnImageDataToCallerCallback);
+  driver.regImageDataCallback(createImageDataCallback(param.lidar_type), driverReturnImageDataToCallerCallback);
 #endif
 
   if (!driver.init(param))  ///< Call the init function
@@ -409,7 +334,7 @@ int main(int argc, char* argv[])
 #if ENABLE_IMAGE_PARSE
     imageData_handle_thread.join();
 #endif
-    RS_INFO << "Driver Stop Error..." << RS_REND;
+    RS_INFO << "Driver Stop" << RS_REND;
     return -1;
   }
   RS_DEBUG << "RoboSense Lidar-Driver Linux usb demo start......" << RS_REND;

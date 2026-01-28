@@ -176,7 +176,7 @@ inline void DecoderRSE1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
     {
       if (this->param_.use_lidar_clock)
       {
-        this->imuDataPtr_->timestamp = parseTimeUTCWithUs(&pkt.timestamp) * 1e-6;
+        this->imuDataPtr_->timestamp = parseTimeUTCWithUs(&pkt.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
       }
       else
       {
@@ -198,6 +198,7 @@ inline void DecoderRSE1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
     this->device_info_.state = true;
     // device status
     this->device_status_.state = true;
+    this->prev_difop_pkt_ts_ = parseTimeUTCWithUs(&pkt.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
     #endif
 }
 
@@ -212,7 +213,11 @@ inline bool DecoderRSE1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
+    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+    if (this->write_pkt_ts_)
+    {
+      createTimeUTCWithUs(pkt_ts, (RSTimestampUTC*)&pkt.header.timestamp);
+    }
   }
   else
   {

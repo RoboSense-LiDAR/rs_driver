@@ -32,10 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 #include <rs_driver/driver/input/input.hpp>
+#include <rs_driver/utility/sync_queue.hpp>
 #include <mutex>
 #include <condition_variable>
 #include <sstream>
-#include <atomic>
 
 #ifdef _WIN32
 #define WIN32
@@ -142,9 +142,9 @@ private:
   uvc_device_handle *uvc_devh_pc_;
   struct uvc_stream_ctrl *uvc_ctrl_pc_;
 
-  std::shared_ptr<Buffer> image_buf_ptr_{nullptr};
-  std::shared_ptr<Buffer> pc_buf_ptr_{nullptr};
-  
+  SyncQueue<std::shared_ptr<Buffer>> image_buf_ptr_queue_;
+  SyncQueue<std::shared_ptr<Buffer>> pc_buf_ptr_queue_;
+
   std::thread usbEventProcThead_;
   int hid_intface_num_;
   int hid_endpoint_in_num_;
@@ -156,7 +156,7 @@ private:
   int image_frame_format_{0};
 
   bool is_usb_300_{false};
-  int kill_handler_thread_{1};
+  std::atomic<int> kill_handler_thread_{0};
   std::atomic<bool> hid_start_flag_{false};       
   std::atomic<bool> is_ac2_{false};            
   std::atomic<bool> transfer_custom_cmd_{false};

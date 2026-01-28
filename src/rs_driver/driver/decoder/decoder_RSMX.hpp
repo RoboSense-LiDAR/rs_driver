@@ -108,7 +108,9 @@ typedef struct
   uint8_t id[8];
   uint8_t reserved1[30];
   RSSN sn;
-  uint8_t reserved2[212];
+  uint8_t reserved2[8];
+  RSTimeInfo time_info;
+  uint8_t reserved3[192];
 } RSMXDifopPkt;
 
 #pragma pack(pop)
@@ -190,6 +192,20 @@ inline void DecoderRSMX<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
     const RSMXDifopPkt& pkt = *(RSMXDifopPkt*)packet;
     // device info
     memcpy (this->device_info_.sn, pkt.sn.num, 4);
+    double pkt_ts = 0;
+    if (this->param_.use_lidar_clock)
+    {
+      pkt_ts = parseTimeUTCWithUs(&pkt.time_info.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+    }
+    else
+    {
+      pkt_ts = getTimeHost() * 1e-6;
+    } 
+    if (this->write_pkt_ts_)
+    {
+      createTimeUTCWithUs (pkt_ts, (RSTimestampUTC*)&pkt.time_info.timestamp);
+    }
+    this->prev_difop_pkt_ts_ = pkt_ts;
     this->device_info_.state = true;
     // device status
     this->device_status_.state = false;
@@ -207,7 +223,11 @@ inline bool DecoderRSMX<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
+    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+    if (this->write_pkt_ts_)
+    {
+      createTimeUTCWithUs (pkt_ts, (RSTimestampUTC*)&pkt.header.timestamp);
+    }
   }
   else
   {

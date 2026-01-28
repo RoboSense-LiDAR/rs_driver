@@ -102,8 +102,8 @@ public:
   virtual ~DecoderRSHELIOS() = default;
 
   explicit DecoderRSHELIOS(const RSDecoderParam& param);
-
-#ifndef UNIT_TEST
+  virtual bool isNewFrame(const uint8_t* packet) override;
+#ifndef UNIT_TEST 
 protected:
 #endif
 
@@ -192,6 +192,20 @@ inline void DecoderRSHELIOS<T_PointCloud>::decodeDifopPkt(const uint8_t* packet,
   this->echo_mode_ = getEchoMode (pkt.return_mode);
   this->split_blks_per_frame_ = (this->echo_mode_ == RSEchoMode::ECHO_DUAL) ? 
     (this->blks_per_frame_ << 1) : this->blks_per_frame_;
+  double pkt_ts = 0;
+  if (this->param_.use_lidar_clock)
+  {
+    pkt_ts = parseTimeUTCWithUs(&pkt.time_info.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+  }
+  else
+  {
+    pkt_ts = getTimeHost() * 1e-6;
+  }
+  if (this->write_pkt_ts_)
+  {
+    createTimeUTCWithUs (pkt_ts, (RSTimestampUTC*)&pkt.time_info.timestamp);
+  }
+  this->prev_difop_pkt_ts_ = pkt_ts;
 }
 
 template <typename T_PointCloud>
@@ -219,7 +233,11 @@ inline bool DecoderRSHELIOS<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pa
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
+    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+    if (this->write_pkt_ts_)
+    {
+      createTimeUTCWithUs (pkt_ts, (RSTimestampUTC*)&pkt.header.timestamp);
+    }
   }
   else
   {
@@ -308,6 +326,30 @@ inline bool DecoderRSHELIOS<T_PointCloud>::internDecodeMsopPkt(const uint8_t* pa
 
   this->prev_pkt_ts_ = pkt_ts;
   return ret;
+}
+
+template <typename T_PointCloud>
+inline bool DecoderRSHELIOS<T_PointCloud>::isNewFrame(const uint8_t* packet)
+{
+  const RSHELIOSMsopPkt& pkt = *(const RSHELIOSMsopPkt*)(packet);
+ 
+  for (uint16_t blk = 0; blk < this->const_param_.BLOCKS_PER_PKT; blk++)
+  {
+    const RSHELIOSMsopBlock& block = pkt.blocks[blk];
+
+    if (memcmp(this->const_param_.BLOCK_ID, block.id, 2) != 0)
+    {
+      break;
+    }
+
+    int32_t block_az = ntohs(block.azimuth);
+    if (this->pre_split_strategy_->newBlock(block_az))
+    {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 }  // namespace lidar

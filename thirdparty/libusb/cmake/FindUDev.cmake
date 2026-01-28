@@ -68,7 +68,7 @@ find_path(UDEV_INCLUDE_DIR
 	)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(udev
+find_package_handle_standard_args(UDev
 	DEFAULT_MSG
 	UDEV_LIBRARY
 	UDEV_INCLUDE_DIR

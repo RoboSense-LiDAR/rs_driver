@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <thread>
 #include <cstring>
+#include <atomic>
 
 #define VLAN_HDR_LEN  4
 #define ETH_HDR_LEN   42
@@ -59,7 +60,9 @@ public:
       const std::function<void(const Error&)>& cb_excep,
       const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
       const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt);
-
+  
+  inline void regPcapSplitFrameCallback(const std::function<bool(const uint8_t* )>& cb_pcap_split_frame);
+	
   inline void regCallback2(
       const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
       const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt);
@@ -67,7 +70,7 @@ public:
   inline void regCallback3(
       const std::function<std::shared_ptr<Buffer>(size_t)>& cb_get_pkt,
       const std::function<void(std::shared_ptr<Buffer>, bool)>& cb_put_pkt);
-
+	
   virtual bool init() = 0;
   virtual bool start() = 0;
   virtual void stop();
@@ -90,8 +93,9 @@ protected:
   std::function<void(std::shared_ptr<Buffer>, bool)> cb_put_pkt_3_;
 
   std::function<void(const Error&)> cb_excep_;
+  std::function<bool(const uint8_t*)> cb_pcap_split_frame_; // for split frame judegment
   std::thread recv_thread_;
-  bool to_exit_recv_;
+  std::atomic<bool> to_exit_recv_{false};
   bool init_flag_;
   bool start_flag_;
 };
@@ -142,6 +146,12 @@ inline void Input::stop()
 inline void Input::pushPacket(std::shared_ptr<Buffer> pkt, bool stuffed)
 {
   cb_put_pkt_(pkt, stuffed);
+}
+
+inline void Input::regPcapSplitFrameCallback(const std::function<bool(const uint8_t*)>& cb_pcap_split_frame)
+{
+  cb_pcap_split_frame_ = cb_pcap_split_frame;
+
 }
 
 inline void Input::pushPacket2(std::shared_ptr<Buffer> pkt, bool stuffed)

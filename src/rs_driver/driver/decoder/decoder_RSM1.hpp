@@ -207,7 +207,20 @@ inline void DecoderRSM1<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, siz
 {
   const RSM1DifopPkt& pkt = *(RSM1DifopPkt*)packet;
   this->echo_mode_ = this->getEchoMode(pkt.return_mode);
-
+  double pkt_ts = 0;
+  if (this->param_.use_lidar_clock)
+  {
+    pkt_ts = parseTimeUTCWithUs(&pkt.time_info.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+  }
+  else
+  {
+    pkt_ts = getTimeHost() * 1e-6;
+  }
+  if (this->write_pkt_ts_)
+  {
+    createTimeUTCWithUs (pkt_ts, (RSTimestampUTC*)&pkt.time_info.timestamp);
+  }
+  this->prev_difop_pkt_ts_ = pkt_ts;
 #ifdef ENABLE_DIFOP_PARSE
   // device info
   memcpy (this->device_info_.sn, pkt.sn.num, 6);
@@ -232,7 +245,11 @@ inline bool DecoderRSM1<T_PointCloud>::decodeMsopPkt(const uint8_t* packet, size
   double pkt_ts = 0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6;
+    pkt_ts = parseTimeUTCWithUs(&pkt.header.timestamp) * 1e-6 + this->param_.sync_timestamp_offset;
+    if (this->write_pkt_ts_)
+    {
+      createTimeUTCWithUs (pkt_ts, (RSTimestampUTC*)&pkt.header.timestamp);
+    }
   }
   else
   {

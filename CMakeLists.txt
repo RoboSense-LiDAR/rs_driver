@@ -8,6 +8,12 @@ endif(WIN32)
 
 project(rs_driver VERSION 1.5.17)
 
+if(EXTRA_CMAKE)
+    include("${EXTRA_CMAKE}")
+    message(STATUS "Including extra cmake from ${EXTRA_CMAKE}")
+endif()
+
+
 #========================
 #  Project setup
 #========================
@@ -36,7 +42,7 @@ option(ENABLE_SIMD_ACCELERATION   "Enable SIMD acceleration for performance crit
 #=============================
 #  Compile Demos, Tools, Tests
 #=============================
-option(COMPILE_DEMOS "Build rs_driver demos" ON)
+option(COMPILE_DEMOS "Build rs_driver demos" OFF)
 option(COMPILE_TOOLS "Build rs_driver tools" OFF)
 option(COMPILE_TOOL_VIEWER "Build point cloud visualization tool" OFF)
 option(COMPILE_TOOL_PCDSAVER "Build point cloud pcd saver tool" OFF)
@@ -141,7 +147,11 @@ endif()
 #========================
 #  Path Setup
 #========================
-set(CMAKE_INSTALL_PREFIX /usr/local)
+if(NOT DEFINED CMAKE_INSTALL_PREFIX)
+  set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation root directory" FORCE)
+endif()
+
+message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
 set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}/include)
 set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 set(DRIVER_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
@@ -338,6 +348,15 @@ if(UNIX AND ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
     LIBRARY DESTINATION ${INSTALL_LIB_DIR})
   endif(${ENABLE_USB})
 
+  if(${ENABLE_GMSL})
+    if(WIN32)
+    else()
+      install(TARGETS rsac_gmsl
+      ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+      LIBRARY DESTINATION ${INSTALL_LIB_DIR})
+    endif(WIN32)
+  endif(${ENABLE_GMSL})
+
   if(NOT TARGET uninstall)
     configure_file(
       ${CMAKE_CURRENT_LIST_DIR}/cmake/cmake_uninstall.cmake.in
@@ -347,4 +366,3 @@ if(UNIX AND ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   endif(NOT TARGET uninstall)
 
 endif(UNIX AND ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
-

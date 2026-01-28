@@ -52,9 +52,12 @@ class InputPcapJumbo : public Input
 {
 public:
   InputPcapJumbo(const RSInputParam& input_param, double sec_to_delay)
-    : Input(input_param), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), pcap_tail_(0), difop_filter_valid_(false), 
-    msec_to_delay_((uint64_t)(sec_to_delay / input_param.pcap_rate * 1000000))
+    : Input(input_param), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), pcap_tail_(0), difop_filter_valid_(false), imu_filter_valid_(false)
   {
+    constexpr float kMinPlayRate = 0.0f;
+    constexpr float kMaxPlayRate = 10.0f;
+    constexpr float kDelayCalcBase = 100.0f;
+
     if (input_param.use_vlan)
     {
       pcap_offset_ += VLAN_HDR_LEN;
@@ -62,16 +65,31 @@ public:
 
     pcap_offset_ += input_param.user_layer_bytes;
     pcap_tail_   += input_param.tail_layer_bytes;
-
-    std::stringstream msop_stream;
+    std::stringstream msop_stream, difop_stream, imu_stream;
     if (input_param_.use_vlan)
     {
       msop_stream << "vlan && ";
+      difop_stream << "vlan && ";
     }
 
     msop_stream << "udp";
+    difop_stream << "udp";
+    imu_stream << "udp";
 
     msop_filter_str_ = msop_stream.str();
+    difop_filter_str_ = difop_stream.str();
+    imu_filter_str_ = imu_stream.str();
+
+    float play_rate_ = input_param.pcap_rate;
+    if (play_rate_ <= kMinPlayRate)
+    {
+      play_rate_ = 1.0f;
+    }
+    if (play_rate_ > kMaxPlayRate)
+    {
+      play_rate_ = kMaxPlayRate;
+    }
+    millisec_to_delay_ = (uint64_t)(kDelayCalcBase / play_rate_);
   }
 
   virtual bool init();
@@ -86,10 +104,14 @@ private:
   size_t pcap_offset_;
   size_t pcap_tail_;
   std::string msop_filter_str_;
+  std::string difop_filter_str_;
+  std::string imu_filter_str_;
   bpf_program msop_filter_;
   bpf_program difop_filter_;
+  bpf_program imu_filter_;
   bool difop_filter_valid_;
-  uint64_t msec_to_delay_;
+  bool imu_filter_valid_;
+  uint64_t millisec_to_delay_;
 
   Jumbo jumbo_;
 };
@@ -108,6 +130,18 @@ inline bool InputPcapJumbo::init()
   }
 
   pcap_compile(pcap_, &msop_filter_, msop_filter_str_.c_str(), 1, 0xFFFFFFFF);
+
+  if ((input_param_.difop_port != 0) && (input_param_.difop_port != input_param_.msop_port))
+  {
+    pcap_compile(pcap_, &difop_filter_, difop_filter_str_.c_str(), 1, 0xFFFFFFFF);
+    difop_filter_valid_ = true;
+  }
+  if ((input_param_.imu_port != 0) && (input_param_.imu_port != input_param_.msop_port) &&
+      (input_param_.imu_port != input_param_.difop_port))
+  {
+    pcap_compile(pcap_, &imu_filter_, imu_filter_str_.c_str(), 1, 0xFFFFFFFF);
+    imu_filter_valid_ = true;
+  }
 
   init_flag_ = true;
   return true;
@@ -144,6 +178,7 @@ inline InputPcapJumbo::~InputPcapJumbo()
 
 inline void InputPcapJumbo::recvPacket()
 {
+  auto start_time = std::chrono::steady_clock::now();
   while (!to_exit_recv_)
   {
     struct pcap_pkthdr* header;
@@ -182,6 +217,17 @@ inline void InputPcapJumbo::recvPacket()
           std::shared_ptr<Buffer> pkt = cb_get_pkt_(IP_LEN);
           memcpy(pkt->data(), udp_data, udp_data_len);
           pkt->setData(0, udp_data_len);
+          if (cb_pcap_split_frame_(pkt->data()))
+          {
+            auto end = std::chrono::steady_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start_time);
+            auto sleepTime = std::chrono::milliseconds(millisec_to_delay_) - duration;
+            if (sleepTime > std::chrono::milliseconds(0))
+            {
+              std::this_thread::sleep_for(sleepTime);
+            }
+            start_time = std::chrono::steady_clock::now();
+          }
           pushPacket(pkt);
         }
       }
@@ -190,8 +236,6 @@ inline void InputPcapJumbo::recvPacket()
     {
       continue;
     }
-
-    std::this_thread::sleep_for(std::chrono::microseconds(msec_to_delay_));
   }
 }
 
