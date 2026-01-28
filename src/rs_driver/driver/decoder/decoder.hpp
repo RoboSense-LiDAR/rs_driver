@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/driver/decoder/trigon.hpp>
 #include <rs_driver/driver/decoder/section.hpp>
 #include <rs_driver/driver/decoder/basic_attr.hpp>
+#include <rs_driver/driver/decoder/split_strategy.hpp>
 #include "rs_driver/msg/imu_data_msg.hpp"
 #include "rs_driver/msg/image_msg.hpp"
 #ifndef _USE_MATH_DEFINES
@@ -129,8 +130,8 @@ typedef struct
 
 typedef struct
 {
-  uint8_t top_ver[5];    // firmware
-  uint8_t bottom_ver[5]; // firmware
+  uint8_t top_ver[5];     // firmware
+  uint8_t bottom_ver[5];  // firmware
   uint8_t bot_soft_ver[5];
   uint8_t motor_firmware_ver[5];
   uint8_t hw_ver[3];
@@ -241,10 +242,10 @@ struct RSDecoderConstParam
   float DISTANCE_RES;
   float TEMPERATURE_RES;
 
-    // IMU parameters (new fields with default values)
-  uint16_t IMU_LEN{0};      // Default to 0 for lidar without IMU
-  uint16_t IMU_ID_LEN{0};   // Default to 0 for lidar without IMU
-  uint8_t IMU_ID[4]{0};     // Default to {0, 0, 0, 0} for lidar without IMU
+  // IMU parameters (new fields with default values)
+  uint16_t IMU_LEN{ 0 };     // Default to 0 for lidar without IMU
+  uint16_t IMU_ID_LEN{ 0 };  // Default to 0 for lidar without IMU
+  uint8_t IMU_ID[4]{ 0 };    // Default to {0, 0, 0, 0} for lidar without IMU
 };
 
 #define INIT_ONLY_ONCE() \
@@ -283,6 +284,7 @@ public:
   double getPacketDuration();
   void enableWritePktTs(bool value);
   double prevPktTs();
+  double prevDifopPktTs();
   void transformPoint(float& x, float& y, float& z);
   void regCallback(
       const std::function<void(const Error&)>& cb_excep,
@@ -293,6 +295,10 @@ public:
   std::shared_ptr<T_PointCloud> point_cloud_; // accumulated point cloud currently
   std::shared_ptr<ImuData> imuDataPtr_;
   std::shared_ptr<ImageMsg> imageDataPtr_;
+  virtual bool isNewFrame(const uint8_t* packet);
+  bool isNewFrameCommon(const uint8_t* packet);
+  SplitStrategyBySeq pre_split_strategy_comm_;
+  bool is_mech_{ false };
 
 #ifndef UNIT_TEST
 protected:
@@ -319,26 +325,26 @@ protected:
 #define COS(angle) this->trigon_.cos(angle)
 
   double packet_duration_;
-  DistanceSection distance_section_; // invalid section of distance
+  DistanceSection distance_section_;  // invalid section of distance
 
-  RSEchoMode echo_mode_; // echo mode (defined by return mode)
-  float temperature_; // lidar temperature
+  RSEchoMode echo_mode_;  // echo mode (defined by return mode)
+  float temperature_;     // lidar temperature
   DeviceInfo device_info_;
   DeviceStatus device_status_;
 
-  bool angles_ready_; // is vert_angles/horiz_angles ready from csv file/difop packet?
-  double prev_pkt_ts_; // timestamp of prevous packet
-  double prev_point_ts_; // timestamp of previous point
-  double first_point_ts_; // timestamp of first point
-  bool is_get_temperature_{false};
+  bool angles_ready_;      // is vert_angles/horiz_angles ready from csv file/difop packet?
+  double prev_pkt_ts_;     // timestamp of prevous packet
+  double prev_difop_pkt_ts_;
+  double prev_point_ts_;   // timestamp of previous point
+  double first_point_ts_;  // timestamp of first point
+  bool is_get_temperature_{ false };
   
   std::function<bool(const std::vector<uint8_t> &send, std::vector<uint8_t> &receive)> cb_custom_cmd_;
 };
 
 template <typename T_PointCloud>
-inline void Decoder<T_PointCloud>::regCallback(
-    const std::function<void(const Error&)>& cb_excep,
-    const std::function<void(uint16_t, double)>& cb_split_frame)
+inline void Decoder<T_PointCloud>::regCallback(const std::function<void(const Error&)>& cb_excep,
+                                               const std::function<void(uint16_t, double)>& cb_split_frame)
 {
   cb_excep_ = cb_excep;
   cb_split_frame_ = cb_split_frame;
@@ -373,6 +379,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param, co
   , temperature_(0.0)
   , angles_ready_(false)
   , prev_pkt_ts_(0.0)
+  , prev_difop_pkt_ts_(0.0)
   , prev_point_ts_(0.0)
   , first_point_ts_(0.0)
 {
@@ -382,7 +389,7 @@ inline Decoder<T_PointCloud>::Decoder(const RSDecoderConstParam& const_param, co
   Eigen::AngleAxisd current_rotation_z(param_.transform_param.yaw, Eigen::Vector3d::UnitZ());
   Eigen::Translation3d current_translation(param_.transform_param.x, param_.transform_param.y,
                                            param_.transform_param.z);
-  trans_ = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();  
+  this->trans_ = (current_translation * current_rotation_z * current_rotation_y * current_rotation_x).matrix();
 #endif
 }
 
@@ -395,7 +402,7 @@ inline void Decoder<T_PointCloud>::enableWritePktTs(bool value)
 template <typename T_PointCloud>
 inline bool Decoder<T_PointCloud>::getTemperature(float& temp)
 {
-  if(!is_get_temperature_)
+  if (!is_get_temperature_)
   {
     return false;
   }
@@ -407,7 +414,7 @@ inline bool Decoder<T_PointCloud>::getTemperature(float& temp)
 template <typename T_PointCloud>
 inline bool Decoder<T_PointCloud>::getDeviceInfo(DeviceInfo& info)
 {
-  if(!device_info_.state)
+  if (!device_info_.state)
   {
     return false;
   }
@@ -418,7 +425,7 @@ inline bool Decoder<T_PointCloud>::getDeviceInfo(DeviceInfo& info)
 template <typename T_PointCloud>
 inline bool Decoder<T_PointCloud>::getDeviceStatus(DeviceStatus& status)
 {
-  if(!device_status_.state)
+  if (!device_status_.state)
   {
     return false;
   }
@@ -440,6 +447,12 @@ inline double Decoder<T_PointCloud>::prevPktTs()
 }
 
 template <typename T_PointCloud>
+inline double Decoder<T_PointCloud>::prevDifopPktTs()
+{
+  return prev_difop_pkt_ts_;
+}
+
+template <typename T_PointCloud>
 inline double Decoder<T_PointCloud>::cloudTs()
 {
   return (param_.ts_first_point ? first_point_ts_ : prev_point_ts_);
@@ -450,7 +463,7 @@ inline void Decoder<T_PointCloud>::transformPoint(float& x, float& y, float& z)
 {
 #ifdef ENABLE_TRANSFORM
   Eigen::Vector4d target_ori(x, y, z, 1);
-  Eigen::Vector4d target_rotate = trans_ * target_ori;
+  Eigen::Vector4d target_rotate = this->trans_ * target_ori;
   x = target_rotate(0);
   y = target_rotate(1);
   z = target_rotate(2);
@@ -462,8 +475,8 @@ inline void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t si
 {
   if (size != this->const_param_.DIFOP_LEN)
   {
-     LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGDIFOPLEN)), 1);
-     return;
+    LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGDIFOPLEN)), 1);
+    return;
   }
 
   if (memcmp(pkt, this->const_param_.DIFOP_ID, const_param_.DIFOP_ID_LEN) != 0)
@@ -500,24 +513,24 @@ inline bool Decoder<T_PointCloud>::processPcFrame(const uint8_t* src_data, size_
 template <typename T_PointCloud>
 inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t size)
 {
-  constexpr static int CLOUD_POINT_MAX = 1000000;
+  constexpr static int CLOUD_POINT_MAX = 5000000;
 
   if (this->point_cloud_ && (this->point_cloud_->points.size() > CLOUD_POINT_MAX))
   {
-     LIMIT_CALL(this->cb_excep_(Error(ERRCODE_CLOUDOVERFLOW)), 1);
-     this->point_cloud_->points.clear();
+    LIMIT_CALL(this->cb_excep_(Error(ERRCODE_CLOUDOVERFLOW)), 1);
+    this->point_cloud_->points.clear();
   }
 
   if (param_.wait_for_difop && !angles_ready_)
   {
-     DELAY_LIMIT_CALL(cb_excep_(Error(ERRCODE_NODIFOPRECV)), 1);
-     return false;
+    DELAY_LIMIT_CALL(cb_excep_(Error(ERRCODE_NODIFOPRECV)), 1);
+    return false;
   }
 
   if (size != this->const_param_.MSOP_LEN)
   {
-     LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGMSOPLEN)), 1);
-     return false;
+    LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGMSOPLEN)), 1);
+    return false;
   }
 
   if (memcmp(pkt, this->const_param_.MSOP_ID, this->const_param_.MSOP_ID_LEN) != 0)
@@ -537,5 +550,25 @@ inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t siz
   return decodeMsopPkt(pkt, size);
 }
 
+template <typename T_PointCloud>
+inline bool Decoder<T_PointCloud>::isNewFrameCommon(const uint8_t* packet)
+{
+  constexpr uint8_t kPktSeqHighByteOffset = 4;
+  constexpr uint8_t kPktSeqLowByteOffset = 5;
+  if (packet == nullptr)
+  {
+    return false;
+  }
+  uint16_t pkt_seq = static_cast<uint16_t>((packet[kPktSeqHighByteOffset] << 8) | packet[kPktSeqLowByteOffset]);
+  return pre_split_strategy_comm_.newPacket(pkt_seq);
+}
+
+template <typename T_PointCloud>
+inline bool Decoder<T_PointCloud>::isNewFrame(const uint8_t* packet)
+{
+  if (!is_mech_)
+    return isNewFrameCommon(packet);
+  return false;
+}
 }  // namespace lidar
 }  // namespace robosense

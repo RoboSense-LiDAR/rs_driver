@@ -71,7 +71,6 @@ enum ErrCode
   ERRCODE_WRONGMSOPPCAPPARSE  = 0x4D,   ///< Parse msop data frome pcap file failed
   ERRCODE_WRONGDIFOPPCAPPARSE  = 0x4E,   ///< Parse difop data frome pcap file failed
   ERRCODE_WRONGIMUPCAPPARSE  = 0x4F,   ///< Parse imu data frome pcap file failed
-  ERRCODE_WRONGPCAPPARSE  = 0x50,   ///< Parse pcap file failed
 
   // error
   ERRCODE_STARTBEFOREINIT = 0x80,  ///< User calls start() before init()
@@ -150,10 +149,6 @@ struct Error
         return "ERRCODE_WRONGDIFOPPCAPPARSE";
       case ERRCODE_WRONGIMUPCAPPARSE:
         return "ERRCODE_WRONGIMUPCAPPARSE";
-      case ERRCODE_WRONGPCAPPARSE:
-        return "ERRCODE_WRONGPCAPPARSE";
-
-
 
       // error
       case ERRCODE_STARTBEFOREINIT:

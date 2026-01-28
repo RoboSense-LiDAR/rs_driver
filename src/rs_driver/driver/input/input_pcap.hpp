@@ -50,16 +50,25 @@ class InputPcap : public Input
 {
 public:
   InputPcap(const RSInputParam& input_param, double sec_to_delay)
-    : Input(input_param), pcap_(NULL), pcap_offset_(ETH_HDR_LEN), pcap_tail_(0), difop_filter_valid_(false), imu_filter_valid_(false),
-     msec_to_delay_((uint64_t)(sec_to_delay / input_param.pcap_rate * 1000000))
+    : Input(input_param)
+    , pcap_(NULL)
+    , pcap_offset_(ETH_HDR_LEN)
+    , pcap_tail_(0)
+    , difop_filter_valid_(false)
+    , imu_filter_valid_(false)
   {
+
+    constexpr float kMinPlayRate = 0.0f;
+    constexpr float kMaxPlayRate = 10.0f;
+    constexpr float kDelayCalcBase = 100.0f;
+    
     if (input_param.use_vlan)
     {
       pcap_offset_ += VLAN_HDR_LEN;
     }
 
     pcap_offset_ += input_param.user_layer_bytes;
-    pcap_tail_   += input_param.tail_layer_bytes;
+    pcap_tail_ += input_param.tail_layer_bytes;
 
     std::stringstream msop_stream, difop_stream, imu_stream;
     if (input_param_.use_vlan)
@@ -75,6 +84,17 @@ public:
     msop_filter_str_ = msop_stream.str();
     difop_filter_str_ = difop_stream.str();
     imu_filter_str_ = imu_stream.str();
+
+    float play_rate_ = input_param.pcap_rate;
+    if (play_rate_ <= kMinPlayRate)
+    {
+      play_rate_ = 1.0f;
+    }
+    if (play_rate_ > kMaxPlayRate)
+    {
+      play_rate_ = kMaxPlayRate;
+    }
+    millisec_to_delay_ = (uint64_t)(kDelayCalcBase / play_rate_);
   }
 
   virtual bool init();
@@ -96,7 +116,7 @@ private:
   bpf_program imu_filter_;
   bool difop_filter_valid_;
   bool imu_filter_valid_;
-  uint64_t msec_to_delay_;
+  uint64_t millisec_to_delay_;
 };
 
 inline bool InputPcap::init()
@@ -119,7 +139,8 @@ inline bool InputPcap::init()
     pcap_compile(pcap_, &difop_filter_, difop_filter_str_.c_str(), 1, 0xFFFFFFFF);
     difop_filter_valid_ = true;
   }
-  if ((input_param_.imu_port != 0) && (input_param_.imu_port != input_param_.msop_port) &&  (input_param_.imu_port != input_param_.difop_port))
+  if ((input_param_.imu_port != 0) && (input_param_.imu_port != input_param_.msop_port) &&
+      (input_param_.imu_port != input_param_.difop_port))
   {
     pcap_compile(pcap_, &imu_filter_, imu_filter_str_.c_str(), 1, 0xFFFFFFFF);
     imu_filter_valid_ = true;
@@ -160,6 +181,7 @@ inline InputPcap::~InputPcap()
 
 inline void InputPcap::recvPacket()
 {
+  auto start_time = std::chrono::steady_clock::now();
   while (!to_exit_recv_)
   {
     struct pcap_pkthdr* header;
@@ -185,19 +207,68 @@ inline void InputPcap::recvPacket()
       }
     }
 
-     if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0 || 
-      (difop_filter_valid_ && pcap_offline_filter(&difop_filter_, header, pkt_data) != 0) ||
-      (imu_filter_valid_ && pcap_offline_filter(&imu_filter_, header, pkt_data) != 0))
+    if (pcap_offline_filter(&msop_filter_, header, pkt_data) != 0)
     {
       int dataLen = (int)(header->len - pcap_offset_ - pcap_tail_);
-      if (dataLen < 0) {
-        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
+      if (dataLen < 0)
+      {
+        cb_excep_(Error(ERRCODE_WRONGMSOPPCAPPARSE));
         continue;
       }
       std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
-      if(static_cast<size_t>(dataLen) > pkt->bufSize())
+      if (static_cast<size_t>(dataLen) > pkt->bufSize())
       {
-        cb_excep_(Error(ERRCODE_WRONGPCAPPARSE));
+        cb_excep_(Error(ERRCODE_WRONGMSOPPCAPPARSE));
+        continue;
+      }
+      memcpy(pkt->data(), pkt_data + pcap_offset_, dataLen);
+      pkt->setData(0, dataLen);
+
+      if (cb_pcap_split_frame_(pkt->data()))
+      {
+        auto end = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start_time);
+        auto sleepTime = std::chrono::milliseconds(millisec_to_delay_) - duration;
+        if (sleepTime > std::chrono::milliseconds(0))
+        {
+          std::this_thread::sleep_for(sleepTime);
+        }
+        start_time = std::chrono::steady_clock::now();
+      }
+      pushPacket(pkt);
+    }
+    else if (difop_filter_valid_ && (pcap_offline_filter(&difop_filter_, header, pkt_data) != 0))
+    {
+      int dataLen = (int)(header->len - pcap_offset_ - pcap_tail_);
+      if (dataLen < 0)
+      {
+        cb_excep_(Error(ERRCODE_WRONGDIFOPPCAPPARSE));
+        continue;
+      }
+
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
+      if (static_cast<size_t>(dataLen) > pkt->bufSize())
+      {
+        cb_excep_(Error(ERRCODE_WRONGDIFOPPCAPPARSE));
+        continue;
+      }
+
+      memcpy(pkt->data(), pkt_data + pcap_offset_, dataLen);
+      pkt->setData(0, dataLen);
+      pushPacket(pkt);
+    }
+    else if (imu_filter_valid_ && (pcap_offline_filter(&imu_filter_, header, pkt_data) != 0))
+    {
+      int dataLen = (int)(header->len - pcap_offset_ - pcap_tail_);
+      if (dataLen < 0)
+      {
+        cb_excep_(Error(ERRCODE_WRONGIMUPCAPPARSE));
+        continue;
+      }
+      std::shared_ptr<Buffer> pkt = cb_get_pkt_(ETH_LEN);
+      if (static_cast<size_t>(dataLen) > pkt->bufSize())
+      {
+        cb_excep_(Error(ERRCODE_WRONGIMUPCAPPARSE));
         continue;
       }
       memcpy(pkt->data(), pkt_data + pcap_offset_, dataLen);
@@ -208,12 +279,9 @@ inline void InputPcap::recvPacket()
     {
       continue;
     }
-
-    std::this_thread::sleep_for(std::chrono::microseconds(msec_to_delay_));
   }
 }
 
 }  // namespace lidar
 }  // namespace robosense
-
 #endif // DISABLE_PCAP_PARSE

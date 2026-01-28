@@ -124,7 +124,7 @@ inline void DecoderRSAC1<T_PointCloud>::decodeImageFrame(const uint8_t* src_data
       memcpy(&timestamp, src_data + 4, 8);
       if (this->param_.use_lidar_clock)
       {
-        mono_data_ptr->timestamp = timestamp;
+        mono_data_ptr->timestamp = timestamp + this->param_.sync_timestamp_offset;
       }
       else
       {
@@ -156,7 +156,7 @@ inline void DecoderRSAC1<T_PointCloud>::decodeImuFrame(const uint8_t* src_data, 
 
     if (this->param_.use_lidar_clock)
     {
-      this->imuDataPtr_->timestamp = time.tv_sec + time.tv_nsec * 1e-9;
+      this->imuDataPtr_->timestamp = time.tv_sec + time.tv_nsec * 1e-9 + this->param_.sync_timestamp_offset;
     }
     else
     {
@@ -199,7 +199,7 @@ inline void DecoderRSAC1<T_PointCloud>::decodePcFrame(const uint8_t* src_data, s
         double timestamp = 0.0;
         if (this->param_.use_lidar_clock)
         {
-          timestamp = (double)(time_offset * 1e-6) + double(time_tmp.tv_usec * 1e-6) + time_tmp.tv_sec;
+          timestamp = (double)(time_offset * 1e-6) + double(time_tmp.tv_usec * 1e-6) + time_tmp.tv_sec + this->param_.sync_timestamp_offset;
         }
         else
         {

@@ -24,6 +24,11 @@ cmake -DCOMPILE_TOOS=ON ..
 ```bash
 ./tool/rs_driver_viewer 
 ```
+注：在 Ubuntu 22.04 下，使用 PCL 1.12 版本与 VTK 9.0 组合时会导致运行失败。经过验证，PCL 1.14 版本与 VTK 9.0 组合能够正常运行。可以通过修改 tool/CMakeLists.txt 文件来指定使用 PCL 1.14 版本。
+
+```cmake
+find_package(PCL 1.14  COMPONENTS common visualization io QUIET REQUIRED)
+```
 
 ### 14.2.1 帮助菜单
 

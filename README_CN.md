@@ -38,7 +38,7 @@ git clone https://github.com/RoboSense-LiDAR/rs_driver.git
 + RS-LiDAR-MX
 + RS-LiDAR-AIRY
 + RS-AC1
-
++ RS-AC2
 
 
 ## 1.3 支持的操作系统

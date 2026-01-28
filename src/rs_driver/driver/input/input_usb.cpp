@@ -103,8 +103,8 @@ bool InputUsb::init()
     RS_ERROR << "USB mode is not USB_3.0!" << RS_REND;
     return false;
   }
-
-  kill_handler_thread_ = 0;
+  
+  kill_handler_thread_.store(0);
   usbEventProcThead_ = std::thread(std::bind(&InputUsb::usbEventHandler, this));
 
   res = libusb_open(dev_, &devh_);
@@ -177,7 +177,6 @@ bool InputUsb::start()
     RS_ERROR << "Depth stream start failed!" << RS_REND;
     return false;
   }
-
   start_flag_ = true;
   return true;
 }
@@ -187,9 +186,9 @@ void InputUsb::stop()
   imageStreamClose();
   pcStreamClose();
 
-  if (!to_exit_recv_)
+  if (!to_exit_recv_.load(std::memory_order_relaxed))
   {
-    to_exit_recv_ = true;
+    to_exit_recv_.store(true, std::memory_order_relaxed);
     if (recv_thread_.joinable())
     {
       recv_thread_.join();
@@ -198,9 +197,9 @@ void InputUsb::stop()
 
   imuStreamClose();
 
-  if (!kill_handler_thread_)
+  if (!kill_handler_thread_.load())
   {
-    kill_handler_thread_ = 1;
+    kill_handler_thread_.store(1);
     if (usbEventProcThead_.joinable())
     {
       usbEventProcThead_.join();
@@ -246,9 +245,9 @@ InputUsb::~InputUsb()
 void InputUsb::usbEventHandler()
 {
   struct timeval tv = { 0, 100000 };
-  while (!kill_handler_thread_)
+  while (!kill_handler_thread_.load(std::memory_order_relaxed))
   {
-    libusb_handle_events_timeout_completed(usb_ctx_, &tv, &kill_handler_thread_);
+    libusb_handle_events_timeout_completed(usb_ctx_, &tv, reinterpret_cast<int*>(&kill_handler_thread_));
   }
 }
 
@@ -413,40 +412,50 @@ bool InputUsb::imageStreamStart()
       uvc_devh_image_, uvc_ctrl_image_,
       [](size_t size, void* ptr) -> uint8_t* {
         auto* self = static_cast<InputUsb*>(ptr);
-        self->image_buf_ptr_ = self->cb_get_pkt_2_(size);
-        return self->image_buf_ptr_->data();
+        std::shared_ptr<Buffer> image_buf_ptr = self->cb_get_pkt_2_(size);
+        if (!image_buf_ptr || !image_buf_ptr->data()) {
+          return nullptr;
+        }
+        self->image_buf_ptr_queue_.push(image_buf_ptr);
+        
+        return image_buf_ptr->data();
       },
       [](void* ptr) {
         auto* self = static_cast<InputUsb*>(ptr);
-        self->image_buf_ptr_->buf()[0] = 0xAA;
-        self->image_buf_ptr_->buf()[1] = 0x66;
+        
+        std::shared_ptr<Buffer> image_buf_ptr = self->image_buf_ptr_queue_.popWait(50000);
+        if (!image_buf_ptr || !image_buf_ptr->data()) {
+          return;
+        }
+        image_buf_ptr->buf()[0] = 0xAA;
+        image_buf_ptr->buf()[1] = 0x66; 
 
-        switch ((uint8_t)(self->image_buf_ptr_->buf()[2]))
+        switch ((uint8_t)(image_buf_ptr->buf()[2]))
         {
           case UVC_COLOR_FORMAT_NV12:
-            self->image_buf_ptr_->buf()[2] = (uint8_t)FRAME_FORMAT_NV12;
+            image_buf_ptr->buf()[2] = (uint8_t)FRAME_FORMAT_NV12;
             break;
 
           case UVC_FRAME_FORMAT_BGR:
-            self->image_buf_ptr_->buf()[2] = (uint8_t)FRAME_FORMAT_BGR24;
+            image_buf_ptr->buf()[2] = (uint8_t)FRAME_FORMAT_BGR24;
             break;
 
           case UVC_FRAME_FORMAT_RGB:
-            self->image_buf_ptr_->buf()[2] = (uint8_t)FRAME_FORMAT_RGB24;
+            image_buf_ptr->buf()[2] = (uint8_t)FRAME_FORMAT_RGB24;
             break;
 
           case UVC_FRAME_FORMAT_YUYV:
-            self->image_buf_ptr_->buf()[2] = (uint8_t)FRAME_FORMAT_YUV422;
+            image_buf_ptr->buf()[2] = (uint8_t)FRAME_FORMAT_YUV422;
             break;
           case UVC_FRAME_FORMAT_XR24:
-            self->image_buf_ptr_->buf()[2] = (uint8_t)FRAME_FORMAT_XR24;
+            image_buf_ptr->buf()[2] = (uint8_t)FRAME_FORMAT_XR24;
             break;
 
           default:
             break;
         }
-        self->image_buf_ptr_->setData(0, self->image_buf_ptr_->bufSize());
-        self->pushPacket2(self->image_buf_ptr_);
+        image_buf_ptr->setData(0, image_buf_ptr->bufSize());
+        self->pushPacket2(image_buf_ptr);
       },
       this, 0);
   if (res < 0)
@@ -572,15 +581,24 @@ bool InputUsb::pcStreamStart()
       uvc_devh_pc_, uvc_ctrl_pc_,
       [](size_t size, void* ptr) -> uint8_t* {
         auto* self = static_cast<InputUsb*>(ptr);
-        self->pc_buf_ptr_ = self->cb_get_pkt_3_(size);
-        return self->pc_buf_ptr_->data();
+        std::shared_ptr<Buffer> pc_buf_ptr = self->cb_get_pkt_3_(size);
+        if (!pc_buf_ptr || !pc_buf_ptr->data()) {
+          return nullptr;
+        }
+        self->pc_buf_ptr_queue_.push(pc_buf_ptr);
+        
+        return pc_buf_ptr->data();
       },
       [](void* ptr) {
         auto* self = static_cast<InputUsb*>(ptr);
-        self->pc_buf_ptr_->buf()[0] = 0xAA;
-        self->pc_buf_ptr_->buf()[1] = 0x77;
-        self->pc_buf_ptr_->setData(0, self->pc_buf_ptr_->bufSize());
-        self->pushPacket3(self->pc_buf_ptr_);
+        std::shared_ptr<Buffer> pc_buf_ptr = self->pc_buf_ptr_queue_.popWait(50000);
+        if (!pc_buf_ptr || !pc_buf_ptr->data()) {
+          return;
+        }
+        pc_buf_ptr->buf()[0] = 0xAA;
+        pc_buf_ptr->buf()[1] = 0x77;
+        pc_buf_ptr->setData(0, pc_buf_ptr->bufSize());
+        self->pushPacket3(pc_buf_ptr);
       },
       this, 0);
 
@@ -681,8 +699,7 @@ bool InputUsb::imuStreamInit()
     RS_ERROR << "Failed to claim interface: " << libusb_error_name(res) << RS_REND;
     return false;
   }
-
-  to_exit_recv_ = false;
+  to_exit_recv_.store(false, std::memory_order_relaxed);
   recv_thread_ = std::thread(std::bind(&InputUsb::recvPacket, this));
 
   std::this_thread::sleep_for(std::chrono::microseconds(50));
@@ -697,7 +714,7 @@ void InputUsb::recvPacket()
   auto last_time = std::chrono::steady_clock::now() - interval;
   while (1)
   {
-    if (to_exit_recv_)
+    if (to_exit_recv_.load(std::memory_order_relaxed))
     {
       RS_INFO << "input usb recv thread exit!" << RS_REND;
       break;
@@ -781,6 +798,7 @@ bool InputUsb::imuStreamStart()
   {
     return true;
   }
+  
   HidReqType hid_req_type = HidReqType::HID_REQ_IMU_UPLOAD_START_100HZ;
   switch (input_param_.imu_fps)
   {

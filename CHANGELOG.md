@@ -13,6 +13,7 @@
 ### Changed
 - Add feature attribute to point type.
 - Update help document.
+- Update block_time_offset as us for RSE1
 
 ### Fix 
 - Fix compilation bug in win/input_socket_select.

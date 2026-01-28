@@ -51,9 +51,7 @@ namespace lidar
 inline std::string getDriverVersion()
 {
   std::stringstream stream;
-  stream << RSLIDAR_VERSION_MAJOR << "."
-    << RSLIDAR_VERSION_MINOR << "."
-    << RSLIDAR_VERSION_PATCH;
+  stream << RSLIDAR_VERSION_MAJOR << "." << RSLIDAR_VERSION_MINOR << "." << RSLIDAR_VERSION_PATCH;
 
   return stream.str();
 }
@@ -62,22 +60,18 @@ template <typename T_PointCloud>
 class LidarDriverImpl
 {
 public:
-
   LidarDriverImpl();
   ~LidarDriverImpl();
 
-  void regPointCloudCallback(
-      const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get_cloud,
-      const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put_cloud);
+  void regPointCloudCallback(const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get_cloud,
+                             const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put_cloud);
   void regPacketCallback(const std::function<void(const Packet&)>& cb_put_pkt);
-  void regImuDataCallback(
-    const std::function<std::shared_ptr<ImuData>(void)>& cb_get_imu_data,
-    const std::function<void(const std::shared_ptr<ImuData>& msg)>& cb_put_imu_data);
-  void regImageDataCallback(
-    const std::function<std::shared_ptr<ImageMsg>(void)>& cb_get_image_data,
-    const std::function<void(const std::shared_ptr<ImageMsg>& msg)>& cb_put_image_data);
+  void regImuDataCallback(const std::function<std::shared_ptr<ImuData>(void)>& cb_get_imu_data,
+                          const std::function<void(const std::shared_ptr<ImuData>& msg)>& cb_put_imu_data);
+  void regImageDataCallback(const std::function<std::shared_ptr<ImageMsg>(void)>& cb_get_image_data,
+                            const std::function<void(const std::shared_ptr<ImageMsg>& msg)>& cb_put_image_data);
   void regExceptionCallback(const std::function<void(const Error&)>& cb_excep);
- 
+
   bool init(const RSDriverParam& param);
   bool start();
   void stop();
@@ -104,7 +98,7 @@ private:
   void processPacket2();
   void processPacket3();
   void internalProcessPacket(std::shared_ptr<Buffer> pkt);
-  
+
   std::shared_ptr<ImuData> getImuData();
   void putImuData();
 
@@ -114,6 +108,8 @@ private:
   std::shared_ptr<T_PointCloud> getPointCloud();
   void splitFrame(uint16_t height, double ts);
   void setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, uint16_t height, double chan_ts);
+
+  bool isNewFrame(const uint8_t* packet);
 
   RSDriverParam driver_param_;
   std::function<std::shared_ptr<T_PointCloud>(void)> cb_get_cloud_;
@@ -141,7 +137,7 @@ private:
   std::thread handle_thread_3_;
   uint32_t pkt_seq_;
   uint32_t point_cloud_seq_;
-  bool to_exit_handle_;
+  std::atomic<bool> to_exit_handle_{ false };
   bool init_flag_;
   bool start_flag_;
 };
@@ -205,25 +201,24 @@ std::shared_ptr<T_PointCloud> LidarDriverImpl<T_PointCloud>::getPointCloud()
 }
 
 template <typename T_PointCloud>
-void LidarDriverImpl<T_PointCloud>::regPointCloudCallback( 
+void LidarDriverImpl<T_PointCloud>::regPointCloudCallback(
     const std::function<std::shared_ptr<T_PointCloud>(void)>& cb_get_cloud,
-    const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put_cloud) 
+    const std::function<void(std::shared_ptr<T_PointCloud>)>& cb_put_cloud)
 {
   cb_get_cloud_ = cb_get_cloud;
   cb_put_cloud_ = cb_put_cloud;
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::regPacketCallback(
-    const std::function<void(const Packet&)>& cb_put_pkt)
+inline void LidarDriverImpl<T_PointCloud>::regPacketCallback(const std::function<void(const Packet&)>& cb_put_pkt)
 {
   cb_put_pkt_ = cb_put_pkt;
 }
 
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::regImuDataCallback(
-  const std::function<std::shared_ptr<ImuData>(void)>& cb_get_imu_data,
-  const std::function<void(const std::shared_ptr<ImuData>& msg)>& cb_put_imu_data)
+    const std::function<std::shared_ptr<ImuData>(void)>& cb_get_imu_data,
+    const std::function<void(const std::shared_ptr<ImuData>& msg)>& cb_put_imu_data)
 {
   cb_get_imu_data_ = cb_get_imu_data;
   cb_put_imu_data_ = cb_put_imu_data;
@@ -231,16 +226,15 @@ inline void LidarDriverImpl<T_PointCloud>::regImuDataCallback(
 
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::regImageDataCallback(
-  const std::function<std::shared_ptr<ImageMsg>(void)>& cb_get_image_data, 
-  const std::function<void(const std::shared_ptr<ImageMsg>& msg)>& cb_put_image_data)
+    const std::function<std::shared_ptr<ImageMsg>(void)>& cb_get_image_data,
+    const std::function<void(const std::shared_ptr<ImageMsg>& msg)>& cb_put_image_data)
 {
   cb_get_image_data_ = cb_get_image_data;
   cb_put_image_data_ = cb_put_image_data;
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::regExceptionCallback(
-    const std::function<void(const Error&)>& cb_excep)
+inline void LidarDriverImpl<T_PointCloud>::regExceptionCallback(const std::function<void(const Error&)>& cb_excep)
 {
   cb_excep_ = cb_excep;
 }
@@ -257,27 +251,27 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   // decoder
   //
   decoder_ptr_ = DecoderFactory<T_PointCloud>::createDecoder(param.lidar_type, param.decoder_param);
-  if(decoder_ptr_ == nullptr)
+  if (decoder_ptr_ == nullptr)
   {
-    return false; 
+    return false;
   }
-  
+
   // rewrite pkt timestamp or not ?
   decoder_ptr_->enableWritePktTs((cb_put_pkt_ == nullptr) ? false : true);
 
   // point cloud related
   decoder_ptr_->point_cloud_ = getPointCloud();
-  decoder_ptr_->regCallback( 
+  decoder_ptr_->regCallback(
       std::bind(&LidarDriverImpl<T_PointCloud>::runExceptionCallback, this, std::placeholders::_1),
       std::bind(&LidarDriverImpl<T_PointCloud>::splitFrame, this, std::placeholders::_1, std::placeholders::_2));
 
-  if(cb_put_imu_data_)
+  if (cb_put_imu_data_)
   {
     decoder_ptr_->imuDataPtr_ = getImuData();
     decoder_ptr_->regImuCallback(std::bind(&LidarDriverImpl<T_PointCloud>::putImuData, this));
   }
 
-  if(cb_put_image_data_ && param.input_param.enable_image)
+  if (cb_put_image_data_ && param.input_param.enable_image)
   {
     decoder_ptr_->imageDataPtr_ = getImageData();
     decoder_ptr_->regImageCallback(std::bind(&LidarDriverImpl<T_PointCloud>::putImageData, this));
@@ -290,18 +284,24 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   // input
   //
   input_ptr_ = InputFactory::createInput(param.input_type, param.input_param, is_jumbo, packet_duration, cb_feed_pkt_);
-  if(input_ptr_ == nullptr)
+  if (input_ptr_ == nullptr)
   {
-    return false; 
+    return false;
   }
 
   input_ptr_->regCallback(
-      std::bind(&LidarDriverImpl<T_PointCloud>::runExceptionCallback, this, std::placeholders::_1), 
-      std::bind(&LidarDriverImpl<T_PointCloud>::packetGet, this, std::placeholders::_1), 
+      std::bind(&LidarDriverImpl<T_PointCloud>::runExceptionCallback, this, std::placeholders::_1),
+      std::bind(&LidarDriverImpl<T_PointCloud>::packetGet, this, std::placeholders::_1),
       std::bind(&LidarDriverImpl<T_PointCloud>::packetPut, this, std::placeholders::_1, std::placeholders::_2));
+  
+  if (param.input_type == InputType::PCAP_FILE)
+  {
+    input_ptr_->regPcapSplitFrameCallback(
+        std::bind(&LidarDriverImpl<T_PointCloud>::isNewFrame, this, std::placeholders::_1));
+  }
 
 #if defined(ENABLE_USB) || defined(ENABLE_GMSL)
-  if(param.input_param.enable_image)
+  if (param.input_param.enable_image)
   {
     input_ptr_->regCallback2(
         std::bind(&LidarDriverImpl<T_PointCloud>::packet2Get, this, std::placeholders::_1),
@@ -313,7 +313,7 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
       std::bind(&LidarDriverImpl<T_PointCloud>::packet3Put, this, std::placeholders::_1, std::placeholders::_2));
 #endif
 
-  decoder_ptr_->regInputCallback([this](const std::vector<uint8_t> &send, std::vector<uint8_t> &receive) -> bool {
+  decoder_ptr_->regInputCallback([this](const std::vector<uint8_t>& send, std::vector<uint8_t>& receive) -> bool {
     return input_ptr_->customCmd(send, receive);
   });
 
@@ -321,8 +321,6 @@ inline bool LidarDriverImpl<T_PointCloud>::init(const RSDriverParam& param)
   {
     goto failInputInit;
   }
-
-
 
   driver_param_ = param;
   init_flag_ = true;
@@ -347,17 +345,17 @@ inline bool LidarDriverImpl<T_PointCloud>::start()
     return false;
   }
 
-  to_exit_handle_ = false;
+  to_exit_handle_.store(false, std::memory_order_release);
   handle_thread_ = std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processPacket, this));
 
 #if defined(ENABLE_USB) || defined(ENABLE_GMSL)
-  if(driver_param_.input_param.enable_image)
+  if (driver_param_.input_param.enable_image)
   {
     handle_thread_2_ = std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processPacket2, this));
   }
   handle_thread_3_ = std::thread(std::bind(&LidarDriverImpl<T_PointCloud>::processPacket3, this));
 #endif
-  if(!input_ptr_->start())
+  if (!input_ptr_->start())
   {
     return false;
   }
@@ -369,21 +367,25 @@ inline bool LidarDriverImpl<T_PointCloud>::start()
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::stop()
 {
-  if (!start_flag_)
-  {
-    return;
-  }
   input_ptr_->stop();
-
-  to_exit_handle_ = true;
-  handle_thread_.join();
+  to_exit_handle_.store(true, std::memory_order_release);
+  if (handle_thread_.joinable())
+  {
+    handle_thread_.join();
+  }
 
 #if defined(ENABLE_USB) || defined(ENABLE_GMSL)
-  if(driver_param_.input_param.enable_image)
+  if (driver_param_.input_param.enable_image)
   {
-    handle_thread_2_.join();
+    if (handle_thread_2_.joinable())
+    {
+      handle_thread_2_.join();
+    }
   }
-  handle_thread_3_.join();
+  if (handle_thread_3_.joinable())
+  {
+    handle_thread_3_.join();
+  }
 #endif
 
   // clear all points before next session
@@ -404,7 +406,7 @@ inline void LidarDriverImpl<T_PointCloud>::decodePacket(const Packet& pkt)
 template <typename T_PointCloud>
 inline bool LidarDriverImpl<T_PointCloud>::getTemperature(float& temp)
 {
-  if (decoder_ptr_ == nullptr )
+  if (decoder_ptr_ == nullptr)
   {
     return false;
   }
@@ -434,8 +436,8 @@ inline bool LidarDriverImpl<T_PointCloud>::getDeviceStatus(DeviceStatus& status)
 }
 
 template <typename T_PointCloud>
-inline void LidarDriverImpl<T_PointCloud>::runPacketCallBack(uint8_t* data, size_t data_size,
-    double timestamp, uint8_t is_difop, uint8_t is_frame_begin)
+inline void LidarDriverImpl<T_PointCloud>::runPacketCallBack(uint8_t* data, size_t data_size, double timestamp,
+                                                             uint8_t is_difop, uint8_t is_frame_begin)
 {
   if (cb_put_pkt_)
   {
@@ -447,11 +449,10 @@ inline void LidarDriverImpl<T_PointCloud>::runPacketCallBack(uint8_t* data, size
     pkt.frame_id = driver_param_.frame_id;
 
     pkt.buf_.resize(data_size);
-    memcpy (pkt.buf_.data(), data, data_size);
+    memcpy(pkt.buf_.data(), data, data_size);
     cb_put_pkt_(pkt);
   }
 }
-
 
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::runExceptionCallback(const Error& error)
@@ -567,40 +568,39 @@ inline void LidarDriverImpl<T_PointCloud>::packet3Put(std::shared_ptr<Buffer> pk
   }
 }
 
-
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::internalProcessPacket(std::shared_ptr<Buffer> pkt)
 {
-  static const uint8_t msop_id[] = {0x55, 0xAA};
-  static const uint8_t difop_id[] = {0xA5, 0xFF};
-  static const uint8_t imu_id[] = {0xAA, 0x55};
-  static const uint8_t image_id[] = {0xAA, 0x66};
-  static const uint8_t depth_id[] = {0xAA, 0x77};
-
+  constexpr static uint8_t kMsopHeaderId[2] = { 0x55, 0xAA };
+  constexpr static uint8_t kDifopHeaderId[2] = { 0xA5, 0xFF };
+  constexpr static uint8_t kImuHeaderId[2] = { 0xAA, 0x55 };
+  constexpr static uint8_t kImageHeaderId[2] = { 0xAA, 0x66 };
+  constexpr static uint8_t kDepthHeaderId[2] = { 0xAA, 0x77 };
   uint8_t* id = pkt->data();
-  if (memcmp(id, msop_id, sizeof(msop_id)) == 0)
+  if (memcmp(id, kMsopHeaderId, sizeof(kMsopHeaderId)) == 0)
   {
     bool pkt_to_split = decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
-    runPacketCallBack(pkt->data(), pkt->dataSize(), decoder_ptr_->prevPktTs(), false, pkt_to_split); // msop packet
+    runPacketCallBack(pkt->data(), pkt->dataSize(), decoder_ptr_->prevPktTs(), false, pkt_to_split);  // msop packet
   }
-  else if(memcmp(id, difop_id, sizeof(difop_id)) == 0)
+  else if (memcmp(id, kDifopHeaderId, sizeof(kDifopHeaderId)) == 0)
   {
     decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
-    runPacketCallBack(pkt->data(), pkt->dataSize(), 0, true, false); // difop packet
+    runPacketCallBack(pkt->data(), pkt->dataSize(), \
+    (decoder_ptr_->prevDifopPktTs() == 0)?(decoder_ptr_->prevPktTs()):(decoder_ptr_->prevDifopPktTs()), true, false);  // difop packet
   }
-  else if(memcmp(id, imu_id, sizeof(imu_id)) == 0)
+  else if (memcmp(id, kImuHeaderId, sizeof(kImuHeaderId)) == 0)
   {
-    decoder_ptr_->processImuFrame(pkt->data(), pkt->dataSize()); // imu packet
+    decoder_ptr_->processImuFrame(pkt->data(), pkt->dataSize());  // imu packet
   }
-  else if(memcmp(id, image_id, sizeof(image_id)) == 0)
+  else if (memcmp(id, kImageHeaderId, sizeof(kImageHeaderId)) == 0)
   {
-    decoder_ptr_->processImageFrame(pkt->data(), pkt->dataSize()); // image packet
+    decoder_ptr_->processImageFrame(pkt->data(), pkt->dataSize());  // image packet
     free_pkt_queue_2_.push(pkt);
     return;
   }
-  else if(memcmp(id, depth_id, sizeof(depth_id)) == 0)
+  else if (memcmp(id, kDepthHeaderId, sizeof(kDepthHeaderId)) == 0)
   {
-    decoder_ptr_->processPcFrame(pkt->data(), pkt->dataSize()); // depth packet
+    decoder_ptr_->processPcFrame(pkt->data(), pkt->dataSize());  // depth packet
     free_pkt_queue_3_.push(pkt);
     return;
   }
@@ -611,7 +611,7 @@ inline void LidarDriverImpl<T_PointCloud>::internalProcessPacket(std::shared_ptr
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::processPacket()
 {
-  while (!to_exit_handle_)
+  while (!to_exit_handle_.load(std::memory_order_relaxed))
   {
     std::shared_ptr<Buffer> pkt = pkt_queue_.popWait(500000);
     if (pkt.get() == NULL)
@@ -626,7 +626,7 @@ inline void LidarDriverImpl<T_PointCloud>::processPacket()
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::processPacket2()
 {
-  while (!to_exit_handle_)
+  while (!to_exit_handle_.load(std::memory_order_relaxed))
   {
     std::shared_ptr<Buffer> pkt = pkt_queue_2_.popWait(500000);
     if (pkt.get() == NULL)
@@ -641,7 +641,7 @@ inline void LidarDriverImpl<T_PointCloud>::processPacket2()
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::processPacket3()
 {
-  while (!to_exit_handle_)
+  while (!to_exit_handle_.load(std::memory_order_relaxed))
   {
     std::shared_ptr<Buffer> pkt = pkt_queue_3_.popWait(500000);
     if (pkt.get() == NULL)
@@ -662,7 +662,6 @@ inline void LidarDriverImpl<T_PointCloud>::putImuData()
     this->cb_put_imu_data_(imuData);
     decoder_ptr_->imuDataPtr_ = getImuData();
   }
-  
 }
 
 template <typename T_PointCloud>
@@ -674,7 +673,6 @@ inline void LidarDriverImpl<T_PointCloud>::putImageData()
     this->cb_put_image_data_(imageData);
     decoder_ptr_->imageDataPtr_ = getImageData();
   }
-  
 }
 
 template <typename T_PointCloud>
@@ -690,8 +688,7 @@ void LidarDriverImpl<T_PointCloud>::splitFrame(uint16_t height, double ts)
 }
 
 template <typename T_PointCloud>
-void LidarDriverImpl<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, 
-    uint16_t height, double ts)
+void LidarDriverImpl<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointCloud> msg, uint16_t height, double ts)
 {
   msg->seq = point_cloud_seq_++;
   msg->timestamp = ts;
@@ -708,6 +705,20 @@ void LidarDriverImpl<T_PointCloud>::setPointCloudHeader(std::shared_ptr<T_PointC
   }
 
   msg->frame_id = driver_param_.frame_id;
+}
+
+template <typename T_PointCloud>
+inline bool LidarDriverImpl<T_PointCloud>::isNewFrame(const uint8_t* packet)
+{
+  constexpr static uint8_t kMsopHeaderId[2] = { 0x55, 0xAA };
+  if (decoder_ptr_ != nullptr)
+  {
+    if (memcmp(packet, kMsopHeaderId, sizeof(kMsopHeaderId)) == 0)
+    {
+      return decoder_ptr_->isNewFrame(packet);
+    }
+  }
+  return false;
 }
 
 }  // namespace lidar

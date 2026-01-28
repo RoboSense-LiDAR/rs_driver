@@ -250,7 +250,8 @@ struct RSDecoderParam  ///< LiDAR decoder parameter
   ///< 3: Split frames by custom number of blocks (num_blks_split)
   float split_angle = 0.0f;     ///< Split angle(degree) used to split frame, only be used when split_frame_mode=1
   uint16_t num_blks_split = 1;  ///< Number of packets in one frame, only be used when split_frame_mode=3
-
+	
+  double sync_timestamp_offset = 0.0f; ///< Time offset added to the timestamp after time synchronization, unit: second
   bool enable_point_cloud = true;  ///< true: enable point cloud; false: disable point cloud
   bool enable_imu = true;          ///< true: enable imu; false: disable imu
   int image_mode = 0;              ///< 0:all enable; 1:enable left image; 2:enable right image; 3:disable image
@@ -275,9 +276,11 @@ struct RSDecoderParam  ///< LiDAR decoder parameter
     RS_INFOL << "enable_point_cloud: " << enable_point_cloud << RS_REND;
     RS_INFOL << "enable_imu: " << enable_imu << RS_REND;
     RS_INFOL << "image_mode: " << image_mode << RS_REND;
+	RS_INFOL << "sync_timestamp_offset: " << sync_timestamp_offset << RS_REND;
     RS_INFO << "------------------------------------------------------" << RS_REND;
     transform_param.print();
   }
+
 };
 
 struct RSInputParam  ///< The LiDAR input parameter

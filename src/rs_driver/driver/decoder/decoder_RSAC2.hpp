@@ -189,8 +189,77 @@ private:
   double getTofTimeOffset(uint16_t pkt_seq, uint8_t tof_id);
   std::array<uint8_t, kAngleSizePerPacket * kAnglePacketNum> raw_angle_array_;
   std::array<bool, kAnglePacketNum> difop_packet_received_;
-  size_t received_count_;
 };
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kBytesPerPixelRgb;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kSrcPixelSize;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kTofHeight;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kHeaderSize;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kPointCloudWidth;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kPointCloudHeight;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kTotalPixels;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kPointCloudWaveNum;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kPointNums;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kImageWidth;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kImageHeight;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kAngleSizePerPacket;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kAnglePacketNum;
+
+template <typename T_PointCloud>
+const uint8_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kTof1Id;
+
+template <typename T_PointCloud>
+const uint8_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kTof2Id;
+
+template <typename T_PointCloud>
+const uint8_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kCmos1Id;
+
+template <typename T_PointCloud>
+const uint8_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kCmos2Id;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kSingleAngleDataBytes;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kAngleDataBytes;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kCrcSize;
+
+template <typename T_PointCloud>
+const size_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kAngleDataTotalLen;
+
+template <typename T_PointCloud>
+const uint16_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kCrc16InitValue;
+
+template <typename T_PointCloud>
+const uint16_t robosense::lidar::DecoderRSAC2<T_PointCloud>::kSwCrcDataWidth8Bit;
+
 
 template <typename T_PointCloud>
 inline RSDecoderConstParam& DecoderRSAC2<T_PointCloud>::getConstParam()
@@ -236,7 +305,6 @@ inline DecoderRSAC2<T_PointCloud>::DecoderRSAC2(const RSDecoderParam& param)
   , pre_frame_index_(0)
   , raw_angle_array_({ 0 })
   , difop_packet_received_({ false })
-  , received_count_(0)
 {
   init(param);
 }
@@ -472,7 +540,7 @@ inline bool DecoderRSAC2<T_PointCloud>::processImageData(const AC2MsopPkt& pkt, 
   {
     if (this->param_.use_lidar_clock)
     {
-      image_ts = timestampToDouble(pkt.header.timestamp);
+      image_ts = timestampToDouble(pkt.header.timestamp) + this->param_.sync_timestamp_offset;
     }
     else
     {
@@ -503,7 +571,7 @@ inline bool DecoderRSAC2<T_PointCloud>::processPointCloudData(const AC2MsopPkt& 
   double pkt_ts = 0.0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = timestampToDouble(pkt.header.timestamp);
+    pkt_ts = timestampToDouble(pkt.header.timestamp) + this->param_.sync_timestamp_offset;
   }
   else
   {
@@ -863,14 +931,13 @@ template <typename T_PointCloud>
 inline bool DecoderRSAC2<T_PointCloud>::processMipiData(const uint8_t* packet, size_t packet_size, uint32_t width,
                                                  uint32_t height, const std::shared_ptr<StereoImageMsg>& stereo_data)
 {
-  constexpr size_t kMipiWidth = 6464;
   constexpr size_t kMipiHeight = (kImageHeight * 2 + kPointCloudHeight);
-  constexpr size_t kMipiLen = (kMipiWidth * kMipiHeight);
   constexpr size_t kAngleDataHeight = 43;
-  constexpr size_t kAngleDataOffset = kMipiWidth * kAngleDataHeight;
   constexpr size_t kAngleDataAndDeviceInfoHeight = 2636;
   constexpr size_t kRgbImageSize = kImageWidth * kImageHeight * kBytesPerPixelRgb;
-
+  const size_t kMipiWidth = width * 4;
+  const size_t kMipiLen = (kMipiWidth * kMipiHeight);
+  const size_t kAngleDataOffset = kMipiWidth * kAngleDataHeight;
   const uint8_t kHeaderIdLen = this->const_param_.MSOP_ID_LEN;
   const uint8_t* kHeaderId = this->const_param_.MSOP_ID;
   if (memcmp(packet, kHeaderId, kHeaderIdLen) != 0)
@@ -904,18 +971,17 @@ inline bool DecoderRSAC2<T_PointCloud>::processMipiData(const uint8_t* packet, s
   }
 
   this->point_cloud_->points.resize(kPointNums);
-  const size_t src_row_stride = width * kSrcPixelSize;
 
   uint32_t point_index = 0;
   uint32_t dense_point_cnt = 0;
-  if (packet_size < height * src_row_stride)
+  if (packet_size < height * kMipiWidth)
   {
     RS_ERROR << "Invalid packet size: " << packet_size << RS_REND;
     return false;
   }
-  if (src_row_stride < sizeof(AC2MsopPkt))
+  if (kMipiWidth < sizeof(AC2MsopPkt))
   {
-    RS_ERROR << "Invalid src_row_stride: " << src_row_stride << RS_REND;
+    RS_ERROR << "Invalid mipi width: " << kMipiWidth << RS_REND;
     return false;
   }
 
@@ -941,13 +1007,13 @@ inline bool DecoderRSAC2<T_PointCloud>::processMipiData(const uint8_t* packet, s
   const size_t MAX_ROW = (size_t)(height > kMipiHeight ? kMipiHeight : height);
   for (size_t row = 0; row < MAX_ROW; ++row)
   {
-    const uint8_t* src_row = packet + row * src_row_stride;
+    const uint8_t* src_row = packet + row * kMipiWidth;
     if (memcmp(src_row, kHeaderId, kHeaderIdLen) != 0)
     {
       RS_WARNING << "Header mismatch at row " << row << ": expected 0x55AA5A, got 0x" << std::hex
                  << static_cast<int>(src_row[0]) << static_cast<int>(src_row[1]) << static_cast<int>(src_row[2])
                  << std::dec << RS_REND;
-      break;
+      continue;
     }
     const AC2MsopPkt& pkt = *reinterpret_cast<const AC2MsopPkt*>(src_row);
     const uint8_t data_type = pkt.header.id[3];
@@ -981,23 +1047,18 @@ inline bool DecoderRSAC2<T_PointCloud>::processMipiData(const uint8_t* packet, s
     }
   }
 
-  if (image_valid)
-  {
-    stereo_data->state = image_valid;
-    stereo_data->timestamp = stereo_data->left_timestamp;
-    stereo_data->width = kImageWidth;
-    stereo_data->height = kImageHeight;
-    this->cb_image_data_();
-  }
+  stereo_data->state = image_valid;
+  stereo_data->timestamp = stereo_data->left_timestamp;
+  stereo_data->width = kImageWidth;
+  stereo_data->height = kImageHeight;
+  this->cb_image_data_();
 
-  if (point_cloud_valid)
+  if (this->param_.dense_points)
   {
-    if (this->param_.dense_points)
-    {
-      this->point_cloud_->points.resize(dense_point_cnt);
-    }
-    this->cb_split_frame_(kPointCloudHeight, this->cloudTs());
+    this->point_cloud_->points.resize(dense_point_cnt);
   }
+  this->cb_split_frame_(kPointCloudHeight, this->cloudTs());
+  
   return point_cloud_valid || image_valid;
 }
 
@@ -1100,7 +1161,7 @@ inline std::shared_ptr<uint8_t> DecoderRSAC2<T_PointCloud>::allocateImageBuffer(
   // Note: std::make_shared for arrays requires C++20; use new+default_delete for compatibility
   try
   {
-    return std::shared_ptr<uint8_t>(new uint8_t[size], std::default_delete<uint8_t[]>());
+    return std::shared_ptr<uint8_t>(new uint8_t[size](), std::default_delete<uint8_t[]>());
   }
   catch (const std::bad_alloc& e)
   {
@@ -1137,7 +1198,7 @@ inline void DecoderRSAC2<T_PointCloud>::decodeImuFrame(const uint8_t* src_data, 
       this->imuDataPtr_->angular_velocity_z = pkt.gyro_y * kGyroConversion;
       if (this->param_.use_lidar_clock)
       {
-        this->imuDataPtr_->timestamp = pkt.timestamp_sec + pkt.timestamp_nsec * 1e-9;
+        this->imuDataPtr_->timestamp = pkt.timestamp_sec + pkt.timestamp_nsec * 1e-9 + this->param_.sync_timestamp_offset;
       }
       else
       {
@@ -1213,18 +1274,20 @@ inline void DecoderRSAC2<T_PointCloud>::decodeDifopPkt(const uint8_t* packet, si
       {
         size_t offset = pkt_seq * kAngleSizePerPacket;
         std::copy(pkt.data, pkt.data + kAngleSizePerPacket, raw_angle_array_.data() + offset);
-        if (!difop_packet_received_[pkt_seq])
+        difop_packet_received_[pkt_seq] = true;
+
+        bool all_received = true;
+        for (bool received : difop_packet_received_)
         {
-          difop_packet_received_[pkt_seq] = true;
-          received_count_++;
+          all_received &= received;
         }
-        if (received_count_ == kAnglePacketNum)
+
+        if (all_received)
         {
           this->angles_ready_ = processAngleData(raw_angle_array_.data(), raw_angle_array_.size());
           if (!this->angles_ready_)
           {
-            // reset received_count_ and difop_packet_received_ if processing fails
-            received_count_ = 0;
+            // reset difop_packet_received_ if processing fails
             std::fill(difop_packet_received_.begin(), difop_packet_received_.end(), false);
           }
         }
