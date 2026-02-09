@@ -836,7 +836,10 @@ void InputUsb::imuStreamClose()
   {
     hidStop();
   }
-
+  if(hid_intface_num_ != -1 )
+  {
+    libusb_release_interface(devh_, hid_intface_num_);
+  }
   hid_intface_num_ = -1;
   hid_endpoint_in_num_ = -1;
   hid_endpoint_out_num_ = -1;

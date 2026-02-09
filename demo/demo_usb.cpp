@@ -246,7 +246,7 @@ void processImageData(void)
 
     image_cnt++;
 
-    RS_MSG << "image seq: " << image_cnt << " image data ts: " << msg->timestamp << RS_REND;
+    RS_MSG << std::fixed << "image seq: " << image_cnt << " image data ts: " << msg->timestamp << RS_REND;
 
     free_image_data_queue.push(msg);
   }
@@ -262,7 +262,7 @@ void processCloud(void)
       continue;
     }
 
-    RS_MSG << "cloud seq: " << msg->seq << " cloud data ts: " << msg->timestamp << RS_REND;
+    RS_MSG << std::fixed << "cloud seq: " << msg->seq << " cloud data ts: " << msg->timestamp << RS_REND;
     // Well, it is time to process the point cloud msg, even it is time-consuming.
     free_cloud_queue.push(msg);
   }
@@ -284,7 +284,7 @@ int main(int argc, char* argv[])
   // param.input_param.device_uuid = "00000000";
 #else
   param.lidar_type = LidarType::RS_AC2;  ///< Set the lidar type. Make sure this type is correct
-  param.input_param.image_width = 1616;  ///< Set the image width. Make sure this value is correct
+  param.input_param.image_width = 1612;  ///< Set the image width. Make sure this value is correct
   param.input_param.image_height = 2636;  ///< Set the image height. Make sure this value is correct
   param.input_param.image_format = FRAME_FORMAT_XR24;  ///< Set the image format. Make sure this value is correct
   param.input_param.image_fps = 15;  ///< Set the image fps. Make sure this value is correct
