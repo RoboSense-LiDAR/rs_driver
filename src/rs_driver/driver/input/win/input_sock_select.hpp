@@ -291,13 +291,22 @@ inline void InputSock::recvPacket()
       perror("select: ");
       break;
     }
-
+    int ret = 0;
     for (int i = 0; i < 3; i++)
     {
       if ((fds_[i] >= 0) && FD_ISSET(fds_[i], &rfds))
       {
         std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
-        int ret = recvfrom(fds_[i], (char*)pkt->buf(), (int)pkt->bufSize(), 0, NULL, NULL);
+        try
+        {
+          ret = recvfrom(fds_[i], (char*)pkt->buf(),(int)pkt->bufSize(), 0, NULL, NULL);
+        }
+        catch (const std::exception& e)
+        {
+          RS_ERROR << "fd[" << i << "] , recvfrom exception:" << e.what() << RS_REND;
+          continue;
+        }
+
         if (ret < 0)
         {
           perror("recvfrom: ");

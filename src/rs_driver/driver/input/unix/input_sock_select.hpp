@@ -32,14 +32,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <rs_driver/driver/input/input.hpp>
+#ifdef __QNX__
+#define FD_SETSIZE 1024
+#include <pthread.h>
+#include <sched.h>
+#include <sys/neutrino.h>
+#include <sys/syspage.h>
+#include <rs_driver/driver/input/unix/qnx_recvmmsg.hpp>
+#endif
 
+#include <rs_driver/driver/input/input.hpp>
 #include <unistd.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#include <vector>
+#include <memory>
+#include <cerrno>
+#include <cstring> 
 
 namespace robosense
 {
@@ -188,16 +200,9 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
 
   if (grpIp != "0.0.0.0")
   {
-#if 0
-    struct ip_mreqn ipm;
-    memset(&ipm, 0, sizeof(ipm));
-    inet_pton(AF_INET, grpIp.c_str(), &(ipm.imr_multiaddr));
-    inet_pton(AF_INET, hostIp.c_str(), &(ipm.imr_address));
-#else
     struct ip_mreq ipm;
     inet_pton(AF_INET, grpIp.c_str(), &(ipm.imr_multiaddr));
     inet_pton(AF_INET, hostIp.c_str(), &(ipm.imr_interface));
-#endif
     ret = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ipm, sizeof(ipm));
     if (ret < 0)
     {
@@ -206,14 +211,13 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
     }
   }
 
-#ifdef ENABLE_MODIFY_RECVBUF
   {
     uint32_t opt_val = input_param_.socket_recv_buf;
     uint32_t before_set_val = 0;
     uint32_t after_set_val = 0;
-    if (opt_val < 1024)
+    if (opt_val < 4194304)
     {
-      opt_val = 106496;
+      opt_val = 4194304;
     }
     socklen_t opt_len = sizeof(uint32_t);
     // get original value
@@ -223,14 +227,12 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
       return -1;
     }
     RS_INFO << "Original receive buffer size: " << before_set_val << " bytes" << RS_REND;
-
     // set new value
     if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &opt_val, opt_len) == -1)
     {
       perror("setsockopt");
       return -1;
     }
-
     // get new value
     if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &after_set_val, &opt_len) == -1)
     {
@@ -239,8 +241,6 @@ inline int InputSock::createSocket(uint16_t port, const std::string& hostIp, con
     }
     RS_INFO << "After setting: receive buffer size: " << after_set_val << " bytes" << RS_REND;
   }
-#endif
-
   {
     int flags = fcntl(fd, F_GETFL, 0);
     ret = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
@@ -264,7 +264,41 @@ failSocket:
 
 inline void InputSock::recvPacket()
 {
-  int max_fd = std::max(std::max(fds_[0], fds_[1]), fds_[2]);
+#ifdef __QNX__
+  struct sched_param param;
+  param.sched_priority = 50;
+  int ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+  if (ret != 0) {
+    RS_WARNING << "Recv_thread_ Failed to set high priority (Error: " << ret << "). "
+              << "Running with normal priority." << RS_REND;
+  }
+  // 0100 = 0x04
+  unsigned run_mask = 0x04;
+  ThreadCtl(_NTO_TCTL_RUNMASK, (void *)run_mask);
+#endif
+int max_fd = std::max(std::max(fds_[0], fds_[1]), fds_[2]);
+  if (max_fd >= FD_SETSIZE) {
+    RS_ERROR << "Socket fd exceeds FD_SETSIZE limit: " << FD_SETSIZE << RS_REND;
+    return;
+  }
+
+  constexpr int VLEN = 16;
+  struct mmsghdr msgs[VLEN];
+  struct iovec iovs[VLEN];
+  std::vector<std::shared_ptr<Buffer>> pkt_pool(VLEN);
+
+  memset(msgs, 0, sizeof(msgs));
+  for (int i = 0; i < VLEN; i++) {
+    iovs[i].iov_base = nullptr;
+    iovs[i].iov_len = 0;
+    msgs[i].msg_hdr.msg_name = NULL; 
+    msgs[i].msg_hdr.msg_namelen = 0;
+    msgs[i].msg_hdr.msg_iov = &iovs[i];
+    msgs[i].msg_hdr.msg_iovlen = 1;
+    msgs[i].msg_hdr.msg_control = NULL;
+    msgs[i].msg_hdr.msg_controllen = 0;
+    msgs[i].msg_hdr.msg_flags = 0;
+  }
 
   while (!to_exit_recv_)
   {
@@ -291,7 +325,6 @@ inline void InputSock::recvPacket()
     {
       if (errno == EINTR)
         continue;
-
       perror("select: ");
       break;
     }
@@ -300,17 +333,31 @@ inline void InputSock::recvPacket()
     {
       if ((fds_[i] >= 0) && FD_ISSET(fds_[i], &rfds))
       {
-        std::shared_ptr<Buffer> pkt = cb_get_pkt_(pkt_buf_len_);
-        ssize_t ret = recvfrom(fds_[i], pkt->buf(), pkt->bufSize(), 0, NULL, NULL);
-        if (ret < 0)
-        {
-          perror("recvfrom: ");
-          break;
+        for (int k = 0; k < VLEN; ++k) {
+          if (pkt_pool[k] == nullptr) {
+            pkt_pool[k] = cb_get_pkt_(pkt_buf_len_);
+          }
+          iovs[k].iov_base = pkt_pool[k]->buf();
+          iovs[k].iov_len = pkt_pool[k]->bufSize();
         }
-        else if (ret > 0)
+        int n_pkts = recvmmsg(fds_[i], msgs, VLEN, MSG_DONTWAIT, NULL);
+        if (n_pkts < 0)
         {
-          pkt->setData(sock_offset_, ret - sock_offset_ - sock_tail_);
-          pushPacket(pkt);
+           if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
+              perror("recvmmsg: ");
+           }
+           continue;
+        }
+        
+        for (int k = 0; k < n_pkts; k++) 
+        {
+          ssize_t data_len = msgs[k].msg_len;
+          if (data_len > (ssize_t)(sock_offset_ + sock_tail_)) 
+          {
+            pkt_pool[k]->setData(sock_offset_, data_len - sock_offset_ - sock_tail_);
+            pushPacket(pkt_pool[k]);
+            pkt_pool[k] = nullptr; 
+          }
         }
       }
     }

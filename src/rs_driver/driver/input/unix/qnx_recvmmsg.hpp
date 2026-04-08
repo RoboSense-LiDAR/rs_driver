@@ -31,75 +31,52 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************************************************************/
 
 #pragma once
-#include <stdio.h>
-#include <cstring>  
+
+#ifdef __QNX__
+#include <sys/time.h> 
+#include <sys/socket.h> 
+#include <cerrno>  
+ 
+// QNX fallback definition for mmsghdr/recvmmsg.
 //
-// define ntohs()
-// 
-#ifdef _WIN32
-#include <ws2tcpip.h>
-#else //__linux__
-#include <arpa/inet.h>
-#endif
-
-inline int16_t RS_SWAP_INT16(int16_t value)
-{
-  return (value << 8) | ((value >> 8) & 0xFF);
-}
-
-inline int16_t RS_INT8(int8_t value)
-{
-  if (value < 0) {
-    return (value + 128) * (-1);
-  } else {
-    return value;
-  }
-}
+// Keep this block disabled by default to avoid redefinition conflicts on
+// platforms / SDK versions where mmsghdr or recvmmsg is already provided
+// by the system headers or libc.
 //
-// define M_PI
-// 
-#ifndef _USE_MATH_DEFINES
-#define _USE_MATH_DEFINES // for VC++, required to use const M_IP in <math.h>
-#endif
+// Enable this block only when building on a target that does not provide
+// recvmmsg-compatible declarations / implementations.   
+#if 0
+struct mmsghdr {
+    struct msghdr msg_hdr;
+    unsigned int  msg_len;
+};
 
-#include <math.h>
-
-#define DEGREE_TO_RADIAN(deg)  ((deg) * M_PI / 180)
-#define RADIAN_TO_DEGREE(deg)  ((deg) * 180 / M_PI)
-
-namespace robosense
+static int recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags, struct timespec *timeout)
 {
-namespace lidar
-{
-inline int16_t RS_SWAP_INT16(int16_t value)
-{
-  uint8_t* v = (uint8_t*)&value;
-
-  uint8_t temp;
-  temp = v[0];
-  v[0] = v[1];
-  v[1] = temp;
-
-  return value;
-}
-
-inline int32_t u8ArrayToInt32(const uint8_t* data, uint8_t len) {
-    if(len != 4)
+    unsigned int i = 0;
+    for (i = 0; i < vlen; ++i)
     {
-      printf("u8ArrayToInt32: len is not 4\n");
-      return 0;
+        ssize_t ret = recvmsg(sockfd, &msgvec[i].msg_hdr, flags);
+        if (ret < 0)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                if (i > 0) {
+                    return i; 
+                }
+                return -1; 
+            }
+            if (errno == EINTR) {
+                if (i > 0) return i;
+                i--; 
+                continue; 
+            }
+            if (i == 0) return -1;
+            return i; 
+        }
+        msgvec[i].msg_len = ret;
     }
-    uint32_t uintValue = ntohl(*reinterpret_cast<const uint32_t*>(data));
-    return static_cast<int32_t>(uintValue);
+    return i; 
 }
-
-inline float convertUint32ToFloat(uint32_t byteArray) {
-    float floatValue;
-    std::memcpy(&floatValue, &byteArray, sizeof(float));
-    return floatValue;
-}
-
-}
-}
-
-
+#endif
+#endif

@@ -61,7 +61,7 @@ SyncQueue<std::shared_ptr<ImuData>> stuffed_imu_data_queue;
 //
 std::shared_ptr<PointCloudMsg> driverGetPointCloudFromCallerCallback(void)
 {
-  // Note: This callback function runs in the packet-parsing/point-cloud-constructing thread of the driver, 
+  // Note: This callback function runs in the packet-parsing/point-cloud-constructing thread of the driver,
   //       so please DO NOT do time-consuming task here.
   std::shared_ptr<PointCloudMsg> msg = free_cloud_queue.pop();
   if (msg.get() != NULL)
@@ -74,13 +74,14 @@ std::shared_ptr<PointCloudMsg> driverGetPointCloudFromCallerCallback(void)
 
 //
 // @brief point cloud callback function. The caller should register it to the lidar driver.
-//        Via this function, the driver gets/returns a stuffed point cloud message to the caller. 
+//        Via this function, the driver gets/returns a stuffed point cloud message to the caller.
 // @param msg  The stuffed point cloud message.
 //
 void driverReturnPointCloudToCallerCallback(std::shared_ptr<PointCloudMsg> msg)
 {
-  // Note: This callback function runs in the packet-parsing/point-cloud-constructing thread of the driver, 
-  //       so please DO NOT do time-consuming task here. Instead, process it in caller's own thread. (see processCloud() below)
+  // Note: This callback function runs in the packet-parsing/point-cloud-constructing thread of the driver,
+  //       so please DO NOT do time-consuming task here. Instead, process it in caller's own thread. (see processCloud()
+  //       below)
   stuffed_cloud_queue.push(msg);
 }
 
@@ -149,7 +150,8 @@ void processImuData(void)
 //
 void exceptionCallback(const Error& code)
 {
-  // Note: This callback function runs in the packet-receving and packet-parsing/point-cloud_constructing thread of the driver, 
+  // Note: This callback function runs in the packet-receving and packet-parsing/point-cloud_constructing thread of the
+  // driver,
   //       so please DO NOT do time-consuming task here.
   RS_WARNING << code.toString() << RS_REND;
 }
@@ -171,9 +173,8 @@ void processCloud(void)
 #if 0
     for (auto it = msg->points.begin(); it != msg->points.end(); it++)
     {
-      std::cout << std::fixed << std::setprecision(3) 
-                << "(" << it->x << ", " << it->y << ", " << it->z << ", " << (int)it->intensity << ")" 
-                << std::endl;
+      std::cout << std::fixed << std::setprecision(8) << "(" << it->x << ", " << it->y << ", " << it->z << ", "
+                << (int)it->intensity << ", " << it->timestamp << ")" << std::endl;
     }
 #endif
 
@@ -189,7 +190,7 @@ int main(int argc, char* argv[])
   RS_TITLE << "            RS_Driver Core Version: v" << getDriverVersion() << RS_REND;
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
-  RSDriverParam param;                  ///< Create a parameter object
+  RSDriverParam param;  ///< Create a parameter object
   param.input_type = InputType::ONLINE_LIDAR;
   param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788

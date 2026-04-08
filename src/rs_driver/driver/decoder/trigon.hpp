@@ -50,6 +50,8 @@ public:
   constexpr static int32_t ANGLE_MIN = -9000;
   constexpr static int32_t ANGLE_MAX = 45000;
 
+  constexpr static int32_t ANGLE_MIN_FINE = -90000;
+  constexpr static int32_t ANGLE_MAX_FINE = 450000;
   Trigon()
   {
     int32_t range = ANGLE_MAX - ANGLE_MIN;
@@ -63,27 +65,35 @@ public:
     {
       double rad = DEGREE_TO_RADIAN(static_cast<double>(i) * 0.01);
 
-#ifdef DBG
-      o_angles_[j] = i;
-#endif
       o_sins_[j] = (float)std::sin(rad);
       o_coss_[j] = (float)std::cos(rad);
     }
 
-#ifdef DBG
-    angles_ = o_angles_ - ANGLE_MIN;
-#endif
     sins_ = o_sins_ - ANGLE_MIN;
     coss_ = o_coss_ - ANGLE_MIN;
+
+    int32_t range_fine = ANGLE_MAX_FINE - ANGLE_MIN_FINE;
+    o_sins_fine_ = (float*)malloc(range_fine * sizeof(float));
+    o_coss_fine_ = (float*)malloc(range_fine * sizeof(float));
+
+    for (int32_t i = ANGLE_MIN_FINE, j = 0; i < ANGLE_MAX_FINE; i++, j++)
+    {
+      double rad = DEGREE_TO_RADIAN(static_cast<double>(i) * 0.001);
+
+      o_sins_fine_[j] = (float)std::sin(rad);
+      o_coss_fine_[j] = (float)std::cos(rad);
+    }
+
+    sins_fine_ = o_sins_fine_ - ANGLE_MIN_FINE;
+    coss_fine_ = o_coss_fine_ - ANGLE_MIN_FINE;
   }
 
   ~Trigon()
   {
     free(o_coss_);
     free(o_sins_);
-#ifdef DBG
-    free(o_angles_);
-#endif
+    free(o_coss_fine_);
+    free(o_sins_fine_);
   }
 
   float sin(int32_t angle)
@@ -104,6 +114,24 @@ public:
     }
 
     return coss_[angle];
+  }
+
+  float sinFine(int32_t angle)
+  {
+    if (angle < ANGLE_MIN_FINE || angle >= ANGLE_MAX_FINE)
+    {
+      angle = 0;
+    }
+    return sins_fine_[angle];
+  }
+
+  float cosFine(int32_t angle)
+  {
+    if (angle < ANGLE_MIN_FINE || angle >= ANGLE_MAX_FINE)
+    {
+      angle = 0;
+    }
+    return coss_fine_[angle];
   }
 
   void print()
@@ -127,6 +155,10 @@ private:
   float* o_coss_;
   float* sins_;
   float* coss_;
+  float* o_sins_fine_;
+  float* o_coss_fine_;
+  float* sins_fine_;
+  float* coss_fine_;
 };
 
 }  // namespace lidar
