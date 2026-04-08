@@ -40,8 +40,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/utility/buffer.hpp>
 #include <rs_driver/driver/input/input_factory.hpp>
 #include <rs_driver/driver/decoder/decoder_factory.hpp>
-
 #include <sstream>
+#ifdef __QNX__
+#include <pthread.h>
+#include <sched.h>
+#include <sys/neutrino.h>
+#include <sys/syspage.h>
+#endif
+#define MAX_POINT_CLOUD_SIZE 1700000
 
 namespace robosense
 {
@@ -164,7 +170,8 @@ std::shared_ptr<T_PointCloud> LidarDriverImpl<T_PointCloud>::getPointCloud()
     std::shared_ptr<T_PointCloud> cloud = cb_get_cloud_();
     if (cloud)
     {
-      cloud->points.resize(0);
+      cloud->points.clear();   
+      cloud->points.reserve(MAX_POINT_CLOUD_SIZE);
       return cloud;
     }
 
@@ -386,16 +393,13 @@ inline std::shared_ptr<Buffer> LidarDriverImpl<T_PointCloud>::packetGet(size_t s
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::packetPut(std::shared_ptr<Buffer> pkt, bool stuffed)
 {
-  constexpr static int PACKET_POOL_MAX = 10240;
-
   if (!stuffed)
   {
     free_pkt_queue_.push(pkt);
     return;
   }
-
-  size_t sz = pkt_queue_.push(pkt);
-  if (sz > PACKET_POOL_MAX)
+  int result = pkt_queue_.push(pkt);
+  if (result == -1)
   {
     LIMIT_CALL(runExceptionCallback(Error(ERRCODE_PKTBUFOVERFLOW)), 1);
     pkt_queue_.clear();
@@ -427,15 +431,32 @@ inline void LidarDriverImpl<T_PointCloud>::internalProcessPacket(std::shared_ptr
 template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::processPacket()
 {
+#ifdef __QNX__
+  struct sched_param param;
+  param.sched_priority = 45;
+  int ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &param);
+  if (ret != 0) {
+    RS_WARNING << "Handle_thread_ Failed to set high priority (Error: " << ret << "). "
+              << "Running with normal priority." << RS_REND;
+  }
+  unsigned run_mask = 0x08;
+  ThreadCtl(_NTO_TCTL_RUNMASK, (void *)run_mask);
+#endif
+  std::vector<std::shared_ptr<Buffer>> pkt_batch;
+  pkt_batch.reserve(50); 
+  
   while (!to_exit_handle_)
   {
-    std::shared_ptr<Buffer> pkt = pkt_queue_.popWait(500000);
-    if (pkt.get() == NULL)
+    pkt_batch.clear();
+    pkt_queue_.popBatch(pkt_batch, 50, 500000);
+    if (pkt_batch.empty())
     {
-      continue;
+      continue; 
     }
-
-    internalProcessPacket(pkt);
+    for (auto& pkt : pkt_batch)
+    {
+      internalProcessPacket(pkt);
+    }
   }
 }
 

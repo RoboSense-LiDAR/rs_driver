@@ -1,18 +1,14 @@
 # 4 **配置参数介绍**
 
-
-
 ## 4.1 概述
 
-文件`rs_driver/src/rs_driver/driver_param.h`中， 定义了`rs_driver`的配置选项。
+文件 `rs_driver/src/rs_driver/driver_param.h`中， 定义了 `rs_driver`的配置选项。
 
 这些配置选项定义在如下结构中。
 
 + RSDriverParam
 + RSDecoderParam
 + RSInputParam
-
-
 
 ## 4.2 RSDriverParam
 
@@ -28,7 +24,7 @@ typedef struct RSDriverParam
 } RSDriverParam;
 ```
 
-+ 成员`lidar_type` - 指定雷达的类型。这些雷达部分是机械式雷达，部分是MEMS雷达。RSDecoderParam中的部分选项只针对机械式雷达。
++ 成员 `lidar_type` - 指定雷达的类型。这些雷达部分是机械式雷达，部分是MEMS雷达。RSDecoderParam中的部分选项只针对机械式雷达。
 
 ```c++
 enum LidarType
@@ -39,6 +35,7 @@ enum LidarType
   RS32,
   RSBP,
   RSAIRY,
+  RSFAIRY,
   RSHELIOS,
   RSHELIOS_16P,
   RS128,
@@ -62,8 +59,8 @@ enum LidarType
 };
 ```
 
-+ 成员`input_type` - 指定雷达的数据源类型
-  + ONLINE_LIDAR是在线雷达；PCAP_FILE是包含MSOP/DIFOP Packet的PCAP文件；RAW_PACKET是使用者调用`rs_driver`的函数接口获得MSOP/DIFOP Packet，自己保存的数据。
++ 成员 `input_type` - 指定雷达的数据源类型
+  + ONLINE_LIDAR是在线雷达；PCAP_FILE是包含MSOP/DIFOP Packet的PCAP文件；RAW_PACKET是使用者调用 `rs_driver`的函数接口获得MSOP/DIFOP Packet，自己保存的数据。
 
 ```c++
 enum InputType
@@ -74,13 +71,12 @@ enum InputType
 };
 ```
 
-
-
 ## 4.3 RSInputParam
 
-RSInputParam指定`rs_driver`的网络配置选项。
+RSInputParam指定 `rs_driver`的网络配置选项。
 
-如下参数针对`ONLINE_LIDAR`和`PCAP_FILE`。
+如下参数针对 `ONLINE_LIDAR`和 `PCAP_FILE`。
+
 + msop_port - 指定主机的本地端口，接收MSOP Packet
 + difop_port - 指定主机的本地端口，接收DIFOP Packet
 + imu_port - 指定主机的本地端口，接收IMU Packet
@@ -93,11 +89,12 @@ RSInputParam指定`rs_driver`的网络配置选项。
 + group_address - 指定一个组播组的IP地址。`rs_driver`将 `host_address`指定的网卡加入这个组播组，以便接收MSOP/DIFOP Packet。
 + socket_recv_buf - 指定socket的接收缓冲区大小。 `rs_driver`会接收MSOP Packet，因此需要足够大的缓冲区。
 
-如下参数仅针对`PCAP_FILE`。
+如下参数仅针对 `PCAP_FILE`。
+
 + pcap_path - PCAP文件的全路径
 + pcap_repeat - 指定是否重复播放PCAP文件
 + pcap_rate - `rs_driver`按理论上的MSOP Packet时间间隔，模拟播放PCAP文件。`pcap_rate`可以在这个速度上指定一个比例值，加快或放慢播放速度。
-+ use_vlan - 如果PCAP文件中的MSOP/DIFOP Packet包含VLAN层，可以指定`use_vlan`=`true`，跳过这一层。
++ use_vlan - 如果PCAP文件中的MSOP/DIFOP Packet包含VLAN层，可以指定 `use_vlan`=`true`，跳过这一层。
 
 ```c++
 typedef struct RSInputParam
@@ -139,8 +136,6 @@ typedef struct RSInputParam
   }
 } RSInputParam;
 ```
-
-
 
 ## 4.4 RSDecoderParam
 
@@ -193,17 +188,18 @@ typedef struct RSDecoderParam
 ```
 
 如下参数针对所有雷达。
+
 + min_distance、max_distance - 重置测距的最大、最小值。仅内部调试使用。
 + use_lidar_clock - 指定点云的时间采用MSOP Packet中的时间（雷达根据自身时间设置），还是主机的系统时间。
-  + 如果`use_lidar_clock`=`true`，则采用MSOP Packet的，否则采用主机的。
+  + 如果 `use_lidar_clock`=`true`，则采用MSOP Packet的，否则采用主机的。
 + dense_points - 指定点云是否是dense的。
-  + 如果`dense_points`=`false`, 则点云中包含NAN点，否则去除点云中的NAN点。
+  + 如果 `dense_points`=`false`, 则点云中包含NAN点，否则去除点云中的NAN点。
 + ts_first_point - 指定点云的时间戳来自它的第一个点，还是最后第一个点。
-  + 如果`ts_first_point`=`true`, 则第一个点的时间作为点云的时间戳，否则最后一个点的时间作为点云的时间戳。
+  + 如果 `ts_first_point`=`true`, 则第一个点的时间作为点云的时间戳，否则最后一个点的时间作为点云的时间戳。
 + wait_for_difop - 解析MSOP Packet之前，是否等待DIFOP Packet。
   + DIFOP Packet中包含垂直角等标定参数。如果没有这些参数，`rs_driver`输出的点云将是扁平的。
-  + 在`rs_driver`不输出点云时，设置`wait_for_difop=false`，可以帮助定位问题。
-+ transform_param - 指定点的坐标转换参数。这个选项只有在CMake编译宏`ENABLE_TRANSFORM=ON`时才有效。
+  + 在 `rs_driver`不输出点云时，设置 `wait_for_difop=false`，可以帮助定位问题。
++ transform_param - 指定点的坐标转换参数。这个选项只有在CMake编译宏 `ENABLE_TRANSFORM=ON`时才有效。
 
 ```c++
 typedef struct RSTransformParam
@@ -233,6 +229,6 @@ enum SplitFrameMode
   SPLIT_BY_CUSTOM_BLKS
 };
 ```
-+ split_angle - 如果`split_frame_mode`=`SPLIT_BY_ANGLE`, 则`split_angle`指定分帧的角度
-+ num_blks_split - 如果`split_frame_mode`=`SPLIT_BY_CUSTOM_BLKS`，则`num_blks_split`指定每帧的BLOCK数。
 
++ split_angle - 如果 `split_frame_mode`=`SPLIT_BY_ANGLE`, 则 `split_angle`指定分帧的角度
++ num_blks_split - 如果 `split_frame_mode`=`SPLIT_BY_CUSTOM_BLKS`，则 `num_blks_split`指定每帧的BLOCK数。

@@ -122,22 +122,33 @@ private:
 template <typename T_PointCloud>
 inline RSDecoderConstParam& DecoderRSE1<T_PointCloud>::getConstParam()
 {
-  static RSDecoderConstParam param = 
-  {
-      1200 // msop len
-      , 256 // difop len
-      , 4 // msop id len
-      , 8 // difop id len
-      , {0x55, 0xAA, 0x5A, 0xA5} // msop id
-      , {0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55} // difop id
-      , {0x00, 0x00}
-      , 1  // laser number
-      , 96 // blocks per packet
-      , 1 // channels per block
-      , 0.2f // distance min
-      , 200.0f // distance max
-      , 0.005f // distance resolution
-      , 80.0f // initial value of temperature 
+  static RSDecoderConstParam param = {
+    1200  // msop len
+    ,
+    256  // difop len
+    ,
+    4  // msop id len
+    ,
+    8  // difop id len
+    ,
+    { 0x55, 0xAA, 0x5A, 0xA5 }  // msop id
+    ,
+    { 0xA5, 0xFF, 0x00, 0x5A, 0x11, 0x11, 0x55, 0x55 }  // difop id
+    ,
+    { 0x00, 0x00 },
+    1  // laser number
+    ,
+    96  // blocks per packet
+    ,
+    1  // channels per block
+    ,
+    0.0f  // distance min
+    ,
+    200.0f  // distance max
+    ,
+    0.005f  // distance resolution
+    ,
+    80.0f  // initial value of temperature
   };
 
   return param;
@@ -156,11 +167,11 @@ inline RSEchoMode DecoderRSE1<T_PointCloud>::getEchoMode(uint8_t mode)
 {
   switch (mode)
   {
-    case 0x00: // dual return
+    case 0x00:  // dual return
       return RSEchoMode::ECHO_DUAL;
-    case 0x04: // strongest return
-    case 0x05: // last return
-    case 0x06: // nearest return
+    case 0x04:  // strongest return
+    case 0x05:  // last return
+    case 0x06:  // nearest return
     default:
       return RSEchoMode::ECHO_SINGLE;
   }

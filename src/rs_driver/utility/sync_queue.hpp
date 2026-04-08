@@ -32,118 +32,139 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <mutex>
-#include <condition_variable>
 #include <thread>
-#include <queue>
+#include <atomic>
 
 namespace robosense
 {
 namespace lidar
 {
-template <typename T>
+template <typename T, size_t Capacity = 102400>
 class SyncQueue
 {
 public:
+  SyncQueue() : head_(0), tail_(0)
+  {
+  }
+
   inline size_t push(const T& value)
   {
-#ifndef ENABLE_WAIT_IF_QUEUE_EMPTY
-     bool empty = false;
-#endif
-     size_t size = 0;
+    size_t current_tail = tail_.load(std::memory_order_relaxed);
+    size_t next_tail = (current_tail + 1) % Capacity;
 
+    if (next_tail == head_.load(std::memory_order_acquire))
     {
-      std::lock_guard<std::mutex> lg(mtx_);
-#ifndef ENABLE_WAIT_IF_QUEUE_EMPTY
-      empty = queue_.empty();
-#endif
-      queue_.push(value);
-      size = queue_.size();
+      return -1;
     }
 
-#ifndef ENABLE_WAIT_IF_QUEUE_EMPTY
-    if (empty)
-      cv_.notify_one();
-#endif
+    buffer_[current_tail] = value;
+    tail_.store(next_tail, std::memory_order_release);
 
-    return size;
+    return size();
   }
 
   inline T pop()
   {
     T value;
+    size_t current_head = head_.load(std::memory_order_relaxed);
 
-    std::lock_guard<std::mutex> lg(mtx_);
-    if (!queue_.empty())
+    if (current_head == tail_.load(std::memory_order_acquire))
     {
-      value = queue_.front();
-      queue_.pop();
+      // RS_WARNING << "pop()::SyncQueue is empty, return default value" << RS_REND;
+      return value;
     }
+
+    value = buffer_[current_head];
+    head_.store((current_head + 1) % Capacity, std::memory_order_release);
 
     return value;
   }
 
   inline T popWait(unsigned int usec = 1000000)
   {
-    //
-    // Low latency, or low CPU usage, that is the question. 
-    //                                            - Hamlet
-
-#ifdef ENABLE_WAIT_IF_QUEUE_EMPTY
     T value;
+    auto start_time = std::chrono::steady_clock::now();
 
+    while (true)
     {
-      std::lock_guard<std::mutex> lg(mtx_);
-      if (!queue_.empty())
+      size_t current_head = head_.load(std::memory_order_relaxed);
+
+      if (current_head != tail_.load(std::memory_order_acquire))
       {
-        value = queue_.front();
-        queue_.pop();
+        value = buffer_[current_head];
+        head_.store((current_head + 1) % Capacity, std::memory_order_release);
         return value;
       }
+
+      auto now = std::chrono::steady_clock::now();
+      int64_t time_diff = std::chrono::duration_cast<std::chrono::microseconds>(now - start_time).count();
+      if (time_diff >= usec)
+      {
+        return value;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-
-    std::this_thread::sleep_for(std::chrono::microseconds(1000));
-    return value;
-#else
-
-    T value;
-
-    std::unique_lock<std::mutex> ul(mtx_);
-    cv_.wait_for(ul, std::chrono::microseconds(usec), [this] { return (!queue_.empty()); });
-
-    if (!queue_.empty())
-    {
-      value = queue_.front();
-      queue_.pop();
-    }
-
-    return value;
-#endif
   }
 
   inline void clear()
   {
-    std::queue<T> empty;
-    std::lock_guard<std::mutex> lg(mtx_);
-    swap(empty, queue_);
+    head_.store(0, std::memory_order_relaxed);
+    tail_.store(0, std::memory_order_relaxed);
   }
 
-  inline bool empty() {
-    std::lock_guard<std::mutex> lg(mtx_);
-    return queue_.empty();
+  inline size_t size() const
+  {
+    size_t head = head_.load(std::memory_order_acquire);
+    size_t tail = tail_.load(std::memory_order_acquire);
+    return (tail >= head) ? (tail - head) : (Capacity - head + tail);
   }
-  
-  inline size_t size() {
-    std::lock_guard<std::mutex> lg(mtx_);
-    return queue_.size();
-  }
+  inline size_t popBatch(std::vector<T>& out_batch, size_t max_count, unsigned int usec = 1000000)
+  {
+    auto start_time = std::chrono::steady_clock::now();
+    while (true)
+    {
+      if (head_.load(std::memory_order_relaxed) != tail_.load(std::memory_order_acquire))
+      {
+        break; 
+      }
+      auto now = std::chrono::steady_clock::now();
+      if (std::chrono::duration_cast<std::chrono::microseconds>(now - start_time).count() >= usec)
+      {
+        return 0; 
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    size_t current_head = head_.load(std::memory_order_relaxed);
+    size_t current_tail = tail_.load(std::memory_order_acquire); 
 
+    size_t available;
+    if (current_tail >= current_head)
+    {
+      available = current_tail - current_head;
+    }
+    else
+    {
+      available = Capacity - current_head + current_tail;
+    }
+    size_t real_count = (max_count < available) ? max_count : available;
+    if (out_batch.capacity() < out_batch.size() + real_count)
+    {
+      out_batch.reserve(out_batch.size() + real_count);
+    }
+    for (size_t i = 0; i < real_count; ++i)
+    {
+      size_t index = (current_head + i) % Capacity;
+      out_batch.emplace_back(buffer_[index]);
+    }
+    head_.store((current_head + real_count) % Capacity, std::memory_order_release);
+
+    return real_count;
+  }
 private:
-  std::queue<T> queue_;
-  std::mutex mtx_;
-#ifndef ENABLE_WAIT_IF_QUEUE_EMPTY
-  std::condition_variable cv_;
-#endif
+  T buffer_[Capacity];
+  alignas(64) std::atomic<size_t> head_;
+  alignas(64) std::atomic<size_t> tail_;
 };
+
 }  // namespace lidar
 }  // namespace robosense

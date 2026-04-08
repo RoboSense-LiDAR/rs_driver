@@ -1,18 +1,14 @@
-# 4 Introduction to rs_driver's Parameters 
-
-
+# 4 Introduction to rs_driver's Parameters
 
 ## 4.1 Parameter File
 
 The parameters are defined in the file `rs_driver/src/rs_driver/driver_param.h`.
 
-Basically, there are 3 structures: 
+Basically, there are 3 structures:
 
-+ RSDriverParam 
-+ RSDecoderParam 
++ RSDriverParam
++ RSDecoderParam
 + RSInputParam
-
-
 
 ## 4.2 RSDriverParam
 
@@ -39,6 +35,7 @@ enum LidarType
   RS32,
   RSBP,
   RSAIRY,
+  RSFAIRY,
   RSHELIOS,
   RSHELIOS_16P,
   RS128,
@@ -74,24 +71,25 @@ enum InputType
 };
 ```
 
-
-
 ## 4.3 RSInputParam
 
 RSInputParam specifies the detail paramters of packet source.
 
 The following parameters are for `ONLINE_LIDAR` and `PCAP_FILE`.
+
 + msop_port - The UDP port on the host, to receive MSOP packets.
 + difop_port - The UDP port on the host, to receive DIFOP Packets.
 + user_layer_bytes - Bytes of user layer. thers is no user layer if it is 0
 + tail_layer_bytes - Bytes of tail layer. thers is no tail layer if it is 0
 
 The following parameters are only for ONLINE_LIDAR.
+
 + host_address - The host's IP, to receive MSOP/DIFOP Packets
 + group_address - A multicast group to receive MSOP/DIFOP packts. `rs_driver` make `host_address` join it.
 + socket_recv_buf - Bytes of socket receive buffer.
 
 The following parameters are only for PCAP_FILE.
+
 + pcap_path - Full path of the PCAP file.
 + pcap_repeat - Whether to replay PCAP file repeatly
 + pcap_rate - `rs_driver` replay the PCAP file by the theological frame rate. `pcap_rate` gives a rate to it, so as to speed up or slow down.
@@ -138,8 +136,6 @@ typedef struct RSInputParam
 } RSInputParam;
 
 ```
-
-
 
 ## 4.4 RSDecoderParam
 
@@ -194,7 +190,7 @@ typedef struct RSDecoderParam
 The following parameters are for all LiDARs。
 
 + min_distance、max_distance - Set measurement range. Internal use only.
-+ use_lidar_clock - Where the point cloud's timestamp is from. From the LiDAR, or from `rs_driver` on the host? 
++ use_lidar_clock - Where the point cloud's timestamp is from. From the LiDAR, or from `rs_driver` on the host?
   + If `use_lidar_clock`=`true`，use the LiDAR timestamp, else use the host one.
 + dense_points - Whether the point cloud is dense.
   + If `dense_points`=`false`, then point cloud contains NAN points, else discard them.
@@ -222,11 +218,11 @@ The following parameters are only for mechanical LiDARs.
 + config_from_file - Where to get LiDAR configuration parameters, from extern files, or from DIFOP packet. Internal use only.
 + angle_path - File of angle calibration parameters. Internal use only.
 + start_angle、end_angle - Generally, mechanical LiDARs's point cloud's azimuths are in the range of [`0`, `360`]. Here you may assign a smaller range of [`start_angle`, `end_angle`).
-
 + split_frame_mode - How to split frame.
+
   + `SPLIT_BY_ANGLE` is by a user requested angle. User can specify it. This is default and suggested.
-  + `SPLIT_BY_FIXED_BLKS` is by blocks theologically; 
-  + `SPLIT_BY_CUSTOM_BLKS` is by user requested blocks. 
+  + `SPLIT_BY_FIXED_BLKS` is by blocks theologically;
+  + `SPLIT_BY_CUSTOM_BLKS` is by user requested blocks.
 
 ```c++
 enum SplitFrameMode
@@ -236,7 +232,6 @@ enum SplitFrameMode
   SPLIT_BY_CUSTOM_BLKS
 };
 ```
+
 + split_angle - If `split_frame_mode`=`SPLIT_BY_ANGLE`, then `split_angle` is the requested angle to split.
 + num_blks_split - If `split_frame_mode`=`SPLIT_BY_CUSTOM_BLKS`，then `num_blks_split` is blocks.
-
-
