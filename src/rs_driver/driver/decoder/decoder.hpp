@@ -296,9 +296,12 @@ protected:
 #endif
 
   double cloudTs();
-
-  RSDecoderConstParam const_param_;  // const param
-  RSDecoderParam param_;             // user param
+//Further corrections are needed
+  bool bCheckMsopLen_{true};
+  bool bCheckDifopLen_{true};
+//
+  RSDecoderConstParam const_param_; // const param
+  RSDecoderParam param_; // user param
   std::function<void(uint16_t, double)> cb_split_frame_;
   std::function<void(const Error&)> cb_excep_;
   std::function<void()> cb_imu_data_;
@@ -311,6 +314,8 @@ protected:
   Trigon trigon_;
 #define SIN(angle) this->trigon_.sin(angle)
 #define COS(angle) this->trigon_.cos(angle)
+#define SIN_FINE(angle) this->trigon_.sinFine(angle)
+#define COS_FINE(angle) this->trigon_.cosFine(angle)
 
   double packet_duration_;
   DistanceSection distance_section_;  // invalid section of distance
@@ -370,6 +375,7 @@ inline void Decoder<T_PointCloud>::enableWritePktTs(bool value)
 {
   write_pkt_ts_ = value;
 }
+
 
 template <typename T_PointCloud>
 inline bool Decoder<T_PointCloud>::getTemperature(float& temp)
@@ -439,7 +445,7 @@ inline void Decoder<T_PointCloud>::transformPoint(float& x, float& y, float& z)
 template <typename T_PointCloud>
 inline void Decoder<T_PointCloud>::processDifopPkt(const uint8_t* pkt, size_t size)
 {
-  if (size != this->const_param_.DIFOP_LEN)
+  if (size != this->const_param_.DIFOP_LEN && bCheckDifopLen_)
   {
     LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGDIFOPLEN)), 1);
     return;
@@ -488,7 +494,7 @@ inline bool Decoder<T_PointCloud>::processMsopPkt(const uint8_t* pkt, size_t siz
     return false;
   }
 
-  if (size != this->const_param_.MSOP_LEN)
+  if (size != this->const_param_.MSOP_LEN&&(this->bCheckMsopLen_))
   {
     LIMIT_CALL(this->cb_excep_(Error(ERRCODE_WRONGMSOPLEN)), 1);
     return false;

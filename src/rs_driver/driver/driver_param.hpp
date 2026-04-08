@@ -50,6 +50,7 @@ enum LidarType  ///< LiDAR type
   RS32,
   RSBP,
   RSAIRY,
+  RSFAIRY,
   RSHELIOS,
   RSHELIOS_16P,
   RS128,
@@ -66,6 +67,9 @@ enum LidarType  ///< LiDAR type
   RSM3,
   RSE1,
   RSMX,
+
+  // EMX
+  RSEMX = 0x71,
 
   // jumbo
   RS_JUMBO = 0x100,
@@ -89,11 +93,12 @@ inline bool isJumbo (LidarType type)
 
 inline std::string lidarTypeToStr(const LidarType& type)
 {
-   static const std::unordered_map<LidarType, std::string> lidarTypeMap = {
+    static const std::unordered_map<LidarType, std::string> lidarTypeMap = {
         {LidarType::RS16, "RS16"},
         {LidarType::RS32, "RS32"},
         {LidarType::RSBP, "RSBP"},
         {LidarType::RSAIRY, "RSAIRY"},
+        {LidarType::RSFAIRY, "RSFAIRY"},
         {LidarType::RSHELIOS, "RSHELIOS"},
         {LidarType::RSHELIOS_16P, "RSHELIOS_16P"},
         {LidarType::RS128, "RS128"},
@@ -107,6 +112,7 @@ inline std::string lidarTypeToStr(const LidarType& type)
         {LidarType::RSM3, "RSM3"},
         {LidarType::RSE1, "RSE1"},
         {LidarType::RSMX, "RSMX"},
+        {LidarType::RSEMX, "RSEMX"},
         {LidarType::RSM1_JUMBO, "RSM1_JUMBO"},
     };
 
@@ -122,7 +128,7 @@ inline std::string lidarTypeToStr(const LidarType& type)
 
 inline LidarType strToLidarType(const std::string& type)
 {
-   static const std::unordered_map<std::string, LidarType> strLidarTypeMap = {
+    static const std::unordered_map<std::string, LidarType> strLidarTypeMap = {
         {"RS16", LidarType::RS16},
         {"RS32", LidarType::RS32},
         {"RSBP", LidarType::RSBP},
@@ -139,7 +145,9 @@ inline LidarType strToLidarType(const std::string& type)
         {"RSM3", LidarType::RSM3},
         {"RSE1", LidarType::RSE1},
         {"RSMX", LidarType::RSMX},
+        {"RSEMX", LidarType::RSEMX},
         {"RSAIRY", LidarType::RSAIRY},
+        {"RSFAIRY", LidarType::RSFAIRY},
         {"RSM1_JUMBO", LidarType::RSM1_JUMBO},
     };
 
@@ -149,12 +157,11 @@ inline LidarType strToLidarType(const std::string& type)
     } else {
       RS_ERROR << "Wrong lidar type: " << type << RS_REND;
       RS_ERROR << "Please give correct type: RS16, RS32, RSBP, RSHELIOS, RSHELIOS_16P, RS48, RS80, RS128, RSP128, RSP80, RSP48, "
-              << "RSM1, RSM1_JUMBO, RSM2,RSM3, RSE1, RSMX, RSAIRY." 
+              << "RSM1, RSM1_JUMBO, RSM2,RSM3, RSE1, RSMX, RSEMX, RSAIRY, RSFAIRY." 
               << RS_REND;
       exit(-1);
     }
 }
-
 enum InputType
 {
   ONLINE_LIDAR = 1,
