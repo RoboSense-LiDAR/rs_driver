@@ -46,7 +46,7 @@ typedef struct
 {
   uint16_t SecondsHigh;
   uint32_t SecondsLow;
-  uint32_t NanoSeconds;
+  uint32_t SmallSeconds;
 } AC2Timestamp;
 
 typedef struct
@@ -56,7 +56,10 @@ typedef struct
   uint8_t frame_cnt;
   uint8_t tof_id;
   uint8_t distance_resolution;
-  uint8_t reserved[14];
+  uint8_t reserved0[11];
+  uint8_t timestamp_version;
+  uint8_t hardware_version;
+  uint8_t reserved1[1];
   uint8_t frame_sync_status;
   uint8_t return_mode;
   uint8_t time_mode;
@@ -163,6 +166,7 @@ private:
   uint32_t point_index_;
   uint32_t dense_point_cnt_;
   uint8_t pre_frame_index_;
+  int16_t hardware_version_;
 
   static RSDecoderParam& getParam();
   static RSDecoderConstParam& getConstParam();
@@ -170,7 +174,7 @@ private:
   std::vector<int16_t> loadCSV(const std::string& filename, size_t expected_rows = 96, size_t expected_cols = 240);
   std::shared_ptr<uint8_t> allocateImageBuffer(const size_t size);
   void copy_3of4_bytes(const uint8_t* src, uint8_t* dst, size_t total_src_bytes);
-  double timestampToDouble(const AC2Timestamp& timestamp);
+  double timestampToDouble(const AC2Timestamp& timestamp, const uint8_t timestamp_version);
   float parseDistanceResolution(uint8_t resolution);
   bool processMipiData(const uint8_t* packet, size_t packet_size, uint32_t width, uint32_t height,
                        const std::shared_ptr<StereoImageMsg>& stereo_data);
@@ -185,7 +189,7 @@ private:
   bool processAngleData(const uint8_t* src, size_t src_size);
   bool parseDeviceInfo(const uint8_t* src, size_t src_size);
   double getArmRealtimeOffset();
-  uint32_t getTofRingId(uint16_t pkt_seq, uint8_t tof_id, uint32_t tof_height);
+  uint32_t getTofRingId(uint16_t pkt_seq, uint8_t tof_id, uint32_t tof_height, uint8_t hardware_version);
   double getTofTimeOffset(uint16_t pkt_seq, uint8_t tof_id);
   std::array<uint8_t, kAngleSizePerPacket * kAnglePacketNum> raw_angle_array_;
   std::array<bool, kAnglePacketNum> difop_packet_received_;
@@ -303,6 +307,7 @@ inline DecoderRSAC2<T_PointCloud>::DecoderRSAC2(const RSDecoderParam& param)
   , point_index_(0U)
   , dense_point_cnt_(0U)
   , pre_frame_index_(0)
+  , hardware_version_( -1 )
   , raw_angle_array_({ 0 })
   , difop_packet_received_({ false })
 {
@@ -475,17 +480,24 @@ inline std::vector<int16_t> DecoderRSAC2<T_PointCloud>::loadCSV(const std::strin
 }
 
 template <typename T_PointCloud>
-inline double DecoderRSAC2<T_PointCloud>::timestampToDouble(const AC2Timestamp& timestamp)
+inline double DecoderRSAC2<T_PointCloud>::timestampToDouble(const AC2Timestamp& timestamp, const uint8_t timestamp_version)
 {
   uint16_t sh = ntohs(timestamp.SecondsHigh);
   uint32_t sl = ntohl(timestamp.SecondsLow);
-  uint32_t ns_raw = ntohl(timestamp.NanoSeconds);
-
-  uint64_t sec = ((uint64_t)sh << 34) | ((uint64_t)sl << 2) | ((uint64_t)(ns_raw & 0xC0000000) >> 30);
-
-  uint32_t ns = ns_raw & 0x3FFFFFFF;
-
-  double ts = sec + ns * 1e-9;
+  uint32_t ss_raw = ntohl(timestamp.SmallSeconds);
+  uint64_t sec;
+  double ts;
+  if(timestamp_version == 0)
+  {
+    sec = ((uint64_t)sh << 34) | ((uint64_t)sl << 2) | ((uint64_t)(ss_raw & 0xC0000000) >> 30);
+    uint32_t ns = ss_raw & 0x3FFFFFFF;
+    ts = sec + ns * 1e-9;
+  }
+  else
+  {
+    sec = ((uint64_t)sh << 32) | (uint64_t)sl;
+    ts = sec + ss_raw * 1e-6;  //SmallSeconds field means Microsecond when timestamp_version is 1
+  }
   return ts;
 }
 
@@ -540,7 +552,7 @@ inline bool DecoderRSAC2<T_PointCloud>::processImageData(const AC2MsopPkt& pkt, 
   {
     if (this->param_.use_lidar_clock)
     {
-      image_ts = timestampToDouble(pkt.header.timestamp) + this->param_.sync_timestamp_offset;
+      image_ts = timestampToDouble(pkt.header.timestamp, pkt.header.timestamp_version) + this->param_.sync_timestamp_offset;
     }
     else
     {
@@ -571,7 +583,7 @@ inline bool DecoderRSAC2<T_PointCloud>::processPointCloudData(const AC2MsopPkt& 
   double pkt_ts = 0.0;
   if (this->param_.use_lidar_clock)
   {
-    pkt_ts = timestampToDouble(pkt.header.timestamp) + this->param_.sync_timestamp_offset;
+    pkt_ts = timestampToDouble(pkt.header.timestamp, pkt.header.timestamp_version) + this->param_.sync_timestamp_offset;
   }
   else
   {
@@ -583,7 +595,7 @@ inline bool DecoderRSAC2<T_PointCloud>::processPointCloudData(const AC2MsopPkt& 
   const auto& vec_z = tof_vector_z_array_;
 
   const size_t max_kPointNums = this->point_cloud_->points.size();
-  const uint32_t ring_id = getTofRingId(pkt_seq, pkt.header.tof_id, kTofHeight);
+  const uint32_t ring_id = getTofRingId(pkt_seq, pkt.header.tof_id, kTofHeight, pkt.header.hardware_version);
   if (ring_id == 0)
   {
     this->first_point_ts_ = pkt_ts;
@@ -597,9 +609,13 @@ inline bool DecoderRSAC2<T_PointCloud>::processPointCloudData(const AC2MsopPkt& 
   const float distance_resolution = parseDistanceResolution(pkt.header.distance_resolution);
   bool ret = true;
   size_t base_index = ring_id * kPointCloudWidth;
+  this->hardware_version_ = static_cast<int16_t>(pkt.header.hardware_version);
   for (size_t pixel_idx = 0; pixel_idx < kPointCloudWidth; ++pixel_idx)
   {
-    const AC2Pixel& pixel = pkt.pixels[pixel_idx];
+    size_t column_idx = pixel_idx;
+    if((pkt.header.hardware_version == 0x01) && (pkt.header.tof_id == 0x01))
+      column_idx = kPointCloudWidth - 1 - pixel_idx;
+    const AC2Pixel& pixel = pkt.pixels[column_idx];
     for (size_t wave_idx = 0; wave_idx < kPointCloudWaveNum; ++wave_idx)
     {
       const AC2Wave& wave = pixel.wave[wave_idx];
@@ -652,7 +668,9 @@ inline bool DecoderRSAC2<T_PointCloud>::processPointCloudData(const AC2MsopPkt& 
 }
 
 template <typename T_PointCloud>
-inline uint32_t DecoderRSAC2<T_PointCloud>::getTofRingId(uint16_t pkt_seq, uint8_t tof_id, uint32_t tof_height) {
+inline uint32_t DecoderRSAC2<T_PointCloud>::getTofRingId(uint16_t pkt_seq, uint8_t tof_id, uint32_t tof_height, uint8_t hardware_version) {
+  if(hardware_version == 1)
+    return (tof_id == 0 ? pkt_seq : ( kPointCloudHeight - pkt_seq - 1));
   const uint32_t sub_idx = pkt_seq & 0x7U;
   const uint32_t base = pkt_seq - sub_idx;  
 
@@ -665,6 +683,7 @@ inline uint32_t DecoderRSAC2<T_PointCloud>::getTofRingId(uint16_t pkt_seq, uint8
   {
     row_idx =  base + ((sub_idx - 4U) << 1) + 1U;
   }
+
   return tof_id == 0 ? row_idx : (row_idx + tof_height);
 }
 
@@ -922,6 +941,12 @@ inline bool DecoderRSAC2<T_PointCloud>::parseDeviceInfo(const uint8_t* src, size
   {
     this->device_info_.calib_params_str = "{" + temp_json_str + "}";
   }
+  //skip when hardware_version is not set
+  if(this->hardware_version_ == -1)
+  {
+    return false;
+  }
+  this->device_info_.hardware_ver = static_cast<uint8_t>(this->hardware_version_);
   this->device_info_.state = true;
   
   return true;

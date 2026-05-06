@@ -418,6 +418,7 @@ struct DeviceInfo
   uint8_t mac[6];
   uint8_t top_ver[5];
   uint8_t bottom_ver[5];
+  uint8_t hardware_ver;
 
   Transform transform;
   std::map<std::string, double> calib_params;
@@ -434,6 +435,7 @@ struct DeviceInfo
     transform.init();
     device_id = "";
     calib_params_str = "";
+    hardware_ver = 0;
     state = false;
   }
 
@@ -448,8 +450,9 @@ struct DeviceInfo
       calib_params = other.calib_params;
       transform = other.transform;
       device_id = other.device_id;
-      state = other.state;
       calib_params_str = other.calib_params_str;
+      hardware_ver = other.hardware_ver;
+      state = other.state;
     }
     return *this;
   }
