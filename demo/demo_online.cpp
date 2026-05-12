@@ -174,7 +174,7 @@ void processCloud(void)
     for (auto it = msg->points.begin(); it != msg->points.end(); it++)
     {
       std::cout << std::fixed << std::setprecision(8) << "(" << it->x << ", " << it->y << ", " << it->z << ", "
-                << (int)it->intensity << ", " << it->timestamp << ")" << std::endl;
+                << (int)it->intensity << ", cloud_ts=" << msg->timestamp << ")" << std::endl;
     }
 #endif
 
@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
 #if ENABLE_IMU_PARSE
   param.input_param.imu_port = 6688;   ///< Set the lidar imu port number, the default is 0
 #endif
-  param.lidar_type = LidarType::RSAIRY;   ///< Set the lidar type. Make sure this type is correct
+  param.lidar_type = LidarType::RSM1;   ///< Set the lidar type. Make sure this type is correct
   param.print();
    
   LidarDriver<PointCloudMsg> driver;               ///< Declare the driver object

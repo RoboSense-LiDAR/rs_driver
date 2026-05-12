@@ -38,10 +38,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/msg/point_cloud_msg.hpp>
 #endif
 
+#include <ctime>
+
 //#define ORDERLY_EXIT
 
 // Define the macro: 1 to enable IMU parsing, 0 to disable IMU parsing
-#define ENABLE_IMU_PARSE 1 
+#define ENABLE_IMU_PARSE 0 
 typedef PointXYZI PointT;
 typedef PointCloudT<PointT> PointCloudMsg;
 
@@ -167,14 +169,20 @@ void processCloud(void)
     }
 
     // Well, it is time to process the point cloud msg, even it is time-consuming.
-    RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
+    RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << " timestamp: " << std::fixed << std::setprecision(6) << msg->timestamp << RS_REND;
+    /*
+    double ts = msg->timestamp;
+    time_t sec = (time_t)ts;
+    double frac = ts - sec;
 
+    std::cout << std::ctime(&sec) << " + " << frac << " s" << std::endl;
+    */
 #if 0
-  for (auto it = msg->points.begin(); it != msg->points.end(); it++)
-  {
-    std::cout << std::fixed << std::setprecision(8) << "(" << it->x << ", " << it->y << ", " << it->z << ", "
-              << (int)it->intensity << ", " << it->timestamp << ")" << std::endl;
-  }
+    for (auto it = msg->points.begin(); it != msg->points.end(); it++)
+    {
+      std::cout << std::fixed << std::setprecision(8) << "(" << it->x << ", " << it->y << ", " << it->z << ", "
+                << (int)it->intensity << ", " << it->timestamp << ")" << std::endl;
+    }
 #endif
 
     free_cloud_queue.push(msg);
@@ -189,13 +197,13 @@ int main(int argc, char* argv[])
 
   RSDriverParam param;  ///< Create a parameter object
   param.input_type = InputType::PCAP_FILE;
-  param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap file directory
+  param.input_param.pcap_path = "C:/point_clouds/test.pcap";  ///< Set the pcap file directory
   param.input_param.msop_port = 6699;                          ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;                         ///< Set the lidar difop port number, the default is 7788
 #if ENABLE_IMU_PARSE
   param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
 #endif
-  param.lidar_type = LidarType::RSAIRY;                          ///< Set the lidar type. Make sure this type is correct
+  param.lidar_type = LidarType::RSM1;                          ///< Set the lidar type. Make sure this type is correct
   param.input_param.pcap_rate = 1.0;
   param.print();
   
