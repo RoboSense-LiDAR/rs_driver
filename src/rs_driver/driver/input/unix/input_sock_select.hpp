@@ -54,35 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstring>
 
 #ifdef __APPLE__
-#include <sys/uio.h>
-
-struct mmsghdr {
-  struct msghdr msg_hdr;
-  unsigned int  msg_len;
-};
-
-static int recvmmsg(int sockfd, struct mmsghdr* msgvec, unsigned int vlen, int flags, struct timespec* /*timeout*/)
-{
-  unsigned int i = 0;
-  for (i = 0; i < vlen; ++i)
-  {
-    ssize_t ret = recvmsg(sockfd, &msgvec[i].msg_hdr, flags);
-    if (ret < 0)
-    {
-      if (errno == EAGAIN || errno == EWOULDBLOCK)
-        return (i > 0) ? (int)i : -1;
-      if (errno == EINTR)
-      {
-        if (i > 0) return (int)i;
-        --i;
-        continue;
-      }
-      return (i == 0) ? -1 : (int)i;
-    }
-    msgvec[i].msg_len = (unsigned int)ret;
-  }
-  return (int)i;
-}
+#include <rs_driver/driver/input/unix/macos_recvmmsg.hpp>
 #endif
 
 namespace robosense
