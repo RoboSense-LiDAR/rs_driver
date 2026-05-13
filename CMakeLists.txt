@@ -62,9 +62,13 @@ if(MSVC)
   add_compile_definitions(_DISABLE_EXTENDED_ALIGNED_STORAGE) # to disable a msvc error
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:100000000")
 
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+       CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR
+       CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
-  if(UNIX)
+  if(APPLE)
+    set(COMPILER "macOS Clang Compiler")
+  elseif(UNIX)
     set(COMPILER "UNIX GNU Compiler")
   elseif(MINGW)
     set(COMPILER "MINGW Compiler")

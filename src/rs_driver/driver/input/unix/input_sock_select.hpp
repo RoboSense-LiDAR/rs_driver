@@ -51,7 +51,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <memory>
 #include <cerrno>
-#include <cstring> 
+#include <cstring>
+
+#ifdef __APPLE__
+#include <rs_driver/driver/input/unix/macos_recvmmsg.hpp>
+#endif
 
 namespace robosense
 {
