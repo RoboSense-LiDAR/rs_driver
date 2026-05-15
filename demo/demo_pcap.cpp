@@ -39,6 +39,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <ctime>
+#include "simple_viewer.h"
+#define NOMINMAX
+#include <algorithm> //std::min, std::max (?)
+
 
 //#define ORDERLY_EXIT
 
@@ -177,6 +181,45 @@ void processCloud(void)
 
     std::cout << std::ctime(&sec) << " + " << frac << " s" << std::endl;
     */
+
+    // Debugging range:
+    /*
+    float min_r = 1e9, max_r = 0;
+
+    for (const auto& pt : msg->points)
+    {
+        float r = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+        min_r = (std::min)(min_r, r); //parenteses here avoid an unwanted macro expansion. https://stackoverflow.com/a/22023122
+        max_r = (std::max)(max_r, r);
+    }
+
+    std::cout << "Range: " << min_r << " .. " << max_r << std::endl;
+
+    */
+    /*
+    float min_i = 1e9, max_i = 0;
+
+    for (const auto& pt : msg->points)
+    {
+        float i = (float)pt.intensity;
+        min_i = (std::min)(min_i, i);
+        max_i = (std::max)(max_i, i);
+    }
+    g_min_intensity = min_i;
+    g_max_intensity = max_i;
+    */
+
+    std::vector<SimplePoint> viewer_pts;
+    viewer_pts.reserve(msg->points.size());
+
+    for (const auto& pt : msg->points)
+    {
+        viewer_pts.push_back({ pt.x, pt.y, pt.z, (float)pt.intensity });
+    }
+    //std::cout << "Viewer bekommt Punkte: " << msg->points.size() << std::endl;
+    updatePointCloud(viewer_pts);
+
+
 #if 0
     for (auto it = msg->points.begin(); it != msg->points.end(); it++)
     {
@@ -206,6 +249,9 @@ int main(int argc, char* argv[])
   param.lidar_type = LidarType::RSM1;                          ///< Set the lidar type. Make sure this type is correct
   param.input_param.pcap_rate = 1.0;
   param.print();
+
+  startViewer(); ///< Start the simple_viewer
+  std::cout << "Viewer gestartet!" << std::endl;
   
   LidarDriver<PointCloudMsg> driver;               ///< Declare the driver object
   driver.regPointCloudCallback(driverGetPointCloudFromCallerCallback, driverReturnPointCloudToCallerCallback); ///< Register the point cloud callback functions

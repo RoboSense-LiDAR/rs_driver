@@ -31,11 +31,19 @@ target_link_libraries(demo_online_multi_lidars
 
 if(NOT ${DISABLE_PCAP_PARSE})
 
+
 add_executable(demo_pcap
-               demo_pcap.cpp)
+    demo_pcap.cpp
+    simple_viewer.cpp
+)
 
 target_link_libraries(demo_pcap
-                     ${EXTERNAL_LIBS})
+    ${EXTERNAL_LIBS}
+)
+
+if(WIN32)
+    target_link_libraries(demo_pcap opengl32 glu32)
+endif()
 
 endif(NOT ${DISABLE_PCAP_PARSE})
 
