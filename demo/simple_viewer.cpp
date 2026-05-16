@@ -237,8 +237,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             lastX = x;
             lastY = y;
 
-            return 0;
+           
         }
+        return 0;
     }
     /**/
     case WM_SIZE:
