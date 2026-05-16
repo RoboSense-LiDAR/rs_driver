@@ -10,6 +10,12 @@
 
 #include <gl/GLU.h>
 
+#include "imgui.h"
+#include "backends/imgui_impl_win32.h"
+#include "backends/imgui_impl_opengl2.h"
+
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
+
 static std::vector<SimplePoint> g_points;
 static std::mutex g_mutex;
 
@@ -109,12 +115,14 @@ void render()
 // --- Window Proc ---
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+        return true;
+    
+    ImGuiIO& io = ImGui::GetIO(); // determine if the ImGui "wants" the mouse
+
     switch (msg)
-    {
-
-    
-
-    
+    {     
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
@@ -136,9 +144,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_LBUTTONDOWN:
-        mouseDown = true;
-        lastX = LOWORD(lParam);
-        lastY = HIWORD(lParam);
+
+        if (!io.WantCaptureMouse)
+        {
+            mouseDown = true;
+            lastX = LOWORD(lParam);
+            lastY = HIWORD(lParam);
+        }
         return 0;
 
     case WM_LBUTTONUP:
@@ -166,54 +178,98 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_MOUSEWHEEL:
     {
-        int delta = GET_WHEEL_DELTA_WPARAM(wParam);
-        zoom += delta * 0.001f;   // fein einstellbar
 
+        if (!io.WantCaptureMouse)
+        {
+            int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+            zoom += delta * 0.001f;   // fein einstellbar
+        }
         return 0;
     }
 
     case WM_RBUTTONDOWN:
-        rightMouseDown = true;
-        lastX = LOWORD(lParam);
-        lastY = HIWORD(lParam);
+
+        if (!io.WantCaptureMouse)
+        {
+            rightMouseDown = true;
+            lastX = LOWORD(lParam);
+            lastY = HIWORD(lParam);
+        }
         return 0;
 
     case WM_RBUTTONUP:
+
+        
         rightMouseDown = false;
+        
         return 0;
 
 
     case WM_MOUSEMOVE:
     {
-        int x = LOWORD(lParam);
-        int y = HIWORD(lParam);
-
-        int dx = x - lastX;
-        int dy = y - lastY;
-
-        if (mouseDown)
+        if (!io.WantCaptureMouse)
         {
-            rotY += dx * 0.5f;
-            rotX += dy * 0.5f;
 
-            // begrenzen
-            if (rotX > 89.0f) rotX = 89.0f;
-            if (rotX < -89.0f) rotX = -89.0f;
+            int x = LOWORD(lParam);
+            int y = HIWORD(lParam);
+
+            int dx = x - lastX;
+            int dy = y - lastY;
+
+            if (mouseDown)
+            {
+                rotY += dx * 0.5f;
+                rotX += dy * 0.5f;
+
+                // begrenzen
+                if (rotX > 89.0f) rotX = 89.0f;
+                if (rotX < -89.0f) rotX = -89.0f;
+            }
+
+            if (rightMouseDown)
+            {
+                float panSpeed = 0.01f * zoom;  // skaliert mit Entfernung
+
+                panX += dx * panSpeed;
+                panY -= dy * panSpeed;
+            }
+
+            lastX = x;
+            lastY = y;
+
+            return 0;
         }
+    }
+    /**/
+    case WM_SIZE:
+    {
 
-        if (rightMouseDown)
-        {
-            float panSpeed = 0.01f * zoom;  // skaliert mit Entfernung
+        
+        int width = LOWORD(lParam);
+        int height = HIWORD(lParam);
 
-            panX += dx * panSpeed;
-            panY -= dy * panSpeed;
-        }
+        if (height == 0)
+            height = 1;
 
-        lastX = x;
-        lastY = y;
+        // Viewport anpassen
+        glViewport(0, 0, width, height);
 
+        // Projection neu berechnen
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+
+        gluPerspective(
+            60.0,
+            (float)width / (float)height,
+            0.1,
+            500.0
+        );
+
+        glMatrixMode(GL_MODELVIEW);
+        
         return 0;
     }
+    /**/
 
     }
 
@@ -251,6 +307,19 @@ void viewerThread()
     HGLRC glrc = wglCreateContext(hdc);
     wglMakeCurrent(hdc, glrc);
 
+    glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplWin32_Init(hwnd);
+    ImGui_ImplOpenGL2_Init();
+
+
     // Für tiefe
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -270,6 +339,7 @@ void viewerThread()
 
     MSG msg;
 
+
     while (true)
     {
         while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
@@ -281,9 +351,44 @@ void viewerThread()
             DispatchMessage(&msg);
         }
 
+        // ----------------------------
+        // 1. Neues ImGui Frame starten
+        // ----------------------------
+        ImGui_ImplOpenGL2_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+
+        // ----------------------------
+        // 2. UI definieren
+        // ----------------------------
+        ImGui::Begin("LiDAR Controls");
+
+        ImGui::Text("Points: %d", (int)g_points.size());
+        ImGui::SliderFloat("Zoom", &zoom, 0.5f, 50.0f);
+        ImGui::SliderFloat("RotX", &rotX, -90.0f, 90.0f);
+        ImGui::SliderFloat("RotY", &rotY, -180.0f, 180.0f);
+
+        ImGui::Text("Pan: %.2f %.2f", panX, panY);
+
+        ImGui::End();
+
+        // ----------------------------
+        // 3. 3D Szene rendern
+        // ----------------------------
         render();
+
+        // ----------------------------
+        // 4. UI rendern (IMMER zuletzt!)
+        // ----------------------------
+        ImGui::Render();
+        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+
+        // ----------------------------
+        // 5. Display aktualisieren
+        // ----------------------------
         SwapBuffers(hdc);
     }
+
 }
 
 void startViewer()
