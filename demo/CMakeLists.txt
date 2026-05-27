@@ -33,7 +33,7 @@ if(WIN32)
 else()
     set(IMGUI_BACKEND
         ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
-        ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
     )
 endif()
 
