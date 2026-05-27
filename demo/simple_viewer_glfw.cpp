@@ -207,29 +207,30 @@ void viewerThread()
     glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
 
     // ImGui Setup
-//    IMGUI_CHECKVERSION();
-//    ImGui::CreateContext();
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
 
-//    ImGui::StyleColorsDark();
+    ImGui::StyleColorsDark();
 
-//    ImGui_ImplGlfw_InitForOpenGL(window, true);
-//    ImGui_ImplOpenGL2_Init();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL2_Init();
 
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     framebuffer_size_callback(window, width, height);
 
     // ---------------- LOOP ----------------
-    /*
+    
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
         processInput(window);
 
-//        ImGui_ImplOpenGL2_NewFrame();
-//        ImGui_ImplGlfw_NewFrame();
-//        ImGui::NewFrame();
+        
+        ImGui_ImplGlfw_NewFrame();
+        ImGui_ImplOpenGL2_NewFrame();
+        ImGui::NewFrame();
 
         // UI
         ImGui::Begin("LiDAR Controls");
@@ -294,22 +295,14 @@ void viewerThread()
 
         render();
 
-//        ImGui::Render();
-//        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+        ImGui::Render();
+        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
     }
-    */
+    
 
-    while (!glfwWindowShouldClose(window))
-    {
-        glfwPollEvents();
-
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glfwSwapBuffers(window);
-    }
-
+    
 
     // Cleanup
     ImGui_ImplOpenGL2_Shutdown();
