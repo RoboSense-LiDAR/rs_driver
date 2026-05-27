@@ -186,6 +186,14 @@ void viewerThread()
     }
 
     GLFWwindow* window = glfwCreateWindow(1024, 768, "LiDAR Viewer", NULL, NULL);
+
+    if (!window)
+    {
+        std::cerr << "GLFW window creation failed!" << std::endl;
+        glfwTerminate();
+        return;
+    }
+
     glfwMakeContextCurrent(window);
 
     glfwSetScrollCallback(window, scroll_callback);
