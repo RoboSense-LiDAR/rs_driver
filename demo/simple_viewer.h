@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <atomic>
+#include <string>
 
 struct SimplePoint
 {
@@ -12,6 +14,8 @@ struct SimplePoint
 void startViewer();
 void updatePointCloud(const std::vector<SimplePoint>& pts);
 
-// NEU: globale Intensität
-//extern float g_min_intensity;
-//extern float g_max_intensity;
+// Aufnahme-Steuerung
+extern std::atomic<bool> g_recording;
+extern std::string g_output_folder;
+extern uint64_t g_frame_counter;
+

@@ -44,28 +44,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm> //std::min, std::max (?)
 
 
-#include <string>
-#include <atomic>
-#include <filesystem>
-#include <fstream>
-#include <iomanip>
-#include <sstream>
-
-std::atomic<bool> g_recording(false);
-std::string g_output_folder = "";
-uint64_t g_frame_counter = 0;
-
-void saveKittiBin(const std::string& path,
-    const std::vector<float>& xyzi)
-{
-    std::ofstream out(path, std::ios::binary);
-    if (!out)
-        return;
-
-    out.write(reinterpret_cast<const char*>(xyzi.data()),
-        xyzi.size() * sizeof(float));
-}
-
 //#define ORDERLY_EXIT
 
 // Define the macro: 1 to enable IMU parsing, 0 to disable IMU parsing
@@ -184,31 +162,6 @@ void exceptionCallback(const Error& code)
   RS_WARNING << code.toString() << RS_REND;
 }
 
-void saveCloud(const std::vector<SimplePoint>& cloud)
-{
-    if (!g_recording || g_output_folder.empty())
-        return;
-
-    std::vector<float> buffer;
-    buffer.reserve(cloud.size() * 4);
-
-    for (const auto& p : cloud)
-    {
-        buffer.push_back(p.x);
-        buffer.push_back(p.y);
-        buffer.push_back(p.z);
-        buffer.push_back(p.intensity);
-    }
-
-    std::ostringstream filename;
-    filename << g_output_folder << "/data"
-        << std::setw(6) << std::setfill('0')
-        << g_frame_counter++
-        << ".bin";
-
-    saveKittiBin(filename.str(), buffer);
-}
-
 void processCloud(void)
 {
   while (!to_exit_process)
@@ -266,8 +219,6 @@ void processCloud(void)
     //std::cout << "Viewer bekommt Punkte: " << msg->points.size() << std::endl;
     updatePointCloud(viewer_pts);
 
-    // Save pointcloud as frame in KITTI format (float32 xyzi)
-    saveCloud(viewer_pts); 
 
 #if 0
     for (auto it = msg->points.begin(); it != msg->points.end(); it++)

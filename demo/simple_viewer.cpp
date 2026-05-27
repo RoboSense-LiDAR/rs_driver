@@ -14,6 +14,10 @@
 #include "backends/imgui_impl_win32.h"
 #include "backends/imgui_impl_opengl2.h"
 
+#include "ImGuiFileDialog.h"
+#include <filesystem>
+
+
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
 
 static std::vector<SimplePoint> g_points;
@@ -363,6 +367,65 @@ void viewerThread()
         // 2. UI definieren
         // ----------------------------
         ImGui::Begin("LiDAR Controls");
+
+        // --------- RECORDING UI ---------
+
+
+        IGFD::FileDialogConfig config;
+        config.path = ".";
+
+        if (ImGui::Button("Select Output Folder"))
+        {
+            ImGuiFileDialog::Instance()->OpenDialog(
+                "ChooseFolder",
+                "Choose Folder",
+                nullptr,
+                config
+            );
+
+        }
+
+        // Dialog anzeigen
+        if (ImGuiFileDialog::Instance()->Display("ChooseFolder"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                g_output_folder =
+                    ImGuiFileDialog::Instance()->GetCurrentPath();
+
+                std::filesystem::create_directories(g_output_folder);
+                g_frame_counter = 0;
+            }
+            ImGuiFileDialog::Instance()->Close();
+        }
+
+        // Anzeigen
+        ImGui::Text("Folder:");
+        ImGui::TextWrapped("%s", g_output_folder.c_str());
+
+        // Start / Stop
+        if (!g_recording)
+        {
+            if (ImGui::Button("Start Recording"))
+            {
+                if (!g_output_folder.empty())
+                {
+                    g_frame_counter = 0;
+                    g_recording = true;
+                }
+            }
+        }
+        else
+        {
+            if (ImGui::Button("Stop Recording"))
+            {
+                g_recording = false;
+            }
+        }
+
+        // Statusanzeige
+        ImGui::Text("Recording: %s", g_recording ? "ON" : "OFF");
+        ImGui::Text("Frames saved: %llu", g_frame_counter);
 
         ImGui::Text("Points: %d", (int)g_points.size());
         ImGui::SliderFloat("Zoom", &zoom, 0.5f, 50.0f);
