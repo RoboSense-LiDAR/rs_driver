@@ -222,7 +222,7 @@ void viewerThread()
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 130";
+    ImGui_ImplOpenGL3_Init("#version 130");
 
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
@@ -236,7 +236,7 @@ void viewerThread()
 
         processInput(window);
 
-        RenderDrawData
+        //RenderDrawData
         ImGui_ImplGlfw_NewFrame();
         ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();
