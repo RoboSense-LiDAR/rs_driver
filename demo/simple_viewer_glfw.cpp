@@ -340,6 +340,6 @@ void viewerThread()
 
 void startViewer()
 {
-    //std::thread(viewerThread).detach();
-    viewerThread();   // direkt im Main Thread
+    std::thread(viewerThread).detach();
+    //viewerThread();   // direkt im Main Thread
 }
