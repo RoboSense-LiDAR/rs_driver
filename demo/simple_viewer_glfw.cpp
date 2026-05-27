@@ -212,6 +212,13 @@ void viewerThread()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
+    if (ImGui::GetCurrentContext() == nullptr)
+    {
+        std::cerr << "ImGui context failed!" << std::endl;
+        return;
+    }
+
+
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
