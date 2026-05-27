@@ -184,6 +184,7 @@ void viewerThread()
         std::cerr << "GLFW init failed\n";
         return;
     }
+    std::cout << "GLFW init OK" << std::endl;
 
     GLFWwindow* window = glfwCreateWindow(1024, 768, "LiDAR Viewer", NULL, NULL);
 
@@ -193,6 +194,7 @@ void viewerThread()
         glfwTerminate();
         return;
     }
+    std::cout << "Window OK" << std::endl;
 
     glfwMakeContextCurrent(window);
 
@@ -311,5 +313,6 @@ void viewerThread()
 
 void startViewer()
 {
-    std::thread(viewerThread).detach();
+    //std::thread(viewerThread).detach();
+    viewerThread();   // direkt im Main Thread
 }
