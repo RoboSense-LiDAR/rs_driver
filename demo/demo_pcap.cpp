@@ -289,7 +289,24 @@ int main(int argc, char* argv[])
 
   RSDriverParam param;  ///< Create a parameter object
   param.input_type = InputType::PCAP_FILE;
-  param.input_param.pcap_path = "C:/point_clouds/test.pcap";  ///< Set the pcap file directory
+  //param.input_param.pcap_path = "C:/point_clouds/test.pcap";  ///< Set the pcap file directory
+  // path to pcap-file per ENV, else platform default: (filename still hard-coded)
+  const char* base = std::getenv("PCAP_DIR");
+
+  if (base)
+  {
+      param.input_param.pcap_path = std::string(base) + "/test.pcap";
+  }
+  else
+  {
+#ifdef _WIN32
+      param.input_param.pcap_path = "C:/point_clouds/test.pcap";
+#else
+      param.input_param.pcap_path = "/mnt/C/point_clouds/test.pcap";
+#endif
+  }
+
+
   param.input_param.msop_port = 6699;                          ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;                         ///< Set the lidar difop port number, the default is 7788
 #if ENABLE_IMU_PARSE
