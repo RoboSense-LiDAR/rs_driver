@@ -305,7 +305,7 @@ void viewerThread()
         }
 
         ImGui::Text("Recording: %s", g_recording ? "ON" : "OFF");
-        ImGui::Text("Frames saved: %llu", g_frame_counter);
+        ImGui::Text("Frames saved: %lu", g_frame_counter);
 
         ImGui::Text("Points: %d", (int)g_points.size());
         ImGui::SliderFloat("Zoom", &zoom, 0.5f, 50.0f);
