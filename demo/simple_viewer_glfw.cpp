@@ -209,13 +209,13 @@ void viewerThread()
     glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
 
     // ImGui Setup
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+//    IMGUI_CHECKVERSION();
+//    ImGui::CreateContext();
 
-    ImGui::StyleColorsDark();
+//    ImGui::StyleColorsDark();
 
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL2_Init();
+//    ImGui_ImplGlfw_InitForOpenGL(window, true);
+//    ImGui_ImplOpenGL2_Init();
 
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
@@ -229,11 +229,11 @@ void viewerThread()
 
         processInput(window);
 
-        ImGui_ImplOpenGL2_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+//        ImGui_ImplOpenGL2_NewFrame();
+//        ImGui_ImplGlfw_NewFrame();
+//        ImGui::NewFrame();
 
-        // UI
+/*        // UI
         ImGui::Begin("LiDAR Controls");
 
         IGFD::FileDialogConfig config;
@@ -293,11 +293,11 @@ void viewerThread()
         ImGui::Text("Pan: %.2f %.2f", panX, panY);
 
         ImGui::End();
-
+*/
         render();
 
-        ImGui::Render();
-        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+//        ImGui::Render();
+//        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
     }
