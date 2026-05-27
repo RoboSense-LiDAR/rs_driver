@@ -21,6 +21,23 @@ add_subdirectory(
 find_package(OpenGL REQUIRED)
 
 
+set(IMGUI_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/imgui)
+set(IMGUIFD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/ImGuiFileDialog)
+
+
+if(WIN32)
+    set(IMGUI_BACKEND
+        ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp
+    )
+else()
+    set(IMGUI_BACKEND
+        ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp
+    )
+endif()
+
+
 if (${ENABLE_PCL_POINTCLOUD})
 
 find_package(PCL REQUIRED)
@@ -35,16 +52,26 @@ include_directories(${DRIVER_INCLUDE_DIRS})
 add_executable(demo_online
     demo_online.cpp
     simple_viewer_glfw.cpp
-    
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_draw.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_tables.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_widgets.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_glfw.cpp
 
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_win32.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_opengl2.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/ImGuiFileDialog/ImGuiFileDialog.cpp
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+
+    ${IMGUI_BACKEND}
+
+    ${IMGUIFD_DIR}/ImGuiFileDialog.cpp
+    
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_draw.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_tables.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_widgets.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_glfw.cpp
+
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_win32.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_opengl2.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/ImGuiFileDialog/ImGuiFileDialog.cpp
 )
 
 #target_link_libraries(demo_online
@@ -78,20 +105,37 @@ target_include_directories(demo_online PRIVATE
 if(NOT ${DISABLE_PCAP_PARSE})
 
 
+#add_executable(demo_pcap
+#    demo_pcap.cpp
+#    simple_viewer_glfw.cpp
+#    
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_draw.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_tables.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_widgets.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_glfw.cpp
+#
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_win32.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_opengl2.cpp
+#    ${CMAKE_SOURCE_DIR}/thirdparty/ImGuiFileDialog/ImGuiFileDialog.cpp
+#)
+
+
 add_executable(demo_pcap
     demo_pcap.cpp
     simple_viewer_glfw.cpp
     
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_draw.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_tables.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/imgui_widgets.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
 
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_win32.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends/imgui_impl_opengl2.cpp
-    ${CMAKE_SOURCE_DIR}/thirdparty/ImGuiFileDialog/ImGuiFileDialog.cpp
+    ${IMGUI_BACKEND}
+
+    ${IMGUIFD_DIR}/ImGuiFileDialog.cpp
 )
+
 
 target_include_directories(demo_pcap PRIVATE
     ${CMAKE_SOURCE_DIR}/thirdparty/imgui
