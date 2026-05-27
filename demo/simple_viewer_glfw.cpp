@@ -220,7 +220,7 @@ void viewerThread()
     framebuffer_size_callback(window, width, height);
 
     // ---------------- LOOP ----------------
-
+    /*
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -231,7 +231,7 @@ void viewerThread()
 //        ImGui_ImplGlfw_NewFrame();
 //        ImGui::NewFrame();
 
-/*        // UI
+        // UI
         ImGui::Begin("LiDAR Controls");
 
         IGFD::FileDialogConfig config;
@@ -291,7 +291,7 @@ void viewerThread()
         ImGui::Text("Pan: %.2f %.2f", panX, panY);
 
         ImGui::End();
-*/
+
         render();
 
 //        ImGui::Render();
@@ -299,6 +299,17 @@ void viewerThread()
 
         glfwSwapBuffers(window);
     }
+    */
+
+    while (!glfwWindowShouldClose(window))
+    {
+        glfwPollEvents();
+
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glfwSwapBuffers(window);
+    }
+
 
     // Cleanup
     ImGui_ImplOpenGL2_Shutdown();
