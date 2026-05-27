@@ -302,7 +302,7 @@ int main(int argc, char* argv[])
 #ifdef _WIN32
       param.input_param.pcap_path = "C:/point_clouds/test.pcap";
 #else
-      param.input_param.pcap_path = "/mnt/C/point_clouds/test.pcap";
+      param.input_param.pcap_path = "/mnt/c/point_clouds/test.pcap";
 #endif
   }
 
