@@ -26,7 +26,7 @@
 
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl2.h"
+#include "backends/imgui_impl_opengl3.h"
 
 #include "ImGuiFileDialog.h"
 
@@ -222,7 +222,7 @@ void viewerThread()
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL2_Init();
+    ImGui_ImplOpenGL3_Init("#version 130";
 
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
@@ -236,9 +236,9 @@ void viewerThread()
 
         processInput(window);
 
-        
+        RenderDrawData
         ImGui_ImplGlfw_NewFrame();
-        ImGui_ImplOpenGL2_NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();
 
         // UI
@@ -319,7 +319,7 @@ void viewerThread()
         render();
 
         ImGui::Render();
-        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
     }
