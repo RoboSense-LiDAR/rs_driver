@@ -186,8 +186,18 @@ void viewerThread()
         std::cerr << "GLFW init failed\n";
         return;
     }
+    std::cout << "GLFW init OK" << std::endl;
 
     GLFWwindow* window = glfwCreateWindow(1024, 768, "LiDAR Viewer", NULL, NULL);
+
+    if (!window)
+    {
+        std::cerr << "GLFW window creation failed!" << std::endl;
+        glfwTerminate();
+        return;
+    }
+    std::cout << "Window OK" << std::endl;
+
     glfwMakeContextCurrent(window);
 
     glfwSetScrollCallback(window, scroll_callback);
@@ -305,5 +315,6 @@ void viewerThread()
 
 void startViewer()
 {
-    std::thread(viewerThread).detach();
+    //std::thread(viewerThread).detach();
+    viewerThread();   // direkt im Main Thread
 }
