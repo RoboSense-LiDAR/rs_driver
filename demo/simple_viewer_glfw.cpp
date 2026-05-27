@@ -12,6 +12,8 @@
 #include <GL/glu.h>
 #endif
 
+#include <cmath>
+
 #include <GLFW/glfw3.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
