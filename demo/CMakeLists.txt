@@ -18,6 +18,8 @@ add_subdirectory(
     ${CMAKE_BINARY_DIR}/glfw_build
 )
 
+find_package(OpenGL REQUIRED)
+
 
 if (${ENABLE_PCL_POINTCLOUD})
 
@@ -45,14 +47,21 @@ add_executable(demo_online
     ${CMAKE_SOURCE_DIR}/thirdparty/ImGuiFileDialog/ImGuiFileDialog.cpp
 )
 
+#target_link_libraries(demo_online
+#    glfw
+#    ${EXTERNAL_LIBS}
+#)
+
+#if(WIN32)
+#    target_link_libraries(demo_online opengl32 glu32)
+#endif()
+
 target_link_libraries(demo_online
     glfw
+    OpenGL::GL
+    OpenGL::GLU
     ${EXTERNAL_LIBS}
 )
-
-if(WIN32)
-    target_link_libraries(demo_online opengl32 glu32)
-endif()
 
 add_executable(demo_online_multi_lidars
               demo_online_multi_lidars.cpp)
@@ -90,14 +99,24 @@ target_include_directories(demo_pcap PRIVATE
     ${CMAKE_SOURCE_DIR}/thirdparty/ImGuiFileDialog
 )
 
+
+
 target_link_libraries(demo_pcap
     glfw
+    OpenGL::GL
+    OpenGL::GLU
     ${EXTERNAL_LIBS}
 )
 
-if(WIN32)
-    target_link_libraries(demo_pcap opengl32 glu32)
-endif()
+
+#target_link_libraries(demo_pcap
+#    glfw
+#    ${EXTERNAL_LIBS}
+#)
+
+#if(WIN32)
+#    target_link_libraries(demo_pcap opengl32 glu32)
+#endif()
 
 endif(NOT ${DISABLE_PCAP_PARSE})
 
