@@ -261,17 +261,31 @@ void viewerThread()
         {
             if (ImGuiFileDialog::Instance()->IsOk())
             {
-                g_output_folder =
+
+                std::string new_path =
                     ImGuiFileDialog::Instance()->GetCurrentPath();
 
-                std::filesystem::create_directories(g_output_folder);
-                g_frame_counter = 0;
+                {
+                    std::lock_guard<std::mutex> lock(g_ui_mutex);
+                    g_output_folder = new_path;
+
+                    g_frame_counter = 0;
+                }
+                std::filesystem::create_directories(new_path);
             }
             ImGuiFileDialog::Instance()->Close();
         }
 
         ImGui::Text("Folder:");
-        ImGui::TextWrapped("%s", g_output_folder.c_str());
+
+        std::string folder_copy;
+
+        {
+            std::lock_guard<std::mutex> lock(g_ui_mutex);
+            folder_copy = g_output_folder;
+        }
+
+        ImGui::TextWrapped("%s", folder_copy.c_str());
 
         if (!g_recording)
         {

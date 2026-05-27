@@ -55,6 +55,8 @@ std::atomic<bool> g_recording(false);
 std::string g_output_folder = "";
 uint64_t g_frame_counter = 0;
 
+std::mutex g_ui_mutex;
+
 void saveKittiBin(const std::string& path,
     const std::vector<float>& xyzi)
 {
