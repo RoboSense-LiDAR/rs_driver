@@ -27,8 +27,9 @@ set(IMGUIFD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/ImGuiFileDialog)
 
 if(WIN32)
     set(IMGUI_BACKEND
-        ${IMGUI_DIR}/backends/imgui_impl_win32.cpp
-        ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp
+        #${IMGUI_DIR}/backends/imgui_impl_win32.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
     )
 else()
     set(IMGUI_BACKEND

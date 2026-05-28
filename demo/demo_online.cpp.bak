@@ -278,8 +278,6 @@ void processCloud(void)
 #endif
 
     free_cloud_queue.push(msg);
-
-    
   }
 }
 
