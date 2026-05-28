@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <cstdint>
 #include <rs_driver/common/rs_log.hpp>
 #include "rs_driver/msg/imu_data_msg.hpp"
 #include <string>
