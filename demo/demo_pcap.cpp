@@ -38,10 +38,40 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/msg/point_cloud_msg.hpp>
 #endif
 
+#include <ctime>
+#include "simple_viewer.h"
+#define NOMINMAX
+#include <algorithm> //std::min, std::max (?)
+
+
+#include <string>
+#include <atomic>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+
+std::atomic<bool> g_recording(false);
+std::string g_output_folder = "";
+uint64_t g_frame_counter = 0;
+
+std::mutex g_ui_mutex;
+
+void saveKittiBin(const std::string& path,
+    const std::vector<float>& xyzi)
+{
+    std::ofstream out(path, std::ios::binary);
+    if (!out)
+        return;
+
+    out.write(reinterpret_cast<const char*>(xyzi.data()),
+        xyzi.size() * sizeof(float));
+}
+
 //#define ORDERLY_EXIT
 
 // Define the macro: 1 to enable IMU parsing, 0 to disable IMU parsing
-#define ENABLE_IMU_PARSE 1 
+#define ENABLE_IMU_PARSE 0 
 typedef PointXYZI PointT;
 typedef PointCloudT<PointT> PointCloudMsg;
 
@@ -156,6 +186,31 @@ void exceptionCallback(const Error& code)
   RS_WARNING << code.toString() << RS_REND;
 }
 
+void saveCloud(const std::vector<SimplePoint>& cloud)
+{
+    if (!g_recording || g_output_folder.empty())
+        return;
+
+    std::vector<float> buffer;
+    buffer.reserve(cloud.size() * 4);
+
+    for (const auto& p : cloud)
+    {
+        buffer.push_back(p.x);
+        buffer.push_back(p.y);
+        buffer.push_back(p.z);
+        buffer.push_back(p.intensity);
+    }
+
+    std::ostringstream filename;
+    filename << g_output_folder << "/data"
+        << std::setw(6) << std::setfill('0')
+        << g_frame_counter++
+        << ".bin";
+
+    saveKittiBin(filename.str(), buffer);
+}
+
 void processCloud(void)
 {
   while (!to_exit_process)
@@ -167,14 +222,61 @@ void processCloud(void)
     }
 
     // Well, it is time to process the point cloud msg, even it is time-consuming.
-    RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
+    RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << " timestamp: " << std::fixed << std::setprecision(6) << msg->timestamp << RS_REND;
+    /*
+    double ts = msg->timestamp;
+    time_t sec = (time_t)ts;
+    double frac = ts - sec;
+
+    std::cout << std::ctime(&sec) << " + " << frac << " s" << std::endl;
+    */
+
+    // Debugging range:
+    /*
+    float min_r = 1e9, max_r = 0;
+
+    for (const auto& pt : msg->points)
+    {
+        float r = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+        min_r = (std::min)(min_r, r); //parenteses here avoid an unwanted macro expansion. https://stackoverflow.com/a/22023122
+        max_r = (std::max)(max_r, r);
+    }
+
+    std::cout << "Range: " << min_r << " .. " << max_r << std::endl;
+
+    */
+    /*
+    float min_i = 1e9, max_i = 0;
+
+    for (const auto& pt : msg->points)
+    {
+        float i = (float)pt.intensity;
+        min_i = (std::min)(min_i, i);
+        max_i = (std::max)(max_i, i);
+    }
+    g_min_intensity = min_i;
+    g_max_intensity = max_i;
+    */
+
+    std::vector<SimplePoint> viewer_pts;
+    viewer_pts.reserve(msg->points.size());
+
+    for (const auto& pt : msg->points)
+    {
+        viewer_pts.push_back({ pt.x, pt.y, pt.z, (float)pt.intensity });
+    }
+    //std::cout << "Viewer bekommt Punkte: " << msg->points.size() << std::endl;
+    updatePointCloud(viewer_pts);
+
+    // Save pointcloud as frame in KITTI format (float32 xyzi)
+    saveCloud(viewer_pts); 
 
 #if 0
-  for (auto it = msg->points.begin(); it != msg->points.end(); it++)
-  {
-    std::cout << std::fixed << std::setprecision(8) << "(" << it->x << ", " << it->y << ", " << it->z << ", "
-              << (int)it->intensity << ", " << it->timestamp << ")" << std::endl;
-  }
+    for (auto it = msg->points.begin(); it != msg->points.end(); it++)
+    {
+      std::cout << std::fixed << std::setprecision(8) << "(" << it->x << ", " << it->y << ", " << it->z << ", "
+                << (int)it->intensity << ", cloud_ts=" << msg->timestamp << ")" << std::endl;
+    }
 #endif
 
     free_cloud_queue.push(msg);
@@ -189,15 +291,35 @@ int main(int argc, char* argv[])
 
   RSDriverParam param;  ///< Create a parameter object
   param.input_type = InputType::PCAP_FILE;
-  param.input_param.pcap_path = "/home/robosense/lidar.pcap";  ///< Set the pcap file directory
+  //param.input_param.pcap_path = "C:/point_clouds/test.pcap";  ///< Set the pcap file directory
+  // path to pcap-file per ENV, else platform default: (filename still hard-coded)
+  const char* base = std::getenv("PCAP_DIR");
+
+  if (base)
+  {
+      param.input_param.pcap_path = std::string(base) + "/test.pcap";
+  }
+  else
+  {
+#ifdef _WIN32
+      param.input_param.pcap_path = "C:/point_clouds/test.pcap";
+#else
+      param.input_param.pcap_path = "/mnt/c/point_clouds/test.pcap";
+#endif
+  }
+
+
   param.input_param.msop_port = 6699;                          ///< Set the lidar msop port number, the default is 6699
   param.input_param.difop_port = 7788;                         ///< Set the lidar difop port number, the default is 7788
 #if ENABLE_IMU_PARSE
-  param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+  param.input_param.imu_port = 6688;   ///< Set the lidar imu port number, the default is 0
 #endif
-  param.lidar_type = LidarType::RSAIRY;                          ///< Set the lidar type. Make sure this type is correct
+  param.lidar_type = LidarType::RSM1;   ///< Set the lidar type. Make sure this type is correct
   param.input_param.pcap_rate = 1.0;
   param.print();
+
+  startViewer(); ///< Start the simple_viewer
+  std::cout << "Viewer gestartet!" << std::endl;
   
   LidarDriver<PointCloudMsg> driver;               ///< Declare the driver object
   driver.regPointCloudCallback(driverGetPointCloudFromCallerCallback, driverReturnPointCloudToCallerCallback); ///< Register the point cloud callback functions

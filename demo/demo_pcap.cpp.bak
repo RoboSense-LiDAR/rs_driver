@@ -290,13 +290,32 @@ int main(int argc, char* argv[])
   RS_TITLE << "------------------------------------------------------" << RS_REND;
 
   RSDriverParam param;  ///< Create a parameter object
-  param.input_type = InputType::ONLINE_LIDAR;
-  param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
-  param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
-#if ENABLE_IMU_PARSE
-  param.input_param.imu_port = 6688;   ///< Set the lidar imu port number, the default is 0
+  param.input_type = InputType::PCAP_FILE;
+  //param.input_param.pcap_path = "C:/point_clouds/test.pcap";  ///< Set the pcap file directory
+  // path to pcap-file per ENV, else platform default: (filename still hard-coded)
+  const char* base = std::getenv("PCAP_DIR");
+
+  if (base)
+  {
+      param.input_param.pcap_path = std::string(base) + "/test.pcap";
+  }
+  else
+  {
+#ifdef _WIN32
+      param.input_param.pcap_path = "C:/point_clouds/test.pcap";
+#else
+      param.input_param.pcap_path = "/mnt/c/point_clouds/test.pcap";
 #endif
-  param.lidar_type = LidarType::RSM1;   ///< Set the lidar type. Make sure this type is correct
+  }
+
+
+  param.input_param.msop_port = 6699;                          ///< Set the lidar msop port number, the default is 6699
+  param.input_param.difop_port = 7788;                         ///< Set the lidar difop port number, the default is 7788
+#if ENABLE_IMU_PARSE
+  param.input_param.imu_port = 6688;                         ///< Set the lidar imu port number, the default is 0
+#endif
+  param.lidar_type = LidarType::RSM1;                          ///< Set the lidar type. Make sure this type is correct
+  param.input_param.pcap_rate = 1.0;
   param.print();
 
   startViewer(); ///< Start the simple_viewer
@@ -321,7 +340,9 @@ int main(int argc, char* argv[])
 #endif
 
   driver.start();  ///< The driver thread will start
-  RS_DEBUG << "RoboSense Lidar-Driver Linux online demo start......" << RS_REND;
+
+  RS_DEBUG << "RoboSense Lidar-Driver Linux pcap demo start......" << RS_REND;
+
 
 #ifdef ORDERLY_EXIT
   std::this_thread::sleep_for(std::chrono::seconds(10));
