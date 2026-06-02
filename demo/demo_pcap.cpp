@@ -51,6 +51,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iomanip>
 #include <sstream>
 
+
+static std::ofstream g_timestamp_file;
+static bool g_timestamp_initialized = false;
+
+
 std::atomic<bool> g_recording(false);
 std::string g_output_folder = "";
 uint64_t g_frame_counter = 0;
@@ -66,6 +71,28 @@ void saveKittiBin(const std::string& path,
 
     out.write(reinterpret_cast<const char*>(xyzi.data()),
         xyzi.size() * sizeof(float));
+}
+
+void initTimestampFile()
+{
+
+    if (g_output_folder.empty())
+        return;
+
+    if (!g_timestamp_initialized)
+    {
+        std::string path = g_output_folder + "/timestamp.txt";
+
+        g_timestamp_file.open(path, std::ios::out | std::ios::app);
+
+        if (!g_timestamp_file.is_open())
+        {
+            RS_MSG << "Failed to open timestamp file: " << path << RS_REND;
+            return;
+        }
+
+        g_timestamp_initialized = true;
+    }
 }
 
 //#define ORDERLY_EXIT
@@ -186,10 +213,57 @@ void exceptionCallback(const Error& code)
   RS_WARNING << code.toString() << RS_REND;
 }
 
-void saveCloud(const std::vector<SimplePoint>& cloud)
+void stopRecording()
+{
+    g_recording = false;
+
+    if (g_timestamp_file.is_open())
+    {
+        g_timestamp_file.close();
+        g_timestamp_initialized = false;
+    }
+}
+
+void startRecording()
+{
+    if (g_output_folder.empty())
+    {
+        RS_MSG << "Cannot start recording: output folder is empty!" << RS_REND;
+        g_recording = false;
+        return;
+    }
+
+    g_recording = true;
+
+    // Frame counter zur¸cksetzen
+    g_frame_counter = 0;
+
+    // Falls noch offen -> schlieﬂen
+    if (g_timestamp_file.is_open())
+    {
+        g_timestamp_file.close();
+    }
+
+    // Datei neu anlegen (truncate)
+    std::string path = g_output_folder + "/timestamp.txt";
+
+    std::ofstream clear_file(path, std::ios::out | std::ios::trunc);
+    if (!clear_file.is_open())
+    {
+        RS_MSG << "Failed to create timestamp file: " << path << RS_REND;
+        g_recording = false;
+        return;
+    }
+    clear_file.close();
+
+    g_timestamp_initialized = false;
+}
+
+
+std::string saveCloud(const std::vector<SimplePoint>& cloud)
 {
     if (!g_recording || g_output_folder.empty())
-        return;
+        return "";
 
     std::vector<float> buffer;
     buffer.reserve(cloud.size() * 4);
@@ -203,12 +277,16 @@ void saveCloud(const std::vector<SimplePoint>& cloud)
     }
 
     std::ostringstream filename;
-    filename << g_output_folder << "/data"
+    filename << "data"
         << std::setw(6) << std::setfill('0')
         << g_frame_counter++
         << ".bin";
 
-    saveKittiBin(filename.str(), buffer);
+    std::string full_path = g_output_folder + "/" + filename.str();
+
+    saveKittiBin(full_path, buffer);
+
+    return filename.str(); // for the timestamp file
 }
 
 void processCloud(void)
@@ -222,7 +300,9 @@ void processCloud(void)
     }
 
     // Well, it is time to process the point cloud msg, even it is time-consuming.
-    RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << " timestamp: " << std::fixed << std::setprecision(6) << msg->timestamp << RS_REND;
+    if (msg->seq % 10 == 0) {
+        RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << " timestamp: " << std::fixed << std::setprecision(6) << msg->timestamp << RS_REND;
+    }
     /*
     double ts = msg->timestamp;
     time_t sec = (time_t)ts;
@@ -269,7 +349,24 @@ void processCloud(void)
     updatePointCloud(viewer_pts);
 
     // Save pointcloud as frame in KITTI format (float32 xyzi)
-    saveCloud(viewer_pts); 
+    std::string saved_file = saveCloud(viewer_pts);
+
+    // Timestamp speichern
+    if (g_recording && !g_output_folder.empty())
+    {
+        if (!g_timestamp_initialized)
+            initTimestampFile();
+
+        if (g_timestamp_file.is_open() && !saved_file.empty())
+        {
+            g_timestamp_file
+                << saved_file << " "
+                << std::fixed << std::setprecision(6)
+                << msg->timestamp
+                << std::endl;
+        }
+    }
+
 
 #if 0
     for (auto it = msg->points.begin(); it != msg->points.end(); it++)

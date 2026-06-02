@@ -14,6 +14,8 @@ struct SimplePoint
 // Viewer API
 void startViewer();
 void updatePointCloud(const std::vector<SimplePoint>& pts);
+void stopRecording();
+void startRecording();
 
 // Aufnahme-Steuerung
 extern std::atomic<bool> g_recording;

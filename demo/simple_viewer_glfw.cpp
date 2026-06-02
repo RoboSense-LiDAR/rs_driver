@@ -188,6 +188,9 @@ void viewerThread()
     }
     std::cout << "GLFW init OK" << std::endl;
 
+    static bool g_show_overwrite_popup = false;
+    static std::string g_pending_folder;
+
     GLFWwindow* window = glfwCreateWindow(1024, 768, "LiDAR Viewer", NULL, NULL);
 
     if (!window)
@@ -289,19 +292,51 @@ void viewerThread()
 
         if (!g_recording)
         {
+
             if (ImGui::Button("Start Recording"))
             {
-                if (!g_output_folder.empty())
+                //std::string folder_copy;
+
+                //{
+                //    std::lock_guard<std::mutex> lock(g_ui_mutex);
+                //    folder_copy = g_output_folder;
+                //}
+
+                if (folder_copy.empty())
                 {
-                    g_frame_counter = 0;
-                    g_recording = true;
+                    std::cout << "No output folder selected!" << std::endl;
+                }
+                else
+                {
+                    bool is_empty = true;
+
+                    try
+                    {
+                        is_empty = std::filesystem::is_empty(folder_copy);
+                    }
+                    catch (...)
+                    {
+                        is_empty = false;
+                    }
+
+                    if (!is_empty)
+                    {
+                        g_pending_folder = folder_copy;
+                        g_show_overwrite_popup = true;
+                        
+                    }
+                    else
+                    {
+                        startRecording();
+                    }
                 }
             }
+
         }
         else
         {
             if (ImGui::Button("Stop Recording"))
-                g_recording = false;
+                stopRecording(); //g_recording = false;
         }
 
         ImGui::Text("Recording: %s", g_recording ? "ON" : "OFF");
@@ -315,6 +350,39 @@ void viewerThread()
         ImGui::Text("Pan: %.2f %.2f", panX, panY);
 
         ImGui::End();
+
+        if (g_show_overwrite_popup)
+        {
+            ImGui::OpenPopup("Overwrite Warning");
+            g_show_overwrite_popup = false; // ganz wichtig!
+        }
+
+        if (ImGui::BeginPopupModal("Overwrite Warning", NULL,
+            ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            ImGui::Text("The selected folder is not empty.\n");
+            ImGui::Text("Starting recording will overwrite existing data.\n\n");
+
+            ImGui::Separator();
+
+            if (ImGui::Button("Yes", ImVec2(120, 0)))
+            {
+                startRecording();
+                g_show_overwrite_popup = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Cancel", ImVec2(120, 0)))
+            {
+                g_show_overwrite_popup = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+
 
         render();
 
