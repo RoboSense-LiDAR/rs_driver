@@ -165,4 +165,34 @@ target_link_libraries(demo_pcap
 
 endif(NOT ${DISABLE_PCAP_PARSE})
 
+
+# ---------------- PLAYBACK DEMO ----------------
+
+add_executable(demo_playback
+    demo_playback.cpp
+    simple_viewer_glfw_playback.cpp
+
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+
+    ${IMGUI_BACKEND}
+
+    ${IMGUIFD_DIR}/ImGuiFileDialog.cpp
+)
+
+target_include_directories(demo_playback PRIVATE
+    ${CMAKE_SOURCE_DIR}/thirdparty/imgui
+    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/backends
+    ${CMAKE_SOURCE_DIR}/thirdparty/ImGuiFileDialog
+)
+
+target_link_libraries(demo_playback
+    glfw
+    OpenGL::GL
+    OpenGL::GLU
+)
+
+
         
