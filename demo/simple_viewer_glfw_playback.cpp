@@ -54,6 +54,7 @@ static std::thread g_playback_thread;
 static size_t g_current_frame = 0;
 static std::atomic<bool> g_pause(false);
 static int g_step_size = 10; // Default: 10 Frames springen
+static int g_ms_delay = 100; // Default: 100 ms Framedauer (je höher, desto niedriger die playback-speed)
 
 // ---------------- UPDATE ----------------
 
@@ -108,7 +109,7 @@ void playbackThreadFunc()
 		
 		if (g_bin_files.empty())
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(g_ms_delay));
             continue;
         }
 
@@ -120,7 +121,7 @@ void playbackThreadFunc()
 
         g_current_frame++;
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(g_ms_delay));
     }
 }
 
@@ -315,6 +316,9 @@ void viewerThread()
         ImGui::Text("Files: %d", (int)g_bin_files.size());
         ImGui::Text("Frame: %d", (int)g_current_frame);
 
+        ImGui::Separator();
+        ImGui::Text("Playback Controls");
+
         if (!g_playback)
         {
             if (ImGui::Button("Start"))
@@ -336,14 +340,7 @@ void viewerThread()
             }
         }
 		
-		
-		ImGui::Separator();
-		ImGui::Text("Playback Controls");
-
-		ImGui::InputInt("Step Size", &g_step_size);
-
-		if (g_step_size < 1)
-			g_step_size = 1;
+        ImGui::SameLine();
 
 		// Pause / Resume
 		if (!g_pause)
@@ -356,6 +353,16 @@ void viewerThread()
 			if (ImGui::Button("Resume"))
 				g_pause = false;
 		}
+
+        
+        ImGui::SliderInt("Frame Time (ms)", &g_ms_delay, 10, 500);
+
+
+        ImGui::InputInt("Step Size", &g_step_size);
+
+        if (g_step_size < 1)
+            g_step_size = 1;
+
 
 		// Vor / Zurück Buttons
 		if (ImGui::Button("<< Back"))
@@ -372,6 +379,13 @@ void viewerThread()
 			jumpFrames(g_step_size);
 		}
 
+
+        ImGui::SliderInt("Frame",
+            (int*)&g_current_frame,
+            0,
+            (int)g_bin_files.size() - 1);
+
+        ImGui::Separator();
 
         ImGui::SliderFloat("Zoom", &zoom, 0.5f, 50.0f);
 
