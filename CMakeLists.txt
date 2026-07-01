@@ -15,6 +15,13 @@ if (CMAKE_BUILD_TYPE STREQUAL "")
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
+
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    add_compile_options(/W1)
+    add_compile_options(/MT)
+endif()
+
 #=============================
 #  Compile Features
 #=============================

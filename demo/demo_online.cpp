@@ -38,11 +38,67 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <rs_driver/msg/point_cloud_msg.hpp>
 #endif
 
+#include <ctime>
+#include "simple_viewer.h"
+#define NOMINMAX
+#include <algorithm> //std::min, std::max (?)
+
+
+#include <string>
+#include <atomic>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+
+
+static std::ofstream g_timestamp_file;
+static bool g_timestamp_initialized = false;
+
+
+std::atomic<bool> g_recording(false);
+std::string g_output_folder = "";
+uint64_t g_frame_counter = 0;
+
+std::mutex g_ui_mutex;
+
+void saveKittiBin(const std::string& path,
+    const std::vector<float>& xyzi)
+{
+    std::ofstream out(path, std::ios::binary);
+    if (!out)
+        return;
+
+    out.write(reinterpret_cast<const char*>(xyzi.data()),
+        xyzi.size() * sizeof(float));
+}
+
+void initTimestampFile()
+{
+
+    if (g_output_folder.empty())
+        return;
+
+    if (!g_timestamp_initialized)
+    {
+        std::string path = g_output_folder + "/timestamp.txt";
+
+        g_timestamp_file.open(path, std::ios::out | std::ios::app);
+
+        if (!g_timestamp_file.is_open())
+        {
+            RS_MSG << "Failed to open timestamp file: " << path << RS_REND;
+            return;
+        }
+
+        g_timestamp_initialized = true;
+    }
+}
+
 //#define ORDERLY_EXIT
 
 // Define the macro: 1 to enable IMU parsing, 0 to disable IMU parsing
-#define ENABLE_IMU_PARSE 1 
-
+#define ENABLE_IMU_PARSE 0 
 typedef PointXYZI PointT;
 typedef PointCloudT<PointT> PointCloudMsg;
 
@@ -51,9 +107,9 @@ using namespace robosense::lidar;
 SyncQueue<std::shared_ptr<PointCloudMsg>> free_cloud_queue;
 SyncQueue<std::shared_ptr<PointCloudMsg>> stuffed_cloud_queue;
 
+
 SyncQueue<std::shared_ptr<ImuData>> free_imu_data_queue;
 SyncQueue<std::shared_ptr<ImuData>> stuffed_imu_data_queue;
-
 //
 // @brief point cloud callback function. The caller should register it to the lidar driver.
 //        Via this fucntion, the driver gets an free/unused point cloud message from the caller.
@@ -143,6 +199,7 @@ void processImuData(void)
   }
 
 }
+
 //
 // @brief exception callback function. The caller should register it to the lidar driver.
 //        Via this function, the driver inform the caller that something happens.
@@ -156,6 +213,81 @@ void exceptionCallback(const Error& code)
   RS_WARNING << code.toString() << RS_REND;
 }
 
+void stopRecording()
+{
+    g_recording = false;
+
+    if (g_timestamp_file.is_open())
+    {
+        g_timestamp_file.close();
+        g_timestamp_initialized = false;
+    }
+}
+
+void startRecording()
+{
+    if (g_output_folder.empty())
+    {
+        RS_MSG << "Cannot start recording: output folder is empty!" << RS_REND;
+        g_recording = false;
+        return;
+    }
+
+    g_recording = true;
+
+    // Frame counter zur¸cksetzen
+    g_frame_counter = 0;
+
+    // Falls noch offen -> schlieﬂen
+    if (g_timestamp_file.is_open())
+    {
+        g_timestamp_file.close();
+    }
+
+    // Datei neu anlegen (truncate)
+    std::string path = g_output_folder + "/timestamp.txt";
+
+    std::ofstream clear_file(path, std::ios::out | std::ios::trunc);
+    if (!clear_file.is_open())
+    {
+        RS_MSG << "Failed to create timestamp file: " << path << RS_REND;
+        g_recording = false;
+        return;
+    }
+    clear_file.close();
+
+    g_timestamp_initialized = false;
+}
+
+
+std::string saveCloud(const std::vector<SimplePoint>& cloud)
+{
+    if (!g_recording || g_output_folder.empty())
+        return "";
+
+    std::vector<float> buffer;
+    buffer.reserve(cloud.size() * 4);
+
+    for (const auto& p : cloud)
+    {
+        buffer.push_back(p.x);
+        buffer.push_back(p.y);
+        buffer.push_back(p.z);
+        buffer.push_back(p.intensity);
+    }
+
+    std::ostringstream filename;
+    filename << "data"
+        << std::setw(6) << std::setfill('0')
+        << g_frame_counter++
+        << ".bin";
+
+    std::string full_path = g_output_folder + "/" + filename.str();
+
+    saveKittiBin(full_path, buffer);
+
+    return filename.str(); // for the timestamp file
+}
 
 void processCloud(void)
 {
@@ -168,19 +300,83 @@ void processCloud(void)
     }
 
     // Well, it is time to process the point cloud msg, even it is time-consuming.
-    RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
+    if (msg->seq % 10 == 0) {
+        RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << " timestamp: " << std::fixed << std::setprecision(6) << msg->timestamp << RS_REND;
+    }
+    /*
+    double ts = msg->timestamp;
+    time_t sec = (time_t)ts;
+    double frac = ts - sec;
+
+    std::cout << std::ctime(&sec) << " + " << frac << " s" << std::endl;
+    */
+
+    // Debugging range:
+    /*
+    float min_r = 1e9, max_r = 0;
+
+    for (const auto& pt : msg->points)
+    {
+        float r = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+        min_r = (std::min)(min_r, r); //parenteses here avoid an unwanted macro expansion. https://stackoverflow.com/a/22023122
+        max_r = (std::max)(max_r, r);
+    }
+
+    std::cout << "Range: " << min_r << " .. " << max_r << std::endl;
+
+    */
+    /*
+    float min_i = 1e9, max_i = 0;
+
+    for (const auto& pt : msg->points)
+    {
+        float i = (float)pt.intensity;
+        min_i = (std::min)(min_i, i);
+        max_i = (std::max)(max_i, i);
+    }
+    g_min_intensity = min_i;
+    g_max_intensity = max_i;
+    */
+
+    std::vector<SimplePoint> viewer_pts;
+    viewer_pts.reserve(msg->points.size());
+
+    for (const auto& pt : msg->points)
+    {
+        viewer_pts.push_back({ pt.x, pt.y, pt.z, (float)pt.intensity });
+    }
+    //std::cout << "Viewer bekommt Punkte: " << msg->points.size() << std::endl;
+    updatePointCloud(viewer_pts);
+
+    // Save pointcloud as frame in KITTI format (float32 xyzi)
+    std::string saved_file = saveCloud(viewer_pts);
+
+    // Timestamp speichern
+    if (g_recording && !g_output_folder.empty())
+    {
+        if (!g_timestamp_initialized)
+            initTimestampFile();
+
+        if (g_timestamp_file.is_open() && !saved_file.empty())
+        {
+            g_timestamp_file
+                << saved_file << " "
+                << std::fixed << std::setprecision(6)
+                << msg->timestamp
+                << std::endl;
+        }
+    }
+
 
 #if 0
     for (auto it = msg->points.begin(); it != msg->points.end(); it++)
     {
       std::cout << std::fixed << std::setprecision(8) << "(" << it->x << ", " << it->y << ", " << it->z << ", "
-                << (int)it->intensity << ", " << it->timestamp << ")" << std::endl;
+                << (int)it->intensity << ", cloud_ts=" << msg->timestamp << ")" << std::endl;
     }
 #endif
 
     free_cloud_queue.push(msg);
-
-
   }
 }
 
@@ -197,16 +393,18 @@ int main(int argc, char* argv[])
 #if ENABLE_IMU_PARSE
   param.input_param.imu_port = 6688;   ///< Set the lidar imu port number, the default is 0
 #endif
-  param.lidar_type = LidarType::RSAIRY;   ///< Set the lidar type. Make sure this type is correct
+  param.lidar_type = LidarType::RSM1;   ///< Set the lidar type. Make sure this type is correct
   param.print();
-   
+
+  startViewer(); ///< Start the simple_viewer
+  std::cout << "Viewer gestartet!" << std::endl;
+  
   LidarDriver<PointCloudMsg> driver;               ///< Declare the driver object
   driver.regPointCloudCallback(driverGetPointCloudFromCallerCallback, driverReturnPointCloudToCallerCallback); ///< Register the point cloud callback functions
   driver.regExceptionCallback(exceptionCallback);  ///< Register the exception callback function
 #if ENABLE_IMU_PARSE
   driver.regImuDataCallback(driverGetIMUDataFromCallerCallback, driverReturnImuDataToCallerCallback);
 #endif
-
   if (!driver.init(param))                         ///< Call the init function
   {
     RS_ERROR << "Driver Initialize Error..." << RS_REND;
@@ -214,9 +412,11 @@ int main(int argc, char* argv[])
   }
 
   std::thread cloud_handle_thread = std::thread(processCloud);
+
 #if ENABLE_IMU_PARSE
   std::thread imuData_handle_thread = std::thread(processImuData);
 #endif
+
   driver.start();  ///< The driver thread will start
   RS_DEBUG << "RoboSense Lidar-Driver Linux online demo start......" << RS_REND;
 

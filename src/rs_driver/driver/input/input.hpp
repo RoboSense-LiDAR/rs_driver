@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <thread>
 #include <cstring>
+#include <memory>
 
 #define VLAN_HDR_LEN  4
 #define ETH_HDR_LEN   42
