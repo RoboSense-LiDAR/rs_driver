@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <rs_driver/driver/decoder/decoder.hpp>
+#include <array>
 
 #define EMX_SURFACE_NUM 2
 #define EMX_PIXELS_PER_COLUMN 192

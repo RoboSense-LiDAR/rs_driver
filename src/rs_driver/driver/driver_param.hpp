@@ -50,6 +50,7 @@ enum LidarType  ///< LiDAR type
   RS32,
   RSBP,
   RSAIRY,
+  RSAIRYLITE_ETH,
   RSFAIRY,
   RSHELIOS,
   RSHELIOS_16P,
@@ -98,6 +99,7 @@ inline std::string lidarTypeToStr(const LidarType& type)
         {LidarType::RS32, "RS32"},
         {LidarType::RSBP, "RSBP"},
         {LidarType::RSAIRY, "RSAIRY"},
+        {LidarType::RSAIRYLITE_ETH, "RSAIRYLITE_ETH"},
         {LidarType::RSFAIRY, "RSFAIRY"},
         {LidarType::RSHELIOS, "RSHELIOS"},
         {LidarType::RSHELIOS_16P, "RSHELIOS_16P"},
@@ -147,6 +149,7 @@ inline LidarType strToLidarType(const std::string& type)
         {"RSMX", LidarType::RSMX},
         {"RSEMX", LidarType::RSEMX},
         {"RSAIRY", LidarType::RSAIRY},
+        {"RSAIRYLITE_ETH", LidarType::RSAIRYLITE_ETH},
         {"RSFAIRY", LidarType::RSFAIRY},
         {"RSM1_JUMBO", LidarType::RSM1_JUMBO},
     };
@@ -157,7 +160,7 @@ inline LidarType strToLidarType(const std::string& type)
     } else {
       RS_ERROR << "Wrong lidar type: " << type << RS_REND;
       RS_ERROR << "Please give correct type: RS16, RS32, RSBP, RSHELIOS, RSHELIOS_16P, RS48, RS80, RS128, RSP128, RSP80, RSP48, "
-              << "RSM1, RSM1_JUMBO, RSM2,RSM3, RSE1, RSMX, RSEMX, RSAIRY, RSFAIRY." 
+              << "RSM1, RSM1_JUMBO, RSM2,RSM3, RSE1, RSMX, RSEMX, RSAIRY, RSAIRYLITE_ETH, RSFAIRY."
               << RS_REND;
       exit(-1);
     }

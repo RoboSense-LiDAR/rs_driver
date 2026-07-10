@@ -34,6 +34,7 @@ git clone https://github.com/RoboSense-LiDAR/rs_driver.git
 + RS-LiDAR-MX
 + RS-LiDAR-EMX
 + RS-LiDAR-AIRY
++ RS-LiDAR-AIRYLITE-ETH
 + RS-LiDAR-FAIRY
 
 ## 1.3 支持的操作系统

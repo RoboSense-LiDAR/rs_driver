@@ -6,7 +6,7 @@
 
 rs_driver支持RoboSense的三种雷达：
 
-+ 机械式雷达。如RS16/RS32/RSBP/RSHELIOS/RS80/RS128/RSAIRY/RSFAIRY。机械式雷达有控制激光发射角度的旋转部件，有360°扫描视场。
++ 机械式雷达。如RS16/RS32/RSBP/RSHELIOS/RS80/RS128/RSAIRY/RSAIRYLITE_ETH/RSFAIRY。机械式雷达有控制激光发射角度的旋转部件，有360°扫描视场。
 + MEMS雷达。如RSM1。MEMS雷达是单轴、谐振式的MEMS扫描镜，其水平扫描角度可达120°。
 + E/EM平台雷达。如RSE1/RSEMX，是基于VCSEL与SPAD芯片的数字化架构雷达。
 
@@ -1476,6 +1476,7 @@ enum LidarType
   RS32,
   RSBP,
   RSAIRY,
+  RSAIRYLITE_ETH,
   RSFAIRY,
   RSHELIOS,
   RSHELIOS_16P,

@@ -42,7 +42,7 @@ class BlockIterator
 {
 public:
 
-  static const int MAX_BLOCKS_PER_PKT = 12;
+  static const int MAX_BLOCKS_PER_PKT = 16;
 
   void get(uint16_t blk, int32_t& az_diff, double& ts)
   {

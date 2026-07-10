@@ -34,6 +34,7 @@ Below are the supported LiDARS.
 - RS-LiDAR-MX
 - RS-LiDAR-EMX
 - RS-LiDAR-AIRY
+- RS-LiDAR-AIRYLITE-ETH
 - RS-LiDAR-FAIRY
 
 ## 1.3 Supported Platforms
