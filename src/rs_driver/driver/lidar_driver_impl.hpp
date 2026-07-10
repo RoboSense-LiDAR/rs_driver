@@ -126,6 +126,7 @@ private:
   static const uint8_t MSOP_HEADER_ID[2];
   static const uint8_t DIFOP_HEADER_ID[2];
   static const uint8_t IMU_HEADER_ID[2];
+  static const uint8_t AIRYLITE_HEADER_ID[2];
 };
 
 template <typename T_PointCloud>
@@ -134,6 +135,8 @@ template <typename T_PointCloud>
 const uint8_t LidarDriverImpl<T_PointCloud>::DIFOP_HEADER_ID[2] = { 0xA5, 0xFF };
 template <typename T_PointCloud>
 const uint8_t LidarDriverImpl<T_PointCloud>::IMU_HEADER_ID[2] = { 0xAA, 0x55 };
+template <typename T_PointCloud>
+const uint8_t LidarDriverImpl<T_PointCloud>::AIRYLITE_HEADER_ID[2] = { 0x5A, 0xFF };
 
 template <typename T_PointCloud>
 inline LidarDriverImpl<T_PointCloud>::LidarDriverImpl()
@@ -410,17 +413,20 @@ template <typename T_PointCloud>
 inline void LidarDriverImpl<T_PointCloud>::internalProcessPacket(std::shared_ptr<Buffer> pkt)
 {
   uint8_t* id = pkt->data();
-  if (memcmp(id, MSOP_HEADER_ID, sizeof(MSOP_HEADER_ID)) == 0)
+  if (memcmp(id, MSOP_HEADER_ID, sizeof(MSOP_HEADER_ID)) == 0 || \
+   (memcmp(id, AIRYLITE_HEADER_ID,sizeof(AIRYLITE_HEADER_ID)) == 0 && (*(id+5) == 0x01)))
   {
     bool pkt_to_split = decoder_ptr_->processMsopPkt(pkt->data(), pkt->dataSize());
     runPacketCallBack(pkt->data(), pkt->dataSize(), decoder_ptr_->prevPktTs(), false, pkt_to_split);  // msop packet
   }
-  else if (memcmp(id, DIFOP_HEADER_ID, sizeof(DIFOP_HEADER_ID)) == 0)
+  else if (memcmp(id, DIFOP_HEADER_ID, sizeof(DIFOP_HEADER_ID)) == 0 || \
+   (memcmp(id, AIRYLITE_HEADER_ID,sizeof(AIRYLITE_HEADER_ID)) == 0 && (*(id+5) == 0x03)))
   {
     decoder_ptr_->processDifopPkt(pkt->data(), pkt->dataSize());
     runPacketCallBack(pkt->data(), pkt->dataSize(), 0, true, false);  // difop packet
   }
-  else if (memcmp(id, IMU_HEADER_ID, sizeof(IMU_HEADER_ID)) == 0)
+  else if (memcmp(id, IMU_HEADER_ID, sizeof(IMU_HEADER_ID)) == 0 || \
+   (memcmp(id, AIRYLITE_HEADER_ID,sizeof(AIRYLITE_HEADER_ID)) == 0 && (*(id+5) == 0x02)))
   {
     decoder_ptr_->processImuPkt(pkt->data(), pkt->dataSize());  // imu packet
   }
@@ -507,7 +513,8 @@ inline bool LidarDriverImpl<T_PointCloud>::isNewFrame(const uint8_t* packet)
 {
   if (decoder_ptr_ != nullptr)
   {
-    if (memcmp(packet, MSOP_HEADER_ID, sizeof(MSOP_HEADER_ID)) == 0)
+    if (memcmp(packet, MSOP_HEADER_ID, sizeof(MSOP_HEADER_ID)) == 0 || \
+   (memcmp(packet, AIRYLITE_HEADER_ID,sizeof(AIRYLITE_HEADER_ID)) == 0 && (*(packet+5) == 0x01)))
     {
       return decoder_ptr_->isNewFrame(packet);
     }

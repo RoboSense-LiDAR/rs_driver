@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <rs_driver/common/rs_common.hpp>
+#include <rs_driver/common/rs_log.hpp>
 
 #include <fstream>
 #include <cmath>
@@ -94,6 +95,68 @@ public:
     vert_angles_.swap(vert_angles);
     horiz_angles_.swap(horiz_angles);
     genUserChan(vert_angles_, user_chans_);
+    return 0;
+  }
+
+  int loadFromDifopAIRYLITE(const uint8_t* packet_angle, size_t size)
+  {
+    const static int32_t channelNum = 24;
+    const static int32_t VERT_VAL_IDX = 0;
+    const static int32_t VERT_SYMB_IDX = 48;
+    const static int32_t HORIZ_VAL_IDX = 51;
+    const static int32_t HORIZ_SYMB_IDX = 99;
+    const size_t required_size = (size_t)(HORIZ_SYMB_IDX + (channelNum - 1) / 8) + 1;
+    if (!packet_angle || size < required_size)
+    {
+      RS_ERROR << "loadFromDifopAIRYLITE: invalid buffer, size=" << size << " required=" << required_size << RS_REND;
+      return -1;
+    }
+
+    std::vector<int32_t> vert_angles;
+    std::vector<int32_t> horiz_angles;
+    int ret = 0;
+    {
+      for (int i = 0; i < channelNum; i++)
+      {
+        int symb_block = i / 8;
+        int symb_move = (i - symb_block * 8);
+        int32_t v;
+
+        v = packet_angle[VERT_VAL_IDX + i * 2] * 256 + packet_angle[VERT_VAL_IDX + i * 2 + 1];
+
+        int vert_sign = static_cast<int>((packet_angle[VERT_SYMB_IDX + symb_block] >> (symb_move)) & (0x01));
+
+        if (vert_sign != 0) v = -v;
+
+        bool checkResV = ((-9000 <= v) && (v < 9000));
+        if (!checkResV)
+        {
+          RS_ERROR << " V Calib Value Error chn: " << i + 1 << RS_REND;
+          ret = -1;
+        }
+        vert_angles.push_back(v);
+
+        v = packet_angle[HORIZ_VAL_IDX + i * 2] * 256 + packet_angle[HORIZ_VAL_IDX + i * 2 + 1];
+        int horiz_sign = static_cast<int>((packet_angle[HORIZ_SYMB_IDX + symb_block] >> (symb_move)) & (0x01));
+        if (horiz_sign != 0) v = -v;
+
+        bool checkResH = ((-9000 <= v) && (v < 9000));
+        if (!checkResH)
+        {
+          RS_ERROR << " H Calib Value Error chn: " << i + 1 << RS_REND;
+          ret = -1;
+        }
+        horiz_angles.push_back(v);
+      }
+    }
+
+    if (ret < 0)
+      return ret;
+
+    vert_angles_.swap(vert_angles);
+    horiz_angles_.swap(horiz_angles);
+    genUserChan(vert_angles_, user_chans_);
+
     return 0;
   }
 

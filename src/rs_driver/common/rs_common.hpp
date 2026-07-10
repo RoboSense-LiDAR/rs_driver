@@ -42,19 +42,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arpa/inet.h>
 #endif
 
-inline int16_t RS_SWAP_INT16(int16_t value)
-{
-  return (value << 8) | ((value >> 8) & 0xFF);
-}
-
-inline int16_t RS_INT8(int8_t value)
-{
-  if (value < 0) {
-    return (value + 128) * (-1);
-  } else {
-    return value;
-  }
-}
 //
 // define M_PI
 // 

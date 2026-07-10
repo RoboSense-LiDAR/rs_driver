@@ -47,6 +47,8 @@ The `ID` and the length of LiDARs is fixed as below.
 |                                                                         | DIFOP       | a5 ff 00 5a 11 11 55 55 | 1248          |
 | RS128/RS80/RS48/RSP128/RSP80/RSP48/RSHELIOS/RSHELIOS_16P/RSAIRY/RSFAIRY | MSOP        | 55 aa 05 5a             | 1248          |
 |                                                                         | DIFOP       | a5 ff 00 5a 11 11 55 55 | 1248          |
+| RSAIRYLITE_ETH                                                          | MSOP        | 5a ff 55 aa 00 01       | 1280          |
+|                                                                         | DIFOP       | 5a ff 55 aa 00 03      | 540           |
 | RSM1/RSM2/RSE1/RSMX                                                     | MSOP        | 55 aa 5a a5             | 1210          |
 |                                                                         | DIFOP       | a5 ff 00 5a 11 11 55 55 | 256           |
 
@@ -58,27 +60,24 @@ Below are the steps to analysis PCAP file.
 
 + Find out the destination IP address of MSOP/DIFOP Packet。In design of RoboSense LiDAR, MSOP and DIFOP packets always have the same destination IPs.
 
-    Also find out what address is it? broadcast/multicast/unicast address? If it is multicast,`groud_address` and `host_address` are required.
-
+  Also find out what address is it? broadcast/multicast/unicast address? If it is multicast,`groud_address` and `host_address` are required.
 + Find out the destination port of MSOP/DIFOP packets.
 
-    Here show a specified type of packet with filter criteria.![](./img/12_01_select_by_port.png)
+  Here show a specified type of packet with filter criteria.![](./img/12_01_select_by_port.png)
 
-    Here exclude a specified type with filter criteria.![](./img/12_02_select_by_non_port.png)
+  Here exclude a specified type with filter criteria.![](./img/12_02_select_by_non_port.png)
 
-    Just set filter criteria on`msop_port` and `difop_port`.
-
+  Just set filter criteria on `msop_port` and `difop_port`.
 + Is there VLAN layer? If Yes,
 
   + create virtual NIC in case of online LiDAR.
   + set `use_vlan=true`, in case of PCAP file.
 + Find out the ID bytes first. Is there User Layer?  How long is it?
 
-    If Yes, set`user_layer_bytes`.
-
+  If Yes, set `user_layer_bytes`.
 + Is there Tail Layer ? How long is it?
 
-    If Yes, set`tail_layer_bytes`.
+  If Yes, set `tail_layer_bytes`.
 
 ## 12.4 Examples
 

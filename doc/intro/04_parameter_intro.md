@@ -35,6 +35,7 @@ enum LidarType
   RS32,
   RSBP,
   RSAIRY,
+  RSAIRYLITE_ETH,
   RSFAIRY,
   RSHELIOS,
   RSHELIOS_16P,
@@ -52,6 +53,9 @@ enum LidarType
   RSM3,
   RSE1,
   RSMX,
+
+  // EMX
+  RSEMX = 0x71,
 
   // jumbo
   RS_JUMBO = 0x100,
