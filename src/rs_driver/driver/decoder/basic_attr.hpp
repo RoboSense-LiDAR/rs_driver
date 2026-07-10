@@ -186,6 +186,31 @@ inline void createTimeUTCWithNs(uint64_t ns, RSTimestampUTC* tsUtc)
   }
 }
 
+inline std::pair<uint64_t, uint32_t> parseTimeUTCWithNs(const RSTimestampUTC* tsUtc)
+{
+  // sec
+  uint64_t sec = 0;
+  for (int i = 0; i < 6; i++)
+  {
+    sec <<= 8;
+    sec += tsUtc->sec[i];
+  }
+
+  // ns
+  uint32_t ns = 0;
+  for (int i = 0; i < 4; i++)
+  {
+    ns <<= 8;
+    ns += tsUtc->ss[i];
+  }
+
+#ifdef ENABLE_STAMP_WITH_LOCAL
+  sec -= getTimezone();
+#endif
+
+  return std::make_pair(sec, ns);
+}
+
 inline uint64_t parseTimeYMD(const RSTimestampYMD* tsYmd)
 {
   std::tm stm;
