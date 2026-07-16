@@ -270,6 +270,9 @@ public:
   virtual bool getDeviceInfo(DeviceInfo& info);
   virtual ~Decoder() = default;
 
+  virtual bool setLaserOn() { return false; }
+  virtual bool setLaserOff() { return false; }
+
   void processDifopPkt(const uint8_t* pkt, size_t size);
   bool processMsopPkt(const uint8_t* pkt, size_t size);
   bool processImuFrame(const uint8_t* src_data, size_t data_len);

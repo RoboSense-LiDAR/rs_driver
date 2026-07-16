@@ -168,6 +168,29 @@ public:
   }
 
   /**
+   * @brief Turn off the LiDAR laser emission (only supported on AC1).
+   *
+   * Note: This only disables laser emission; the IMU/CMOS data streams remain
+   * active. The laser state is persistent across AC1/LiDAR reboot.
+   *
+   * @return If successful, return true; else return false
+   */
+  inline bool setLaserOff()
+  {
+    return driver_ptr_->setLaserOff();
+  }
+
+  /**
+   * @brief Turn on the LiDAR laser emission (only supported on AC1).
+   *
+   * @return If successful, return true; else return false
+   */
+  inline bool setLaserOn()
+  {
+    return driver_ptr_->setLaserOn();
+  }
+
+  /**
    * @brief Stop all threads
    */
   inline void stop()

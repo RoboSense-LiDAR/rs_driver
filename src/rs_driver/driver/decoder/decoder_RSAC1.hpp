@@ -55,6 +55,8 @@ public:
   void decodeImageFrame(const uint8_t* src_data, size_t data_len);
   void decodePcFrame(const uint8_t* src_data, size_t data_len);
   bool getDeviceInfo(DeviceInfo& info) override final;
+  bool setLaserOff() override final;
+  bool setLaserOn() override final;
   virtual ~DecoderRSAC1() = default;
 
   explicit DecoderRSAC1(const RSDecoderParam& param);
@@ -303,6 +305,42 @@ inline bool DecoderRSAC1<T_PointCloud>::getDeviceInfo(DeviceInfo& info)
 
   info = this->device_info_;
   return true;
+}
+
+template <typename T_PointCloud>
+inline bool DecoderRSAC1<T_PointCloud>::setLaserOff()
+{
+  if (!this->cb_custom_cmd_)
+  {
+    return false;
+  }
+  // RoutineControl: 31 09 01 (Laser OFF)
+  // Expected positive response: 71 09 01
+  std::vector<uint8_t> send = {0x31, 0x09, 0x01};
+  std::vector<uint8_t> receive;
+  if (this->cb_custom_cmd_(send, receive) && receive.size() >= 3)
+  {
+    return (receive[0] == 0x71 && receive[1] == 0x09 && receive[2] == 0x01);
+  }
+  return false;
+}
+
+template <typename T_PointCloud>
+inline bool DecoderRSAC1<T_PointCloud>::setLaserOn()
+{
+  if (!this->cb_custom_cmd_)
+  {
+    return false;
+  }
+  // RoutineControl: 31 09 02 (Laser ON)
+  // Expected positive response: 71 09 02
+  std::vector<uint8_t> send = {0x31, 0x09, 0x02};
+  std::vector<uint8_t> receive;
+  if (this->cb_custom_cmd_(send, receive) && receive.size() >= 3)
+  {
+    return (receive[0] == 0x71 && receive[1] == 0x09 && receive[2] == 0x02);
+  }
+  return false;
 }
 
 }  // namespace lidar
