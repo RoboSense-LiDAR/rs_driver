@@ -80,6 +80,8 @@ public:
   bool getTemperature(float& temp);
   bool getDeviceInfo(DeviceInfo& info);
   bool getDeviceStatus(DeviceStatus& status);
+  bool setLaserOn();
+  bool setLaserOff();
 
 private:
   void runPacketCallBack(uint8_t* data, size_t data_size, double timestamp, uint8_t is_difop, uint8_t is_frame_begin);
@@ -433,6 +435,26 @@ inline bool LidarDriverImpl<T_PointCloud>::getDeviceStatus(DeviceStatus& status)
   }
 
   return decoder_ptr_->getDeviceStatus(status);
+}
+
+template <typename T_PointCloud>
+inline bool LidarDriverImpl<T_PointCloud>::setLaserOn()
+{
+  if (decoder_ptr_ == nullptr)
+  {
+    return false;
+  }
+  return decoder_ptr_->setLaserOn();
+}
+
+template <typename T_PointCloud>
+inline bool LidarDriverImpl<T_PointCloud>::setLaserOff()
+{
+  if (decoder_ptr_ == nullptr)
+  {
+    return false;
+  }
+  return decoder_ptr_->setLaserOff();
 }
 
 template <typename T_PointCloud>

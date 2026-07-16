@@ -37,6 +37,12 @@ add_executable(demo_usb
 
 target_link_libraries(demo_usb
                     ${EXTERNAL_LIBS})
+
+add_executable(demo_laser_control
+              demo_laser_control.cpp)
+
+target_link_libraries(demo_laser_control
+                    ${EXTERNAL_LIBS})
 endif()
 
 if(${ENABLE_GMSL})
