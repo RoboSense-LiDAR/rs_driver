@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "rs_driver/msg/imu_data_msg.hpp"
 #include <string>
 #include <map>
+#include <cstdint>
 #include <cstring>
 #include <unordered_map>
 namespace robosense
