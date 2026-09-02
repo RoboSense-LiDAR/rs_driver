@@ -18,7 +18,7 @@ endif()
 #=============================
 #  Compile Features
 #=============================
-option(DISABLE_PCAP_PARSE         "Disable PCAP file parse" OFF) 
+option(DISABLE_PCAP_PARSE         "Disable PCAP file parse" OFF)
 option(ENABLE_TRANSFORM           "Enable transform functions" OFF)
 
 option(ENABLE_MODIFY_RECVBUF       "Enable modify size of RCVBUF" ON)
@@ -84,10 +84,14 @@ message(=============================================================)
 #========================
 #  Path Setup
 #========================
+# Generated files land in the build tree so the source tree stays read-only.
+set(DRIVER_GENERATED_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/include)
+set(DRIVER_CMAKE_GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/cmake)
+
 set(CMAKE_INSTALL_PREFIX /usr/local)
 set(INSTALL_DRIVER_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}/include)
 set(INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/cmake)
-set(DRIVER_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/src)
+set(DRIVER_INCLUDE_DIRS ${DRIVER_GENERATED_INCLUDE_DIR} ${CMAKE_CURRENT_LIST_DIR}/src)
 set(DRIVER_CMAKE_ROOT ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 if(WIN32)
@@ -197,24 +201,24 @@ endif(${COMPILE_TESTS})
 
 #========================
 #  Cmake
-#========================  
+#========================
 configure_file(
   ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake.in
-  ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake 
+  ${DRIVER_CMAKE_GENERATED_DIR}/rs_driverConfig.cmake
   @ONLY)
 
 configure_file(
   ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake.in
-  ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake 
+  ${DRIVER_CMAKE_GENERATED_DIR}/rs_driverConfigVersion.cmake
   @ONLY)
 
 configure_file (
   ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.hpp.in
-  ${CMAKE_CURRENT_LIST_DIR}/src/rs_driver/macro/version.hpp
+  ${DRIVER_GENERATED_INCLUDE_DIR}/rs_driver/macro/version.hpp
   @ONLY)
 
 if(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
-  set(rs_driver_DIR ${DRIVER_CMAKE_ROOT} PARENT_SCOPE)
+  set(rs_driver_DIR ${DRIVER_CMAKE_GENERATED_DIR} PARENT_SCOPE)
 endif()
 
 #========================
@@ -222,8 +226,8 @@ endif()
 #========================
 if(UNIX AND ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 
-  install(FILES ${DRIVER_CMAKE_ROOT}/rs_driverConfig.cmake
-                ${DRIVER_CMAKE_ROOT}/rs_driverConfigVersion.cmake
+  install(FILES ${DRIVER_CMAKE_GENERATED_DIR}/rs_driverConfig.cmake
+                ${DRIVER_CMAKE_GENERATED_DIR}/rs_driverConfigVersion.cmake
           DESTINATION ${INSTALL_CMAKE_DIR}/${CMAKE_PROJECT_NAME})
 
   install(DIRECTORY src/
@@ -234,6 +238,9 @@ if(UNIX AND ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
           DESTINATION ${INSTALL_DRIVER_DIR}
           FILES_MATCHING PATTERN "*.hpp")
 
+  install(FILES ${DRIVER_GENERATED_INCLUDE_DIR}/rs_driver/macro/version.hpp
+          DESTINATION ${INSTALL_DRIVER_DIR}/rs_driver/macro)
+
   if(NOT TARGET uninstall)
     configure_file(
       ${CMAKE_CURRENT_LIST_DIR}/cmake/cmake_uninstall.cmake.in
@@ -243,4 +250,3 @@ if(UNIX AND ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
   endif(NOT TARGET uninstall)
 
 endif(UNIX AND ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
-
